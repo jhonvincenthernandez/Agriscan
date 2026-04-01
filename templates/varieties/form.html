@@ -1,0 +1,592 @@
+{% extends 'base.html' %}
+{% comment %}
+  varieties/form.html
+  ─────────────────────────────────────────────────────────────────────────────
+  Kumpletong form para sa pag-create at pag-edit ng Rice Variety.
+  Naka-grupo sa 7 sections para sa mas maayos na pag-fill-up.
+  Ginagamit ng variety_create at variety_edit views.
+  Lahat ng user-visible na text ay English; comments ay Tagalog/Filipino.
+{% endcomment %}
+
+{% block title %}{{ title }} - AgriScan{% endblock %}
+
+{% block content %}
+<section class="page-container">
+
+  {# ── Page Header ──────────────────────────────────────────────────────── #}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+          {{ title }}
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">
+          {% if variety %}
+            Update information for rice variety <strong class="text-gray-700">{{ variety.code }}</strong>
+          {% else %}
+            Add a new rice variety to the system
+          {% endif %}
+        </p>
+      </div>
+      <a href="{{ cancel_url }}" onclick="history.back(); return false;"
+         class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium self-start sm:self-auto">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Varieties
+      </a>
+    </div>
+  </div>
+
+  {# ── Main Form ────────────────────────────────────────────────────────── #}
+  <form method="post" id="variety-form" novalidate>
+    {% csrf_token %}
+
+    {# Non-field errors — pangkalahatang error messages #}
+    {% if form.non_field_errors %}
+    <div class="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 flex gap-3">
+      <svg class="h-5 w-5 text-red-400 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+      </svg>
+      <div>
+        <p class="text-sm font-medium text-red-800">Please fix the following errors:</p>
+        <div class="mt-1 text-sm text-red-700">{{ form.non_field_errors }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ═══ SECTION 1 — Variety Identification ═════════════════════════════ #}
+    {# Pangunahing pagkakakilanlan ng rice variety                          #}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
+      <div class="px-6 py-4 bg-green-50 border-b border-green-100 flex items-center gap-3">
+        <span class="flex-shrink-0 w-7 h-7 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center">1</span>
+        <div>
+          <h2 class="text-base font-semibold text-green-800">Variety Identification</h2>
+          <p class="text-xs text-green-600 mt-0.5">Primary identification details of the variety</p>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <div>
+          <label for="{{ form.code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Variety Code <span class="text-red-500">*</span>
+          </label>
+          {{ form.code }}
+          <p class="mt-1 text-xs text-gray-500">Unique code (e.g. RC222, NSIC Rc222)</p>
+          {% if form.code.errors %}<p class="mt-1 text-xs text-red-600">{{ form.code.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Variety Name <span class="text-red-500">*</span>
+          </label>
+          {{ form.name }}
+          <p class="mt-1 text-xs text-gray-500">Full name of the variety</p>
+          {% if form.name.errors %}<p class="mt-1 text-xs text-red-600">{{ form.name.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.variety_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Variety Type <span class="text-red-500">*</span>
+          </label>
+          {{ form.variety_type }}
+          {% if form.variety_type.errors %}<p class="mt-1 text-xs text-red-600">{{ form.variety_type.errors.0 }}</p>{% endif %}
+          <details class="mt-1">
+            <summary class="text-xs text-indigo-600 cursor-pointer hover:text-indigo-800 select-none">ℹ️ Variety Type Guide</summary>
+            <div class="mt-1 text-xs text-gray-600 bg-gray-50 rounded p-2 space-y-0.5 border border-gray-200">
+              <p><strong>Inbred</strong> — Self-pollinated; stable traits. Suited for rainfed/irrigated systems, low seed cost.</p>
+              <p><strong>Hybrid</strong> — Cross-pollinated; higher yield potential. Best for high-input irrigated and commercial production.</p>
+              <p><strong>Traditional / Local</strong> — Indigenous varieties; stress-tolerant with specific flavor/aroma; promotes biodiversity.</p>
+              <p><strong>Specialty</strong> — Aromatic, glutinous, or high-protein. For niche markets and premium rice.</p>
+              <p><strong>Stress-Tolerant</strong> — Drought/flood-tolerant varieties designed for climate-extreme areas.</p>
+            </div>
+          </details>
+        </div>
+
+        <div>
+          <label for="{{ form.release_year.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Release Year
+          </label>
+          {{ form.release_year }}
+          <p class="mt-1 text-xs text-gray-500">Year released by DA / PhilRice</p>
+          {% if form.release_year.errors %}<p class="mt-1 text-xs text-red-600">{{ form.release_year.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="{{ form.developer.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Developer / Breeding Institution
+          </label>
+          {{ form.developer }}
+          <p class="mt-1 text-xs text-gray-500">e.g. PhilRice, IRRI, DA-RFU Region III</p>
+          {% if form.developer.errors %}<p class="mt-1 text-xs text-red-600">{{ form.developer.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# ═══ SECTION 2 — Agronomic Characteristics ══════════════════════════ #}
+    {# Biological traits na nakakaapekto sa pagsasaka                       #}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
+      <div class="px-6 py-4 bg-blue-50 border-b border-blue-100 flex items-center gap-3">
+        <span class="flex-shrink-0 w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">2</span>
+        <div>
+          <h2 class="text-base font-semibold text-blue-800">Agronomic Characteristics</h2>
+          <p class="text-xs text-blue-600 mt-0.5">Biological traits of the variety</p>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <div>
+          <label for="{{ form.average_growth_days.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Growth Duration (days) <span class="text-red-500">*</span>
+          </label>
+          {{ form.average_growth_days }}
+          <p class="mt-1 text-xs text-gray-500">Short: 90-110 · Medium: 111-135 · Long: 136-165</p>
+          {% if form.average_growth_days.errors %}<p class="mt-1 text-xs text-red-600">{{ form.average_growth_days.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.plant_height_cm.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Plant Height (cm)
+          </label>
+          {{ form.plant_height_cm }}
+          {% if form.plant_height_cm.errors %}<p class="mt-1 text-xs text-red-600">{{ form.plant_height_cm.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.tillering_capacity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Tillering Capacity
+          </label>
+          {{ form.tillering_capacity }}
+          {% if form.tillering_capacity.errors %}<p class="mt-1 text-xs text-red-600">{{ form.tillering_capacity.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.grain_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Grain Type
+          </label>
+          {{ form.grain_type }}
+          {% if form.grain_type.errors %}<p class="mt-1 text-xs text-red-600">{{ form.grain_type.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.lodging_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Lodging Resistance
+          </label>
+          {{ form.lodging_resistance }}
+          {% if form.lodging_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.lodging_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# ═══ SECTION 3 — Environmental Adaptation ═══════════════════════════ #}
+    {# Kung saan environment pinaka-angkop ang variety                      #}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
+      <div class="px-6 py-4 bg-teal-50 border-b border-teal-100 flex items-center gap-3">
+        <span class="flex-shrink-0 w-7 h-7 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center">3</span>
+        <div>
+          <h2 class="text-base font-semibold text-teal-800">Environmental Adaptation</h2>
+          <p class="text-xs text-teal-600 mt-0.5">Optimal growing environment for the variety</p>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+
+        <div>
+          <label for="{{ form.climate_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Climate Type <span class="text-red-500">*</span>
+          </label>
+          {{ form.climate_type }}
+          {% if form.climate_type.errors %}<p class="mt-1 text-xs text-red-600">{{ form.climate_type.errors.0 }}</p>{% endif %}
+          <details class="mt-1">
+            <summary class="text-xs text-green-600 cursor-pointer hover:text-green-800 select-none">ℹ️ Climate Type Guide</summary>
+            <div class="mt-1 text-xs text-gray-600 bg-gray-50 rounded p-2 space-y-0.5 border border-gray-200">
+              <p><strong>Irrigated</strong> — Consistent water supply; optimal for high-yield commercial varieties.</p>
+              <p><strong>Rainfed Lowland</strong> — Dependent on rainfall; use drought-tolerant inbred varieties.</p>
+              <p><strong>Upland</strong> — Dry, non-flooded areas; stress-tolerant or local varieties.</p>
+              <p><strong>Flood-Prone</strong> — Areas with seasonal flooding; use submergence-tolerant varieties (e.g. Swarna-Sub1).</p>
+              <p><strong>Saline-Prone</strong> — Coastal or salt-affected soil; use salt-tolerant varieties.</p>
+            </div>
+          </details>
+        </div>
+
+        <div>
+          <label for="{{ form.soil_type_compatibility.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Soil Type Compatibility
+          </label>
+          {{ form.soil_type_compatibility }}
+          {% if form.soil_type_compatibility.errors %}<p class="mt-1 text-xs text-red-600">{{ form.soil_type_compatibility.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.flood_tolerance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Flood Tolerance
+          </label>
+          {{ form.flood_tolerance }}
+          {% if form.flood_tolerance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.flood_tolerance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.drought_tolerance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Drought Tolerance
+          </label>
+          {{ form.drought_tolerance }}
+          {% if form.drought_tolerance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.drought_tolerance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.temperature_tolerance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Temperature Tolerance
+          </label>
+          {{ form.temperature_tolerance }}
+          {% if form.temperature_tolerance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.temperature_tolerance.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# ═══ SECTION 4 — Yield Characteristics ══════════════════════════════ #}
+    {# Performance at kalidad ng ani ng variety                             #}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
+      <div class="px-6 py-4 bg-amber-50 border-b border-amber-100 flex items-center gap-3">
+        <span class="flex-shrink-0 w-7 h-7 rounded-full bg-amber-500 text-white text-xs font-bold flex items-center justify-center">4</span>
+        <div>
+          <h2 class="text-base font-semibold text-amber-800">Yield Characteristics</h2>
+          <p class="text-xs text-amber-600 mt-0.5">Harvest performance and grain quality</p>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
+
+        <div>
+          <label for="{{ form.average_yield_t_ha.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Average Yield (t/ha)
+          </label>
+          {{ form.average_yield_t_ha }}
+          <p class="mt-1 text-xs text-gray-500">Typical attainable yield under normal conditions</p>
+          {% if form.average_yield_t_ha.errors %}<p class="mt-1 text-xs text-red-600">{{ form.average_yield_t_ha.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.potential_yield_t_ha.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Potential Yield (t/ha)
+          </label>
+          {{ form.potential_yield_t_ha }}
+          <p class="mt-1 text-xs text-gray-500">Maximum achievable yield under optimal conditions</p>
+          {% if form.potential_yield_t_ha.errors %}<p class="mt-1 text-xs text-red-600">{{ form.potential_yield_t_ha.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.grain_quality.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Grain Quality
+          </label>
+          {{ form.grain_quality }}
+          {% if form.grain_quality.errors %}<p class="mt-1 text-xs text-red-600">{{ form.grain_quality.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# ═══ SECTION 5 — Pest and Disease Resistance ═════════════════════════ #}
+    {# Resistansya sa tatlong pangunahing sakit ng palay                     #}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
+      <div class="px-6 py-4 bg-red-50 border-b border-red-100 flex items-center gap-3">
+        <span class="flex-shrink-0 w-7 h-7 rounded-full bg-red-500 text-white text-xs font-bold flex items-center justify-center">5</span>
+        <div>
+          <h2 class="text-base font-semibold text-red-800">Pest and Disease Resistance</h2>
+          <p class="text-xs text-red-500 mt-0.5">Resistance ratings for major rice diseases</p>
+        </div>
+      </div>
+      {# Legend para sa resistance levels #}
+      <div class="px-6 pt-4 flex flex-wrap gap-2 text-xs">
+        <span class="px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">R — Resistant</span>
+        <span class="px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">MR — Moderately Resistant</span>
+        <span class="px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">S — Susceptible</span>
+        <span class="px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">HS — Highly Susceptible</span>
+        <span class="px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">U — Unknown</span>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
+
+        <div>
+          <label for="{{ form.blast_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🍃 Leaf Blast
+          </label>
+          {{ form.blast_resistance }}
+          {% if form.blast_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.blast_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.neck_blast_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🌾 Neck Blast
+          </label>
+          {{ form.neck_blast_resistance }}
+          {% if form.neck_blast_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.neck_blast_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.blight_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🦠 Bacterial Leaf Blight
+          </label>
+          {{ form.blight_resistance }}
+          {% if form.blight_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.blight_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.brown_spot_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🟤 Brown Spot
+          </label>
+          {{ form.brown_spot_resistance }}
+          {% if form.brown_spot_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.brown_spot_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.false_smut_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🟢 False Smut
+          </label>
+          {{ form.false_smut_resistance }}
+          {% if form.false_smut_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.false_smut_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.leaf_scald_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🔥 Leaf Scald
+          </label>
+          {{ form.leaf_scald_resistance }}
+          {% if form.leaf_scald_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.leaf_scald_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.leaf_smut_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            ⚫ Leaf Smut
+          </label>
+          {{ form.leaf_smut_resistance }}
+          {% if form.leaf_smut_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.leaf_smut_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.narrow_brown_spot_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🟫 Narrow Brown Spot
+          </label>
+          {{ form.narrow_brown_spot_resistance }}
+          {% if form.narrow_brown_spot_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.narrow_brown_spot_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.rice_hispa_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🐛 Rice Hispa
+          </label>
+          {{ form.rice_hispa_resistance }}
+          {% if form.rice_hispa_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.rice_hispa_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.sheath_blight_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🌿 Sheath Blight
+          </label>
+          {{ form.sheath_blight_resistance }}
+          {% if form.sheath_blight_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.sheath_blight_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.tungro_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🔴 Tungro
+          </label>
+          {{ form.tungro_resistance }}
+          {% if form.tungro_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.tungro_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.unhealthy_flowers_resistance.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            🌸 Unhealthy Flowers
+          </label>
+          {{ form.unhealthy_flowers_resistance }}
+          {% if form.unhealthy_flowers_resistance.errors %}<p class="mt-1 text-xs text-red-600">{{ form.unhealthy_flowers_resistance.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# ═══ SECTION 6 — Seed Management ════════════════════════════════════ #}
+    {# Para masigurong quality ang planting material                        #}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-6 overflow-hidden">
+      <div class="px-6 py-4 bg-purple-50 border-b border-purple-100 flex items-center gap-3">
+        <span class="flex-shrink-0 w-7 h-7 rounded-full bg-purple-600 text-white text-xs font-bold flex items-center justify-center">6</span>
+        <div>
+          <h2 class="text-base font-semibold text-purple-800">Seed Management</h2>
+          <p class="text-xs text-purple-600 mt-0.5">Ensure planting material quality</p>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-5">
+
+        <div>
+          <label for="{{ form.seed_source.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Seed Source
+          </label>
+          {{ form.seed_source }}
+          {% if form.seed_source.errors %}<p class="mt-1 text-xs text-red-600">{{ form.seed_source.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.seed_certification.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Certification Level
+          </label>
+          {{ form.seed_certification }}
+          {% if form.seed_certification.errors %}<p class="mt-1 text-xs text-red-600">{{ form.seed_certification.errors.0 }}</p>{% endif %}
+          <details class="mt-1">
+            <summary class="text-xs text-amber-600 cursor-pointer hover:text-amber-800 select-none">ℹ️ Certification Level Guide</summary>
+            <div class="mt-1 text-xs text-gray-600 bg-gray-50 rounded p-2 space-y-0.5 border border-gray-200">
+              <p><strong>Breeder Seed</strong> — Purest seed from breeding institutions; used for multiplication programs.</p>
+              <p><strong>Foundation Seed</strong> — Derived from breeder seed; for large-scale certified seed production.</p>
+              <p><strong>Registered Seed</strong> — Meets standards; for commercial planting at moderate scale.</p>
+              <p><strong>Certified Seed</strong> — Market-ready and approved for distribution; direct planting by farmers.</p>
+              <p><strong>Truthfully Labeled / Local</strong> — Usually farmer-saved seeds; lower uniformity and yield guarantee.</p>
+            </div>
+          </details>
+        </div>
+
+        <div>
+          <label for="{{ form.germination_rate_pct.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Germination Rate (%)
+          </label>
+          {{ form.germination_rate_pct }}
+          <p class="mt-1 text-xs text-gray-500">Minimum recommended: 85%</p>
+          {% if form.germination_rate_pct.errors %}<p class="mt-1 text-xs text-red-600">{{ form.germination_rate_pct.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# ═══ SECTION 7 — Management Recommendations ══════════════════════════ #}
+    {# Gabay para sa mga magsasaka tungkol sa tamang pamamahala              #}
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 mb-24 overflow-hidden">
+      <div class="px-6 py-4 bg-indigo-50 border-b border-indigo-100 flex items-center gap-3">
+        <span class="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center">7</span>
+        <div>
+          <h2 class="text-base font-semibold text-indigo-800">Management Recommendations</h2>
+          <p class="text-xs text-indigo-600 mt-0.5">Best practices for crop management</p>
+        </div>
+      </div>
+      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+        <div class="md:col-span-2">
+          <label for="{{ form.fertilizer_schedule.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Fertilizer Schedule
+          </label>
+          {{ form.fertilizer_schedule }}
+          {% if form.fertilizer_schedule.errors %}<p class="mt-1 text-xs text-red-600">{{ form.fertilizer_schedule.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.water_management.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Water Management Method
+          </label>
+          {{ form.water_management }}
+          {% if form.water_management.errors %}<p class="mt-1 text-xs text-red-600">{{ form.water_management.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.plant_spacing_cm.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Plant Spacing
+          </label>
+          {{ form.plant_spacing_cm }}
+          {% if form.plant_spacing_cm.errors %}<p class="mt-1 text-xs text-red-600">{{ form.plant_spacing_cm.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="{{ form.planting_season.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Recommended Planting Season
+          </label>
+          {{ form.planting_season }}
+          {% if form.planting_season.errors %}<p class="mt-1 text-xs text-red-600">{{ form.planting_season.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="md:col-span-2">
+          <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            Additional Notes
+          </label>
+          {{ form.notes }}
+          {% if form.notes.errors %}<p class="mt-1 text-xs text-red-600">{{ form.notes.errors.0 }}</p>{% endif %}
+        </div>
+
+      </div>
+    </div>
+
+    {# ── Sticky Action Buttons — laging visible kahit mataas ang form ─── #}
+    <div class="fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-gray-200 shadow-lg px-6 py-4">
+      <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="text-sm text-gray-500">
+          {% if variety %}
+            Used in <strong class="text-gray-700">{{ variety.plantings.count }}</strong>
+            planting record{{ variety.plantings.count|pluralize }}.
+          {% else %}
+            <span class="text-gray-400">Fields marked <span class="text-red-500">*</span> are required</span>
+          {% endif %}
+        </div>
+        <div class="flex items-center gap-3">
+          {# Cancel button #}
+          <a href="{{ cancel_url }}" onclick="history.back(); return false;"
+             class="px-5 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition">
+            Cancel
+          </a>
+          {# Archive button — edit mode lang #}
+          {% if variety %}
+          <button type="button"
+                  onclick="openDeleteModal('{% url 'polls:variety_delete' variety.pk %}','{{ variety.code }} — {{ variety.name }}','{{ variety.average_growth_days }} days growth')"
+                  class="px-5 py-2 border border-amber-300 rounded-lg text-sm font-medium text-amber-700 bg-amber-50 hover:bg-amber-100 transition">
+            <svg class="h-4 w-4 inline -mt-0.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12"/>
+            </svg>
+            Archive
+          </button>
+          {% endif %}
+          {# Save / Create button #}
+          <button type="submit"
+                  class="inline-flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg shadow-sm transition focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ submit_text }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </form>
+
+  {# ── Edit-mode stats card ─────────────────────────────────────────────── #}
+  {% if variety %}
+  <div class="mt-6 mb-6 bg-gray-50 rounded-lg border border-gray-200 p-5">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+      <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Variety Usage Statistics
+    </h3>
+    <dl class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+      <div class="bg-white rounded-lg border border-gray-200 p-3">
+        <dt class="text-xs text-gray-500 uppercase tracking-wide">ID</dt>
+        <dd class="mt-1 text-lg font-bold text-gray-900 font-mono">#{{ variety.pk }}</dd>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-3">
+        <dt class="text-xs text-gray-500 uppercase tracking-wide">Code</dt>
+        <dd class="mt-1 text-lg font-bold text-green-700">{{ variety.code }}</dd>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-3">
+        <dt class="text-xs text-gray-500 uppercase tracking-wide">Plantings</dt>
+        <dd class="mt-1 text-lg font-bold text-blue-600">{{ variety.plantings.count }}</dd>
+      </div>
+      <div class="bg-white rounded-lg border border-gray-200 p-3">
+        <dt class="text-xs text-gray-500 uppercase tracking-wide">Growth</dt>
+        <dd class="mt-1 text-lg font-bold text-amber-600">{{ variety.average_growth_days }}d</dd>
+      </div>
+    </dl>
+  </div>
+  {% endif %}
+
+</section>
+{% endblock %}

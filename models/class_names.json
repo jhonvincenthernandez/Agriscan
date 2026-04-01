@@ -1,0 +1,18 @@
+{
+  "labels": [
+    "bacterial_leaf_blight",
+    "brown_spot",
+    "false_smut",
+    "healthy",
+    "healthy_flowers",
+    "leaf_blast",
+    "leaf_scald",
+    "leaf_smut",
+    "narrow_brown_spot",
+    "neck_blast",
+    "rice_hispa",
+    "sheath_blight",
+    "tungro",
+    "unhealthy_flowers"
+  ]
+}

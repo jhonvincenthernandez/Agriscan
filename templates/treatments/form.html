@@ -1,0 +1,883 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - AgriScan{% endblock %}
+
+{% block content %}
+<section class="page-container">
+
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <a href="{% url 'polls:treatments_list' %}"
+             onclick="history.back(); return false;"
+             class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium self-start sm:self-auto">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Back to Treatments
+          </a>
+          <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            {{ title }}
+          </h1>
+          <p class="mt-1 text-sm text-gray-500">Fill in all sections to build a complete Integrated Pest Management (IPM) treatment recommendation.</p>
+        </div>
+        <!-- Completion meter -->
+        <div class="bg-gray-50 border border-gray-200 rounded-lg px-5 py-3 min-w-[200px]">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-xs font-semibold text-gray-600">Completeness</span>
+            <span id="complete-pct" class="text-xs font-bold text-red-500">0%</span>
+          </div>
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div id="complete-bar" class="bg-red-400 h-2 rounded-full transition-all duration-300" style="width:0%"></div>
+          </div>
+          <p id="complete-hint" class="text-xs text-gray-500 mt-1">Fill in more sections</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+      <!-- ══════════════════ MAIN FORM ══════════════════ -->
+      <div class="xl:col-span-2">
+        <form id="treatment-form" method="post" class="space-y-4">
+          {% csrf_token %}
+
+          <!-- ── SECTION 1: Basic Info ── -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <button type="button" class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition" data-target="sec-basic">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-600 text-white text-sm font-bold">1</span>
+                <div>
+                  <h3 class="text-base font-semibold text-gray-900">Basic Information</h3>
+                  <p class="text-xs text-gray-500">Disease, severity range, and quick summary</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="sec-basic-badge" class="hidden text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">✓ Filled</span>
+                <svg class="accordion-arrow h-5 w-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </button>
+            <div id="sec-basic" class="accordion-body px-6 pb-6 pt-2 border-t border-gray-100 space-y-5">
+
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                  <label for="{{ form.disease.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Disease Type <span class="text-red-500">*</span>
+                  </label>
+                  {{ form.disease }}
+                  {% if form.disease.errors %}<p class="mt-1 text-sm text-red-600">{{ form.disease.errors.0 }}</p>{% endif %}
+                </div>
+                <div>
+                  <label for="{{ form.priority.id_for_label }}" class="flex items-center justify-between text-sm font-medium text-gray-700 mb-1">
+                    <span>
+                      Priority
+                      <span class="ml-1 text-xs text-gray-400 cursor-help" title="1-3=Low (mild), 4-7=Medium, 8-10=High/Critical">ⓘ</span>
+                    </span>
+                    <span id="priority-badge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 tabular-nums transition-colors">5 / 10</span>
+                  </label>
+                  {{ form.priority }}
+                  <div class="mt-2">
+                    <div class="w-full bg-gray-200 rounded-full h-1.5">
+                      <div id="priority-bar" class="h-1.5 rounded-full bg-blue-400" style="width:50%;transition:width .2s ease,background-color .3s ease"></div>
+                    </div>
+                    <p id="priority-label" class="text-xs text-gray-500 mt-0.5">Medium</p>
+                  </div>
+                  {% if form.priority.errors %}<p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+
+              <!-- Severity Range -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Severity Range <span class="text-red-500">*</span></label>
+                <div class="flex items-end gap-3">
+                  <div class="flex-1">
+                    <label class="text-xs text-gray-500 mb-1 block">Min %</label>
+                    {{ form.severity_min }}
+                    {% if form.severity_min.errors %}<p class="mt-1 text-xs text-red-600">{{ form.severity_min.errors.0 }}</p>{% endif %}
+                  </div>
+                  <span class="text-gray-400 text-sm mb-2.5">→</span>
+                  <div class="flex-1">
+                    <label class="text-xs text-gray-500 mb-1 block">Max %</label>
+                    {{ form.severity_max }}
+                    {% if form.severity_max.errors %}<p class="mt-1 text-xs text-red-600">{{ form.severity_max.errors.0 }}</p>{% endif %}
+                  </div>
+                  <div class="flex-1 pb-1">
+                    <div class="relative w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div id="sev-range-bar" class="absolute h-3 rounded-full transition-all"
+                           style="left:0%;width:100%;background:linear-gradient(to right,#22c55e,#f59e0b,#ef4444)"></div>
+                    </div>
+                    <p id="sev-range-label" class="text-xs text-gray-500 mt-0.5 text-center">0% – 100%</p>
+                    <p id="sev-range-error" class="text-xs text-red-600 hidden text-center">Min must be ≤ Max</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Summary -->
+              <div>
+                <label for="{{ form.short_text.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                  Quick Recommendation <span class="text-red-500">*</span>
+                  <span class="text-xs text-gray-400 font-normal ml-1">— shown on the blue detection card</span>
+                </label>
+                {{ form.short_text }}
+                <div class="flex items-center justify-between mt-1">
+                  <p class="text-xs text-gray-500">Concise action summary for farmers.</p>
+                  <span id="short-text-count" class="text-xs text-gray-400">0/200</span>
+                </div>
+                {% if form.short_text.errors %}<p class="mt-1 text-sm text-red-600">{{ form.short_text.errors.0 }}</p>{% endif %}
+              </div>
+
+              <!-- Active toggle -->
+              <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                {{ form.is_active }}
+                <div>
+                  <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-gray-700 cursor-pointer">Active Treatment</label>
+                  <p class="text-xs text-gray-500">Inactive treatments are not shown in detection results</p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- KNOWLEDGE SECTION PROVISIONALLY MOVED TO SECTION 5 -->
+
+          <!-- ── SECTION 2: Factors Favoring ── -->
+          <div class="bg-amber-50 rounded-lg shadow-sm border border-amber-200 overflow-hidden">
+            <button type="button" class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left hover:bg-amber-100 transition" data-target="sec-factors">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-amber-400 text-white text-sm font-bold">2</span>
+                <div>
+                  <h3 class="text-base font-semibold text-amber-900">Factors Favoring Disease</h3>
+                  <p class="text-xs text-amber-700">Each item becomes an interactive checkbox for farmers on the detection page</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="sec-factors-badge" class="hidden text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">✓ Filled</span>
+                <svg class="accordion-arrow h-5 w-5 text-amber-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </button>
+            <div id="sec-factors" class="accordion-body accordion-closed px-6 pb-6 pt-2 border-t border-amber-200">
+              <div class="mt-2 mb-3 bg-amber-100 border border-amber-200 rounded p-2 text-xs text-amber-800">
+                💡 Each line you write here becomes a <strong>checkbox</strong> on the detection detail page.
+                Farmers tick which factors apply to their field — the Quick Recommendation card updates based on how many are checked.
+                Write <strong>one factor per line</strong>, no bullets needed.
+                <br>Add a <strong>Quick Action</strong> per factor to show a specific recommendation when it is ticked.
+              </div>
+
+              <!-- Hidden textareas (synced by JS, submitted to Django) -->
+              <textarea id="id_factors_favoring_hidden" name="factors_favoring" class="hidden">{{ form.factors_favoring.value }}</textarea>
+              <textarea id="id_factor_actions_hidden" name="factor_actions" class="hidden">{{ form.factor_actions.value }}</textarea>
+              <textarea id="id_factor_expected_results_hidden" name="factor_expected_results" class="hidden">{{ form.factor_expected_results.value }}</textarea>
+              {% if form.factors_favoring.errors %}<p class="mb-2 text-sm text-red-600">{{ form.factors_favoring.errors.0 }}</p>{% endif %}
+              {% if form.factor_actions.errors %}<p class="mb-2 text-sm text-red-600">{{ form.factor_actions.errors.0 }}</p>{% endif %}
+              {% if form.factor_expected_results.errors %}<p class="mb-2 text-sm text-red-600">{{ form.factor_expected_results.errors.0 }}</p>{% endif %}
+
+              <!-- Column headers -->
+              <div class="hidden sm:grid sm:grid-cols-3 gap-2 mb-1 text-xs font-semibold text-amber-700 px-1">
+                <span>Factor (checkbox label)</span>
+                <span>Quick Action (specific recommendation when ticked)</span>
+                <span>Expected Result if Acted Upon</span>
+              </div>
+
+              <!-- Dynamic rows -->
+              <div id="factors-builder" class="space-y-2 mb-3"></div>
+
+              <button type="button" id="add-factor-btn"
+                      class="inline-flex items-center gap-2 text-sm text-amber-700 hover:text-amber-900 font-medium px-3 py-1.5 border border-amber-300 rounded-lg hover:bg-amber-100 transition">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Add Factor
+              </button>
+            </div>
+          </div>
+
+          <!-- ── SECTION 3: Cultural Practices (IPM) ── -->
+          <div class="bg-green-50 rounded-lg shadow-sm border border-green-200 overflow-hidden">
+            <button type="button" class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left hover:bg-green-100 transition" data-target="sec-cultural">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-green-600 text-white text-sm font-bold">3</span>
+                <div>
+                  <h3 class="text-base font-semibold text-green-900">Cultural Practices <span class="text-xs font-normal text-green-600 ml-1">Integrated Pest Management (IPM) — First Priority</span></h3>
+                  <p class="text-xs text-green-700">Non-chemical Integrated Pest Management — always recommend before chemicals</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="sec-cultural-badge" class="hidden text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">✓ Filled</span>
+                <svg class="accordion-arrow h-5 w-5 text-green-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </button>
+            <div id="sec-cultural" class="accordion-body accordion-closed px-6 pb-6 pt-2 border-t border-green-200">
+              <div class="mt-2 mb-3 bg-green-100 border border-green-200 rounded p-2 text-xs text-green-800">
+                🌿 <strong>IPM Best Practice:</strong> Crop rotation, resistant varieties, proper spacing, balanced fertilization, water management, and biological controls.
+              </div>
+              <label for="{{ form.cultural_practices.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Cultural Practices</label>
+              {{ form.cultural_practices }}
+              {% if form.cultural_practices.errors %}<p class="mt-1 text-sm text-red-600">{{ form.cultural_practices.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── SECTION 4: Chemical Control ── -->
+          <div class="bg-red-50 rounded-lg shadow-sm border border-red-200 overflow-hidden">
+            <button type="button" class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left hover:bg-red-100 transition" data-target="sec-chemical">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-white text-sm font-bold">4</span>
+                <div>
+                  <h3 class="text-base font-semibold text-red-900">Chemical Control <span class="text-xs font-normal text-red-600 ml-1">Last Resort Only</span></h3>
+                  <p class="text-xs text-red-700">Fungicide/pesticide with dosages, timing, PHI, and safety warnings</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="sec-chemical-badge" class="hidden text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">✓ Filled</span>
+                <svg class="accordion-arrow h-5 w-5 text-red-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </button>
+            <div id="sec-chemical" class="accordion-body accordion-closed px-6 pb-6 pt-2 border-t border-red-200">
+              <div class="mt-2 mb-3 bg-red-100 border border-red-200 rounded p-2 text-xs text-red-800">
+                ⚗️ <strong>Use Only When Necessary:</strong> Include product name, dosage, application timing, pre-harvest interval (PHI), and safety precautions.
+              </div>
+              <label for="{{ form.chemical_control.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">Chemical Control</label>
+              {{ form.chemical_control }}
+              {% if form.chemical_control.errors %}<p class="mt-1 text-sm text-red-600">{{ form.chemical_control.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── SECTION 5: Knowledge Entries ── -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-visible">
+            <button type="button" class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition" data-target="sec-knowledge">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-indigo-700 text-sm font-bold">5</span>
+                <div>
+                  <h3 class="text-base font-semibold text-gray-900">Knowledge References</h3>
+                  <p class="text-xs text-gray-500">Choose trusted, approved guides knowledge so farmers can get safe, consistent, and reliable advice.</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="sec-knowledge-badge" class="hidden text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">✓ Filled</span>
+                <svg class="accordion-arrow h-5 w-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </button>
+            <div id="sec-knowledge" class="accordion-body accordion-closed px-6 pb-6 pt-2 border-t border-gray-100">
+              <label for="{{ form.knowledge_entries.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1 mt-2">Knowledge Entries</label>
+              {{ form.knowledge_entries }}
+              <div id="selected-knowledge-tags" class="mt-3 flex flex-wrap gap-2"></div>
+              <p class="text-xs text-gray-500 mt-3">Pick published, approved entries guidelines. This keeps the treatment clean and avoids repeating the same farming advice in multiple places.</p>
+              <p class="text-xs text-gray-500 mt-1">Tip for farmers: the entries you select are shared health guides; you can send the link instead of rewriting them in the treatment note.</p>
+              {% if form.knowledge_entries.errors %}<p class="mt-1 text-sm text-red-600">{{ form.knowledge_entries.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- ── SECTION 6: Severity Escalation ── -->
+          <div class="bg-orange-50 rounded-lg shadow-sm border border-orange-200 overflow-hidden">
+            <button type="button" class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left hover:bg-orange-100 transition" data-target="sec-severity-esc">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-white text-sm font-bold">6</span>
+                <div>
+                  <h3 class="text-base font-semibold text-orange-900">Severity Escalation</h3>
+                  <p class="text-xs text-orange-700">Set the severity threshold and IPM-based message when cultural control is no longer sufficient</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span id="sec-severity-esc-badge" class="hidden text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">✓ Filled</span>
+                <svg class="accordion-arrow h-5 w-5 text-orange-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </div>
+            </button>
+            <div id="sec-severity-esc" class="accordion-body accordion-closed px-6 pb-6 pt-2 border-t border-orange-200">
+              <div class="bg-orange-100 border border-orange-300 rounded-lg p-3 mb-4 text-xs text-orange-800">
+                <p class="font-semibold mb-1">📌 IPM Principle</p>
+                <p>Below the threshold → factor checkboxes (cultural IPM) are <strong>sufficient</strong>.</p>
+                <p class="mt-1">At or above the threshold → the escalation message is shown alongside the Quick Recommendation, signaling that cultural control alone may not be enough.</p>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                <div>
+                  <label for="{{ form.severity_threshold.id_for_label }}" class="block text-sm font-medium text-orange-900 mb-1">
+                    {{ form.severity_threshold.label }}
+                  </label>
+                  {{ form.severity_threshold }}
+                  <p class="text-xs text-orange-600 mt-1">{{ form.severity_threshold.help_text }}</p>
+                  {% if form.severity_threshold.errors %}<p class="mt-1 text-sm text-red-600">{{ form.severity_threshold.errors.0 }}</p>{% endif %}
+                </div>
+                <div class="sm:col-span-2">
+                  <label for="{{ form.severity_high_msg.id_for_label }}" class="block text-sm font-medium text-orange-900 mb-1">
+                    {{ form.severity_high_msg.label }}
+                  </label>
+                  {{ form.severity_high_msg }}
+                  <p class="text-xs text-orange-600 mt-1">{{ form.severity_high_msg.help_text }}</p>
+                  {% if form.severity_high_msg.errors %}<p class="mt-1 text-sm text-red-600">{{ form.severity_high_msg.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── SECTION 7: Additional Notes ── -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <button type="button" class="accordion-toggle w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition" data-target="sec-notes">
+              <div class="flex items-center gap-3">
+                <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-gray-600 text-sm font-bold">7</span>
+                <div>
+                  <h3 class="text-base font-semibold text-gray-700">Additional Notes <span class="text-xs font-normal text-gray-400">(Optional)</span></h3>
+                  <p class="text-xs text-gray-500">Extended references or supplementary information</p>
+                </div>
+              </div>
+              <svg class="accordion-arrow h-5 w-5 text-gray-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+            <div id="sec-notes" class="accordion-body accordion-closed px-6 pb-6 pt-2 border-t border-gray-100">
+              <label for="{{ form.detailed_text.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1 mt-2">Extended Information</label>
+              {{ form.detailed_text }}
+              <p class="text-xs text-gray-500 mt-1">Shown at the bottom of the detection detail page under "Additional Information".</p>
+              {% if form.detailed_text.errors %}<p class="mt-1 text-sm text-red-600">{{ form.detailed_text.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4 flex items-center justify-between gap-3">
+            <a href="{% url 'polls:treatments_list' %}"
+               onclick="history.back(); return false;"
+               class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+              Cancel
+            </a>
+            <button type="submit"
+                    class="px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition flex items-center gap-2">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              {{ action }} Treatment
+            </button>
+          </div>
+
+        </form>
+      </div><!-- /form col -->
+
+      <!-- ══════════════════ LIVE PREVIEW ══════════════════ -->
+      <div class="xl:col-span-1">
+        <div class="sticky top-6 space-y-4">
+
+          <!-- Preview card -->
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+              Live Preview
+            </h3>
+
+            <!-- Quick Recommendation preview -->
+            <div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg p-4 mb-3">
+              <div class="flex items-start gap-2">
+                <svg class="h-5 w-5 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div>
+                  <p class="text-xs font-bold mb-1 uppercase tracking-wide text-blue-100">Quick Recommendation</p>
+                  <p id="prev-short-text" class="text-sm text-blue-50 leading-relaxed">
+                    <em class="text-blue-300">Type a quick summary…</em>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Metadata summary -->
+            <div class="text-xs text-gray-500 space-y-1 mb-3">
+              <div class="flex items-center justify-between">
+                <span>Disease:</span>
+                <span id="prev-disease" class="font-semibold text-gray-700">—</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Severity Range:</span>
+                <span id="prev-sev" class="font-semibold text-gray-700">—</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>Priority:</span>
+                <span id="prev-priority" class="font-semibold text-gray-700">—</span>
+              </div>
+            </div>
+
+            <!-- Factors preview -->
+            <div id="prev-factors-wrap" class="hidden">
+              <div class="bg-amber-50 border-l-4 border-amber-400 rounded p-3 mb-2">
+                <p class="text-xs font-bold text-amber-900 mb-2">Factors Favoring Disease
+                  <span class="text-amber-600 font-normal ml-1">(farmer checkboxes)</span>
+                </p>
+                <div id="prev-factors-list" class="space-y-1.5"></div>
+              </div>
+            </div>
+
+            <!-- Section completeness dots -->
+            <div class="border-t border-gray-100 pt-3">
+              <p class="text-xs font-semibold text-gray-600 mb-2">Sections Filled</p>
+              <div class="grid grid-cols-2 gap-1.5" id="section-status-grid">
+                <div data-sec="symptoms" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
+                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Symptoms
+                </div>
+                <div data-sec="factors" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
+                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Factors
+                </div>
+                <div data-sec="cultural" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
+                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Cultural IPM
+                </div>
+                <div data-sec="chemical" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
+                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Chemical
+                </div>
+                <div data-sec="prevent" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
+                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Prevention
+                </div>
+                <div data-sec="severity-esc" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
+                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Escalation
+                </div>
+                <div data-sec="notes" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
+                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Notes
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- IPM Quick-Check -->
+          <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <p class="text-xs font-bold text-green-800 mb-2">✅ IPM Checklist</p>
+            <ul class="text-xs text-green-700 space-y-1.5">
+              <li class="flex items-start gap-1.5"><span class="flex-shrink-0">•</span>Resistant variety recommended?</li>
+              <li class="flex items-start gap-1.5"><span class="flex-shrink-0">•</span>Proper spacing &amp; planting date?</li>
+              <li class="flex items-start gap-1.5"><span class="flex-shrink-0">•</span>Water management noted?</li>
+              <li class="flex items-start gap-1.5"><span class="flex-shrink-0">•</span>Fertilizer balance covered?</li>
+              <li class="flex items-start gap-1.5"><span class="flex-shrink-0">•</span>Chemical listed as LAST resort?</li>
+              <li class="flex items-start gap-1.5"><span class="flex-shrink-0">•</span>PHI &amp; safety warning included?</li>
+            </ul>
+          </div>
+
+        </div>
+      </div><!-- /preview col -->
+
+    </div><!-- /grid -->
+</section>
+
+<style>
+  .accordion-closed { display: none; }
+  .accordion-arrow  { transition: transform 0.2s ease; }
+</style>
+
+<script>
+(function () {
+
+  /* ── Accordion ─────────────────────────────────────────── */
+  document.querySelectorAll('.accordion-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const body  = document.getElementById(btn.dataset.target);
+      const arrow = btn.querySelector('.accordion-arrow');
+      if (!body) return;
+      const isOpen = !body.classList.contains('accordion-closed');
+      if (isOpen) {
+        body.classList.add('accordion-closed');
+        if (arrow) arrow.style.transform = '';
+      } else {
+        body.classList.remove('accordion-closed');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      }
+    });
+  });
+  // Open Basic section by default
+  const basicBody  = document.getElementById('sec-basic');
+  const basicArrow = document.querySelector('[data-target="sec-basic"] .accordion-arrow');
+  if (basicBody)  basicBody.classList.remove('accordion-closed');
+  if (basicArrow) basicArrow.style.transform = 'rotate(180deg)';
+
+  /* ── Priority bar ─────────────────────────────────────── */
+  const priorityInput  = document.getElementById('{{ form.priority.id_for_label }}');
+  const priorityBar    = document.getElementById('priority-bar');
+  const priorityLbl    = document.getElementById('priority-label');
+  const priorityBadge  = document.getElementById('priority-badge');
+  const prevPriority   = document.getElementById('prev-priority');
+  const PRIORITY_COLORS = {
+    low:    { bar: '#60a5fa', badge: 'bg-blue-100 text-blue-700' },
+    medium: { bar: '#fbbf24', badge: 'bg-amber-100 text-amber-700' },
+    high:   { bar: '#ef4444', badge: 'bg-red-100 text-red-700' },
+  };
+  function updatePriority() {
+    const v   = Math.min(10, Math.max(1, parseInt(priorityInput?.value) || 5));
+    const pct = (v / 10) * 100;
+    let tier = 'medium', lbl = 'Medium (moderate)';
+    if (v <= 3)      { tier = 'low';  lbl = 'Low (mild)'; }
+    else if (v <= 7) { tier = 'medium'; }
+    else             { tier = 'high'; lbl = 'High / Critical'; }
+    const colors = PRIORITY_COLORS[tier];
+    if (priorityBar) {
+      priorityBar.style.width           = pct + '%';
+      priorityBar.style.backgroundColor = colors.bar;
+    }
+    if (priorityLbl)   priorityLbl.textContent = lbl;
+    if (priorityBadge) {
+      priorityBadge.textContent = v + ' / 10';
+      priorityBadge.className   = 'text-xs font-bold px-2 py-0.5 rounded-full tabular-nums transition-colors ' + colors.badge;
+    }
+    if (prevPriority) prevPriority.textContent = v + '/10 — ' + lbl;
+  }
+  if (priorityInput) priorityInput.addEventListener('input', updatePriority);
+  updatePriority();
+
+  /* ── Severity Range bar ────────────────────────────────── */
+  const sevMin  = document.getElementById('{{ form.severity_min.id_for_label }}');
+  const sevMax  = document.getElementById('{{ form.severity_max.id_for_label }}');
+  const sevBar  = document.getElementById('sev-range-bar');
+  const sevLbl  = document.getElementById('sev-range-label');
+  const sevErr  = document.getElementById('sev-range-error');
+  const prevSev = document.getElementById('prev-sev');
+  function updateSeverity() {
+    const mn = parseInt(sevMin?.value) || 0;
+    const mx = parseInt(sevMax?.value) || 100;
+    if (sevBar) { sevBar.style.left = mn + '%'; sevBar.style.width = Math.max(0, mx - mn) + '%'; }
+    if (sevLbl) sevLbl.textContent = mn + '% – ' + mx + '%';
+    if (sevErr) sevErr.classList.toggle('hidden', mn <= mx);
+    if (prevSev) prevSev.textContent = mn + '% – ' + mx + '%';
+  }
+  if (sevMin) sevMin.addEventListener('input', updateSeverity);
+  if (sevMax) sevMax.addEventListener('input', updateSeverity);
+  updateSeverity();
+
+  /* ── Short-text counter + preview ─────────────────────── */
+  const shortInput = document.getElementById('{{ form.short_text.id_for_label }}');
+  const shortCount = document.getElementById('short-text-count');
+  const prevShort  = document.getElementById('prev-short-text');
+  function updateShortText() {
+    const v = shortInput?.value || '';
+    if (shortCount) {
+      shortCount.textContent = v.length + '/200';
+      shortCount.className   = 'text-xs ' + (v.length > 180 ? 'text-red-500 font-semibold' : v.length > 150 ? 'text-amber-500' : 'text-gray-400');
+    }
+    if (prevShort) {
+      prevShort.innerHTML = v.trim()
+        ? escHtml(v)
+        : '<em class="text-blue-300">Type a quick summary…</em>';
+    }
+    checkSection('basic', !!(v.trim() && diseaseSelect?.value));
+  }
+  if (shortInput) shortInput.addEventListener('input', updateShortText);
+
+  /* ── Disease preview ───────────────────────────────────── */
+  const diseaseSelect = document.getElementById('{{ form.disease.id_for_label }}');
+  const prevDisease   = document.getElementById('prev-disease');
+  function updateDisease() {
+    const opt = diseaseSelect?.options[diseaseSelect.selectedIndex];
+    if (prevDisease) prevDisease.textContent = (opt && diseaseSelect.value) ? opt.text : '—';
+    checkSection('basic', !!(shortInput?.value?.trim() && diseaseSelect?.value));
+  }
+  if (diseaseSelect) diseaseSelect.addEventListener('change', updateDisease);
+
+  /* ── Completeness tracker ──────────────────────────────── */
+  const SECTIONS    = ['basic','symptoms','factors','cultural','chemical','prevent','severity-esc','notes'];
+  const sectionFill = {};
+  SECTIONS.forEach(s => sectionFill[s] = false);
+
+  function checkSection(key, filled) {
+    sectionFill[key] = !!filled;
+    const badge = document.getElementById('sec-' + key + '-badge');
+    if (badge) badge.classList.toggle('hidden', !filled);
+    const dot = document.querySelector('.sec-dot[data-sec="' + key + '"]');
+    if (dot) {
+      dot.querySelector('.dot').className = 'dot w-2 h-2 rounded-full inline-block flex-shrink-0 ' + (filled ? 'bg-green-500' : 'bg-gray-300');
+      const txtCls = filled ? 'text-green-700' : 'text-gray-400';
+      dot.className = dot.className.replace(/text-\S+/, txtCls);
+    }
+    const filled_n = Object.values(sectionFill).filter(Boolean).length;
+    const pct      = Math.round((filled_n / SECTIONS.length) * 100);
+    const bar      = document.getElementById('complete-bar');
+    const pctEl    = document.getElementById('complete-pct');
+    const hint     = document.getElementById('complete-hint');
+    if (bar) {
+      bar.style.width = pct + '%';
+      bar.className   = 'h-2 rounded-full transition-all ' + (pct >= 80 ? 'bg-green-500' : pct >= 50 ? 'bg-amber-400' : 'bg-red-400');
+    }
+    if (pctEl) {
+      pctEl.textContent = pct + '%';
+      pctEl.className   = 'text-xs font-bold ' + (pct >= 80 ? 'text-green-700' : pct >= 50 ? 'text-amber-600' : 'text-red-500');
+    }
+    if (hint) hint.textContent = pct === 100 ? '🎉 All sections complete!' : pct >= 80 ? 'Almost complete' : pct >= 50 ? 'Good progress' : 'Fill in more sections';
+  }
+
+  // Watch text fields
+  const watchFields = {
+    symptoms: '{{ form.symptoms.id_for_label }}',
+    cultural: '{{ form.cultural_practices.id_for_label }}',
+    chemical: '{{ form.chemical_control.id_for_label }}',
+    prevent:  '{{ form.preventive_measures.id_for_label }}',
+    notes:    '{{ form.detailed_text.id_for_label }}',
+  };
+  Object.entries(watchFields).forEach(([key, id]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => checkSection(key, !!el.value.trim()));
+    checkSection(key, !!el.value.trim());
+  });
+
+  // Severity Escalation section watcher (threshold input + message textarea)
+  const sevThreshEl = document.getElementById('{{ form.severity_threshold.id_for_label }}');
+  const sevMsgEl    = document.getElementById('{{ form.severity_high_msg.id_for_label }}');
+  function checkSeverityEsc() {
+    const hasMsg = !!(sevMsgEl?.value?.trim());
+    checkSection('severity-esc', hasMsg);
+  }
+  if (sevThreshEl) sevThreshEl.addEventListener('input', checkSeverityEsc);
+  if (sevMsgEl)    sevMsgEl.addEventListener('input',    checkSeverityEsc);
+  checkSeverityEsc();
+  updateShortText();
+  updateDisease();
+
+  /* ── Factors Builder ───────────────────────────────────── */
+  const hiddenTA      = document.getElementById('id_factors_favoring_hidden');
+  const hiddenActions = document.getElementById('id_factor_actions_hidden');
+  const hiddenResults = document.getElementById('id_factor_expected_results_hidden');
+  const builder       = document.getElementById('factors-builder');
+  const addBtn        = document.getElementById('add-factor-btn');
+  const prevFWrap     = document.getElementById('prev-factors-wrap');
+  const prevFList     = document.getElementById('prev-factors-list');
+
+  function serializeFactors() {
+    const rows    = builder.querySelectorAll('.factor-row');
+    const factors = [...rows].map(r => r.querySelector('.factor-row-input').value.trim());
+    const actions = [...rows].map(r => r.querySelector('.factor-action-input').value.trim());
+    const results = [...rows].map(r => r.querySelector('.factor-result-input').value.trim());
+
+    const factorLines = factors.filter(Boolean);
+    if (hiddenTA)      hiddenTA.value      = factorLines.map(l => '• ' + l).join('\n');
+    // actions and results stored as plain lines (empty line = no value for that factor)
+    if (hiddenActions) hiddenActions.value = actions.join('\n');
+    if (hiddenResults) hiddenResults.value = results.join('\n');
+
+    // Update preview
+    if (factorLines.length > 0) {
+      prevFWrap?.classList.remove('hidden');
+      if (prevFList) {
+        prevFList.innerHTML = factorLines.map((l, i) =>
+          `<label class="flex items-start gap-2 text-xs text-amber-800 cursor-default">
+             <input type="checkbox" class="mt-0.5 h-3 w-3 rounded border-amber-400 pointer-events-none" />
+             <span><strong>${escHtml(l)}</strong>${actions[i] ? ` — <em>${escHtml(actions[i])}</em>` : ''}${results[i] ? ` <span class="text-blue-600">→ ${escHtml(results[i])}</span>` : ''}</span>
+           </label>`
+        ).join('');
+      }
+    } else {
+      prevFWrap?.classList.add('hidden');
+    }
+    checkSection('factors', factorLines.length > 0);
+  }
+
+  function addFactorRow(factorValue, actionValue, resultValue) {
+    const row = document.createElement('div');
+    row.className = 'factor-row grid grid-cols-1 sm:grid-cols-3 gap-2 group items-center';
+    row.innerHTML =
+      '<div class="flex items-center gap-2">' +
+        '<span class="text-amber-400 font-bold text-sm flex-shrink-0">•</span>' +
+        '<input type="text" class="factor-row-input flex-1 rounded-md border-amber-300 bg-white text-sm shadow-sm focus:border-amber-500 focus:ring-amber-400 py-1.5 px-2"' +
+        ' placeholder="e.g. High humidity (>90%)" />' +
+      '</div>' +
+      '<div class="flex items-center gap-2">' +
+        '<input type="text" class="factor-action-input flex-1 rounded-md border-green-300 bg-green-50 text-sm shadow-sm focus:border-green-500 focus:ring-green-400 py-1.5 px-2"' +
+        ' placeholder="e.g. Reduce irrigation; improve drainage" />' +
+      '</div>' +
+      '<div class="flex items-center gap-2">' +
+        '<input type="text" class="factor-result-input flex-1 rounded-md border-blue-300 bg-blue-50 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-400 py-1.5 px-2"' +
+        ' placeholder="e.g. Disease spread slows within 7 days" />' +
+        '<button type="button" class="remove-factor opacity-0 group-hover:opacity-100 transition-opacity text-red-400 hover:text-red-600 flex-shrink-0" title="Remove">' +
+        '<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>' +
+        '</button>' +
+      '</div>';
+    const factorInp = row.querySelector('.factor-row-input');
+    const actionInp = row.querySelector('.factor-action-input');
+    const resultInp = row.querySelector('.factor-result-input');
+    factorInp.value = factorValue || '';
+    actionInp.value = actionValue || '';
+    resultInp.value = resultValue || '';
+    factorInp.addEventListener('input', serializeFactors);
+    actionInp.addEventListener('input', serializeFactors);
+    resultInp.addEventListener('input', serializeFactors);
+    row.querySelector('.remove-factor').addEventListener('click', () => { row.remove(); serializeFactors(); });
+    builder.appendChild(row);
+    return factorInp;
+  }
+
+  if (addBtn) {
+    addBtn.addEventListener('click', () => {
+      const inp = addFactorRow('', '', '');
+      serializeFactors();
+      setTimeout(() => inp.focus(), 40);
+      // Open factors section
+      const body  = document.getElementById('sec-factors');
+      const arrow = document.querySelector('[data-target="sec-factors"] .accordion-arrow');
+      if (body)  body.classList.remove('accordion-closed');
+      if (arrow) arrow.style.transform = 'rotate(180deg)';
+    });
+  }
+
+  // Load existing data
+  const existingRaw     = hiddenTA?.value || '';
+  const existingActRaw  = hiddenActions?.value || '';
+  const existingResRaw  = hiddenResults?.value || '';
+  const existingLines   = existingRaw.split('\n')
+    .map(l => l.replace(/^[•·*\-–➤▸▪►◆◇\s]+/, '').trim())
+    .filter(Boolean);
+  const existingActions = existingActRaw.split('\n').map(l => l.trim());
+  const existingResults = existingResRaw.split('\n').map(l => l.trim());
+
+  if (existingLines.length > 0) {
+    existingLines.forEach((l, i) => addFactorRow(l, existingActions[i] || '', existingResults[i] || ''));
+    serializeFactors();
+    const body  = document.getElementById('sec-factors');
+    const arrow = document.querySelector('[data-target="sec-factors"] .accordion-arrow');
+    if (body)  body.classList.remove('accordion-closed');
+    if (arrow) arrow.style.transform = 'rotate(180deg)';
+  }
+
+  // Sync before submit
+  document.getElementById('treatment-form')?.addEventListener('submit', () => serializeFactors());
+
+  // ── Searchable selects for any <select data-searchable="true"> ──
+  const searchableSelects = Array.from(document.querySelectorAll('select[data-searchable="true"]'));
+  if (searchableSelects.length) {
+    searchableSelects.forEach(select => {
+      if (select.dataset._searchableInit === '1') return;
+      select.dataset._searchableInit = '1';
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'relative overflow-visible';
+      select.parentNode.insertBefore(wrapper, select);
+
+      const input = document.createElement('input');
+      input.type = 'search';
+      input.placeholder = '🔍 Type to search...';
+      input.className = select.className;
+      input.style.paddingRight = '2.5rem';
+
+      const icon = document.createElement('div');
+      icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
+      icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
+
+      const options = Array.from(select.options);
+      const originalValue = select.multiple ? Array.from(select.selectedOptions).map(o => o.text).join(', ') : select.value;
+      if (originalValue) {
+        input.value = originalValue;
+      }
+
+      select.style.display = 'none';
+
+      const dropdown = document.createElement('div');
+      dropdown.className = 'absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
+
+      wrapper.appendChild(input);
+      wrapper.appendChild(icon);
+      wrapper.appendChild(select);
+      wrapper.appendChild(dropdown);
+
+      function updateDropdown(){
+        const term = input.value.trim().toLowerCase();
+        dropdown.innerHTML = '';
+        const filtered = options.filter(o => o.value && o.text.toLowerCase().includes(term));
+        if (!filtered.length) {
+          const item = document.createElement('div');
+          item.className = 'px-3 py-2 text-xs text-gray-500';
+          item.textContent = 'No matches';
+          dropdown.appendChild(item);
+          dropdown.classList.remove('hidden');
+          return;
+        }
+        filtered.forEach(o => {
+          const item = document.createElement('div');
+          const selectedClass = select.multiple && o.selected ? 'bg-blue-50 text-blue-700' : 'text-gray-700';
+          item.className = 'px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer ' + selectedClass;
+          item.textContent = o.text;
+          item.addEventListener('click', () => {
+            if (select.multiple) {
+              o.selected = !o.selected;
+              select.dispatchEvent(new Event('change', { bubbles: true }));
+              const selected = options.filter(opt => opt.selected);
+              input.value = '';
+              updateDropdown();
+              dropdown.classList.remove('hidden');
+            } else {
+              select.value = o.value;
+              select.dispatchEvent(new Event('change', { bubbles: true }));
+              input.value = o.text;
+              dropdown.classList.add('hidden');
+            }
+          });
+          dropdown.appendChild(item);
+        });
+        dropdown.classList.remove('hidden');
+      }
+
+      input.addEventListener('input', updateDropdown);
+      input.addEventListener('focus', updateDropdown);
+      document.addEventListener('click', (ev) => {
+        if (!wrapper.contains(ev.target)) {
+          dropdown.classList.add('hidden');
+        }
+      });
+
+      // Update the widget text when options are changed externally (via other controls)
+      select.addEventListener('change', () => {
+        if (select.multiple) {
+          const selected = Array.from(select.selectedOptions).map(opt => opt.text);
+          input.value = selected.join(', ');
+        } else {
+          const opt = select.selectedOptions[0];
+          input.value = opt ? opt.text : '';
+        }
+      });
+    });
+  }
+
+  // ── Knowledge entries selection summary tags ──
+  const knowledgeSelect = document.getElementById('{{ form.knowledge_entries.id_for_label }}');
+  const tagWrapper = document.getElementById('selected-knowledge-tags');
+
+  function renderKnowledgeTags() {
+    if (!knowledgeSelect || !tagWrapper) return;
+    tagWrapper.innerHTML = '';
+    const selected = Array.from(knowledgeSelect.selectedOptions);
+    if (!selected.length) {
+      const hint = document.createElement('p');
+      hint.className = 'text-xs text-gray-500';
+      hint.textContent = 'No knowledge entries selected yet.';
+      tagWrapper.appendChild(hint);
+      return;
+    }
+    selected.forEach(opt => {
+      const tag = document.createElement('div');
+      tag.className = 'inline-flex items-center gap-2 px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs border border-blue-100';
+      tag.innerHTML = `${opt.text} <button type="button" class="text-blue-500 hover:text-blue-700" aria-label="Remove">✕</button>`;
+      tag.querySelector('button').addEventListener('click', () => {
+        opt.selected = false;
+        knowledgeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      tagWrapper.appendChild(tag);
+    });
+  }
+
+  if (knowledgeSelect) {
+    knowledgeSelect.addEventListener('change', renderKnowledgeTags);
+    renderKnowledgeTags();
+  }
+
+  /* ── Helpers ───────────────────────────────────────────── */
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+})();
+</script>
+{% endblock %}

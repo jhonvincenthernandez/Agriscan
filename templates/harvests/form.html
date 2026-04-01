@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}Edit{% else %}New{% endif %} Harvest Record · AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <svg class="h-7 w-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {% if is_edit %}Edit{% else %}New{% endif %} Harvest Record
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">Record actual harvest yield after harvest has occurred.</p>
+      </div>
+      <a href="{% url 'polls:harvests_list' %}" onclick="history.back(); return false;" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium self-start sm:self-auto">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to list
+      </a>
+    </div>
+  </div>
+
+  <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+    <form method="post" class="space-y-5" id="harvest-form">
+      {% csrf_token %}
+      {% include 'partials/forms/_errors.html' %}
+      {% for field in form %}
+        {% if field.name == 'planting' %}
+          <div class="form-field" id="field-{{ field.name }}">
+            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+              {{ field.label }}{% if field.field.required %} <span class="text-red-600" aria-hidden="true">*</span>{% endif %}
+            </label>
+            <div class="mt-1">
+              {% with current_value=field.value|default:form.instance.planting_id %}
+                {% with current_value_str=current_value|stringformat:"s" instance_value=form.instance.planting_id|stringformat:"s" %}
+                  <select name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="{{ field.field.widget.attrs.class }}" data-searchable="true">
+                    <option value="">-- Select --</option>
+                    {% if form.instance.planting %}
+                      <option value="{{ form.instance.planting.pk }}" data-ecosystem-type="{{ form.instance.planting.ecosystem_type|default_if_none:'' }}" data-cycle="{{ form.instance.planting.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ form.instance.planting.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ form.instance.planting.planting_date|date:'Y-m-d' }}" {% if not current_value_str or current_value_str == instance_value %}selected{% endif %}>
+                        {{ form.instance.planting.field.name }} — {% if form.instance.planting.variety %}{{ form.instance.planting.variety.code }}{% else %}No variety{% endif %} ({{ form.instance.planting.season|default_if_none:''|capfirst }}, Cycle {{ form.instance.planting.cropping_cycle|default_if_none:'?' }})
+                      </option>
+                    {% endif %}
+                    {% for obj in field.field.queryset %}
+                      {% if not form.instance.planting or obj.pk != form.instance.planting.pk %}
+                        {% with pid=obj.pk|stringformat:"s" %}
+                          <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-cycle="{{ obj.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ obj.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" {% if pid == current_value_str or pid == instance_value %}selected{% endif %}>
+                            {{ obj.field.name }} — {% if obj.variety %}{{ obj.variety.code }}{% else %}No variety{% endif %} ({{ obj.season|default_if_none:''|capfirst }}, Cycle {{ obj.cropping_cycle|default_if_none:'?' }})
+                          </option>
+                        {% endwith %}
+                      {% endif %}
+                    {% endfor %}
+                  </select>
+                {% endwith %}
+              {% endwith %}
+            </div>
+            {% if field.help_text %}
+            <p id="help-{{ field.name }}" class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+            {% endif %}
+            {% if field.errors %}
+            <p id="error-{{ field.name }}" class="mt-1 text-sm text-red-600 field-error" role="alert">
+              {% for err in field.errors %}{{ err }}{% if not forloop.last %}<br />{% endif %}{% endfor %}
+            </p>
+            {% endif %}
+          </div>
+        {% else %}
+          {% include 'partials/forms/_field.html' with field=field %}
+        {% endif %}
+      {% endfor %}
+      <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+        <button type="submit" class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Save Harvest Record
+        </button>
+        <a href="{% url 'polls:harvests_list' %}" onclick="history.back(); return false;" class="bg-white border border-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg hover:bg-gray-50 transition-all shadow-sm hover:shadow flex items-center gap-2">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+// Auto-calculate yield (tons/ha) when actual yield or area changes.
+document.addEventListener('DOMContentLoaded', function () {
+  const yieldField = document.getElementById('id_yield_tons_per_ha');
+  const actualField = document.getElementById('id_actual_yield_tons');
+  const areaField = document.getElementById('id_area_harvested_ha');
+
+  function recalcYield() {
+    if (!yieldField || !actualField || !areaField) return;
+    const actual = parseFloat(actualField.value);
+    const area = parseFloat(areaField.value);
+    if (area > 0 && actual >= 0) {
+      const calc = (actual / area).toFixed(2);
+      yieldField.value = calc;
+    } else {
+      yieldField.value = '';
+    }
+  }
+
+  [actualField, areaField].forEach(field => {
+    if (!field) return;
+    field.addEventListener('input', recalcYield);
+  });
+
+  // Trigger initial calculation on load
+  recalcYield();
+});
+</script>
+<script>
+// Lightweight searchable select enhancer for selects with `data-searchable="true"`.
+document.addEventListener('DOMContentLoaded', function () {
+  const selects = Array.from(document.querySelectorAll('select[data-searchable="true"]'));
+  if (!selects.length) return;
+
+  selects.forEach(function (select) {
+    // Build wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative';
+
+    // Create the search input
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.placeholder = '🔍Search fields…';
+    input.className = 'block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2';
+    input.setAttribute('aria-haspopup', 'listbox');
+    input.setAttribute('aria-expanded', 'false');
+
+    // Create dropdown list
+    const list = document.createElement('ul');
+    list.className = 'absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-md max-h-60 overflow-auto shadow-sm hidden';
+    list.setAttribute('role', 'listbox');
+
+    // Populate list from select options (keep a reference to the original option element
+    // so we can read any `data-*` attributes the server may have rendered for richer display)
+    const options = Array.from(select.options).map(opt => ({ value: opt.value, text: opt.text, disabled: opt.disabled, el: opt }));
+
+    function renderList(filtered, highlightIndex) {
+      list.innerHTML = '';
+      filtered.forEach((opt, i) => {
+        const li = document.createElement('li');
+        li.className = 'px-3 py-2 text-sm cursor-pointer hover:bg-gray-100';
+        li.dataset.value = opt.value;
+        li.setAttribute('role', 'option');
+
+        // Build a richer display if the original <option> had data-* attributes (e.g. data-ecosystem-type,
+        // data-cycle, data-area-ha, data-planting-date). This helps users quickly pick the correct planting
+        // when creating a harvest record.
+        const el = opt.el;
+        const title = opt.text;
+        const metaParts = [];
+        try {
+          if (el) {
+            const d = el.dataset || {};
+            if (d.ecosystemType) metaParts.push(d.ecosystemType);
+            if (d.cycle) metaParts.push('Cycle ' + d.cycle);
+            if (d.areaHa) metaParts.push(d.areaHa + ' ha');
+            if (d.plantingDate) metaParts.push(d.plantingDate);
+          }
+        } catch (e) {
+          // ignore dataset read errors
+        }
+
+        if (metaParts.length) {
+          const left = document.createElement('div');
+          left.className = 'flex flex-col';
+          const main = document.createElement('div');
+          main.className = 'text-sm text-gray-900 truncate';
+          main.textContent = title;
+          const meta = document.createElement('div');
+          meta.className = 'text-xs text-gray-500 truncate';
+          meta.textContent = metaParts.join(' · ');
+          left.appendChild(main);
+          left.appendChild(meta);
+          li.appendChild(left);
+        } else {
+          li.textContent = title;
+        }
+
+        if (opt.disabled) {
+          li.classList.add('text-gray-400', 'cursor-not-allowed');
+          li.setAttribute('aria-disabled', 'true');
+        }
+        if (i === highlightIndex) li.classList.add('bg-gray-100');
+        list.appendChild(li);
+      });
+    }
+
+    // Initial render (exclude empty placeholder options)
+    const initial = options.filter(o => o.value !== '');
+    renderList(initial, -1);
+
+    // Wire up DOM: replace select visually with our widget but keep select for submission
+    select.style.position = 'absolute';
+    select.style.left = '-9999px';
+    select.setAttribute('aria-hidden', 'true');
+    select.tabIndex = -1;
+    select.parentNode.insertBefore(wrapper, select);
+    wrapper.appendChild(input);
+    wrapper.appendChild(list);
+    wrapper.appendChild(select);
+
+    let filtered = initial;
+    let highlight = -1;
+
+    function openList() {
+      list.classList.remove('hidden');
+      input.setAttribute('aria-expanded', 'true');
+    }
+    function closeList() {
+      list.classList.add('hidden');
+      input.setAttribute('aria-expanded', 'false');
+      highlight = -1;
+      renderList(filtered, highlight);
+    }
+
+    input.addEventListener('input', function () {
+      const q = input.value.trim().toLowerCase();
+      filtered = initial.filter(o => o.text.toLowerCase().includes(q));
+      renderList(filtered, -1);
+      openList();
+    });
+
+    input.addEventListener('focus', function () {
+      filtered = initial;
+      renderList(filtered, -1);
+      openList();
+    });
+
+    input.addEventListener('keydown', function (evt) {
+      if (list.classList.contains('hidden')) return;
+      const count = filtered.length;
+      if (evt.key === 'ArrowDown') {
+        evt.preventDefault();
+        highlight = (highlight + 1) % count;
+        renderList(filtered, highlight);
+        scrollToHighlight();
+      } else if (evt.key === 'ArrowUp') {
+        evt.preventDefault();
+        highlight = (highlight - 1 + count) % count;
+        renderList(filtered, highlight);
+        scrollToHighlight();
+      } else if (evt.key === 'Enter') {
+        evt.preventDefault();
+        if (highlight >= 0 && filtered[highlight]) selectValue(filtered[highlight].value);
+      } else if (evt.key === 'Escape') {
+        closeList();
+      }
+    });
+
+    function scrollToHighlight() {
+      const items = Array.from(list.children);
+      if (highlight < 0 || highlight >= items.length) return;
+      const el = items[highlight];
+      el.scrollIntoView({ block: 'nearest' });
+    }
+
+    list.addEventListener('click', function (e) {
+      const li = e.target.closest('li');
+      if (!li || li.getAttribute('aria-disabled') === 'true') return;
+      selectValue(li.dataset.value);
+    });
+
+    function selectValue(value) {
+      select.value = value;
+      // Update input display to selected option text
+      const selOpt = options.find(o => o.value === value);
+      input.value = selOpt ? selOpt.text : '';
+      // Collapse
+      closeList();
+      // Notify any listeners
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // If select had an initial value, reflect on input.
+    // Use the currently selected option text (rather than select.value lookup)
+    // so we don't end up blank when the browser doesn't set select.value reliably.
+    const selectedOption = select.selectedOptions[0];
+    const selectedText = selectedOption && selectedOption.value ? selectedOption.text : '';
+    if (selectedText) input.value = selectedText;
+
+    // Close when clicking outside
+    document.addEventListener('click', function (e) {
+      if (!wrapper.contains(e.target)) closeList();
+    });
+  });
+});
+</script>
+{% endblock %}

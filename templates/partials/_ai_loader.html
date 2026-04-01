@@ -1,0 +1,105 @@
+<!--
+  ============================================================
+  AgriScan+ — AI Prediction Loader Partial
+  ============================================================
+  Usage: { include 'partials/_ai_loader.html' }
+  Wire up via: ScanLoader.start() / ScanLoader.stop()
+  ============================================================
+-->
+{% load static %}
+<div
+  id="ai-scan-loader"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="loader-title"
+  aria-describedby="loader-status"
+  style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center;"
+>
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+
+  <!-- Modal Card -->
+  <div class="relative z-10 w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+    <!-- Top accent bar — animated gradient -->
+    <div class="h-1 w-full bg-gradient-to-r from-green-400 via-blue-500 to-indigo-500 scan-accent-bar"></div>
+
+    <div class="px-8 py-8">
+
+      <!-- Icon ring -->
+      <div class="flex justify-center mb-6">
+        <div class="relative inline-flex items-center justify-center">
+          <!-- Outer pulse rings -->
+          <div class="absolute inset-0 rounded-full bg-green-100 scan-pulse-ring"></div>
+          <div class="absolute inset-0 rounded-full scan-pulse-ring-2"></div>
+          <!-- Inner icon container -->
+          <div class="relative flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-green-500 to-blue-600 shadow-lg">
+            <img
+              src="{% static 'polls/img/logo.jpg' %}"
+              alt=""
+              aria-hidden="true"
+              width="44"
+              height="44"
+              class="rounded-full"
+            >
+            <!-- Orbiting dot — anchored to center of this 80px div -->
+            <div class="scan-orbit-dot">
+              <div class="scan-orbit-inner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <h2 id="loader-title" class="text-center text-xl font-bold text-gray-900 mb-1">
+        Analyzing Leaf Image
+      </h2>
+      <p class="text-center text-sm text-gray-500 mb-6">
+        Powered by AgriScan AI
+      </p>
+
+      <!-- Stage steps list -->
+      <ol id="scan-steps" class="space-y-3 mb-6" aria-label="Processing steps">
+        <li class="scan-step flex items-center gap-3" data-step="0">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Uploading image</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="1">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Preprocessing image</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="2">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Running AI model</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="3">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Detecting disease pattern</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="4">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Generating treatment plan</span>
+        </li>
+      </ol>
+
+      <!-- Live status text for screen readers + visual -->
+      <p
+        id="loader-status"
+        class="text-center text-xs text-gray-400 min-h-[1.25rem]"
+        aria-live="polite"
+        aria-atomic="true"
+      ></p>
+
+    </div>
+  </div>
+</div>

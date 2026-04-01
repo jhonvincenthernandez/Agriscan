@@ -1,0 +1,196 @@
+{% if messages %}
+<div id="flash-messages-container" class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 mt-6 space-y-3">
+  {% for message in messages %}
+
+    {% if message.tags and 'error' in message.tags %}
+    {# Errors: no auto-dismiss — user must close manually #}
+    <div role="alert" aria-live="assertive" data-flash
+      class="relative overflow-hidden border rounded-lg text-sm font-medium bg-red-50 border-red-200 text-red-800">
+      <div class="flex items-start justify-between gap-3 px-4 py-3">
+        <span class="flex items-center gap-2">
+          <svg class="h-4 w-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          {{ message }}
+        </span>
+        <button type="button" aria-label="Dismiss" onclick="dismissFlash(this.closest('[data-flash]'))"
+          class="shrink-0 rounded p-0.5 hover:bg-red-100 transition">
+          <svg class="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    {% elif message.tags and 'warning' in message.tags %}
+    {# Warnings: auto-dismiss after 7s #}
+    <div role="status" aria-live="polite" data-flash data-flash-timeout="7000"
+      class="relative overflow-hidden border rounded-lg text-sm font-medium bg-amber-50 border-amber-200 text-amber-800">
+      <div class="flex items-start justify-between gap-3 px-4 py-3">
+        <span class="flex items-center gap-2">
+          <svg class="h-4 w-4 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+          </svg>
+          {{ message }}
+        </span>
+        <button type="button" aria-label="Dismiss" onclick="dismissFlash(this.closest('[data-flash]'))"
+          class="shrink-0 rounded p-0.5 hover:bg-amber-100 transition">
+          <svg class="h-4 w-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="flash-progress h-1 bg-amber-300 w-full origin-right"></div>
+    </div>
+
+    {% elif message.tags and 'success' in message.tags %}
+    {# Success: auto-dismiss after 5s #}
+    <div role="status" aria-live="polite" data-flash data-flash-timeout="5000"
+      class="relative overflow-hidden border rounded-lg text-sm font-medium bg-green-50 border-green-200 text-green-800">
+      <div class="flex items-start justify-between gap-3 px-4 py-3">
+        <span class="flex items-center gap-2">
+          <svg class="h-4 w-4 shrink-0 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {{ message }}
+        </span>
+        <button type="button" aria-label="Dismiss" onclick="dismissFlash(this.closest('[data-flash]'))"
+          class="shrink-0 rounded p-0.5 hover:bg-green-100 transition">
+          <svg class="h-4 w-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="flash-progress h-1 bg-green-400 w-full origin-right"></div>
+    </div>
+
+    {% else %}
+    {# Info: auto-dismiss after 5s #}
+    <div role="status" aria-live="polite" data-flash data-flash-timeout="5000"
+      class="relative overflow-hidden border rounded-lg text-sm font-medium bg-blue-50 border-blue-200 text-blue-800">
+      <div class="flex items-start justify-between gap-3 px-4 py-3">
+        <span class="flex items-center gap-2">
+          <svg class="h-4 w-4 shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20A10 10 0 0012 2z"/>
+          </svg>
+          {{ message }}
+        </span>
+        <button type="button" aria-label="Dismiss" onclick="dismissFlash(this.closest('[data-flash]'))"
+          class="shrink-0 rounded p-0.5 hover:bg-blue-100 transition">
+          <svg class="h-4 w-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="flash-progress h-1 bg-blue-400 w-full origin-right"></div>
+    </div>
+    {% endif %}
+
+  {% endfor %}
+</div>
+
+<style>
+  .flash-progress {
+    transition: transform linear;
+    transform-origin: left;
+  }
+  [data-flash] {
+    transition: opacity 0.3s ease, max-height 0.4s ease, margin 0.4s ease, padding 0.4s ease;
+  }
+</style>
+
+<script>
+(function () {
+  function dismissFlash(el) {
+    if (!el || el._dismissing) return;
+    el._dismissing = true;
+
+    // Cancel the auto-dismiss timer if manually closed early
+    if (el._timer) clearTimeout(el._timer);
+    if (el._raf)   cancelAnimationFrame(el._raf);
+
+    // 1. Fade out
+    el.style.opacity = '0';
+    el.style.maxHeight = el.offsetHeight + 'px';
+
+    // 2. Collapse height after fade
+    setTimeout(function () {
+      el.style.maxHeight   = '0';
+      el.style.marginTop   = '0';
+      el.style.marginBottom = '0';
+      el.style.paddingTop  = '0';
+      el.style.paddingBottom = '0';
+      el.style.overflow    = 'hidden';
+    }, 280);
+
+    // 3. Remove from DOM after collapse
+    setTimeout(function () {
+      el.remove();
+      var container = document.getElementById('flash-messages-container');
+      if (container && !container.querySelector('[data-flash]')) container.remove();
+    }, 680);
+  }
+
+  window.dismissFlash = dismissFlash;
+
+  // Start progress bar + schedule auto-dismiss
+  document.querySelectorAll('[data-flash][data-flash-timeout]').forEach(function (el) {
+    var delay     = parseInt(el.dataset.flashTimeout, 10) || 5000;
+    var bar       = el.querySelector('.flash-progress');
+    var remaining = delay;      // ms left before dismiss
+    var startedAt = null;       // when current countdown segment started
+
+    function startCountdown() {
+      startedAt = Date.now();
+
+      // Progress bar: transition remaining ms from current scale → 0
+      if (bar) {
+        // Snapshot current scaleX so we resume from where we paused
+        var current = bar._scaleX !== undefined ? bar._scaleX : 1;
+        bar.style.transition = 'none';
+        bar.style.transform  = 'scaleX(' + current + ')';
+        // Force reflow so the "none" transition takes effect before we add the new one
+        bar.offsetWidth; // eslint-disable-line no-unused-expressions
+        bar.style.transition      = 'transform ' + remaining + 'ms linear';
+        bar.style.transform       = 'scaleX(0)';
+      }
+
+      el._timer = setTimeout(function () { dismissFlash(el); }, remaining);
+    }
+
+    function pauseCountdown() {
+      if (!startedAt) return;
+      clearTimeout(el._timer);
+      var elapsed = Date.now() - startedAt;
+      remaining   = Math.max(0, remaining - elapsed);
+      startedAt   = null;
+
+      // Freeze bar at current position
+      if (bar) {
+        var computed = getComputedStyle(bar).transform;
+        // Extract scaleX from matrix(a,b,c,d,e,f) — a is scaleX
+        var match = computed.match(/^matrix\(([^,]+)/);
+        bar._scaleX = match ? parseFloat(match[1]) : (remaining / delay);
+        bar.style.transition = 'none';
+        bar.style.transform  = 'scaleX(' + bar._scaleX + ')';
+      }
+    }
+
+    // Kick off
+    startCountdown();
+
+    // Pause on hover, resume on leave
+    el.addEventListener('mouseenter', function () {
+      if (el._dismissing) return;
+      pauseCountdown();
+    });
+    el.addEventListener('mouseleave', function () {
+      if (el._dismissing) return;
+      // Give user a brief moment before resuming
+      remaining = Math.min(remaining + 500, delay);
+      startCountdown();
+    });
+  });
+})();
+</script>
+{% endif %}

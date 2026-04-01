@@ -1,0 +1,380 @@
+/* =============================================================================
+   AgriScan+ — AI Loader & Skeleton CSS
+   Provides: shimmer skeleton, AI scan modal, step states, pulse animations
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   1. SHIMMER / SKELETON BASE
+   --------------------------------------------------------------------------- */
+@keyframes sk-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+.sk {
+  display: block;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e8e8e8 37%,
+    #f0f0f0 63%
+  );
+  background-size: 800px 100%;
+  animation: sk-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Skeleton block wrapper — hidden by default; remove style or add .sk-visible to show */
+.skeleton-block {
+  display: none;
+}
+.skeleton-block.sk-visible {
+  display: block;
+}
+/* Flex skeleton wrapper (e.g. detection_row) */
+.skeleton-block.sk-visible-flex {
+  display: flex;
+}
+/* Utility alias — same as skeleton-block default, safe to add/remove via JS */
+.sk-hidden {
+  display: none !important;
+}
+
+/* Fade in/out helper */
+.sk-fade-in  { animation: sk-fade-in  0.25s ease forwards; }
+.sk-fade-out { animation: sk-fade-out 0.2s  ease forwards; }
+
+@keyframes sk-fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sk-fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+/* ---------------------------------------------------------------------------
+   2. AI SCAN LOADER MODAL — Accent bar
+   --------------------------------------------------------------------------- */
+@keyframes accent-slide {
+  0%   { background-position: 0%   50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0%   50%; }
+}
+
+.scan-accent-bar {
+  height: 4px;
+  border-radius: 4px 4px 0 0;
+  background: linear-gradient(
+    90deg,
+    #22c55e,   /* green-500  */
+    #3b82f6,   /* blue-500   */
+    #6366f1,   /* indigo-500 */
+    #22c55e
+  );
+  background-size: 200% 200%;
+  animation: accent-slide 2s ease infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   3. PULSE RING — radiating ring behind icon
+   --------------------------------------------------------------------------- */
+@keyframes pulse-ring {
+  0%   { transform: scale(0.9); opacity: 0.8; }
+  70%  { transform: scale(1.4); opacity: 0; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+.scan-pulse-ring {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid #22c55e;
+  animation: pulse-ring 1.6s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  pointer-events: none;
+}
+
+/* Second, delayed ring for depth */
+.scan-pulse-ring-2 {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+  animation: pulse-ring 1.6s cubic-bezier(0.215, 0.61, 0.355, 1) 0.5s infinite;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   4. ORBIT DOT — dot revolving around the main icon
+   Icon is h-20 w-20 = 80px. Orbit radius = 48px (center to dot center),
+   so translateX(48px) puts the dot right at the icon's edge.
+   --------------------------------------------------------------------------- */
+@keyframes orbit {
+  from { transform: rotate(0deg)   translateX(48px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(48px) rotate(-360deg); }
+}
+
+.scan-orbit-dot {
+  position: absolute;
+  /* anchor at exact center of the 80px icon container */
+  top:  50%;
+  left: 50%;
+  width:  12px;
+  height: 12px;
+  margin-top:  -6px;
+  margin-left: -6px;
+  border-radius: 50%;
+  animation: orbit 2s linear infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scan-orbit-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px 2px rgba(34, 197, 94, 0.7);
+}
+
+/* ---------------------------------------------------------------------------
+   5. STEP STATES
+   --------------------------------------------------------------------------- */
+
+/* --- Pending (default) --- */
+.scan-step-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #d1d5db; /* gray-300 */
+  background: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.3s, background 0.3s;
+  position: relative;
+}
+
+.scan-step-label {
+  font-size: 0.8125rem; /* ~13px */
+  color: #9ca3af;       /* gray-400 */
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.scan-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db; /* gray-300 */
+  transition: background 0.3s;
+}
+
+/* --- Active --- */
+@keyframes step-spin {
+  to { transform: rotate(360deg); }
+}
+
+.scan-step.is-active .scan-step-icon {
+  border-color: #22c55e;       /* green-500 */
+  background: #f0fdf4;          /* green-50  */
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.scan-step.is-active .scan-step-label {
+  color: #15803d; /* green-700 */
+  font-weight: 600;
+}
+
+.scan-step.is-active .scan-step-dot {
+  background: #22c55e;
+}
+
+/* Spinner replaces dot when active */
+.scan-step.is-active .scan-step-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid #22c55e;
+  border-top-color: transparent;
+  animation: step-spin 0.75s linear infinite;
+}
+
+/* --- Done --- */
+.scan-step.is-done .scan-step-icon {
+  border-color: #16a34a; /* green-600 */
+  background: #16a34a;
+}
+
+.scan-step.is-done .scan-step-label {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+/* Checkmark SVG inside done icon (injected by JS) */
+.scan-step.is-done .scan-step-checkmark {
+  color: #ffffff;
+  width: 16px;
+  height: 16px;
+}
+
+/* Connector line between steps */
+.scan-step-connector {
+  width: 2px;
+  height: 14px;
+  background: #e5e7eb; /* gray-200 */
+  margin: 2px 0 2px 15px; /* align with icon center */
+  border-radius: 1px;
+  transition: background 0.4s;
+}
+
+.scan-step.is-done + li .scan-step-connector,
+.scan-step-connector.is-filled {
+  background: #22c55e;
+}
+
+/* Keyframe used by inline spinner in ScanLoader JS */
+@keyframes step-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------------------------
+   6. UTILITY — prevent body scroll while loader is open
+   --------------------------------------------------------------------------- */
+body.loader-open {
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   7. PAGE-TRANSITION PROGRESS BAR — AgriScan+ branded
+      Brand palette:
+        #16a34a  green-700  (primary / healthy crops)
+        #22c55e  green-500  (accent)
+        #4ade80  green-400  (light tip glow)
+        #3b82f6  blue-500   (scan / AI accent)
+      4 px tall — slightly thicker than generic bars so it's
+      clearly visible against the white sticky header.
+   --------------------------------------------------------------------------- */
+
+/* ── Sliding shimmer animation along the bar ── */
+@keyframes progress-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+
+/* ── Subtle pulse on the leading-edge glow ── */
+@keyframes progress-glow-pulse {
+  0%, 100% { opacity: 0.9; transform: scaleY(1);   }
+  50%       { opacity: 1;   transform: scaleY(1.4); }
+}
+
+#page-progress {
+  /* Layout */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 4px;          /* 1 px thicker — more visible on white header */
+  z-index: 99999;
+  pointer-events: none;
+
+  /* AgriScan brand gradient: deep-green → bright-green → blue (AI scan colour) */
+  background: linear-gradient(
+    90deg,
+    #16a34a 0%,
+    #22c55e 35%,
+    #4ade80 60%,
+    #3b82f6 100%
+  );
+  background-size: 400px 100%;
+  /* shimmer travelling left-to-right while the bar grows */
+  animation: progress-shimmer 1.2s linear infinite;
+
+  border-radius: 0 3px 3px 0;
+
+  /* Visibility toggle */
+  opacity: 0;
+  transition: width 0.22s ease, opacity 0.35s ease;
+}
+
+/* Show when navigation is in progress */
+#page-progress.is-running {
+  opacity: 1;
+}
+
+/* Leading-edge glow — the bright "tip" that travels with the bar */
+#page-progress::after {
+  content: '';
+  display: block;
+  position: absolute;
+  right:  -1px;
+  top:    -3px;
+  width:   100px;
+  height:  10px;
+  /* tight AgriScan-green glow */
+  background: radial-gradient(
+    ellipse at right,
+    rgba(74, 222, 128, 0.85) 0%,   /* green-400 core  */
+    rgba(34, 197, 94,  0.45) 35%,  /* green-500 halo  */
+    rgba(59, 130, 246, 0.15) 65%,  /* blue-500 fringe */
+    transparent 100%
+  );
+  border-radius: 50%;
+  animation: progress-glow-pulse 0.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   8. BUTTON SPINNER — for submit/action buttons
+   --------------------------------------------------------------------------- */
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.75;
+}
+.btn-loading .btn-text { opacity: 0; }
+.btn-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: btn-spin 0.7s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   9. PAGE CONTENT FADE-IN — smooth entrance for each page
+   --------------------------------------------------------------------------- */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-content-enter {
+  animation: page-fade-in 0.35s ease forwards;
+}
+
+/* ---------------------------------------------------------------------------
+   10. LIST PAGE SKELETON WRAPPERS
+   --------------------------------------------------------------------------- */
+/* Table rows skeleton */
+.sk-table-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+.sk-table-row:last-child { border-bottom: none; }
+
+/* Card skeleton grid item */
+.sk-card {
+  background: #fff;
+  border-radius: 0.5rem;
+  border: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}

@@ -1,0 +1,100 @@
+﻿{% extends "base.html" %}
+{% block title %}{{ action|title }} User - AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+    <div class="bg-white rounded-lg shadow-sm p-8">
+      <!-- Warning Icon -->
+      <div class="flex items-center justify-center mb-6">
+        <div class="flex-shrink-0 h-16 w-16 rounded-full {% if action == 'deactivate' %}bg-red-100{% else %}bg-green-100{% endif %} flex items-center justify-center">
+          <svg class="h-10 w-10 {% if action == 'deactivate' %}text-red-600{% else %}text-green-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {% if action == 'deactivate' %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            {% else %}
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            {% endif %}
+          </svg>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">
+        {{ action|title }} User Account?
+      </h2>
+
+      <!-- User Info -->
+      <div class="bg-gray-50 rounded-lg p-4 mb-6">
+        <div class="flex items-center justify-center">
+          <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <span class="text-white font-bold text-lg">
+              {{ user_to_toggle.username|slice:":2"|upper }}
+            </span>
+          </div>
+          <div class="ml-4 text-left">
+            <p class="text-sm font-medium text-gray-500">Username</p>
+            <p class="text-lg font-bold text-gray-900">@{{ user_to_toggle.username }}</p>
+            <p class="text-sm text-gray-500">
+              {{ user_to_toggle.get_full_name|default:"No name set" }}
+              {% if user_to_toggle.profile %}
+                • {{ user_to_toggle.profile.get_role_display }}
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning Message -->
+      <div class="{% if action == 'deactivate' %}bg-red-50 border-l-4 border-red-500{% else %}bg-green-50 border-l-4 border-green-500{% endif %} p-4 mb-6">
+        <div class="flex">
+          <svg class="h-5 w-5 {% if action == 'deactivate' %}text-red-400{% else %}text-green-400{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+          <div class="ml-3">
+            <p class="text-sm {% if action == 'deactivate' %}text-red-700{% else %}text-green-700{% endif %}">
+              {% if action == 'deactivate' %}
+                <strong>Deactivating this account will:</strong>
+                <ul class="list-disc ml-5 mt-2 space-y-1">
+                  <li>Prevent the user from logging in</li>
+                  <li>Keep all user data intact (fields, scans, yields)</li>
+                  <li>Allow you to reactivate the account later</li>
+                  <li>This is REVERSIBLE (better than deletion)</li>
+                </ul>
+              {% else %}
+                <strong>Activating this account will:</strong>
+                <ul class="list-disc ml-5 mt-2 space-y-1">
+                  <li>Allow the user to login again</li>
+                  <li>Restore full access to their data</li>
+                  <li>Enable all features for this user</li>
+                </ul>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation Buttons -->
+      <form method="POST">
+        {% csrf_token %}
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+          <a href="{{ cancel_url }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition w-full sm:w-auto justify-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Cancel
+          </a>
+          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition w-full sm:w-auto justify-center {% if action == 'deactivate' %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %}">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {% if action == 'deactivate' %}
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+              {% else %}
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              {% endif %}
+            </svg>
+            Yes, {{ action|title }} Account
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

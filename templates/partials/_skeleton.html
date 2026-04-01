@@ -1,0 +1,296 @@
+<!--
+  ============================================================
+  AgriScan+ — Skeleton Loader Components
+  ============================================================
+  Usage:
+    Stat card:   {% include 'partials/_skeleton.html' with type='stat' %}
+    Chart card:  {% include 'partials/_skeleton.html' with type='chart' %}
+    Table:       {% include 'partials/_skeleton.html' with type='table' rows=5 %}
+    Scan card:   {% include 'partials/_skeleton.html' with type='scan_card' %}
+    Detection:   {% include 'partials/_skeleton.html' with type='detection_row' rows=5 %}
+    Analytics:   {% include 'partials/_skeleton.html' with type='analytics' %}
+
+  All skeletons are hidden by default (display:none via CSS).
+  Show:  el.style.display = 'block'  or  el.classList.remove('sk-hidden')
+  Hide:  el.style.display = 'none'   or  el.classList.add('sk-hidden')
+
+  NOTE: Do NOT add Tailwind's `hidden` class — use only `sk-hidden` (defined
+  in agriscan-loaders.css as display:none) so `.sk-visible` can override it.
+  ============================================================
+-->
+
+<!-- ── STAT CARD SKELETON ───────────────────────────────── -->
+{% if type == 'stat' %}
+<div class="skeleton-block bg-white rounded-lg shadow-sm border border-gray-200 p-6" aria-hidden="true">
+  <div class="flex items-center justify-between mb-4">
+    <div class="sk h-12 w-12 rounded-lg"></div>
+  </div>
+  <div class="sk h-8 w-24 rounded mb-2"></div>
+  <div class="sk h-4 w-32 rounded"></div>
+  <div class="mt-3 flex items-center gap-2">
+    <div class="sk flex-1 h-2 rounded-full"></div>
+    <div class="sk h-4 w-8 rounded"></div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── CHART WIDGET SKELETON ────────────────────────────── -->
+{% if type == 'chart' %}
+<div class="skeleton-block bg-white rounded-lg shadow-sm border border-gray-200 p-6" aria-hidden="true">
+  <div class="sk h-5 w-44 rounded mb-5"></div>
+  <!-- Fake bar chart -->
+  <div class="flex items-end gap-2 h-40">
+    <div class="sk flex-1 rounded-t" style="height:55%"></div>
+    <div class="sk flex-1 rounded-t" style="height:80%"></div>
+    <div class="sk flex-1 rounded-t" style="height:35%"></div>
+    <div class="sk flex-1 rounded-t" style="height:65%"></div>
+    <div class="sk flex-1 rounded-t" style="height:90%"></div>
+    <div class="sk flex-1 rounded-t" style="height:45%"></div>
+    <div class="sk flex-1 rounded-t" style="height:70%"></div>
+  </div>
+  <!-- X axis label row -->
+  <div class="flex gap-2 mt-2">
+    {% for i in '1234567'|make_list %}
+    <div class="sk flex-1 h-3 rounded"></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── TABLE SKELETON ───────────────────────────────────── -->
+{% if type == 'table' %}
+<div class="skeleton-block" aria-hidden="true">
+  <!-- Fake table header -->
+  <div class="flex gap-4 px-4 py-3 bg-gray-50 border border-gray-200 rounded-t-lg">
+    <div class="sk h-4 w-8 rounded"></div>
+    <div class="sk h-4 flex-1 rounded"></div>
+    <div class="sk h-4 w-24 rounded"></div>
+    <div class="sk h-4 w-20 rounded"></div>
+    <div class="sk h-4 w-20 rounded"></div>
+    <div class="sk h-4 w-16 rounded"></div>
+  </div>
+  <!-- Fake rows — always render 5; caller hides via parent container -->
+  {% for i in '12345'|make_list %}
+  <div class="flex items-center gap-4 px-4 py-3 border-l border-r border-b border-gray-200 {% if forloop.last %}rounded-b-lg{% endif %}">
+    <div class="sk h-4 w-8 rounded"></div>
+    <div class="sk h-10 w-10 rounded-md flex-shrink-0"></div>
+    <div class="sk h-4 flex-1 rounded"></div>
+    <div class="sk h-4 w-24 rounded"></div>
+    <div class="sk h-6 w-20 rounded-full"></div>
+    <div class="sk h-4 w-20 rounded"></div>
+    <div class="sk h-8 w-16 rounded-lg"></div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- ── SCAN RESULT CARD SKELETON ────────────────────────── -->
+{% if type == 'scan_card' %}
+<div class="skeleton-block" aria-hidden="true">
+  <!-- Image placeholder -->
+  <div class="sk h-56 w-full rounded-lg mb-4"></div>
+  <!-- Result grid -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="bg-gray-50 rounded-lg p-4">
+      <div class="sk h-3 w-16 rounded mb-2"></div>
+      <div class="sk h-6 w-28 rounded"></div>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-4">
+      <div class="sk h-3 w-16 rounded mb-2"></div>
+      <div class="sk h-6 w-20 rounded"></div>
+    </div>
+  </div>
+  <!-- Severity bar -->
+  <div class="bg-gray-50 rounded-lg p-4 mb-4">
+    <div class="sk h-3 w-24 rounded mb-3"></div>
+    <div class="sk h-3 w-full rounded-full"></div>
+  </div>
+  <!-- Treatment text lines -->
+  <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+    <div class="sk h-3 w-32 rounded mb-3"></div>
+    <div class="sk h-3 w-full rounded"></div>
+    <div class="sk h-3 w-5/6 rounded"></div>
+    <div class="sk h-3 w-4/6 rounded"></div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── DETECTION HISTORY ROW SKELETONS ──────────────────── -->
+{% if type == 'detection_row' %}
+{% for i in '12345'|make_list %}
+<div class="skeleton-block flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg" aria-hidden="true">
+  <div class="sk h-4 w-8 rounded flex-shrink-0"></div>
+  <div class="sk h-12 w-12 rounded-md flex-shrink-0"></div>
+  <div class="flex-1 space-y-2">
+    <div class="sk h-4 w-36 rounded"></div>
+    <div class="sk h-3 w-24 rounded"></div>
+  </div>
+  <div class="sk h-6 w-20 rounded-full flex-shrink-0"></div>
+  <div class="sk h-4 w-16 rounded flex-shrink-0"></div>
+  <div class="sk h-8 w-20 rounded-lg flex-shrink-0"></div>
+</div>
+{% endfor %}
+{% endif %}
+
+<!-- ── ANALYTICS WIDGET SKELETON ────────────────────────── -->
+{% if type == 'analytics' %}
+<div class="skeleton-block bg-white rounded-lg shadow-sm border border-gray-200 p-6" aria-hidden="true">
+  <div class="sk h-5 w-40 rounded mb-5"></div>
+  <!-- Donut / pie placeholder -->
+  <div class="flex items-center justify-center mb-4">
+    <div class="sk h-36 w-36 rounded-full"></div>
+  </div>
+  <!-- Legend rows -->
+  <div class="space-y-2">
+    {% for i in '123'|make_list %}
+    <div class="flex items-center gap-3">
+      <div class="sk h-3 w-3 rounded-sm flex-shrink-0"></div>
+      <div class="sk h-3 flex-1 rounded"></div>
+      <div class="sk h-3 w-10 rounded"></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── STAT CARD SKELETON ───────────────────────────────── -->
+{% if type == 'stat' %}
+<div class="skeleton-block bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden" aria-hidden="true">
+  <div class="flex items-center justify-between mb-4">
+    <div class="sk h-12 w-12 rounded-lg"></div>
+  </div>
+  <div class="sk h-8 w-24 rounded mb-2"></div>
+  <div class="sk h-4 w-32 rounded"></div>
+  <div class="mt-3 flex items-center gap-2">
+    <div class="sk flex-1 h-2 rounded-full"></div>
+    <div class="sk h-4 w-8 rounded"></div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── CHART WIDGET SKELETON ────────────────────────────── -->
+{% if type == 'chart' %}
+<div class="skeleton-block bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden" aria-hidden="true">
+  <div class="sk h-5 w-44 rounded mb-5"></div>
+  <!-- Fake bar chart -->
+  <div class="flex items-end gap-2 h-40">
+    <div class="sk flex-1 rounded-t" style="height:55%"></div>
+    <div class="sk flex-1 rounded-t" style="height:80%"></div>
+    <div class="sk flex-1 rounded-t" style="height:35%"></div>
+    <div class="sk flex-1 rounded-t" style="height:65%"></div>
+    <div class="sk flex-1 rounded-t" style="height:90%"></div>
+    <div class="sk flex-1 rounded-t" style="height:45%"></div>
+    <div class="sk flex-1 rounded-t" style="height:70%"></div>
+  </div>
+  <!-- X axis label row -->
+  <div class="flex gap-2 mt-2">
+    {% for i in '1234567'|make_list %}
+    <div class="sk flex-1 h-3 rounded"></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── TABLE SKELETON ───────────────────────────────────── -->
+{% if type == 'table' %}
+<div class="skeleton-block hidden" aria-hidden="true">
+  <!-- Fake table header -->
+  <div class="flex gap-4 px-4 py-3 bg-gray-50 border border-gray-200 rounded-t-lg">
+    <div class="sk h-4 w-8 rounded"></div>
+    <div class="sk h-4 flex-1 rounded"></div>
+    <div class="sk h-4 w-24 rounded"></div>
+    <div class="sk h-4 w-20 rounded"></div>
+    <div class="sk h-4 w-20 rounded"></div>
+    <div class="sk h-4 w-16 rounded"></div>
+  </div>
+  <!-- Fake rows -->
+  {% with rows|default:5 as row_count %}
+  {% for i in "12345"|make_list %}
+  {% if forloop.counter <= row_count %}
+  <div class="flex items-center gap-4 px-4 py-3 border-l border-r border-b border-gray-200 {% if forloop.last %}rounded-b-lg{% endif %}">
+    <div class="sk h-4 w-8 rounded"></div>
+    <div class="sk h-10 w-10 rounded-md flex-shrink-0"></div><!-- image col -->
+    <div class="sk h-4 flex-1 rounded"></div>
+    <div class="sk h-4 w-24 rounded"></div>
+    <div class="sk h-6 w-20 rounded-full"></div>
+    <div class="sk h-4 w-20 rounded"></div>
+    <div class="sk h-8 w-16 rounded-lg"></div>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% endwith %}
+</div>
+{% endif %}
+
+<!-- ── SCAN RESULT CARD SKELETON ────────────────────────── -->
+{% if type == 'scan_card' %}
+<div class="skeleton-block hidden" aria-hidden="true">
+  <!-- Image placeholder -->
+  <div class="sk h-56 w-full rounded-lg mb-4"></div>
+  <!-- Result grid -->
+  <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="bg-gray-50 rounded-lg p-4">
+      <div class="sk h-3 w-16 rounded mb-2"></div>
+      <div class="sk h-6 w-28 rounded"></div>
+    </div>
+    <div class="bg-gray-50 rounded-lg p-4">
+      <div class="sk h-3 w-16 rounded mb-2"></div>
+      <div class="sk h-6 w-20 rounded"></div>
+    </div>
+  </div>
+  <!-- Severity bar -->
+  <div class="bg-gray-50 rounded-lg p-4 mb-4">
+    <div class="sk h-3 w-24 rounded mb-3"></div>
+    <div class="sk h-3 w-full rounded-full"></div>
+  </div>
+  <!-- Treatment text lines -->
+  <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+    <div class="sk h-3 w-32 rounded mb-3"></div>
+    <div class="sk h-3 w-full rounded"></div>
+    <div class="sk h-3 w-5/6 rounded"></div>
+    <div class="sk h-3 w-4/6 rounded"></div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── DETECTION HISTORY ROW SKELETONS ──────────────────── -->
+{% if type == 'detection_row' %}
+{% with rows|default:4 as row_count %}
+{% for i in "12345"|make_list %}
+{% if forloop.counter <= row_count %}
+<div class="skeleton-block flex items-center gap-4 p-4 bg-white border border-gray-200 rounded-lg hidden" aria-hidden="true">
+  <div class="sk h-4 w-8 rounded flex-shrink-0"></div>
+  <div class="sk h-12 w-12 rounded-md flex-shrink-0"></div>
+  <div class="flex-1 space-y-2">
+    <div class="sk h-4 w-36 rounded"></div>
+    <div class="sk h-3 w-24 rounded"></div>
+  </div>
+  <div class="sk h-6 w-20 rounded-full flex-shrink-0"></div>
+  <div class="sk h-4 w-16 rounded flex-shrink-0"></div>
+  <div class="sk h-8 w-20 rounded-lg flex-shrink-0"></div>
+</div>
+{% endif %}
+{% endfor %}
+{% endwith %}
+{% endif %}
+
+<!-- ── ANALYTICS WIDGET SKELETON ────────────────────────── -->
+{% if type == 'analytics' %}
+<div class="skeleton-block bg-white rounded-lg shadow-sm border border-gray-200 p-6 hidden" aria-hidden="true">
+  <div class="sk h-5 w-40 rounded mb-5"></div>
+  <!-- Donut / pie placeholder -->
+  <div class="flex items-center justify-center mb-4">
+    <div class="sk h-36 w-36 rounded-full"></div>
+  </div>
+  <!-- Legend rows -->
+  <div class="space-y-2">
+    {% for i in "123"|make_list %}
+    <div class="flex items-center gap-3">
+      <div class="sk h-3 w-3 rounded-sm flex-shrink-0"></div>
+      <div class="sk h-3 flex-1 rounded"></div>
+      <div class="sk h-3 w-10 rounded"></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

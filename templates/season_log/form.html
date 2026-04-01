@@ -1,0 +1,416 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ form_title }} · AgriScan+{% endblock %}
+{% block content %}
+<section class="page-container">
+
+  <!-- ── Page Header ──────────────────────────────────────────────── -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
+          </svg>
+          {{ form_title }}
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">{{ subtitle }}</p>
+      </div>
+      <a href="{% url 'polls:season_log_list' %}"
+         onclick="history.back(); return false;"
+         class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Logs
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Form Card ──────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    {% if form.errors %}
+    <div class="mb-5 bg-red-50 border border-red-200 rounded-lg p-4">
+      <p class="text-sm font-semibold text-red-700 mb-1">Please fix the following errors:</p>
+      <ul class="list-disc list-inside space-y-1">
+        {% for field in form %}
+          {% for error in field.errors %}
+          <li class="text-sm text-red-600">{{ field.label }}: {{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+        <li class="text-sm text-red-600">{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- Section 1: Season Identity -->
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-green-500">📅</span> Season Identification
+        </h3>
+
+        {% if is_staff %}
+        <!-- Admin/Tech: Profile selector ────────────────────────────── -->
+        {% if is_create %}
+        <div class="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-4">
+          <label class="block text-sm font-semibold text-blue-800 mb-2">
+            👤 Log For <span class="text-red-500">*</span>
+            <span class="font-normal text-blue-600 ml-1">— Select who this season log belongs to</span>
+          </label>
+          <!-- Hidden flag so view knows this is a profile-change reload, not a save -->
+          <input type="hidden" name="change_owner" id="change-owner-flag" value="">
+          <input type="hidden" name="profile_id"   id="profile-id-input"  value="{% if target_profile %}{{ target_profile.pk }}{% endif %}">
+
+          <!-- Searchable profile select (enhanced by JS below) -->
+          <div class="sm:max-w-sm">
+            <select id="profile-select" name="_profile_select_display"
+              data-searchable="true"
+              class="w-full border border-blue-300 rounded-lg px-3 py-2 text-sm text-gray-800 bg-white focus:ring-2 focus:ring-blue-400 focus:outline-none">
+              <option value="">— Select a Profile —</option>
+              {% for f in profiles %}
+              <option value="{{ f.pk }}" {% if target_profile and target_profile.pk == f.pk %}selected{% endif %}>
+                {% if f.role == 'farmer' %}🧑‍🌾{% elif f.role == 'technician' %}🔬{% else %}🛡️{% endif %}
+                {{ f.user.get_full_name|default:f.user.username }}
+                ({{ f.get_role_display }}){% if f.location %} · {{ f.location }}{% endif %}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          {% if not target_profile %}
+          <p class="text-xs text-blue-600 mt-2">⚠️ Select a profile — their fields will load automatically.</p>
+          {% elif not target_has_fields %}
+          <div class="mt-2 flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+            <span class="text-red-500 mt-0.5">⚠️</span>
+            <div>
+              <p class="text-xs font-semibold text-red-700">
+                {{ target_profile.user.get_full_name|default:target_profile.user.username }} has no registered fields yet.
+              </p>
+              <p class="text-xs text-red-600 mt-0.5">
+                A season log requires at least one field. Please
+                <a href="{% url 'polls:field_create' %}" class="underline font-medium">add a field</a>
+                for this user first, then come back to create the season log.
+              </p>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-xs text-green-700 mt-2">
+            ✅ Logging for:
+            <strong>{{ target_profile.user.get_full_name|default:target_profile.user.username }}</strong>
+            <span class="ml-1 px-1.5 py-0.5 rounded text-xs font-medium
+              {% if target_profile.role == 'farmer' %}bg-green-100 text-green-700
+              {% elif target_profile.role == 'technician' %}bg-blue-100 text-blue-700
+              {% else %}bg-purple-100 text-purple-700{% endif %}">
+              {{ target_profile.get_role_display }}
+            </span>
+            {% if target_profile.location %} · {{ target_profile.location }}{% endif %}
+          </p>
+          {% endif %}
+        </div>
+        {% else %}
+        <!-- Edit: show logged-for profile as read-only info -->
+        <div class="mb-4 flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 flex-wrap">
+          <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+          <div>
+            <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Logged For</p>
+            <p class="text-sm font-semibold text-gray-800 flex items-center gap-2">
+              {{ target_profile.user.get_full_name|default:target_profile.user.username }}
+              <span class="px-1.5 py-0.5 rounded text-xs font-medium
+                {% if target_profile.role == 'farmer' %}bg-green-100 text-green-700
+                {% elif target_profile.role == 'technician' %}bg-blue-100 text-blue-700
+                {% else %}bg-purple-100 text-purple-700{% endif %}">
+                {{ target_profile.get_role_display }}
+              </span>
+            </p>
+          </div>
+          <span class="ml-auto text-xs text-gray-400">Cannot be changed after creation</span>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.season_year.label }} <span class="text-red-500">*</span></label>
+            {{ form.season_year }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.season_type.label }} <span class="text-red-500">*</span></label>
+            {{ form.season_type }}
+          </div>
+        </div>
+        {% if not is_create and log %}
+        <!-- Read-only stage indicator — stage is auto-managed by activity logging -->
+        <div class="mt-4 flex items-center gap-3">
+          <span class="text-sm font-medium text-gray-500">Current Stage:</span>
+          {% with s=log.current_stage %}
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold
+            {% if s == 'planning' %}bg-gray-100 text-gray-700
+            {% elif s == 'land_prep' %}bg-orange-100 text-orange-700
+            {% elif s == 'planting' %}bg-teal-100 text-teal-700
+            {% elif s == 'growing' %}bg-green-100 text-green-700
+            {% elif s == 'harvest_ready' %}bg-yellow-100 text-yellow-700
+            {% elif s == 'harvested' %}bg-emerald-100 text-emerald-700
+            {% else %}bg-gray-100 text-gray-700{% endif %}">
+            {% if s == 'planning' %}📋 Planning
+            {% elif s == 'land_prep' %}🚜 Land Preparation
+            {% elif s == 'planting' %}🌾 Planting
+            {% elif s == 'growing' %}🌱 Growing
+            {% elif s == 'harvest_ready' %}⚡ Harvest Ready
+            {% elif s == 'harvested' %}🎉 Harvested
+            {% else %}{{ log.get_current_stage_display }}{% endif %}
+          </span>
+          {% endwith %}
+          <span class="text-xs text-gray-400">— auto-updated when you log activities</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Sections 2–5 + submit: only show when farmer is known AND has fields -->
+      {% if not is_staff or not is_create or target_has_fields %}
+
+      <!-- Section 2: Field & Variety -->
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-blue-500">🌾</span> Field & Variety
+        </h3>
+
+        {% if is_create %}
+        <!-- Planting picker: auto-fills field/variety/dates -->
+        {% if form.planting.field.queryset.exists %}
+        <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <label class="block text-sm font-semibold text-blue-800 mb-1">
+            🔗 {{ form.planting.label }}
+          </label>
+          <p class="text-xs text-blue-600 mb-2">{{ form.planting.help_text }}</p>
+          {{ form.planting }}
+        </div>
+        {% else %}
+        <div class="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-start gap-3">
+          <svg class="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-gray-600">No available planting records</p>
+            <p class="text-xs text-gray-500 mt-0.5">
+              All active plantings already have a season log, or no planting records exist yet.
+              Fill in the fields below manually, or
+              <a href="{% url 'polls:planting_create' %}" class="text-blue-600 hover:underline font-medium">create a planting record first</a>.
+            </p>
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.field.label }} <span class="text-red-500">*</span></label>
+            {{ form.field }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.variety.label }}</label>
+            {{ form.variety }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Key Dates -->
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-orange-500">📆</span> Key Dates
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.date_started.label }} <span class="text-red-500">*</span></label>
+            {{ form.date_started }}
+            <p class="text-xs text-gray-400 mt-1">When did this season begin? (defaults to today)</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.date_planted.label }}</label>
+            {{ form.date_planted }}
+            <p class="text-xs text-gray-400 mt-1">Leave blank if not yet transplanted</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.date_harvested.label }}</label>
+            {{ form.date_harvested }}
+            <p class="text-xs text-gray-400 mt-1">Fill after harvest</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Harvest & Income (optional) -->
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-yellow-500">💰</span> Harvest & Income <span class="text-xs font-normal text-gray-400">(fill after harvest)</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.actual_yield_sacks.label }}</label>
+            {{ form.actual_yield_sacks }}
+            <p class="text-xs text-gray-400 mt-1">1 sack = 50 kg</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.price_per_sack.label }}</label>
+            {{ form.price_per_sack }}
+            <p class="text-xs text-gray-400 mt-1">Selling price per sack</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.total_expenses.label }}</label>
+            {{ form.total_expenses }}
+            <p class="text-xs text-gray-400 mt-1">Total inputs + labor for the whole season</p>
+          </div>
+        </div>
+        <p class="text-xs text-blue-600 mt-2 bg-blue-50 rounded-lg p-2">
+          💡 Gross income, net income, cost per sack, and net per sack are automatically calculated.
+        </p>
+      </div>
+
+      <!-- Section 5: Notes -->
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-gray-400">📝</span> Notes
+        </h3>
+        <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.summary_notes.label }}</label>
+        {{ form.summary_notes }}
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
+        <button type="submit" data-loading
+          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {% if is_create %}Create Season Log{% else %}Save Changes{% endif %}
+        </button>
+        <a href="{% url 'polls:season_log_list' %}"
+           onclick="history.back(); return false;"
+           class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition">
+          Cancel
+        </a>
+        {% if not is_create and log %}
+        <a href="{% url 'polls:season_log_delete' log.pk %}"
+           data-open-delete="true"
+           data-delete-label="{{ log.season_label }}"
+           data-delete-subtitle="{{ log.field.name }}"
+           class="ml-auto px-5 py-2.5 text-red-600 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-50 transition">
+          Delete
+        </a>
+        {% endif %}
+      </div>
+
+      {% endif %}{# end: farmer-required guard #}
+    </form>
+  </div>
+
+</section>
+
+<!-- Searchable profile dropdown for admin/tech -->
+<script>
+(function () {
+  const profileSelect = document.getElementById('profile-select');
+  if (!profileSelect || profileSelect.dataset.searchable !== 'true') return;
+
+  const form           = profileSelect.closest('form');
+  const profileIdInput = document.getElementById('profile-id-input');
+  const changeFlag     = document.getElementById('change-owner-flag');
+
+  /* ---- build searchable UI ---- */
+  const wrapper = document.createElement('div');
+  wrapper.className = 'relative';
+  profileSelect.parentNode.insertBefore(wrapper, profileSelect);
+
+  const searchInput = document.createElement('input');
+  searchInput.type        = 'text';
+  searchInput.placeholder = 'Type to search user...';
+  searchInput.className   = profileSelect.className;
+  searchInput.style.paddingRight = '2.5rem';
+
+  const icon = document.createElement('div');
+  icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
+  icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
+
+  const options = Array.from(profileSelect.options);
+  const originalValue = profileSelect.value;
+  if (originalValue) {
+    const sel = options.find(o => o.value === originalValue);
+    if (sel) searchInput.value = sel.text.replace(/^\S+\s/, '').trim();
+  }
+
+  profileSelect.style.display = 'none';
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'absolute z-50 w-full mt-1 bg-white border border-blue-200 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
+
+  wrapper.appendChild(searchInput);
+  wrapper.appendChild(icon);
+  wrapper.appendChild(profileSelect);
+  wrapper.appendChild(dropdown);
+
+  function filterOptions(term) {
+    dropdown.innerHTML = '';
+    const t = term.toLowerCase();
+    const filtered = options.filter(o => o.value && o.text.toLowerCase().includes(t));
+    if (filtered.length === 0) {
+      dropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No matches found</div>';
+    } else {
+      filtered.forEach(function (opt) {
+        const div = document.createElement('div');
+        div.className     = 'px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm';
+        div.textContent   = opt.text;
+        div.dataset.value = opt.value;
+        div.addEventListener('click', function () {
+          searchInput.value = this.textContent.replace(/^\S+\s/, '').trim();
+          dropdown.classList.add('hidden');
+          /* set hidden inputs then submit to reload fields */
+          if (profileIdInput) profileIdInput.value = this.dataset.value;
+          if (changeFlag)     changeFlag.value     = '1';
+          form.submit();
+        });
+        dropdown.appendChild(div);
+      });
+    }
+    dropdown.classList.remove('hidden');
+  }
+
+  searchInput.addEventListener('focus', function () { filterOptions(this.value); });
+  searchInput.addEventListener('input', function () { filterOptions(this.value); });
+  document.addEventListener('click', function (e) {
+    if (!wrapper.contains(e.target)) dropdown.classList.add('hidden');
+  });
+})();
+</script>
+
+{% if is_create %}
+<script>
+(function () {
+  const PLANTINGS = {{ plantings_json|safe }};
+
+  const picker   = document.getElementById('id_planting_picker');
+  const fldField = document.getElementById('id_field');
+  const varField = document.getElementById('id_variety');
+  const dtPlant  = document.getElementById('id_date_planted');
+  const dtHarv   = document.getElementById('id_date_harvested');
+
+  if (!picker) return;
+
+  picker.addEventListener('change', function () {
+    const pk   = this.value;
+    const data = PLANTINGS[pk];
+    if (!data) return; // "— fill manually —" selected
+
+    if (fldField && data.field_id)    fldField.value = data.field_id;
+    if (varField && data.variety_id)  varField.value = data.variety_id;
+    if (dtPlant  && data.date_planted)  dtPlant.value  = data.date_planted;
+    if (dtHarv   && data.date_harvested) dtHarv.value  = data.date_harvested;
+  });
+})();
+</script>
+{% endif %}
+
+{% endblock %}

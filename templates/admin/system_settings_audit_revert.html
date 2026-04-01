@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Confirm Revert · System Settings · AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <h1 class="text-2xl font-bold text-gray-900">Confirm Revert</h1>
+    <p class="mt-2 text-sm text-gray-600">
+      You're about to revert system settings to what they were at <strong>{{ audit.changed_at|date:'M d, Y H:i' }}</strong>.
+    </p>
+
+    <div class="mt-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+      <h2 class="text-sm font-semibold text-gray-700">Changes in that entry</h2>
+      {% if audit.details.changes %}
+        <ul class="mt-2 list-disc list-inside text-sm text-gray-700">
+          {% for key, diff in audit.details.changes.items %}
+            <li>
+              <span class="font-semibold">{{ key }}</span>:
+              <span class="text-red-600">{{ diff.from }}</span> →
+              <span class="text-green-600">{{ diff.to }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-2 text-sm text-gray-600">No specific changes captured; this entry records the settings at that time.</p>
+      {% endif %}
+    </div>
+
+    <form method="post" class="mt-6">
+      {% csrf_token %}
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <a href="{% url 'polls:system_settings_audit_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+          Cancel
+        </a>
+        <button type="submit"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition">
+          Revert settings
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

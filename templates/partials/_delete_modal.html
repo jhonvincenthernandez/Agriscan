@@ -1,0 +1,197 @@
+{% comment %}
+  Global Delete / Archive Confirmation Modal
+  ==========================================
+  Included once in base.html. Works for ALL delete/archive/purge actions
+  across the entire app.
+
+  Trigger any element with:
+    data-open-delete="true"
+    data-delete-label="..."        ← item name shown in modal
+    data-delete-subtitle="..."     ← optional second line
+    data-delete-type="archive"     ← "archive" (default) or "permanent"
+
+  For Trash purge (no href needed):
+    data-purge-url="{% url 'polls:trash_management' %}"
+    data-purge-model="field"
+    data-purge-pk="42"
+
+  For normal archive (href = delete URL):
+    href="{% url 'polls:field_delete' pk %}"
+{% endcomment %}
+
+<!-- Delete / Archive confirmation modal -->
+<div
+  id="confirm-delete-modal"
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="delete-modal-title"
+  style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:1rem;"
+>
+  <!-- Backdrop -->
+  <div
+    style="position:absolute; inset:0; background:rgba(0,0,0,0.5);"
+    onclick="(function(){
+      var m = document.getElementById('confirm-delete-modal');
+      var f = document.getElementById('delete-post-form');
+      m.style.display = 'none';
+      m.setAttribute('aria-hidden', 'true');
+      if (f) f.querySelectorAll('.injected-purge').forEach(function(el){ el.remove(); });
+    })()"
+  ></div>
+
+  <!-- Card -->
+  <div
+    style="position:relative; width:100%; max-width:26rem; background:#fff; border-radius:1rem;
+           box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); padding:2rem;
+           border:1px solid #fecaca; text-align:center;"
+  >
+    <div id="delete-modal-icon" class="text-5xl mb-4">🗑️</div>
+    <h3 id="delete-modal-title" class="text-lg font-bold text-gray-900 mb-1">Confirm Action</h3>
+    <p id="confirm-delete-text" class="text-sm font-semibold text-gray-800 mb-1"></p>
+    <p id="confirm-delete-subtitle" class="text-xs text-gray-500 mb-4"></p>
+
+    <!-- Archive notice (amber) -->
+    <div
+      id="delete-modal-notice-archive"
+      class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-5"
+      style="display:none;"
+    >
+      This will archive the record. You can restore it anytime from
+      <strong>Trash &amp; Archive</strong>.
+    </div>
+
+    <!-- Permanent delete notice (red) -->
+    <div
+      id="delete-modal-notice-permanent"
+      class="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-5"
+      style="display:none;"
+    >
+      ⚠️ This will <strong>permanently delete</strong> this record. This cannot be undone.
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-3 justify-center">
+      <button
+        id="delete-modal-cancel"
+        type="button"
+        class="px-6 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-200 transition"
+      >
+        Cancel
+      </button>
+      <form id="delete-post-form" method="post" action="">
+        {% csrf_token %}
+        <button
+          id="delete-modal-confirm"
+          type="submit"
+          class="px-6 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition shadow-sm"
+        >
+          Confirm
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Wait for DOM to be fully parsed before wiring up handlers.
+  // This partial is included at the bottom of base.html — DOM is ready.
+  var deleteButtons    = document.querySelectorAll("[data-open-delete]");
+  var deleteModal      = document.getElementById("confirm-delete-modal");
+  var deleteModalCancel   = document.getElementById("delete-modal-cancel");
+  var deleteModalConfirm  = document.getElementById("delete-modal-confirm");
+  var deleteForm       = document.getElementById("delete-post-form");
+  var deleteModalText  = document.getElementById("confirm-delete-text");
+  var deleteHref       = null;
+
+  if (!deleteModal || !deleteModalConfirm) return;
+
+  // ── Open modal ────────────────────────────────────────────────────────────
+  deleteButtons.forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+
+      var label         = btn.dataset.deleteLabel    || "";
+      var subtitle      = btn.dataset.deleteSubtitle || "";
+      var dtype         = btn.dataset.deleteType     || "archive"; // "archive" | "permanent" | "revert"
+      var customTitle   = btn.dataset.deleteTitle;
+      var customConfirm = btn.dataset.deleteConfirm;
+      var customNotice  = btn.dataset.deleteNotice;
+
+      // Title
+      document.getElementById("delete-modal-title").textContent =
+        customTitle || (dtype === "permanent" ? "Delete Permanently?" : dtype === "revert" ? "Confirm Revert?" : "Archive Record?");
+
+      // Label + subtitle
+      if (deleteModalText) deleteModalText.textContent = label;
+      var subEl = document.getElementById("confirm-delete-subtitle");
+      if (subEl) subEl.textContent = subtitle;
+
+      // Notice boxes
+      var noticeArchive   = document.getElementById("delete-modal-notice-archive");
+      var noticePermanent = document.getElementById("delete-modal-notice-permanent");
+      if (noticeArchive)   noticeArchive.style.display   = (dtype === "permanent" ? "none"  : "block");
+      if (noticePermanent) noticePermanent.style.display = (dtype === "permanent" ? "block" : "none");
+
+      if (customNotice && noticeArchive) {
+        noticeArchive.textContent = customNotice;
+      }
+
+      // Confirm button text
+      deleteModalConfirm.textContent =
+        customConfirm || (dtype === "permanent" ? "Yes, Delete" : dtype === "revert" ? "Yes, Revert" : "Yes, Archive");
+
+      // Clean up any leftover injected purge fields
+      if (deleteForm) deleteForm.querySelectorAll(".injected-purge").forEach(function (el) { el.remove(); });
+
+      // --- Purge path (Trash page) vs normal archive path ---
+      var purgeUrl   = btn.dataset.purgeUrl;
+      var purgeModel = btn.dataset.purgeModel;
+      var purgePk    = btn.dataset.purgePk;
+
+      if (purgeUrl) {
+        // Trash permanent delete: inject hidden fields into the shared form
+        deleteForm.action = purgeUrl;
+        [["action", "purge"], ["model", purgeModel], ["pk", purgePk]].forEach(function (pair) {
+          var inp = document.createElement("input");
+          inp.type = "hidden";
+          inp.name = pair[0];
+          inp.value = pair[1];
+          inp.className = "injected-purge";
+          deleteForm.appendChild(inp);
+        });
+      } else {
+        // Normal archive: form action = the delete URL
+        deleteHref = btn.getAttribute("href");
+        if (deleteForm && deleteHref) deleteForm.action = deleteHref;
+      }
+
+      // Focus management
+      try { window._prevFocus = document.activeElement; } catch (_) {}
+      setTimeout(function () { deleteModalConfirm.focus(); }, 50);
+
+      deleteModal.style.display = "flex";
+      deleteModal.setAttribute("aria-hidden", "false");
+    });
+  });
+
+  // ── Cancel ────────────────────────────────────────────────────────────────
+  function closeDeleteModal() {
+    deleteModal.style.display = "none";
+    deleteModal.setAttribute("aria-hidden", "true");
+    deleteHref = null;
+    if (deleteForm) deleteForm.querySelectorAll(".injected-purge").forEach(function (el) { el.remove(); });
+    try { if (window._prevFocus) window._prevFocus.focus(); } catch (_) {}
+  }
+
+  if (deleteModalCancel) deleteModalCancel.addEventListener("click", closeDeleteModal);
+
+  // ── Escape key ───────────────────────────────────────────────────────────
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && deleteModal.style.display === "flex") {
+      closeDeleteModal();
+    }
+  });
+})();
+</script>

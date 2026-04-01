@@ -1,0 +1,6 @@
+/* input.css */
+/* Huwag baguhin — ito ang source ng lahat ng Tailwind v3 styles */
+/* Ginagamit ang v3 syntax dahil ang lahat ng AgriScan+ templates ay v3-based */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

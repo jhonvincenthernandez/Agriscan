@@ -1,0 +1,136 @@
+<!--
+  ============================================================
+  AgriScan+ — Global Page Loader
+  ============================================================
+  Provides:
+    1. Top progress bar  (#page-progress) — shown on every
+       <a> navigation and form submit
+    2. Page content fade-in (.page-content-enter) — applied
+       to <main> on DOMContentLoaded
+    3. Submit-button spinner (.btn-loading) — applied to any
+       [data-loading] button on its parent form submit
+
+  Include once in base.html, just before </body>.
+  ============================================================
+-->
+
+<!-- ── Top progress bar ─────────────────────────────────── -->
+<div id="page-progress" role="progressbar" aria-hidden="true"></div>
+
+<script>
+/* ============================================================
+   PageLoader — best-practice loading UX module
+   ============================================================ */
+(function () {
+  'use strict';
+
+  /* ── Progress bar ──────────────────────────────────────── */
+  const bar = document.getElementById('page-progress');
+  let _raf      = null;
+  let _current  = 0;
+  let _started  = false;  // true while bar is actively running
+
+  function _setWidth(w) {
+    _current = w;
+    bar.style.width = w + '%';
+  }
+
+  function _trickle() {
+    const inc = _current < 20  ? 8
+              : _current < 50  ? 5
+              : _current < 70  ? 3
+              : _current < 85  ? 1.5
+              : _current < 92  ? 0.5
+              : 0;
+    if (inc > 0) {
+      _setWidth(Math.min(_current + inc, 92));
+      _raf = setTimeout(_trickle, 220);
+    }
+  }
+
+  function start() {
+    if (_raf) clearTimeout(_raf);
+    _started = true;
+    bar.classList.add('is-running');
+    _setWidth(10);
+    _raf = setTimeout(_trickle, 220);
+  }
+
+  function done() {
+    if (_raf) clearTimeout(_raf);
+    _raf     = null;
+    _started = false;
+
+    // 1. Jump to 100% (bar is now full-width and visible)
+    _setWidth(100);
+
+    // 2. Fade out FIRST — let the CSS opacity transition finish (350ms)
+    setTimeout(function () {
+      bar.classList.remove('is-running'); // triggers opacity → 0
+    }, 80);
+
+    // 3. Only THEN reset width (after fade is complete) — no visual jump
+    setTimeout(function () {
+      _setWidth(0);
+    }, 500);
+  }
+
+  /* ── Wire navigation links ─────────────────────────────── */
+  document.addEventListener('click', function (e) {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+
+    const href = a.getAttribute('href');
+    if (!href
+      || href.startsWith('#')
+      || href.startsWith('javascript')
+      || href.startsWith('mailto')
+      || href.startsWith('tel')
+      || a.hasAttribute('download')
+      || a.target === '_blank'
+      || a.dataset.noProgress === 'true'
+      || a.hasAttribute('data-open-delete')
+    ) return;
+
+    // Skip export/download links
+    if (href.includes('export=') || href.includes('export_')) return;
+
+    start();
+  });
+
+  /* ── Wire form submissions ──────────────────────────────── */
+  document.addEventListener('submit', function (e) {
+    const form = e.target;
+    if (form.target === '_blank') return;
+
+    start();
+
+    // Button spinner
+    form.querySelectorAll('[data-loading]').forEach(function (btn) {
+      btn.classList.add('btn-loading');
+      btn.disabled = true;
+    });
+  });
+
+  /* ── Finish bar on page load / bfcache restore ──────────── */
+  // Use only `pageshow` — it fires on BOTH normal load and bfcache restore.
+  // DOMContentLoaded is NOT used for done() to avoid double-calling.
+  window.addEventListener('pageshow', function () {
+    // Re-enable any disabled [data-loading] buttons (handles validation
+    // errors where the browser stays on the same page after submit)
+    document.querySelectorAll('[data-loading].btn-loading').forEach(function (btn) {
+      btn.classList.remove('btn-loading');
+      btn.disabled = false;
+    });
+    done();
+  });
+
+  /* ── Page-content fade-in on DOM ready ─────────────────── */
+  document.addEventListener('DOMContentLoaded', function () {
+    const main = document.querySelector('main');
+    if (main) main.classList.add('page-content-enter');
+    // Do NOT call done() here — pageshow handles it and fires after DOMContentLoaded
+  });
+
+})();
+</script>

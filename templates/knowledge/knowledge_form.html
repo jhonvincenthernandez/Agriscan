@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}Edit{% else %}Create{% endif %} Knowledge Entry · AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">{% if is_edit %}Edit{% else %}New{% endif %} Knowledge Entry</h1>
+        <p class="mt-1 text-sm text-gray-500">Use the form below to add or update a farming guides entry.</p>
+      </div>
+      <button type="button" onclick="history.back(); return false;" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition">
+        Back
+      </button>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="mt-6 space-y-6">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label class="block text-sm font-medium text-gray-700">{{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+        {% endif %}
+        {% for error in field.errors %}
+          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endfor %}
+
+      {% if form.non_field_errors %}
+      <div class="text-sm text-red-600">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <div class="flex gap-2">
+        <button type="submit" class="inline-flex items-center justify-center px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold">
+          Save
+        </button>
+        <button type="button" onclick="history.back(); return false;" class="inline-flex items-center justify-center px-5 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

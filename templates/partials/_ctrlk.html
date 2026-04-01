@@ -1,0 +1,12 @@
+{# ── Ctrl+K / Cmd+K → focus a search input ────────────────────────────── #}
+{# Usage: {% include 'partials/_ctrlk.html' with input_id='my-search-id' %} #}
+<script>
+(function () {
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      var el = document.getElementById('{{ input_id }}');
+      if (el) { e.preventDefault(); el.focus(); el.select(); }
+    }
+  });
+})();
+</script>

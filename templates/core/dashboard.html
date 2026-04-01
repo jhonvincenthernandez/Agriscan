@@ -1,0 +1,642 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard · AgriScan+{% endblock %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<section class="page-container">
+  <!-- Page Header -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex items-center gap-3">
+      <svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Welcome back, {{ user.first_name|default:user.username }}!</h1>
+        <p class="mt-0.5 text-sm text-gray-500">
+          {% if is_admin %}
+          System-wide overview · Managing records across all users.
+          {% elif is_technician %}
+          System-wide overview · Monitoring records across all farmers.
+          {% else %}
+          Here's what's happening with your farm today.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions (Scan / Predict) -->
+  <div class="grid sm:grid-cols-2 gap-6 mb-8">
+    <a href="{% url 'polls:scan' %}" class="group bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg hover:shadow-xl transition-all p-6 text-white">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-white/20 rounded-lg">
+          <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <svg class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold mb-2">Scan Leaf Disease</h2>
+      <p class="text-blue-100 text-sm">Capture or upload rice leaf images for instant disease detection and severity analysis.</p>
+    </a>
+
+    <a href="{% url 'polls:yield_prediction' %}" class="group bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg hover:shadow-xl transition-all p-6 text-white">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-white/20 rounded-lg">
+          <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <svg class="h-5 w-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold mb-2">Predict Yield</h2>
+      <p class="text-green-100 text-sm">Estimate your harvest yield using agronomic data and disease severity metrics.</p>
+    </a>
+  </div>
+
+
+  <div id="dashboard-stats-skeleton" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-8">
+    {% for i in "12345678" %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <span class="sk block h-10 w-10 rounded-lg"></span>
+      </div>
+      <span class="sk block h-7 w-14 mb-2 rounded"></span>
+      <span class="sk block h-3 w-24 rounded"></span>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div id="dashboard-stats" class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-8">
+    <!-- Card 1: Fields -->
+    <a href="{% url 'polls:fields_list' %}" class="group bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-teal-300 transition-all duration-200 cursor-pointer">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-teal-100 rounded-lg group-hover:bg-teal-200 transition-colors">
+          <svg class="h-6 w-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+        <svg class="h-4 w-4 text-gray-300 group-hover:text-teal-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ active_fields }}</h3>
+      <p class="text-xs text-gray-600 mt-1">{% if is_admin or is_technician %}Active{% else %}My{% endif %} Fields</p>
+      <p class="text-xs text-gray-400 mt-1">{% if is_admin or is_technician %}System-wide{% else %}Your farms{% endif %}</p>
+    </a>
+
+     <!-- Card 2: Plantings -->
+    <a href="{% url 'polls:plantings_list' %}" class="group bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-lime-300 transition-all duration-200 cursor-pointer">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-lime-100 rounded-lg group-hover:bg-lime-200 transition-colors">
+          <svg class="h-6 w-6 text-lime-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v5m0-5c-3 0-5-2.5-5-5s2-4 5-4 5 2 5 4-2 5-5 5z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 20h16"/>
+          </svg>
+        </div>
+        <svg class="h-4 w-4 text-gray-300 group-hover:text-lime-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ active_plantings }}</h3>
+      <p class="text-xs text-gray-600 mt-1">{% if is_admin or is_technician %}Active{% else %}My{% endif %} Plantings</p>
+      <p class="text-xs text-gray-400 mt-1">{% if is_admin or is_technician %}System-wide{% else %}Your crops{% endif %}</p>
+
+    </a>
+
+    <!-- Card 3: Detections -->
+    <a href="{% url 'polls:detections_list' %}" class="group bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200 cursor-pointer">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+          <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h1.5l1-1h7l1 1H19a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11a3 3 0 100 6 3 3 0 000-6z"/>
+          </svg>
+        </div>
+        <svg class="h-4 w-4 text-gray-300 group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ detections_count }}</h3>
+      <p class="text-xs text-gray-600 mt-1">{% if is_admin or is_technician %}System-wide{% else %}My{% endif %} Rice Detections</p>
+      <p class="text-xs text-gray-400 mt-1">{% if is_admin or is_technician %}All users{% else %}Your scans{% endif %}</p>
+
+      <!-- Healthy/Diseased mini bar -->
+      <div class="mt-2 space-y-1">
+        <div class="flex items-center justify-between text-xs text-gray-500">
+          <span>✅ {{ healthy_count }} healthy</span>
+          <span>🔴 {{ diseased_count }} diseased</span>
+        </div>
+        <div class="flex h-1.5 rounded-full overflow-hidden bg-gray-200">
+          <div class="bg-emerald-500 transition-all" style="width: {{ health_percentage }}%"></div>
+          <div class="bg-red-400 transition-all" style="width: {{ diseased_percentage }}%"></div>
+        </div>
+      </div>
+
+    </a>
+
+    <!-- Card 4: Yield Predictions -->
+    <a href="{% url 'polls:yield_records_list' %}" class="group bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-green-300 transition-all duration-200 cursor-pointer">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
+          <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 17h18M8 17V9m4 8V5m4 12v-6"/>
+          </svg>
+        </div>
+        <svg class="h-4 w-4 text-gray-300 group-hover:text-green-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ yield_count }}</h3>
+      <p class="text-xs text-gray-600 mt-1">{% if is_admin or is_technician %}System-wide{% else %}My{% endif %} Yield Predictions</p>
+      <p class="text-xs text-gray-400 mt-1">{% if is_admin or is_technician %}All users{% else %}Your predictions{% endif %}</p>
+
+      <!-- Harvest Ready mini bar (green/yellow optimal) -->
+      <div class="mt-2 space-y-1">
+        <div class="flex items-center justify-between text-xs text-gray-500">
+          <span>✅ {{ harvest_ready_count }} ready</span>
+          <span>🌱 {{ still_growing_count }} growing</span>
+        </div>
+        <div class="flex h-1.5 rounded-full overflow-hidden bg-gray-200">
+          {% if yield_count > 0 %}
+          <div class="bg-green-500 transition-all" style="width: {% widthratio harvest_ready_count yield_count 100 %}%"></div>
+          <div class="bg-yellow-300 transition-all" style="width: {% widthratio still_growing_count yield_count 100 %}%"></div>
+          {% endif %}
+        </div>
+      </div>
+
+    </a>
+
+ 
+   
+
+    <!-- Card 5: Knowledge Base -->
+    <a href="{% url 'polls:knowledge_list' %}" class="group bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-emerald-300 transition-all duration-200 cursor-pointer">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-emerald-100 rounded-lg group-hover:bg-emerald-200 transition-colors">
+          <svg class="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3a2 2 0 012-2h10a2 2 0 012 2v18l-7-3-7 3V3z"/>
+          </svg>
+        </div>
+        <svg class="h-4 w-4 text-gray-300 group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ knowledge_count|default:'—' }}</h3>
+      <p class="text-xs text-gray-600 mt-1">Agri Knowledge</p>
+      <p class="text-xs text-gray-400 mt-1">Farming guides & references</p>
+    </a>
+
+    <!-- Card 6: Varieties -->
+    <a href="{% url 'polls:varieties_list' %}" class="group bg-white rounded-lg shadow-sm border border-gray-200 p-5 hover:shadow-md hover:border-amber-300 transition-all duration-200 cursor-pointer">
+      <div class="flex items-center justify-between mb-4">
+        <div class="p-3 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
+          <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c2.485 0 4.5 2.015 4.5 4.5S14.485 12 12 12s-4.5-2.015-4.5-4.5S9.515 3 12 3z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.25 16.5c0 3-2.25 4.5-5.25 4.5s-5.25-1.5-5.25-4.5c0-4.5 5.25-7.5 5.25-7.5s5.25 3 5.25 7.5z"/>
+          </svg>
+        </div>
+        <svg class="h-4 w-4 text-gray-300 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ varieties_count|default:'—' }}</h3>
+      <p class="text-xs text-gray-600 mt-1">Varieties</p>
+      <p class="text-xs text-gray-400 mt-1">Rice variety catalog</p>
+    </a>
+
+  </div><!-- /#dashboard-stats -->
+
+  <!-- Charts skeleton -->
+  <div id="dashboard-charts-skeleton" class="grid lg:grid-cols-3 gap-6 mb-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="grid sm:grid-cols-2 gap-6">
+        {% for i in "1234" %}
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <span class="sk block h-5 w-40 mb-4 rounded"></span>
+          <span class="sk block rounded-lg" style="height:200px"></span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="space-y-6">
+      <div class="rounded-lg shadow-lg p-6" style="background:#6366f1">
+        <span class="sk block h-5 w-32 mb-3 rounded opacity-60"></span>
+        <span class="sk block h-4 w-full mb-2 rounded opacity-40"></span>
+        <span class="sk block h-4 w-4/5 rounded opacity-40"></span>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+        <span class="sk block h-4 w-24 mb-4 rounded"></span>
+        {% for i in "12345" %}
+        <span class="sk block h-10 w-full mb-2 rounded"></span>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div id="dashboard-charts" class="hidden grid grid-cols-1 gap-6 lg:grid-cols-6">
+
+    <!-- Chart cards (6) -->
+    <!-- Disease Distribution → Reports -->
+    <div class="group lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all duration-200 overflow-hidden">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Disease Distribution</h3>
+        <canvas id="diseaseChart" class="max-h-64"></canvas>
+      </div>
+      <a href="{% url 'polls:reports' %}"
+         class="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs font-medium text-gray-500 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-colors">
+        <span>View full report</span>
+        <svg class="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Detection Trends → Reports -->
+    <div class="group lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 overflow-hidden">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Detection Trends</h3>
+        <canvas id="trendChart" class="max-h-64"></canvas>
+      </div>
+      <a href="{% url 'polls:reports' %}"
+         class="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs font-medium text-gray-500 group-hover:text-blue-600 group-hover:bg-blue-50 transition-colors">
+        <span>View full report</span>
+        <svg class="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Severity Distribution → Detections sorted by severity -->
+    <div class="group lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-red-300 transition-all duration-200 overflow-hidden">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Severity Distribution</h3>
+        <canvas id="severityChart" class="max-h-64"></canvas>
+      </div>
+      <a href="{% url 'polls:detections_list' %}?sort=-severity_pct"
+         class="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs font-medium text-gray-500 group-hover:text-red-600 group-hover:bg-red-50 transition-colors">
+        <span>View by severity</span>
+        <svg class="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Yield by Field/Barangay → Yield Records -->
+    <div class="group lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-green-300 transition-all duration-200 overflow-hidden">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+          {% if is_admin or is_technician %}Average Yield by Barangay{% else %}My Yield by Field{% endif %}
+        </h3>
+        <canvas id="yieldChart" class="max-h-64"></canvas>
+      </div>
+      <a href="{% url 'polls:yield_records_list' %}"
+         class="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs font-medium text-gray-500 group-hover:text-green-600 group-hover:bg-green-50 transition-colors">
+        <span>View yield records</span>
+        <svg class="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Variety Trend -->
+    <div class="group lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-indigo-300 transition-all duration-200 overflow-hidden">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Variety Trend</h3>
+        <canvas id="varietyChart" class="max-h-64"></canvas>
+      </div>
+      <a href="{% url 'polls:varieties_list' %}"
+         class="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs font-medium text-gray-500 group-hover:text-indigo-600 group-hover:bg-indigo-50 transition-colors">
+        <span>View varieties</span>
+        <svg class="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Knowledge Trend -->
+    <div class="group lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md hover:border-emerald-300 transition-all duration-200 overflow-hidden">
+      <div class="p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Knowledge Trend</h3>
+        <canvas id="knowledgeChart" class="max-h-64"></canvas>
+      </div>
+      <a href="{% url 'polls:knowledge_list' %}"
+         class="flex items-center justify-between px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs font-medium text-gray-500 group-hover:text-emerald-600 group-hover:bg-emerald-50 transition-colors">
+        <span>View knowledge base</span>
+        <svg class="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Recent Activity (full width) -->
+    <div class="lg:col-span-6 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">Recent Activity</h3>
+        <span class="text-xs text-gray-500">Last 6 actions</span>
+      </div>
+      <div class="space-y-3">
+        {% for activity in recent_activity %}
+        <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-50 transition">
+          <div class="mt-1 p-2 bg-blue-100 rounded-full">
+            <svg class="h-3 w-3 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900">{{ activity.title }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ activity.timestamp }}</p>
+          </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-8">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+          </svg>
+          <p class="mt-2 text-sm text-gray-500">No recent activity yet</p>
+          <p class="text-xs text-gray-400 mt-1">Start scanning or predicting yield</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Tip & System Info (full width, split on lg) -->
+    <div class="lg:col-span-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-6">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="p-2 bg-white/20 rounded-lg">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <h4 class="text-lg font-bold">Tip of the Day</h4>
+        </div>
+        <p class="text-sm text-white/90 leading-relaxed">
+          {{ tip|default:'Monitor leaf discoloration early to reduce severity progression and protect your yield.' }}
+        </p>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">System Info</h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Model Version</span>
+            <span class="font-medium text-gray-900">{{ model_version|default:'—' }}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Detectable Classes</span>
+            <span class="font-medium text-gray-900">{{ detectable_classes|default:'—' }}</span>
+          </div>
+          {% if last_sync %}
+          <div class="flex items-center justify-between">
+            <span class="text-gray-600">Last Scan</span>
+            <span class="font-medium text-gray-900 text-xs">{{ last_sync }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /#dashboard-charts -->
+</section>
+
+{{ disease_stats|default:"[]"|json_script:"dashboardDiseaseStats" }}
+{{ trend_data|default:"[]"|json_script:"dashboardTrendData" }}
+{{ severity_distribution|default:"[]"|json_script:"dashboardSeverityData" }}
+{{ avg_yield_by_barangay|default:"[]"|json_script:"dashboardYieldByBarangay" }}
+{{ avg_yield_by_field|default:"[]"|json_script:"dashboardYieldByField" }}
+{{ variety_trend|default:"[]"|json_script:"dashboardVarietyTrend" }}
+{{ knowledge_trend|default:"[]"|json_script:"dashboardKnowledgeTrend" }}
+
+<script>
+// Safely load JSON data directly from the template (avoids Django/Python None issues)
+const diseaseData = JSON.parse(document.getElementById('dashboardDiseaseStats').textContent);
+const diseaseLabels = diseaseData.map(d => d.disease__name || 'Unknown');
+const diseaseCounts = diseaseData.map(d => d.count);
+
+if (diseaseLabels.length > 0) {
+  new Chart(document.getElementById('diseaseChart'), {
+    type: 'doughnut',
+    data: {
+      labels: diseaseLabels,
+      datasets: [{
+        data: diseaseCounts,
+        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      }
+    }
+  });
+} else {
+  document.getElementById('diseaseChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No data yet</p>';
+}
+
+// Detection Trends Line Chart
+const trendData = JSON.parse(document.getElementById('dashboardTrendData').textContent);
+const trendLabels = trendData.map(d => d.date);
+const trendCounts = trendData.map(d => d.count);
+
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: trendLabels,
+    datasets: [{
+      label: 'Detections',
+      data: trendCounts,
+      borderColor: '#3b82f6',
+      backgroundColor: 'rgba(59, 130, 246, 0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+
+// Severity Distribution Bar Chart
+const severityDataRaw = JSON.parse(document.getElementById('dashboardSeverityData').textContent);
+const severityData = Array.isArray(severityDataRaw) ? severityDataRaw : [];
+const severityLabels = severityData.map(d => d.label);
+const severityCounts = severityData.map(d => d.count);
+
+if (severityCounts.some(c => c > 0)) {
+  new Chart(document.getElementById('severityChart'), {
+    type: 'bar',
+    data: {
+      labels: severityLabels,
+      datasets: [{
+        label: 'Detections',
+        data: severityCounts,
+        backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444']
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+} else {
+  document.getElementById('severityChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No severity data yet</p>';
+}
+
+// Average Yield Chart (Barangay for admin/technician, Field for farmers)
+const yieldByBarangay = JSON.parse(document.getElementById('dashboardYieldByBarangay').textContent);
+const yieldByField = JSON.parse(document.getElementById('dashboardYieldByField').textContent);
+const isAdmin = {{ is_admin|yesno:"true,false" }};
+const isTechnician = {{ is_technician|yesno:"true,false" }};
+
+// Variety Trend Chart
+const varietyTrend = JSON.parse(document.getElementById('dashboardVarietyTrend').textContent);
+
+// Knowledge Trend Chart
+const knowledgeTrendRaw = JSON.parse(document.getElementById('dashboardKnowledgeTrend').textContent);
+const knowledgeTrend = Array.isArray(knowledgeTrendRaw) ? knowledgeTrendRaw : [];
+
+let yieldLabels, yieldValues;
+if (isAdmin || isTechnician) {
+  yieldLabels = yieldByBarangay.map(d => d.planting__field__barangay || 'N/A');
+  yieldValues = yieldByBarangay.map(d => parseFloat(d.avg_yield || 0).toFixed(2));
+} else {
+  yieldLabels = yieldByField.map(d => d.planting__field__name || 'Field ' + d.planting__field__id);
+  yieldValues = yieldByField.map(d => parseFloat(d.avg_yield || 0).toFixed(2));
+}
+
+if (yieldLabels && yieldLabels.length > 0) {
+  new Chart(document.getElementById('yieldChart'), {
+    type: 'bar',
+    data: {
+      labels: yieldLabels,
+      datasets: [{
+        label: 'Avg Yield (tons/ha)',
+        data: yieldValues,
+        backgroundColor: '#10b981'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { 
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Tons per Hectare'
+          }
+        }
+      }
+    }
+  });
+} else {
+  document.getElementById('yieldChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No yield data yet</p>';
+}
+
+// Variety Trend Bar Chart
+const varietyLabels = varietyTrend.map(d => d.variety__name || 'Unknown');
+const varietyValues = varietyTrend.map(d => d.count);
+
+if (varietyLabels.length > 0) {
+  new Chart(document.getElementById('varietyChart'), {
+    type: 'bar',
+    data: {
+      labels: varietyLabels,
+      datasets: [{
+        label: 'Plantings',
+        data: varietyValues,
+        backgroundColor: '#8b5cf6'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+} else {
+  document.getElementById('varietyChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No variety data yet</p>';
+}
+
+// Knowledge Trend Bar Chart
+const knowledgeLabels = knowledgeTrend.map(d => d.name || 'Unknown');
+const knowledgeValues = knowledgeTrend.map(d => d.view_count);
+
+if (knowledgeLabels.length > 0) {
+  new Chart(document.getElementById('knowledgeChart'), {
+    type: 'bar',
+    data: {
+      labels: knowledgeLabels,
+      datasets: [{
+        label: 'Views',
+        data: knowledgeValues,
+        backgroundColor: '#22c55e'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+} else {
+  document.getElementById('knowledgeChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No knowledge trend data yet</p>';
+}
+
+/* ============================================================
+   SkeletonLoader — reveal real content after page is ready
+   ============================================================ */
+document.addEventListener('DOMContentLoaded', function () {
+  // Small delay so the skeleton flashes briefly (feels snappier than instant)
+  setTimeout(function () {
+    // Hide skeleton placeholders
+    var statsSkel   = document.getElementById('dashboard-stats-skeleton');
+    var chartsSkel  = document.getElementById('dashboard-charts-skeleton');
+    // Show real content
+    var statsReal   = document.getElementById('dashboard-stats');
+    var chartsReal  = document.getElementById('dashboard-charts');
+
+    if (statsSkel)  { statsSkel.style.display  = 'none'; }
+    if (chartsSkel) { chartsSkel.style.display = 'none'; }
+    if (statsReal)  { statsReal.classList.remove('hidden'); }
+    if (chartsReal) { chartsReal.classList.remove('hidden'); }
+  }, 350);
+});
+
+</script>
+{% endblock %}

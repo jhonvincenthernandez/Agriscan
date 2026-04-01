@@ -1,0 +1,379 @@
+{% comment %}
+  Global Export Modal
+  ===================
+  Included once in base.html. Handles CSV/PDF export for any list page.
+
+  ── Mode 1 — Column picker (detections, yields, any list) ───────────────────
+    openExportModal({
+      title:  'Export Detection Records',
+      csvUrl: '/polls/detections/export/csv/',
+      pdfUrl: '/polls/detections/export/pdf/',
+      cols: [
+        { value:'id',      label:'ID'      },
+        { value:'date',    label:'Date'    },
+        // checked: false  → unchecked by default
+      ],
+    });
+
+  ── Mode 2 — Section picker (reports page) ──────────────────────────────────
+    openExportModal({
+      title:    'Export Report',
+      baseUrl:  '?',           // URL base; format & sections appended as query params
+      fmtParam: 'export',      // query param name for the format  (default: 'export')
+      sections: [
+        { value:'summary',    label:'Summary Statistics',       desc:'Total detections, yield overview, model accuracy' },
+        { value:'monthly',    label:'Monthly Breakdown',        desc:'Healthy vs diseased per month' },
+        // …
+      ],
+      // optional: carry extra query params (e.g. date range) through
+      extraParams: { start_date: '2026-01-01', end_date: '2026-03-08' },
+      // optional: pre-select format ('pdf'|'csv'); user can still switch inside the modal
+      format: 'pdf',
+    });
+{% endcomment %}
+
+<!-- ── Global Export Modal ──────────────────────────────────────────────── -->
+<div id="global-export-modal"
+     role="dialog" aria-modal="true" aria-labelledby="gem-title"
+     style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:1rem;">
+
+  <!-- Backdrop -->
+  <div style="position:absolute; inset:0; background:rgba(0,0,0,0.45);" onclick="closeExportModal()"></div>
+
+  <!-- Card -->
+  <div style="position:relative; width:100%; max-width:28rem; max-height:90vh; overflow-y:auto;
+              background:#fff; border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); padding:1.5rem;">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-5">
+      <div>
+        <h2 id="gem-title" class="text-lg font-bold text-gray-900">Export Records</h2>
+        <p id="gem-subtitle" class="text-sm text-gray-500 mt-0.5">Choose format, date range, and columns.</p>
+      </div>
+      <button type="button" onclick="closeExportModal()"
+              class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+              aria-label="Close">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- ── Mode 1 only: Format selector (CSV / PDF) ── -->
+    <div id="gem-fmt-block">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Format</p>
+      <div class="flex gap-2 mb-5">
+        <label id="gem-csv-label"
+               class="flex-1 flex items-center gap-2 p-3 rounded-lg border-2 border-green-500 bg-green-50 cursor-pointer">
+          <input type="radio" name="gem_fmt" value="csv" checked class="text-green-600" id="gem-fmt-csv">
+          <span class="text-sm font-medium text-green-800">CSV</span>
+          <span class="text-xs text-green-600 ml-auto">Excel</span>
+        </label>
+        <label id="gem-pdf-label"
+               class="flex-1 flex items-center gap-2 p-3 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-red-300 transition">
+          <input type="radio" name="gem_fmt" value="pdf" class="text-red-600" id="gem-fmt-pdf">
+          <span class="text-sm font-medium text-gray-800">PDF</span>
+          <span class="text-xs text-gray-500 ml-auto">Print</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- ── Mode 1 only: Date Range ── -->
+    <div id="gem-date-block">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+        Date Range <span class="text-gray-400 normal-case font-normal">(optional)</span>
+      </p>
+      <div class="flex gap-2 mb-5">
+        <div class="flex-1">
+          <label class="text-xs text-gray-500 mb-1 block">From</label>
+          <input type="date" id="gem-start-date"
+                 class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+        <div class="flex-1">
+          <label class="text-xs text-gray-500 mb-1 block">To</label>
+          <input type="date" id="gem-end-date"
+                 class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mode 1: Column checkboxes ── -->
+    <div id="gem-cols-section">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+          Columns <span class="text-gray-400 normal-case font-normal">(CSV only)</span>
+        </p>
+        <div class="flex gap-2">
+          <button type="button" onclick="gemSetItems(true)"  class="text-xs text-blue-600 hover:underline">All</button>
+          <span class="text-gray-300">|</span>
+          <button type="button" onclick="gemSetItems(false)" class="text-xs text-gray-500 hover:underline">None</button>
+        </div>
+      </div>
+      <div id="gem-cols-grid" class="grid grid-cols-2 gap-1 mb-5">
+        <!-- filled by openExportModal() in cols mode -->
+      </div>
+    </div>
+
+    <!-- ── Mode 2: Section checkboxes ── -->
+    <div id="gem-sections-section" style="display:none;">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Include Sections</p>
+        <div class="flex gap-2">
+          <button type="button" onclick="gemSetItems(true)"  class="text-xs text-blue-600 hover:underline">Select All</button>
+          <span class="text-gray-300">|</span>
+          <button type="button" onclick="gemSetItems(false)" class="text-xs text-gray-500 hover:underline">Clear All</button>
+        </div>
+      </div>
+      <div id="gem-sections-list" class="space-y-2 mb-5">
+        <!-- filled by openExportModal() in sections mode -->
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex gap-3 pt-3 border-t border-gray-100">
+      <button type="button" onclick="closeExportModal()"
+              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+        Cancel
+      </button>
+      <button type="button" id="gem-download-btn" onclick="confirmExportModal()"
+              class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <span id="gem-download-label">Download</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // ── Internal state ────────────────────────────────────────────────────────
+  var _cfg = {};  // current config passed to openExportModal()
+
+  // ── Public API ────────────────────────────────────────────────────────────
+  window.openExportModal = function (cfg) {
+    _cfg = cfg || {};
+    var isSections = Array.isArray(_cfg.sections) && _cfg.sections.length > 0;
+
+    // Title & subtitle
+    var titleEl = document.getElementById('gem-title');
+    var subEl   = document.getElementById('gem-subtitle');
+    if (titleEl) titleEl.textContent = _cfg.title || 'Export Records';
+
+    if (isSections) {
+      // ── Mode 2: sections picker ──────────────────────────────────────────
+      // Show format selector (so one button handles both PDF & CSV)
+      document.getElementById('gem-fmt-block').style.display  = '';
+      document.getElementById('gem-date-block').style.display = 'none';
+      document.getElementById('gem-cols-section').style.display    = 'none';
+      document.getElementById('gem-sections-section').style.display = '';
+
+      if (subEl) subEl.textContent = 'Choose format and sections to export.';
+
+      // Pre-select the format if provided, else default to PDF
+      var initFmt = _cfg.format || 'pdf';
+      var csvR = document.getElementById('gem-fmt-csv');
+      var pdfR = document.getElementById('gem-fmt-pdf');
+      if (csvR) csvR.checked = (initFmt === 'csv');
+      if (pdfR) pdfR.checked = (initFmt === 'pdf');
+      gemSyncFormat(initFmt === 'csv');
+
+      var labelEl = document.getElementById('gem-download-label');
+      if (labelEl) labelEl.textContent = 'Download';
+
+      // Build section checkboxes
+      var list = document.getElementById('gem-sections-list');
+      if (list) {
+        list.innerHTML = '';
+        _cfg.sections.forEach(function (sec) {
+          var lbl = document.createElement('label');
+          lbl.className = 'flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition';
+          var cb = document.createElement('input');
+          cb.type      = 'checkbox';
+          cb.name      = 'gem_section';
+          cb.value     = sec.value;
+          cb.checked   = sec.checked !== false;
+          cb.className = 'w-4 h-4 rounded text-blue-600 border-gray-300 flex-shrink-0';
+          var wrap = document.createElement('div');
+          var span = document.createElement('span');
+          span.className   = 'text-sm font-medium text-gray-800';
+          span.textContent = sec.label;
+          wrap.appendChild(span);
+          if (sec.desc) {
+            var p = document.createElement('p');
+            p.className   = 'text-xs text-gray-500';
+            p.textContent = sec.desc;
+            wrap.appendChild(p);
+          }
+          lbl.appendChild(cb);
+          lbl.appendChild(wrap);
+          list.appendChild(lbl);
+        });
+      }
+
+    } else {
+      // ── Mode 1: column picker ────────────────────────────────────────────
+      document.getElementById('gem-fmt-block').style.display   = '';
+      document.getElementById('gem-date-block').style.display  = '';
+      document.getElementById('gem-cols-section').style.display     = '';
+      document.getElementById('gem-sections-section').style.display = 'none';
+
+      if (subEl) subEl.textContent = 'Choose format, date range, and columns.';
+
+      // Reset to CSV
+      var csvRadio = document.getElementById('gem-fmt-csv');
+      if (csvRadio) { csvRadio.checked = true; }
+      gemSyncFormat(true);
+
+      // Reset dates
+      var s = document.getElementById('gem-start-date');
+      var e = document.getElementById('gem-end-date');
+      if (s) s.value = '';
+      if (e) e.value = '';
+
+      // Build column checkboxes
+      var grid = document.getElementById('gem-cols-grid');
+      if (grid) {
+        grid.innerHTML = '';
+        var cols = _cfg.cols || [];
+        cols.forEach(function (col) {
+          var lbl = document.createElement('label');
+          lbl.className = 'flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer text-sm';
+          var cb = document.createElement('input');
+          cb.type      = 'checkbox';
+          cb.name      = 'gem_col';
+          cb.value     = col.value;
+          cb.checked   = col.checked !== false;
+          cb.className = 'w-3.5 h-3.5 rounded text-green-600';
+          var span = document.createElement('span');
+          span.className   = 'text-gray-700';
+          span.textContent = col.label;
+          lbl.appendChild(cb);
+          lbl.appendChild(span);
+          grid.appendChild(lbl);
+        });
+      }
+    }
+
+    var modal = document.getElementById('global-export-modal');
+    if (modal) {
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  window.closeExportModal = function () {
+    var modal = document.getElementById('global-export-modal');
+    if (modal) {
+      modal.style.display = 'none';
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  };
+
+  window.confirmExportModal = function () {
+    var isSections = document.getElementById('gem-sections-section').style.display !== 'none';
+
+    if (isSections) {
+      // ── Mode 2: build ?export=pdf&sections=...&start_date=...&end_date=... ──
+      var checked = Array.from(document.querySelectorAll('#gem-sections-list input[name="gem_section"]:checked'))
+                        .map(function (c) { return c.value; });
+      if (checked.length === 0) {
+        alert('Please select at least one section to export.');
+        return;
+      }
+      // Read format from the radio (user may have switched it)
+      var fmtRadio = document.querySelector('input[name="gem_fmt"]:checked');
+      var chosenFmt = fmtRadio ? fmtRadio.value : (_cfg.format || 'pdf');
+      var params = new URLSearchParams(_cfg.extraParams || {});
+      var fmtParam = _cfg.fmtParam || 'export';
+      params.set(fmtParam, chosenFmt);
+      checked.forEach(function (s) { params.append('sections', s); });
+      closeExportModal();
+      window.location.href = (_cfg.baseUrl || '?') + params.toString();
+
+    } else {
+      // ── Mode 1: build CSV/PDF download URL ──────────────────────────────
+      var fmt  = document.querySelector('input[name="gem_fmt"]:checked');
+      var fmtVal = fmt ? fmt.value : 'csv';
+      var cols = Array.from(document.querySelectorAll('#gem-cols-grid input[name="gem_col"]:checked'))
+                     .map(function (c) { return c.value; });
+      if (fmtVal === 'csv' && cols.length === 0) {
+        alert('Please select at least one column.');
+        return;
+      }
+      var url    = fmtVal === 'csv' ? (_cfg.csvUrl || '') : (_cfg.pdfUrl || '');
+      var params = new URLSearchParams();
+      var start  = document.getElementById('gem-start-date');
+      var end    = document.getElementById('gem-end-date');
+      if (start && start.value) params.set('start_date', start.value);
+      if (end   && end.value)   params.set('end_date',   end.value);
+      if (fmtVal === 'csv') cols.forEach(function (c) { params.append('cols', c); });
+      closeExportModal();
+      window.location.href = url + (params.toString() ? '?' + params.toString() : '');
+    }
+  };
+
+  // Select-all / clear-all (works for both cols and sections)
+  window.gemSetItems = function (checked) {
+    document.querySelectorAll('#gem-cols-grid input[name="gem_col"], #gem-sections-list input[name="gem_section"]')
+            .forEach(function (cb) { cb.checked = checked; });
+  };
+  // Keep old name for back-compat
+  window.gemSetCols = window.gemSetItems;
+
+  // ── Format toggle (Mode 1 only) ───────────────────────────────────────────
+  function gemSyncFormat(isCsv) {
+    var colSection = document.getElementById('gem-cols-section');
+    var csvLabel   = document.getElementById('gem-csv-label');
+    var pdfLabel   = document.getElementById('gem-pdf-label');
+    if (colSection) {
+      colSection.style.opacity       = isCsv ? '1'  : '0.4';
+      colSection.style.pointerEvents = isCsv ? ''   : 'none';
+    }
+    gemSetBtnColor(isCsv ? 'csv' : 'pdf');
+    var labelEl = document.getElementById('gem-download-label');
+    if (labelEl) labelEl.textContent = 'Download';
+
+    if (csvLabel) {
+      csvLabel.className = csvLabel.className
+        .replace(/border-(?:green|red|gray)-\d+/g, '').replace(/bg-(?:green|red|gray)-\d+/g, '').trim()
+        + (isCsv ? ' border-green-500 bg-green-50' : ' border-gray-200 bg-white');
+    }
+    if (pdfLabel) {
+      pdfLabel.className = pdfLabel.className
+        .replace(/border-(?:green|red|gray)-\d+/g, '').replace(/bg-(?:green|red|gray)-\d+/g, '').trim()
+        + (!isCsv ? ' border-red-500 bg-red-50' : ' border-gray-200 bg-white');
+    }
+  }
+
+  function gemSetBtnColor(fmt) {
+    var btn = document.getElementById('gem-download-btn');
+    if (!btn) return;
+    btn.className = btn.className
+      .replace(/bg-(?:green|red)-600/g, '').replace(/hover:bg-(?:green|red)-700/g, '').trim();
+    if (fmt === 'pdf') {
+      btn.classList.add('bg-red-600', 'hover:bg-red-700');
+    } else {
+      btn.classList.add('bg-green-600', 'hover:bg-green-700');
+    }
+  }
+
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.name === 'gem_fmt') {
+      gemSyncFormat(e.target.value === 'csv');
+    }
+  });
+
+  // Escape key
+  document.addEventListener('keydown', function (e) {
+    var modal = document.getElementById('global-export-modal');
+    if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
+      closeExportModal();
+    }
+  });
+})();
+</script>

@@ -1,0 +1,502 @@
+﻿{% extends 'base.html' %}
+{% block title %}Detection Details · AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+  <!-- Header with Back Button -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <svg class="h-7 w-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Detection Details &amp; Treatment
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">Comprehensive treatment recommendations and management strategies</p>
+      </div>
+      <div class="no-print flex items-center gap-2 flex-wrap self-start sm:self-auto">
+        <!-- Print -->
+        <button id="print-btn" onclick="handlePagePrint('print-header')" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition shadow-sm">
+          <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Print
+        </button>
+
+        <a href="{% url 'polls:detections_list' %}"
+           onclick="history.back(); return false;"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium self-start sm:self-auto">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Back to Detections
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Print header shown only during print -->
+  <div id="print-header" style="display:none; margin-bottom:1rem; padding:1rem;background:#ffffff;border:1px solid #e5e7eb;">
+    <h2 class="text-xl font-bold text-gray-900">Detection Detail Report</h2>
+    <p class="text-sm text-gray-600">Detection ID: {{ detection.pk }} • {{ detection.disease.name|default:'Unknown' }}</p>
+    <p class="text-sm text-gray-600">Generated: <span id="print-date"></span></p>
+  </div>
+
+  <div class="grid lg:grid-cols-3 gap-6">
+    <!-- Left Column: Image and Basic Info -->
+    <div class="lg:col-span-1 space-y-6">
+      <!-- Detection Image -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        {% if detection.image_path %}
+        <img src="{{ media_url }}{{ detection.image_path }}" 
+             alt="Detection image" 
+             class="w-full h-64 object-cover" />
+        {% else %}
+        <div class="w-full h-64 bg-gray-100 flex items-center justify-center">
+          <svg class="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        {% endif %}
+        
+        <div class="p-4 space-y-3">
+          <!-- Disease Type -->
+          <div class="{% if detection.disease.name == 'Healthy' %}bg-green-50{% elif detection.disease.name == UNKNOWN_LABEL %}bg-gray-50{% else %}bg-red-50{% endif %} rounded-lg p-3">
+            <p class="text-xs {% if detection.disease.name == 'Healthy' %}text-green-600{% elif detection.disease.name == UNKNOWN_LABEL %}text-gray-600{% else %}text-red-600{% endif %} font-semibold uppercase mb-1">
+              Disease
+            </p>
+            <p class="text-lg font-bold {% if detection.disease.name == 'Healthy' %}text-green-700{% elif detection.disease.name == UNKNOWN_LABEL %}text-gray-700{% else %}text-gray-900{% endif %}">
+              {{ detection.disease.name|default:"Unknown" }}
+            </p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <!-- Confidence -->
+            <div class="bg-blue-50 rounded-lg p-3">
+              <p class="text-xs text-blue-600 font-semibold uppercase mb-1">Confidence</p>
+              <p class="text-lg font-bold text-gray-900">{{ detection.confidence_pct|default:"0" }}%</p>
+            </div>
+
+            <!-- Severity -->
+            <div class="bg-amber-50 rounded-lg p-3">
+              <p class="text-xs text-amber-600 font-semibold uppercase mb-1">Severity</p>
+              <p class="text-lg font-bold text-gray-900">{{ detection.severity_pct|default:"0" }}%</p>
+            </div>
+          </div>
+
+          <!-- Field Info -->
+          {% if detection.planting %}
+          <div class="bg-gray-50 rounded-lg p-3">
+            <p class="text-xs text-gray-600 font-semibold uppercase mb-1">Field</p>
+            <p class="text-sm font-medium text-gray-900">{{ detection.planting.field.name }}</p>
+            {% if detection.planting.field.area_hectares %}
+            <p class="text-xs text-gray-600 mt-1">{{ detection.planting.field.area_hectares }} hectares</p>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <!-- Detection Date -->
+          <div class="bg-gray-50 rounded-lg p-3">
+            <p class="text-xs text-gray-600 font-semibold uppercase mb-1">Detected On</p>
+            <p class="text-sm text-gray-900">{{ detection.created_at|date:"F d, Y h:i A" }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <h3 class="text-sm font-semibold text-gray-900 mb-3">Actions</h3>
+        <div class="space-y-2">
+          {% if not is_farmer or detection.user == request.user.profile %}
+          <a href="{% url 'polls:detections_edit' detection.pk %}" 
+             class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+            Edit Detection
+          </a>
+          {% endif %}
+          
+          {% if detection.disease.name != UNKNOWN_LABEL %}
+          <a href="{% url 'polls:yield_prediction' %}?detection_id={{ detection.pk }}" 
+             class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Predict Yield
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Detailed Treatment Information -->
+    <div class="lg:col-span-2 space-y-6">
+      {% if detailed_treatment %}
+      
+      <!-- Quick Summary -->
+      <div id="quick-rec-card" class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-lg shadow-lg p-6">
+        <div class="flex items-start gap-3">
+          <svg class="h-6 w-6 mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-lg font-bold">Quick Recommendation</h3>
+              {% if treatment_obj %}
+              <div class="flex items-center gap-2">
+                <span class="text-xs px-2 py-0.5 rounded-full font-semibold
+                  {% if treatment_obj.priority >= 8 %}bg-red-200 text-red-900
+                  {% elif treatment_obj.priority >= 4 %}bg-amber-200 text-amber-900
+                  {% else %}bg-blue-200 text-blue-900{% endif %}">
+                  Priority {{ treatment_obj.priority }}/10
+                </span>
+                {% if not is_farmer %}
+                <a href="{% url 'polls:treatments_edit' treatment_obj.pk %}"
+                   class="text-xs text-blue-200 hover:text-white underline underline-offset-2 transition"
+                   title="Edit this treatment record">Edit treatment ↗</a>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+            <p id="quick-rec-base" class="text-blue-50 leading-relaxed">{{ detailed_treatment.short_text }}</p>
+            {% if detailed_treatment.factors_favoring %}
+            <p id="quick-rec-prompt" class="mt-2 text-xs text-blue-200 flex items-center gap-1">
+              <svg class="h-3.5 w-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5 5m0 0l5-5m-5 5V3"/>
+              </svg>
+              Check the factors present in your field below to get a specific action plan.
+            </p>
+            {% endif %}
+            <!-- Dynamic factor-based notice (shown by JS when factors are checked) -->
+            <div id="quick-rec-notice" class="hidden mt-3 pt-3 border-t border-blue-400">
+              <div class="flex items-start gap-2">
+                <svg id="qrn-icon" class="h-5 w-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <div>
+                  <p id="qrn-label" class="font-semibold text-sm"></p>
+                  <div id="qrn-detail" class="text-blue-100 text-sm mt-1"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Factors Favoring Disease -->
+      {% if detailed_treatment.factors_favoring %}
+      <div class="bg-amber-50 border-l-4 border-amber-400 rounded-lg p-6">
+        <div class="flex items-start gap-3">
+          <div class="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+            <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center justify-between mb-1">
+              <h3 class="text-lg font-bold text-amber-900">Factors Favoring Disease</h3>
+              <span id="factors-badge" class="hidden text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-200 text-amber-800">
+                <span id="factors-count">0</span> factor<span id="factors-plural">s</span> present
+              </span>
+            </div>
+            <p class="text-xs text-amber-700 mb-3">✅ Check the factors that are currently present in your field to see a specific recommendation.</p>
+            <div id="factors-list" class="space-y-2">
+              {% for item in detailed_treatment.factors_with_actions %}
+              {% if item.factor %}
+              <label class="flex items-start gap-3 cursor-pointer group">
+                <input type="checkbox"
+                       class="factor-checkbox mt-0.5 h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 flex-shrink-0 cursor-pointer"
+                       data-factor="{{ item.factor }}"
+                       data-action="{{ item.action }}"
+                       data-expected-result="{{ item.expected_result }}" />
+                <span class="text-sm text-amber-800 group-hover:text-amber-900 select-none leading-snug">{{ item.factor }}</span>
+              </label>
+              {% endif %}
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Cultural/Agronomic Practices -->
+      {% if detailed_treatment.cultural_practices %}
+      <div id="sec-cultural" class="bg-white rounded-lg shadow-sm border-2 border-green-200 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="p-2 bg-green-100 rounded-lg">
+            <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap mb-2">
+              <h3 class="text-lg font-bold text-green-900">✅ General Cultural Practices</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Integrated Pest Management (IPM)</span>
+            </div>
+            <p class="text-xs text-green-700 mb-3">These are general agronomic practices recommended for this disease. For specific actions based on your current field conditions, refer to the factor checkboxes above.</p>
+            <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed bg-green-50 p-4 rounded-lg">{{ detailed_treatment.cultural_practices }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Chemical Control -->
+      {% if detailed_treatment.chemical_control %}
+      <div id="sec-chemical" class="bg-white rounded-lg shadow-sm border-2 border-red-200 p-6">
+        <div class="flex items-start gap-3 mb-4">
+          <div class="p-2 bg-red-100 rounded-lg">
+            <svg class="h-5 w-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <div class="flex items-center gap-2 flex-wrap mb-2">
+              <h3 class="text-lg font-bold text-red-900">⚗️ Chemical Control Guide</h3>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-medium">Only if Cultural IPM is Insufficient</span>
+            </div>
+            <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg mb-3">
+              <p class="text-xs text-red-700 font-semibold">⚠️ IMPORTANT: Always follow product label instructions and consult with DA technicians</p>
+            </div>
+            <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed bg-red-50 p-4 rounded-lg">{{ detailed_treatment.chemical_control }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Knowledge Reference (link-only display for canonical IPM content) -->
+      {% if detailed_treatment.knowledge_entries %}
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-4">Knowledge Reference</h3>
+        <p class="text-sm text-gray-700 mb-4">
+          This section shows only approved guides. For the best farming decisions, read the full published article by clicking the links below.
+          
+        </p>
+        <div class="space-y-3">
+          {% for kb in detailed_treatment.knowledge_entries %}
+          <div class="px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer border border-gray-200 rounded-lg">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <h4 class="font-semibold text-gray-800">{{ kb.name }}</h4>
+                <p class="text-xs text-gray-500">{{ kb.category|title }}</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <a href="{% url 'polls:knowledge_detail' kb.pk %}"
+                   class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 text-xs font-medium transition">
+                  View full knowledge
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% else %}
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Knowledge Reference</h3>
+        <p class="text-sm text-gray-500">
+          No published Knowledge entries are linked. Please link a published entry in Treatment management.
+        </p>
+      </div>
+      {% endif %}
+
+      <!-- Additional Details -->
+      {% if detailed_treatment.detailed_text %}
+      <div class="bg-gray-50 rounded-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-3">📋 Additional Information</h3>
+        <div class="text-sm text-gray-700 whitespace-pre-line leading-relaxed">{{ detailed_treatment.detailed_text }}</div>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <!-- No detailed treatment available -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">No Detailed Treatment Available</h3>
+        <p class="text-gray-600 mb-4">Basic treatment information is shown in the detection record.</p>
+        {% if detection.treatment_text %}
+        <div class="bg-gray-50 rounded-lg p-4 text-left">
+          <p class="text-sm text-gray-700">{{ detection.treatment_text }}</p>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Contact Support -->
+      <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg shadow-lg p-6">
+        <div class="flex items-start gap-3">
+          <svg class="h-6 w-6 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <div>
+            <h3 class="text-lg font-bold mb-2">Need Help?</h3>
+            <p class="text-indigo-100 text-sm mb-3">For severe infections or if you're unsure about treatment, contact your local DA field technician for professional guidance.</p>
+            <a href="{% url 'polls:dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-colors text-sm">
+              Contact DA Support
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if detailed_treatment and detailed_treatment.factors_favoring %}
+<script>
+(function () {
+  const checkboxes = document.querySelectorAll('.factor-checkbox');
+  const notice     = document.getElementById('quick-rec-notice');
+  const qrnLabel   = document.getElementById('qrn-label');
+  const qrnDetail  = document.getElementById('qrn-detail');
+  const badge      = document.getElementById('factors-badge');
+  const countEl    = document.getElementById('factors-count');
+  const pluralEl   = document.getElementById('factors-plural');
+  const card       = document.getElementById('quick-rec-card');
+
+  // ── Generic urgency levels (priority-based fallback) ──
+  const levels = {{ urgency_levels_json|safe }};
+
+  // ── Per-factor specific actions from DB ──
+  // Array of { factor: "...", action: "..." } — action may be "" (use generic)
+  const factorActions = {{ factors_with_actions_json|safe }};
+
+  // ── Severity context (from AI detection result) ──
+  // Used to append an extra severity-aware line in the Quick Rec notice
+  const severityPct       = {{ detection.severity_pct|default:0 }};
+  // ── Severity escalation (DA/IPM-curated, from DB) ──
+  // threshold and message are set by the DA/IPM technician in the treatment form
+  const severityThreshold = {{ detailed_treatment.severity_threshold|default:70 }};
+  const severityHighMsg   = "{{ detailed_treatment.severity_high_msg|default:''|escapejs }}";
+
+  const ALL_GRADIENTS = [
+    'from-blue-500','to-indigo-600',
+    'from-yellow-500','to-amber-600',
+    'from-orange-500','to-red-600',
+    'from-red-500','to-rose-700',
+    'from-red-600','to-rose-800',
+    'from-blue-600','to-indigo-700',
+  ];
+
+  function setCardGradient(bgStr) {
+    ALL_GRADIENTS.forEach(c => card.classList.remove(c));
+    bgStr.split(' ').forEach(c => card.classList.add(c));
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function update() {
+    const checked = [...checkboxes].filter(c => c.checked);
+    const n = checked.length;
+
+    // Badge
+    if (n > 0) {
+      countEl.textContent  = n;
+      pluralEl.textContent = n === 1 ? '' : 's';
+      badge.classList.remove('hidden');
+    } else {
+      badge.classList.add('hidden');
+    }
+
+    if (n === 0) {
+      // 0 checked — restore default blue, hide notice, show base text + prompt
+      notice.classList.add('hidden');
+      document.getElementById('quick-rec-base')?.classList.remove('hidden');
+      document.getElementById('quick-rec-prompt')?.classList.remove('hidden');
+      setCardGradient('from-blue-500 to-indigo-600');
+      return;
+    }
+
+    // Hide base text + prompt — factor-specific notice takes over
+    document.getElementById('quick-rec-base')?.classList.add('hidden');
+    document.getElementById('quick-rec-prompt')?.classList.add('hidden');
+
+    // Build specific action lines from checked factors
+    const specificParts = checked
+      .map(cb => {
+        const action = cb.dataset.action || '';
+        const result = cb.dataset.expectedResult || '';
+        if (!action) return null;
+        return { action, result };
+      })
+      .filter(Boolean);
+
+    // Pick generic urgency level for colour/label (clamp to last defined level)
+    const maxIdx = levels.length - 1;
+    const idx    = Math.min(n, maxIdx);
+    const lvl    = levels[idx];
+
+    if (lvl) {
+      setCardGradient(lvl.bg);
+      qrnLabel.textContent = lvl.label;
+
+      if (specificParts.length > 0) {
+        // Show specific actions instead of generic detail
+        qrnDetail.innerHTML = specificParts
+          .map((p, i) => {
+            const border = i > 0 ? 'style="border-top:1px solid rgba(255,255,255,0.15);padding-top:10px;margin-top:10px"' : '';
+            const action = p.action ? `<div style="font-weight:600;color:#fff">• ${escHtml(p.action)}</div>` : '';
+            const result = p.result ? `<div style="padding-left:1rem;padding-top:2px;color:#bfdbfe;font-size:0.75rem;font-style:italic">↳ ${escHtml(p.result)}</div>` : '';
+            return `<div ${border}>${action}${result}</div>`;
+          })
+          .join('');
+      } else {
+        // Fallback to generic detail text
+        qrnDetail.innerHTML = `<span class="text-blue-100">${escHtml(lvl.detail)}</span>`;
+      }
+
+      // ── Severity escalation line (DA/IPM-curated, appended after factor actions) ──
+      // Only shown when severity >= DA-set threshold AND technician provided a message
+      let severityHtml = '';
+      if (severityHighMsg && severityPct >= severityThreshold) {
+        // Idagdag ang anchor links para sa existing sections (kung available sa page)
+        const hasCultural  = !!document.getElementById('sec-cultural');
+        const hasChemical  = !!document.getElementById('sec-chemical');
+        const hasPrevention = !!document.getElementById('sec-prevention');
+        const links = [
+          hasCultural   ? `<a href="#sec-cultural"   style="color:#86efac;text-decoration:underline;white-space:nowrap">✅ Cultural IPM</a>`   : null,
+          hasChemical   ? `<a href="#sec-chemical"   style="color:#fca5a5;text-decoration:underline;white-space:nowrap">⚗️ Chemical Control</a>` : null,
+          hasPrevention ? `<a href="#sec-prevention" style="color:#93c5fd;text-decoration:underline;white-space:nowrap">🛡️ Prevention</a>`       : null,
+        ].filter(Boolean).join('<span style="color:rgba(255,255,255,0.4);margin:0 4px">·</span>');
+
+        severityHtml = `
+          <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.2)">
+            <div style="font-size:0.75rem;color:#fca5a5;font-weight:600">
+              🔴 Severity ${severityPct}% — Quick Recommendation alone is not sufficient at this level.
+            </div>
+            <div style="font-size:0.75rem;color:#fecaca;margin-top:4px">${escHtml(severityHighMsg)}</div>
+            ${links ? `<div style="font-size:0.7rem;margin-top:8px;color:rgba(255,255,255,0.6)">See full guidance below: ${links}</div>` : ''}
+          </div>`;
+      }
+      if (severityHtml) qrnDetail.innerHTML += severityHtml;
+
+      notice.classList.remove('hidden');
+    }
+
+    // Highlight checked rows
+    checkboxes.forEach(cb => {
+      const row = cb.closest('label');
+      if (cb.checked) {
+        row.classList.add('bg-amber-100', 'rounded-lg', 'px-2', 'py-1', '-mx-2');
+      } else {
+        row.classList.remove('bg-amber-100', 'rounded-lg', 'px-2', 'py-1', '-mx-2');
+      }
+    });
+  }
+
+  checkboxes.forEach(cb => cb.addEventListener('change', update));
+})();
+</script>
+{% endif %}
+
+{% endblock %}

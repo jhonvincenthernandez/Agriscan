@@ -1,0 +1,19 @@
+<!-- Generic trash section for simple models (used by RiceVariety) -->
+<div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+    <h2 class="text-base font-semibold text-gray-800">{{ title }}
+      <span class="ml-2 text-xs font-normal bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">{{ items.count }}</span>
+    </h2>
+  </div>
+  <div class="divide-y divide-gray-100">
+    {% for obj in items %}
+    <div class="flex items-center justify-between px-6 py-3 hover:bg-gray-50">
+      <div class="min-w-0">
+        <p class="text-sm font-medium text-gray-900 truncate">{{ obj }}</p>
+        <p class="text-xs text-gray-500">#{{ obj.pk }}</p>
+      </div>
+      {% include 'trash/_actions.html' with model=model pk=obj.pk %}
+    </div>
+    {% endfor %}
+  </div>
+</div>

@@ -1,0 +1,474 @@
+﻿{% extends 'base.html' %}
+{% block title %}Detection Records · AgriScan+{% endblock %}
+
+{% block extra_head %}{% endblock %}
+
+{% block content %}
+
+<!-- Print-only header -->
+<div id="print-header" style="display:none" class="mb-4 border-b pb-3">
+  <h1 class="text-xl font-bold text-gray-900">AgriScan+ · Detection Records</h1>
+  <p class="text-sm text-gray-500 mt-1">
+    Printed on <span id="det-print-date"></span>
+    {% if request.GET.search or request.GET.disease or request.GET.date_filter %}
+     · Filtered view{% endif %}
+  </p>
+</div>
+
+<section class="page-container">
+  <!-- Page Header -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <svg class="h-7 w-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Detection Records
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">Review and manage your leaf scan detection history.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+          <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="text-sm font-semibold text-blue-700">{{ total_count }} Record{{ total_count|pluralize }}</span>
+        </div>
+        <!-- Print Button -->
+        <button onclick="handlePagePrint()"
+                class="no-print flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium text-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Print
+        </button>
+        <div class="relative">
+          <button onclick="openDetExportModal()" class="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium text-sm">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Export
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+            </svg>
+          </button>
+        </div>
+        <a href="{% url 'polls:scan' %}" class="no-print inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition shadow-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          New Scan
+        </a>
+      </div>
+    </div>
+
+    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg">
+      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <form method="get" class="space-y-3">
+        <!-- Row 1: Text search -->
+        <div class="flex items-center gap-2">
+          <input id="det-search" type="text" name="search" value="{{ request.GET.search }}"
+                 placeholder="🔍Search ID, disease, variety, field… (Ctrl+K)"
+                 autocomplete="off"
+                 class="flex-1 min-w-0 rounded-md border-gray-200 text-sm px-3 py-2" />
+          <!-- preserve dropdown values across text search -->
+          <input type="hidden" name="date_filter" value="{{ request.GET.date_filter }}">
+          <input type="hidden" name="disease" value="{{ request.GET.disease }}">
+          <input type="hidden" name="variety" value="{{ request.GET.variety }}">
+          <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+          <input type="hidden" name="page_size" value="{{ page_size }}">
+          <button type="submit" data-loading class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm hover:shadow text-sm font-medium flex items-center gap-1">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Search
+          </button>
+          {% if request.GET.search or request.GET.date_filter or request.GET.disease or request.GET.variety %}
+          <a href="{% url 'polls:detections_list' %}" class="px-4 py-2 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-100 transition">Clear</a>
+          {% endif %}
+        </div>
+        <!-- Row 2: Dropdowns (auto-submit) -->
+        <div class="flex flex-wrap items-center gap-2">
+          <select name="date_filter" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[110px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="">All Time</option>
+            <option value="today" {% if request.GET.date_filter == 'today' %}selected{% endif %}>Today</option>
+            <option value="week" {% if request.GET.date_filter == 'week' %}selected{% endif %}>This Week</option>
+            <option value="month" {% if request.GET.date_filter == 'month' %}selected{% endif %}>This Month</option>
+          </select>
+          <select name="disease" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[130px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="">All Conditions</option>
+            {% if detection_classes %}
+              {% for d in detection_classes %}
+                <option value="{{ d }}" {% if request.GET.disease == d %}selected{% endif %}>{{ d }}</option>
+              {% endfor %}
+            {% endif %}
+          </select>
+          <select name="variety" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[130px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="">All Varieties</option>
+            {% for v in varieties %}
+              <option value="{{ v }}" {% if request.GET.variety == v %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+          <select name="sort" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[120px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest</option>
+            <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest</option>
+            <option value="-severity_pct" {% if request.GET.sort == '-severity_pct' or not request.GET.sort %}selected{% endif %}>Severity ↓</option>
+            <option value="severity_pct" {% if request.GET.sort == 'severity_pct' %}selected{% endif %}>Severity ↑</option>
+            <option value="-confidence_pct" {% if request.GET.sort == '-confidence_pct' %}selected{% endif %}>Confidence ↓</option>
+            <option value="confidence_pct" {% if request.GET.sort == 'confidence_pct' %}selected{% endif %}>Confidence ↑</option>
+            <option value="disease__name" {% if request.GET.sort == 'disease__name' %}selected{% endif %}>Disease A-Z</option>
+            <option value="-disease__name" {% if request.GET.sort == '-disease__name' %}selected{% endif %}>Disease Z-A</option>
+            <option value="planting__variety__code" {% if request.GET.sort == 'planting__variety__code' %}selected{% endif %}>Variety A-Z</option>
+            <option value="-planting__variety__code" {% if request.GET.sort == '-planting__variety__code' %}selected{% endif %}>Variety Z-A</option>
+            <option value="planting__field__name" {% if request.GET.sort == 'planting__field__name' %}selected{% endif %}>Field A-Z</option>
+            <option value="-planting__field__name" {% if request.GET.sort == '-planting__field__name' %}selected{% endif %}>Field Z-A</option>
+            <option value="pk" {% if request.GET.sort == 'pk' %}selected{% endif %}>ID ↑</option>
+            <option value="-pk" {% if request.GET.sort == '-pk' %}selected{% endif %}>ID ↓</option>
+          </select>
+          <select name="page_size" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[100px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
+            <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
+          </select>
+          <span class="ml-auto text-xs text-gray-500">{{ total_count }} total records</span>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>  
+
+  {% if detections %}
+      <!-- Bulk Action Toolbar (hidden until rows selected) -->
+      <div id="bulk-toolbar" class="hidden no-print px-6 py-3 bg-blue-50 border-b border-blue-200 flex items-center gap-3">
+        <span id="bulk-count" class="text-sm font-semibold text-blue-800">0 selected</span>
+        <button type="button" onclick="confirmBulkDelete()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Archive Selected
+        </button>
+        <button onclick="clearSelection()" class="text-xs text-blue-600 hover:text-blue-800 font-medium ml-auto">✕ Clear selection</button>
+      </div>
+
+      <!-- Table skeleton (shown immediately, hidden after JS runs) -->
+      <div id="detections-skeleton" class="divide-y divide-gray-100" aria-hidden="true">
+        {% for i in "12345" %}
+        <div class="sk-table-row">
+          <div class="sk h-4 w-10 rounded flex-shrink-0"></div>
+          <div class="sk h-16 w-16 rounded-md flex-shrink-0"></div>
+          <div class="sk h-4 flex-1 rounded"></div>
+          <div class="sk h-4 w-20 rounded"></div>
+          <div class="sk h-4 w-20 rounded"></div>
+          <div class="sk h-4 w-16 rounded"></div>
+          <div class="sk h-4 w-24 rounded"></div>
+          <div class="sk h-8 w-24 rounded-lg flex-shrink-0"></div>
+        </div>
+        {% endfor %}
+      </div>
+      <!-- Real table (hidden until JS reveals) -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div id="detections-table" class="hidden overflow-x-auto">
+          <table role="table" aria-label="Detection records" class="min-w-full divide-y divide-gray-200 text-sm">
+          <thead class="bg-gray-50">
+            <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              {% with sb=sort_by p=request.GET.search d=request.GET.disease v=request.GET.variety df=request.GET.date_filter ps=request.GET.page_size %}
+              <th class="px-4 py-3 w-8 no-print">
+                <input type="checkbox" id="select-all-cb"
+                       class="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                       title="Select all on this page" />
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == 'pk' %}-pk{% else %}pk{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  ID
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'pk' or sb == '-pk' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'pk' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">Image</th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == 'disease__name' %}-disease__name{% else %}disease__name{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Disease
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'disease__name' or sb == '-disease__name' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'disease__name' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == 'planting__variety__code' %}-planting__variety__code{% else %}planting__variety__code{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Variety
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'planting__variety__code' or sb == '-planting__variety__code' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'planting__variety__code' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == '-confidence_pct' %}confidence_pct{% else %}-confidence_pct{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Confidence
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'confidence_pct' or sb == '-confidence_pct' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'confidence_pct' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == '-severity_pct' %}severity_pct{% else %}-severity_pct{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Severity
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'severity_pct' or sb == '-severity_pct' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'severity_pct' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == 'planting__field__name' %}-planting__field__name{% else %}planting__field__name{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Field
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'planting__field__name' or sb == '-planting__field__name' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'planting__field__name' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == '-created_at' %}created_at{% else %}-created_at{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Created
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'created_at' or sb == '-created_at' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'created_at' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 text-right">Actions</th>
+              {% endwith %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for detection in detections %}
+            <tr class="hover:bg-gray-50 transition det-row" data-id="{{ detection.pk }}">
+              <td class="px-4 py-3 w-8 no-print">
+                <input type="checkbox" class="row-cb h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                       value="{{ detection.pk }}" />
+              </td>
+              <td class="px-4 py-3 font-mono text-xs text-gray-500">#{{ detection.pk }}</td>
+              <td class="px-4 py-3">
+                {% if detection.image_path %}
+                  <img src="{{ media_url }}{{ detection.image_path }}" alt="Detection {{ detection.pk }}" class="h-16 w-16 object-cover rounded-md border" />
+                {% else %}
+                  <span class="text-xs text-gray-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 font-medium">{{ detection.disease|default:'Unknown' }}</td>
+              <td class="px-4 py-3">
+                {% if detection.planting and detection.planting.variety %}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {{ detection.planting.variety.code }}
+                  </span>
+                {% else %}
+                  <span class="text-xs text-gray-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                {% if detection.confidence_pct %}
+                  <span class="inline-flex items-center gap-1 text-xs font-medium {% if detection.confidence_pct >= 80 %}text-green-700{% elif detection.confidence_pct >= 60 %}text-amber-700{% else %}text-red-700{% endif %}">
+                    {{ detection.confidence_pct }}%
+                  </span>
+                {% else %}<span class="text-xs text-gray-400">—</span>{% endif %}
+              </td>
+              <td class="px-4 py-3">
+                {% if detection.severity_pct is not None %}
+                  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium
+                    {% if detection.severity_pct >= 70 %}bg-red-100 text-red-700
+                    {% elif detection.severity_pct >= 40 %}bg-amber-100 text-amber-700
+                    {% elif detection.severity_pct > 0 %}bg-yellow-100 text-yellow-700
+                    {% else %}bg-green-100 text-green-700{% endif %}">
+                    {{ detection.severity_pct }}%
+                  </span>
+                {% else %}<span class="text-xs text-gray-400">—</span>{% endif %}
+              </td>
+              <td class="px-4 py-3 text-xs text-gray-600">
+                {% if detection.planting and detection.planting.field %}
+                  {{ detection.planting.field.name }}
+                {% else %}
+                  <span class="text-gray-400">—</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3 text-xs text-gray-500">{{ detection.created_at|date:'Y-m-d H:i' }}</td>
+                <td class="px-4 py-3 text-right">
+                  <div class="inline-flex items-center justify-end gap-2">
+                    <a href="{% url 'polls:detections_detail' detection.pk %}" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium transition" aria-label="View treatment for detection {{ detection.pk }}" title="View Full Treatment">
+                      <svg class="h-4 w-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                      Treatment
+                    </a>
+                    {% if not is_farmer or detection.user == request.user.profile %}
+                    <a href="{% url 'polls:detections_edit' detection.pk %}" class="text-blue-600 hover:text-blue-700 text-sm font-medium transition" aria-label="Edit detection {{ detection.pk }}">Edit</a>
+                    <a href="{% url 'polls:detections_delete' detection.pk %}" data-open-delete="true" data-delete-label="Detection #{{ detection.pk }}" class="text-red-600 hover:text-red-700 text-sm font-medium transition" aria-label="Delete detection {{ detection.pk }}">Delete</a>
+                    {% endif %}
+                  </div>
+                </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div><!-- /#detections-table -->
+      {% if is_paginated and page_obj %}
+        {% include 'partials/_pagination.html' %}
+      {% endif %}
+    {% else %}
+      <div class="px-6 py-12 text-center">
+        <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <p class="mt-4 text-sm text-gray-600">No detection records yet</p>
+        <p class="text-xs text-gray-400 mt-1">Start scanning leaves to see results here</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var sk  = document.getElementById('detections-skeleton');
+  var tbl = document.getElementById('detections-table');
+  if (sk)  sk.style.display  = 'none';
+  if (tbl) tbl.classList.remove('hidden');
+
+  var el = document.getElementById('det-print-date');
+  if (el) el.textContent = new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' });
+
+  /* ── Bulk select ─────────────────────────────────────── */
+  const selectAll  = document.getElementById('select-all-cb');
+  const toolbar    = document.getElementById('bulk-toolbar');
+  const countEl    = document.getElementById('bulk-count');
+
+  function getRowCbs() { return document.querySelectorAll('.row-cb'); }
+
+  function updateToolbar() {
+    const checked = [...getRowCbs()].filter(cb => cb.checked);
+    const n = checked.length;
+    if (toolbar)  toolbar.classList.toggle('hidden', n === 0);
+    if (countEl)  countEl.textContent = n + ' selected';
+    // Sync select-all state
+    const total = getRowCbs().length;
+    if (selectAll) {
+      selectAll.checked       = n === total && total > 0;
+      selectAll.indeterminate = n > 0 && n < total;
+    }
+    // Highlight selected rows
+    document.querySelectorAll('.det-row').forEach(row => {
+      const cb = row.querySelector('.row-cb');
+      row.classList.toggle('bg-blue-50', cb && cb.checked);
+    });
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener('change', function () {
+      getRowCbs().forEach(cb => cb.checked = this.checked);
+      updateToolbar();
+    });
+  }
+
+  document.addEventListener('change', function (e) {
+    if (e.target.classList.contains('row-cb')) updateToolbar();
+  });
+
+  // Click anywhere on row also toggles the checkbox (except on links/buttons)
+  document.querySelectorAll('.det-row').forEach(row => {
+    row.addEventListener('click', function (e) {
+      if (e.target.closest('a, button, input')) return;
+      const cb = row.querySelector('.row-cb');
+      if (cb) { cb.checked = !cb.checked; updateToolbar(); }
+    });
+    row.style.cursor = 'pointer';
+  });
+});
+
+function clearSelection() {
+  document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
+  const sa = document.getElementById('select-all-cb');
+  if (sa) { sa.checked = false; sa.indeterminate = false; }
+  document.getElementById('bulk-toolbar')?.classList.add('hidden');
+  document.querySelectorAll('.det-row').forEach(r => r.classList.remove('bg-blue-50'));
+}
+
+function confirmBulkDelete() {
+  const checked = [...document.querySelectorAll('.row-cb:checked')];
+  const count   = checked.length;
+  if (count === 0) return;
+
+  // Reuse the global delete modal
+  const modal   = document.getElementById('confirm-delete-modal');
+  const form    = document.getElementById('delete-post-form');
+  if (!modal || !form) return;
+
+  // Configure modal text
+  document.getElementById('delete-modal-title').textContent  = 'Archive Detections?';
+  document.getElementById('confirm-delete-text').textContent = `${count} detection${count !== 1 ? 's' : ''} selected`;
+  const sub = document.getElementById('confirm-delete-subtitle');
+  if (sub) sub.textContent = 'They will be archived and can be restored from Trash.';
+
+  // Show archive notice, hide permanent
+  const noticeA = document.getElementById('delete-modal-notice-archive');
+  const noticeP = document.getElementById('delete-modal-notice-permanent');
+  if (noticeA) noticeA.style.display = 'block';
+  if (noticeP) noticeP.style.display = 'none';
+
+  document.getElementById('delete-modal-confirm').textContent = 'Yes, Archive';
+
+  // Point the global form to the bulk-delete endpoint and inject selected IDs
+  form.action = '{% url "polls:detections_bulk_delete" %}';
+  form.querySelectorAll('.injected-bulk').forEach(el => el.remove());
+  checked.forEach(cb => {
+    const inp = document.createElement('input');
+    inp.type      = 'hidden';
+    inp.name      = 'selected_ids';
+    inp.value     = cb.value;
+    inp.className = 'injected-bulk injected-purge'; // injected-purge ensures cleanup on cancel
+    form.appendChild(inp);
+  });
+
+  modal.style.display = 'flex';
+  modal.setAttribute('aria-hidden', 'false');
+  setTimeout(() => document.getElementById('delete-modal-confirm')?.focus(), 50);
+}
+</script>
+
+{% include 'partials/_ctrlk.html' with input_id='det-search' %}
+{% endblock %}
+
+{% block modals %}
+<script>
+function openDetExportModal() {
+  openExportModal({
+    title:  'Export Detection Records',
+    csvUrl: '{% url "polls:export_detections_csv" %}',
+    pdfUrl: '{% url "polls:export_detections_pdf" %}',
+    cols: [
+      { value: 'id',         label: 'ID'           },
+      { value: 'date',       label: 'Date'         },
+      { value: 'disease',    label: 'Disease'      },
+      { value: 'confidence', label: 'Confidence'   },
+      { value: 'severity',   label: 'Severity'     },
+      { value: 'field',      label: 'Field'        },
+      { value: 'source',     label: 'Source'       },
+      { value: 'model',      label: 'Model Version'},
+    ],
+  });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,398 @@
+﻿{% extends 'base.html' %}
+{% block title %}Reports & Analytics · AgriScan+{% endblock %}
+
+{% block extra_head %}
+<style>
+  @media print {
+    /* Charts — fixed height so they don't overflow */
+    canvas { max-height: 220px !important; page-break-inside: avoid; }
+
+    /* Grid layout fallback for print */
+    .grid { display: block !important; }
+    .grid > * { margin-bottom: 1rem; width: 100% !important; }
+    .lg\:grid-cols-2, .lg\:grid-cols-3 { columns: 1 !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- Print-only header (hidden on screen) -->
+<div id="print-header" style="display:none" class="mb-6 border-b pb-4">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">AgriScan+ · Reports &amp; Analytics</h1>
+      <p class="text-sm text-gray-500 mt-1">
+        Period: {{ start_date|default:"All time" }} — {{ end_date|default:"Present" }}
+      </p>
+    </div>
+    <p class="text-xs text-gray-400">Printed on <span id="print-date"></span></p>
+  </div>
+</div>
+
+<section class="page-container">
+  <!-- Page Header -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <svg class="h-7 w-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Reports &amp; Analytics
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">Monthly summaries and performance metrics for AgriScan+ system.</p>
+      </div>
+      <div class="no-print flex items-center gap-2 flex-wrap self-start sm:self-auto">
+        <!-- Print -->
+        <button id="print-btn" onclick="handlePagePrint()"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition shadow-sm">
+          <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          Print
+        </button>
+        <!-- Export -->
+        <button onclick="openExportModal({ title:'Export Report', baseUrl:'?', fmtParam:'export', extraParams:{ start_date:'{{ start_date }}', end_date:'{{ end_date }}' }, sections: _reportSections })"
+                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition shadow-sm">
+          <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Export
+          <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date Range Filter -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <form method="get" class="flex flex-col sm:flex-row gap-4 items-end">
+      <div class="flex-1 min-w-0">
+        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+        <input
+          type="date"
+          id="start_date"
+          name="start_date"
+          value="{{ start_date }}"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+      </div>
+      <div class="flex-1 min-w-0">
+        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+        <input
+          type="date"
+          id="end_date"
+          name="end_date"
+          value="{{ end_date }}"
+          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        >
+      </div>
+      <button
+        type="submit"
+        data-loading
+        class="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+      >
+        Apply Filter
+      </button>
+    </form>
+  </div>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-6">
+    <!-- Model Accuracy -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs text-gray-500 font-medium">Model Accuracy</p>
+        <div class="p-1.5 bg-blue-100 rounded-lg">
+          <svg class="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ model_accuracy|default:"N/A" }}{% if model_accuracy %}%{% endif %}</h3>
+      <p class="text-xs text-gray-400 mt-1">CNN Detection Model</p>
+    </div>
+
+    <!-- High Confidence Rate -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs text-gray-500 font-medium">High Confidence</p>
+        <div class="p-1.5 bg-green-100 rounded-lg">
+          <svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ confidence_rate }}%</h3>
+      <p class="text-xs text-gray-400 mt-1">Detections ≥80% conf.</p>
+    </div>
+
+    <!-- Total Detections -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs text-gray-500 font-medium">Detections</p>
+        <div class="p-1.5 bg-purple-100 rounded-lg">
+          <svg class="h-4 w-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ total_detections }}</h3>
+      <p class="text-xs text-gray-400 mt-1">
+        <span class="text-green-600 font-semibold">{{ healthy_count }}✓</span>
+        <span class="text-gray-300 mx-1">·</span>
+        <span class="text-red-500 font-semibold">{{ diseased_count }}✗</span>
+      </p>
+    </div>
+
+    <!-- Yield Predictions -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs text-gray-500 font-medium">Yield Records</p>
+        <div class="p-1.5 bg-yellow-100 rounded-lg">
+          <svg class="h-4 w-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ total_yields }}</h3>
+      <p class="text-xs text-gray-400 mt-1">Predictions in range</p>
+    </div>
+
+    <!-- Active Fields -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs text-gray-500 font-medium">Active Fields</p>
+        <div class="p-1.5 bg-emerald-100 rounded-lg">
+          <svg class="h-4 w-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ total_fields }}</h3>
+      <p class="text-xs text-gray-400 mt-1">Registered rice fields</p>
+    </div>
+
+    <!-- Plantings in Range -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+      <div class="flex items-center justify-between mb-2">
+        <p class="text-xs text-gray-500 font-medium">Plantings</p>
+        <div class="p-1.5 bg-lime-100 rounded-lg">
+          <svg class="h-4 w-4 text-lime-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+          </svg>
+        </div>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900">{{ total_plantings }}</h3>
+      <p class="text-xs text-gray-400 mt-1">Planting cycles in range</p>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-2 gap-6 mb-6">
+    <!-- Chart skeleton (shown until Chart.js renders) -->
+    <div id="monthly-chart-skeleton" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6" aria-hidden="true">
+      <div class="sk h-5 w-64 rounded mb-5"></div>
+      <div class="flex items-end gap-2" style="height:200px">
+        <div class="sk flex-1 rounded-t" style="height:55%"></div>
+        <div class="sk flex-1 rounded-t" style="height:80%"></div>
+        <div class="sk flex-1 rounded-t" style="height:35%"></div>
+        <div class="sk flex-1 rounded-t" style="height:65%"></div>
+        <div class="sk flex-1 rounded-t" style="height:90%"></div>
+        <div class="sk flex-1 rounded-t" style="height:45%"></div>
+      </div>
+    </div>
+    <div id="monthly-chart-real" class="hidden bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Healthy vs Diseased Crops (Last 6 Months)</h3>
+      <canvas id="monthlyChart" class="max-h-80"></canvas>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Monthly Detection Summary</h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50">
+            <tr class="text-left text-xs font-medium text-gray-500 uppercase">
+              <th class="px-3 py-2">Month</th>
+              <th class="px-3 py-2 text-center">Healthy</th>
+              <th class="px-3 py-2 text-center">Diseased</th>
+              <th class="px-3 py-2 text-center">Total</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            {% for data in monthly_data %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-3 py-2 font-medium text-gray-900">{{ data.month }}</td>
+              <td class="px-3 py-2 text-center text-green-600">{{ data.healthy }}</td>
+              <td class="px-3 py-2 text-center text-red-600">{{ data.diseased }}</td>
+              <td class="px-3 py-2 text-center font-semibold">{{ data.total }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="px-3 py-8 text-center text-gray-500">No data available</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">Top Disease Frequency</h3>
+      {% if unclassified_count and role != 'farmer' %}
+      <span class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+        {{ unclassified_count }} unclassified scan{{ unclassified_count|pluralize }} excluded
+      </span>
+      {% endif %}
+    </div>
+    {% if disease_freq %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr class="text-left text-xs font-medium text-gray-500 uppercase">
+            <th class="px-4 py-3">#</th>
+            <th class="px-4 py-3">Disease</th>
+            <th class="px-4 py-3 text-right">Detections</th>
+            <th class="px-4 py-3 text-right">% of Diseased</th>
+            <th class="px-4 py-3">Share</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for item in disease_freq %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2.5 text-xs text-gray-400 font-mono">{{ forloop.counter }}</td>
+            <td class="px-4 py-2.5 font-medium text-gray-900">{{ item.disease__name|default:"Unknown" }}</td>
+            <td class="px-4 py-2.5 text-right font-semibold text-gray-800">{{ item.count }}</td>
+            <td class="px-4 py-2.5 text-right text-gray-600">{{ item.pct }}%</td>
+            <td class="px-4 py-2.5 w-40">
+              <div class="w-full bg-gray-100 rounded-full h-2">
+                <div class="bg-red-400 h-2 rounded-full" style="width:{{ item.pct }}%"></div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-sm text-gray-400 py-6 text-center">No disease detections in the selected period.</p>
+    {% endif %}
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">Average Yield per Rice Variety</h3>
+      {% if unlinked_yield_count and role != 'farmer' %}
+      <span class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+        {{ unlinked_yield_count }} prediction{{ unlinked_yield_count|pluralize }} excluded — no variety linked
+      </span>
+      {% endif %}
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50">
+          <tr class="text-left text-xs font-medium text-gray-500 uppercase">
+            <th class="px-4 py-3">Variety</th>
+            <th class="px-4 py-3 text-right">Avg Sacks/ha</th>
+            <th class="px-4 py-3 text-right">Avg Tons/ha</th>
+            <th class="px-4 py-3 text-right">Predictions</th>
+            <th class="px-4 py-3 text-right">Performance</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for item in variety_yields %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-3 font-medium text-gray-900">{{ item.variety }}</td>
+            <td class="px-4 py-3 text-right text-gray-900">{{ item.avg_sacks }}</td>
+            <td class="px-4 py-3 text-right text-gray-600">{{ item.avg_tons }}</td>
+            <td class="px-4 py-3 text-right text-gray-600">{{ item.count }}</td>
+            <td class="px-4 py-3 text-right">
+              {% if item.avg_sacks >= 100 %}
+                <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">Excellent</span>
+              {% elif item.avg_sacks >= 80 %}
+                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">Good</span>
+              {% elif item.avg_sacks >= 60 %}
+                <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs font-medium">Average</span>
+              {% else %}
+                <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-medium">Low</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-500">No yield data available</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+// Monthly Healthy vs Diseased Chart
+const monthlyData = {{ monthly_data|safe }};
+const monthLabels = monthlyData.map(d => d.month);
+const healthyData = monthlyData.map(d => d.healthy);
+const diseasedData = monthlyData.map(d => d.diseased);
+
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'bar',
+  data: {
+    labels: monthLabels,
+    datasets: [
+      {
+        label: 'Healthy',
+        data: healthyData,
+        backgroundColor: 'rgba(34, 197, 94, 0.8)',
+        borderColor: 'rgb(34, 197, 94)',
+        borderWidth: 1
+      },
+      {
+        label: 'Diseased',
+        data: diseasedData,
+        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+        borderColor: 'rgb(239, 68, 68)',
+        borderWidth: 1
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' }
+    },
+    scales: {
+      y: { beginAtZero: true, ticks: { stepSize: 1 } }
+    }
+  }
+});
+
+// Reveal real chart card, hide skeleton
+document.addEventListener('DOMContentLoaded', function () {
+  var sk   = document.getElementById('monthly-chart-skeleton');
+  var real = document.getElementById('monthly-chart-real');
+  if (sk)   sk.style.display = 'none';
+  if (real) real.classList.remove('hidden');
+});
+
+// Sections config shared by both Export PDF and Export CSV buttons
+var _reportSections = [
+  { value: 'summary',    label: 'Summary Statistics',      desc: 'Total detections, yield overview, model accuracy' },
+  { value: 'monthly',    label: 'Monthly Breakdown',        desc: 'Healthy vs diseased per month'                   },
+  { value: 'diseases',   label: 'Disease Frequency',        desc: 'Top 10 diseases by detection count'             },
+  { value: 'varieties',  label: 'Yield per Variety',        desc: 'Average sacks/ha per rice variety'              },
+  { value: 'detections', label: 'Detection Details',        desc: 'Full list of scan records in date range'        },
+  { value: 'yields',     label: 'Yield Prediction Details', desc: 'Full list of yield predictions in date range'   },
+];
+</script>
+
+{% endblock %}

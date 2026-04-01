@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Knowledge Base · AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Knowledge Base</h1>
+        <p class="mt-1 text-sm text-gray-500">Browse trusted guidance on farming, crop health, and best practices.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+          <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          <span class="text-sm font-semibold text-green-700">{{ total_count }} entr{{ total_count|pluralize:"y,ies" }}</span>
+        </div>
+
+        {% if is_admin_or_technician %}
+        <a href="{% url 'polls:knowledge_admin_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition text-sm font-medium">
+          Manage
+        </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg">
+      <form method="get" class="space-y-3 p-4">
+        <div class="flex flex-col md:flex-row md:items-center gap-2">
+          <input id="knowledge-search" type="text" name="search" value="{{ search_query }}"
+                 placeholder="🔍Search name, description, symptoms… (Ctrl+K)"
+                 autocomplete="off"
+                 class="flex-1 min-w-0 rounded-md border-gray-200 text-sm px-3 py-2" />
+          <!-- preserve dropdown values across text search -->
+          <input type="hidden" name="category" value="{{ category_filter }}">
+          <input type="hidden" name="sort" value="{{ sort }}">
+          <input type="hidden" name="page_size" value="{{ page_size }}">
+          <button type="submit" data-loading class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm hover:shadow text-sm font-medium flex items-center gap-1">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            Search
+          </button>
+          {% if search_query or category_filter %}
+          <a href="{% url 'polls:knowledge_list' %}" class="px-4 py-2 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-100 transition">Clear</a>
+          {% endif %}
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <select name="category" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[160px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="">All categories</option>
+            <option value="disease" {% if category_filter == 'disease' %}selected{% endif %}>🦠 Disease</option>
+            <option value="pest" {% if category_filter == 'pest' %}selected{% endif %}>🐛 Pest</option>
+            <option value="crop_nutrition" {% if category_filter == 'crop_nutrition' %}selected{% endif %}>🌱 Crop Nutrition & Fertilizer</option>
+            <option value="irrigation" {% if category_filter == 'irrigation' %}selected{% endif %}>💧 Irrigation & Water Management</option>
+            <option value="soil" {% if category_filter == 'soil' %}selected{% endif %}>🌿 Soil Management</option>
+            <option value="post_harvest" {% if category_filter == 'post_harvest' %}selected{% endif %}>🌾 Post-Harvest & Storage</option>
+          </select>
+
+          <select name="sort" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[150px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="name" {% if sort == 'name' %}selected{% endif %}>Name A-Z</option>
+            <option value="-name" {% if sort == '-name' %}selected{% endif %}>Name Z-A</option>
+            <option value="updated_at" {% if sort == 'updated_at' %}selected{% endif %}>Newest updated</option>
+          </select>
+
+          <select name="page_size" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[120px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+            <option value="12" {% if page_size == 12 %}selected{% endif %}>12 / page</option>
+            <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
+          </select>
+
+          <span class="ml-auto text-xs text-gray-500">{{ total_count }} total records</span>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if entries %}
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for entry in entries %}
+    <article class="flex flex-col bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition">
+      {% if entry.image_url %}
+      <div class="h-40 overflow-hidden rounded-t-lg">
+        <img src="{{ entry.image_url }}" alt="{{ entry.name }}" class="h-full w-full object-cover" />
+      </div>
+      {% endif %}
+      <div class="p-5 flex flex-col h-full">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-lg font-semibold text-gray-900">{{ entry.name }}</h2>
+          {% if entry.category == 'disease' %}
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-red-50 text-red-700">🦠 Disease</span>
+          {% elif entry.category == 'pest' %}
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-amber-50 text-amber-700">🐛 Pest</span>
+          {% elif entry.category == 'crop_nutrition' %}
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-emerald-50 text-emerald-700">🌱 Crop Nutrition</span>
+          {% elif entry.category == 'irrigation' %}
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-cyan-50 text-cyan-700">💧 Irrigation</span>
+          {% elif entry.category == 'soil' %}
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-lime-50 text-lime-700">🌿 Soil Management</span>
+          {% elif entry.category == 'post_harvest' %}
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-orange-50 text-orange-700">🌾 Post-Harvest</span>
+          {% else %}
+            <span class="text-[11px] font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600">{{ entry.get_category_display }}</span>
+          {% endif %}
+        </div>
+        <p class="text-sm text-gray-600 leading-relaxed">{{ entry.description|truncatechars:140 }}</p>
+
+        <div class="mt-auto pt-4 border-t border-gray-100">
+          <div class="flex items-center justify-between">
+            <a href="{% url 'polls:knowledge_detail' entry.pk %}"
+               class="text-sm font-semibold text-blue-600 hover:text-blue-700">Read more →</a>
+            <span class="text-xs text-gray-400">Updated {{ entry.updated_at|date:'M d, Y' }}</span>
+          </div>
+
+          {% if is_admin_or_technician %}
+          <div class="mt-3 flex flex-col sm:flex-row sm:items-center sm:gap-2">
+            <a href="{% url 'polls:knowledge_edit' entry.pk %}" class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+              Edit
+            </a>
+            <a href="{% url 'polls:knowledge_archive' entry.pk %}" data-open-delete="true" data-delete-label="Knowledge entry: {{ entry.name }}" data-delete-subtitle="This will archive the entry and move it to Trash & Archive." class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
+              Archive
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  {% if page_obj and is_paginated %}
+    {% include 'partials/_pagination.html' %}
+  {% endif %}
+
+  {% else %}
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 text-center text-gray-500">
+    <p>No knowledge entries found.</p>
+  </div>
+  {% endif %}
+</section>
+{% include 'partials/_ctrlk.html' with input_id='knowledge-search' %}
+{% endblock %}

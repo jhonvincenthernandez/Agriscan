@@ -1,0 +1,431 @@
+﻿{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Announcements - AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <svg class="h-7 w-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    Announcements & Advisories
+                </h1>
+                <p class="mt-1 text-sm text-gray-500">Stay updated with important information and crop advisories</p>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+                <!-- Unread badge / count -->
+                {% if unread_count > 0 %}
+                <div class="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg">
+                    <svg class="h-5 w-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+                    <span class="text-sm font-semibold text-red-700">{{ unread_count }} Unread</span>
+                </div>
+                {% else %}
+                <div class="flex items-center gap-2 px-4 py-2 bg-indigo-50 border border-indigo-200 rounded-lg">
+                    <svg class="h-5 w-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="text-sm font-semibold text-indigo-700">All Read</span>
+                </div>
+                {% endif %}
+
+                <!-- Mark All as Read button -->
+                {% if unread_count > 0 %}
+                <form method="post" action="{% url 'polls:announcements_list' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="mark_all_read">
+                    <button type="submit" data-loading
+                        class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Mark All as Read
+                        <span class="inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold bg-red-100 text-red-700 rounded-full">
+                            {{ unread_count }}
+                        </span>
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if is_admin or is_technician %}
+                <a href="{% url 'polls:announcement_create' %}"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Create Announcement
+                </a>
+                {% if draft_count %}
+                <a href="?status=draft"
+                   class="inline-flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 text-yellow-700 text-sm font-semibold rounded-lg hover:bg-yellow-100 transition">
+                    <svg class="h-4 w-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m-3.536 9.536A9 9 0 1120.536 7.464"/>
+                    </svg>
+                    {{ draft_count }} Draft{{ draft_count|pluralize }}
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Search & Filters -->
+        <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <form method="get" class="space-y-3" id="ann-filter-form">
+                <!-- Row 1: Text search -->
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1 min-w-0">
+                        
+                        <input
+                            type="text"
+                            name="search"
+                            id="ann-search-input"
+                            value="{{ current_search }}"
+                            placeholder="🔍Search title, content, author… (Ctrl+K)"
+                            class="block w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition"
+                            autocomplete="off"
+                        />
+                    </div>
+                    <!-- Preserve dropdown values across text search -->
+                    <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+                    <button type="submit" data-loading
+                        class="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        Search
+                    </button>
+                    {% if current_search or current_category or current_status %}
+                    <a href="{% url 'polls:announcements_list' %}"
+                       class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                        Clear
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Row 2: Dropdowns (auto-submit, preserve search text) -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <select name="category" onchange="this.form.submit()"
+                        class="rounded-lg border border-gray-300 text-sm px-3 py-2 bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-9 min-w-[160px] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                        <option value="">All Categories</option>
+                        {% for value, label in categories %}
+                            <option value="{{ value }}" {% if current_category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <select name="status" onchange="this.form.submit()"
+                        class="rounded-lg border border-gray-300 text-sm px-3 py-2 bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-9 min-w-[130px] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                        <option value="">All</option>
+                        <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread Only</option>
+                        <option value="read"   {% if current_status == 'read'   %}selected{% endif %}>Read Only</option>
+                        {% if is_admin or is_technician %}
+                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="draft"  {% if current_status == 'draft'  %}selected{% endif %}>Draft</option>
+                        {% endif %}
+                    </select>
+                    <select name="page_size" onchange="this.form.submit()" class="rounded-lg border border-gray-300 text-sm px-3 py-2 bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.5rem_center] bg-no-repeat pr-9 min-w-[130px] focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                        {% for size in allowed_page_sizes %}
+                        <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} / page</option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- Active-filter chips -->
+                    {% if current_search %}
+                    <span class="inline-flex items-center gap-1 pl-3 pr-2 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-full">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                        "{{ current_search }}"
+                    </span>
+                    {% endif %}
+
+                    <!-- Result count -->
+                    <span class="ml-auto text-xs text-gray-500 whitespace-nowrap">
+                        {{ announcements.paginator.count }} result{{ announcements.paginator.count|pluralize }} found
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-blue-100 rounded-lg p-3">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Unread</p>
+                    <p class="text-2xl font-bold text-gray-800" data-stat="unread">{{ unread_count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">Total</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ announcements.paginator.count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow p-6">
+            <div class="flex items-center">
+                <div class="flex-shrink-0 bg-purple-100 rounded-lg p-3">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div class="ml-4">
+                    <p class="text-gray-600 text-sm">This Page</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ announcements|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Announcements List -->
+    <div class="space-y-4">
+        {% if announcements %}
+            {% for announcement in announcements %}
+                {% with is_unread=announcement.is_read %}
+                <div id="announcement-{{ announcement.pk }}"
+                     class="rounded-lg shadow hover:shadow-lg transition-all duration-200
+                            {% if not is_unread %}bg-blue-50 ring-1 ring-blue-100{% else %}bg-white{% endif %}">
+                    <div class="p-6">
+                        <div class="flex items-start">
+                            <!-- Priority Icon -->
+                            <div class="flex-shrink-0 mr-4">
+                                {% if announcement.priority == 'urgent' %}
+                                    <span class="text-4xl">📕</span>
+                                {% elif announcement.priority == 'warning' %}
+                                    <span class="text-4xl">📙</span>
+                                {% elif announcement.priority == 'advisory' %}
+                                    <span class="text-4xl">📗</span>
+                                {% else %}
+                                    <span class="text-4xl">📘</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- Content -->
+                            <div class="flex-1">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h3 class="text-xl {% if not is_unread %}font-extrabold text-gray-900{% else %}font-semibold text-gray-700{% endif %}">
+                                        {{ announcement.title }}
+                                    </h3>
+                                    <span class="text-sm text-gray-500 ml-4 shrink-0">
+                                        {{ announcement.published_at|date:"M d, Y g:i A" }}
+                                    </span>
+                                </div>
+
+                                <!-- Category & Priority Badges -->
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ announcement.get_category_display }}
+                                    </span>
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium 
+                                        {% if announcement.priority == 'urgent' %}bg-red-100 text-red-800
+                                        {% elif announcement.priority == 'warning' %}bg-yellow-100 text-yellow-800
+                                        {% elif announcement.priority == 'advisory' %}bg-green-100 text-green-800
+                                        {% else %}bg-blue-100 text-blue-800{% endif %}">
+                                        {{ announcement.get_priority_display }}
+                                    </span>
+                                    {% if is_admin or is_technician %}
+                                        {% if announcement.is_active %}
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> Active
+                                        </span>
+                                        {% else %}
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span> Draft
+                                        </span>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+
+                                <!-- Preview Text -->
+                                <p class="text-gray-600 mb-3">
+                                    {{ announcement.content|truncatewords:30|safe }}
+                                </p>
+
+                                <!-- Actions Row -->
+                                <div class="flex items-center justify-between flex-wrap gap-2">
+                                    <div class="flex items-center gap-3">
+                                        <!-- Read Full Announcement — auto-marks as read on click -->
+                                        <a href="{% url 'polls:announcement_detail' announcement.pk %}"
+                                           {% if not is_unread %}
+                                           data-ann-id="{{ announcement.pk }}"
+                                           data-mark-read-url="{% url 'polls:announcement_mark_read' announcement.pk %}"
+                                           onclick="handleReadClick(event, this)"
+                                           {% endif %}
+                                           class="text-green-600 hover:text-green-700 font-medium inline-flex items-center">
+                                            Read Full Announcement
+                                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                        </a>
+                                    </div>
+
+                                    <!-- Edit/Delete Buttons (Admin/Technician only) -->
+                                    {% if is_admin or is_technician %}
+                                    <div class="flex items-center gap-2">
+                                        <a 
+                                            href="{% url 'polls:announcement_edit' announcement.pk %}" 
+                                            class="inline-flex items-center px-3 py-1 text-sm border border-blue-300 text-blue-600 rounded-lg hover:bg-blue-50 transition"
+                                            title="Edit"
+                                        >
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                            </svg>
+                                            Edit
+                                        </a>
+                                        {% if is_admin %}
+                                        <a 
+                                            href="{% url 'polls:announcement_delete' announcement.pk %}" 
+                                            data-open-delete="true"
+                                            data-delete-label="{{ announcement.title }}"
+                                            data-delete-subtitle="{{ announcement.get_priority_display }} · {{ announcement.get_category_display }}"
+                                            class="inline-flex items-center px-3 py-1 text-sm border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition"
+                                            title="Delete"
+                                        >
+                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                            </svg>
+                                            Delete
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endwith %}
+            {% endfor %}
+
+            {% if page_obj and is_paginated %}
+                {% include 'partials/_pagination.html' %}
+            {% endif %}
+
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-lg shadow p-12 text-center">
+                <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+                </svg>
+                <h3 class="text-xl font-medium text-gray-900 mb-2">No announcements found</h3>
+                <p class="text-gray-600">
+                    {% if current_search or current_category or current_status %}
+                        No announcements match your search or filters. Try adjusting them.
+                    {% else %}
+                        There are currently no announcements available.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const CSRF_TOKEN = '{{ csrf_token }}';
+
+    /* ------------------------------------------------------------------ *
+     * 1. BFCACHE FIX                                                      *
+     *    When user clicks "Read Full Announcement" then presses Back,     *
+     *    the browser restores this page from bfcache (frozen snapshot).   *
+     *    We detect that restore and reload so the server re-renders       *
+     *    the correct read/unread state.                                   *
+     * ------------------------------------------------------------------ */
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            // Page was restored from bfcache — force a fresh server render
+            window.location.reload();
+        }
+    });
+
+    /* ------------------------------------------------------------------ *
+     * 2. FIRE-AND-FORGET mark-read on "Read Full Announcement" click     *
+     *    Sends AJAX silently while the browser navigates to detail page. *
+     * ------------------------------------------------------------------ */
+    window.handleReadClick = function (event, link) {
+        const url   = link.dataset.markReadUrl;
+        const annId = link.dataset.annId;
+
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
+            keepalive: true,
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) return;
+            const navBadge = document.getElementById('unreadBadge');
+            if (navBadge) {
+                if (data.unread_count > 0) navBadge.textContent = data.unread_count;
+                else navBadge.remove();
+            }
+        })
+        .catch(function () {});
+        // No preventDefault — browser navigates immediately
+    };
+
+    /* ------------------------------------------------------------------ *
+     * 3. Manual mark-as-read (used by "Mark All as Read" POST form       *
+     *    and any programmatic calls).                                     *
+     * ------------------------------------------------------------------ */
+    window.markAnnouncementRead = function (annId, url, callback) {
+        fetch(url, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': CSRF_TOKEN, 'Content-Type': 'application/json' },
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (!data.success) return;
+            const card = document.getElementById('announcement-' + annId);
+            if (card) {
+                // Remove unread highlight, apply read style
+                card.classList.remove('bg-blue-50', 'ring-1', 'ring-blue-100');
+                card.classList.add('bg-white');
+                // Make title normal weight
+                const title = card.querySelector('h3');
+                if (title) {
+                    title.classList.remove('font-extrabold', 'text-gray-900');
+                    title.classList.add('font-semibold', 'text-gray-700');
+                }
+            }
+            const navBadge = document.getElementById('unreadBadge');
+            if (navBadge) {
+                if (data.unread_count > 0) navBadge.textContent = data.unread_count;
+                else navBadge.remove();
+            }
+            const statUnread = document.querySelector('[data-stat="unread"]');
+            if (statUnread) statUnread.textContent = data.unread_count;
+            if (callback) callback();
+        })
+        .catch(function () {});
+    };
+})();
+</script>
+{% include 'partials/_ctrlk.html' with input_id='ann-search-input' %}
+{% endblock %}

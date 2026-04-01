@@ -1,0 +1,759 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriScan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    
+
+
+
+    <!-- Camera Capture Section -->
+    <div id="camera-capture-section" class="">
+        <div class="max-w-[1600px] mx-auto py-6 px-4 sm:px-6 lg:px-8 xl:px-12">
+            <div class="px-4 py-6 sm:px-0">
+                <div class="flex items-center mb-6">
+                    <a href="{% url 'polls:scan' %}" class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                    <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Camera Capture</h1>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Camera Preview Section -->
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Camera Preview</h2>
+                            <div class="flex space-x-2">
+                                <button onclick="switchCamera()" id="switch-camera-btn" class="bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 px-3 py-1 rounded text-sm" disabled>
+                                    Switch Camera
+                                </button>
+                                <button onclick="toggleCamera()" id="camera-toggle-btn" class="bg-primary-600 hover:bg-primary-700 text-white px-3 py-1 rounded text-sm">
+                                    Start Camera
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Camera Container -->
+                        <div class="relative bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden" style="aspect-ratio: 4/3;">
+                            <video id="camera-video" class="w-full h-full object-cover hidden" autoplay playsinline></video>
+                            <canvas id="camera-canvas" class="w-full h-full object-cover hidden"></canvas>
+                            
+                            <!-- Placeholder when camera is off -->
+                            <div id="camera-placeholder" class="flex items-center justify-center h-full">
+                                <div class="text-center">
+                                    <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    </svg>
+                                    <p class="text-gray-500 dark:text-gray-400">Click "Start Camera" to begin</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Camera overlay grid -->
+                            <div id="camera-overlay" class="absolute inset-0 pointer-events-none hidden">
+                                <div class="w-full h-full border-2 border-white opacity-50">
+                                    <div class="absolute top-1/3 left-0 right-0 border-t border-white opacity-30"></div>
+                                    <div class="absolute top-2/3 left-0 right-0 border-t border-white opacity-30"></div>
+                                    <div class="absolute left-1/3 top-0 bottom-0 border-l border-white opacity-30"></div>
+                                    <div class="absolute left-2/3 top-0 bottom-0 border-l border-white opacity-30"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Camera Controls -->
+                        <div class="mt-4 flex justify-center space-x-4">
+                            <button onclick="capturePhoto()" id="capture-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-full text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+                                </svg>
+                                Capture Photo
+                            </button>
+                            <button onclick="toggleFlash()" id="flash-btn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <svg class="w-5 h-5 inline mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+                                </svg>
+                                Flash: <span id="flash-status">Off</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Camera Status -->
+                        <div class="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                            <div class="flex items-center">
+                                <div id="camera-status-icon" class="w-3 h-3 bg-gray-400 rounded-full mr-3"></div>
+                                <span id="camera-status-text" class="text-sm text-blue-700 dark:text-blue-300">Camera not started</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Captured Images Section -->
+                    <div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-lg font-medium text-gray-900 dark:text-white">Captured Images</h2>
+                            <div class="flex space-x-2">
+                                <button onclick="clearAllImages()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                                    Clear All
+                                </button>
+                                <button onclick="downloadAllImages()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                                    Download All
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Images Grid -->
+                        <div id="captured-images" class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto">
+                            <!-- Captured images will appear here -->
+                            <div id="no-images-message" class="col-span-2 text-center py-8 text-gray-500 dark:text-gray-400">
+                                <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <p>No images captured yet</p>
+                                <p class="text-sm mt-1">Start the camera and capture some photos</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Image Counter -->
+                        <div class="mt-4 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-green-700 dark:text-green-300">Images Captured</span>
+                                <span id="image-counter" class="text-sm font-medium text-green-700 dark:text-green-300">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Settings Panel -->
+                <div class="mt-6 bg-white dark:bg-gray-800 shadow rounded-lg p-6">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Camera Settings</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Resolution Settings -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resolution</label>
+                            <select id="resolution-select" onchange="changeResolution()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <option value="640x480">640 × 480 (VGA)</option>
+                                <option value="1280x720" selected>1280 × 720 (HD)</option>
+                                <option value="1920x1080">1920 × 1080 (Full HD)</option>
+                                <option value="3840x2160">3840 × 2160 (4K)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Image Format -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Image Format</label>
+                            <select id="format-select" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                                <option value="image/jpeg">JPEG</option>
+                                <option value="image/png">PNG</option>
+                                <option value="image/webp">WebP</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Image Quality -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quality: <span id="quality-value">90</span>%</label>
+                            <input type="range" id="quality-slider" min="10" max="100" value="90" onchange="updateQuality()" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700">
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Settings -->
+                    <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <h4 class="font-medium text-gray-900 dark:text-white">Capture Options</h4>
+                            <div class="space-y-2">
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="auto-save" class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Auto-save images</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="show-grid" onchange="toggleGrid()" class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Show grid overlay</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="timestamp" class="rounded border-gray-300 text-primary-600 shadow-sm focus:border-primary-300 focus:ring focus:ring-primary-200 focus:ring-opacity-50">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Add timestamp to images</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <h4 class="font-medium text-gray-900 dark:text-white">Camera Info</h4>
+                            <div class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                <div>Available Cameras: <span id="camera-count">0</span></div>
+                                <div>Current Camera: <span id="current-camera">None</span></div>
+                                <div>Stream Status: <span id="stream-status">Inactive</span></div>
+                                <div>Last Capture: <span id="last-capture">Never</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================================================
+        // CAMERA CAPTURE FUNCTIONALITY
+        // =============================================================================
+
+        let cameraStream = null;
+        let currentCamera = 0;
+        let availableCameras = [];
+        let capturedImages = [];
+        let flashEnabled = false;
+
+        /**
+         * Dark mode functionality
+         */
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        }
+
+        // Initialize dark mode from localStorage on page load
+        if (localStorage.getItem('darkMode') === 'true') {
+            document.documentElement.classList.add('dark');
+        }
+
+        /**
+         * Initialize the camera section
+         */
+        async function initializeCameraSection() {
+            try {
+                // Get available cameras
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                availableCameras = devices.filter(device => device.kind === 'videoinput');
+                
+                document.getElementById('camera-count').textContent = availableCameras.length;
+                
+                if (availableCameras.length > 1) {
+                    document.getElementById('switch-camera-btn').disabled = false;
+                }
+                
+                updateCameraInfo();
+            } catch (error) {
+                console.error('Error initializing camera:', error);
+                updateCameraStatus('Error accessing camera devices', 'error');
+            }
+        }
+
+        /**
+         * Toggle camera on/off
+         */
+        async function toggleCamera() {
+            const video = document.getElementById('camera-video');
+            const placeholder = document.getElementById('camera-placeholder');
+            const toggleBtn = document.getElementById('camera-toggle-btn');
+            const captureBtn = document.getElementById('capture-btn');
+            const flashBtn = document.getElementById('flash-btn');
+            
+            if (cameraStream) {
+                // Stop camera
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+                
+                video.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                
+                toggleBtn.textContent = 'Start Camera';
+                toggleBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+                toggleBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+                
+                captureBtn.disabled = true;
+                flashBtn.disabled = true;
+                
+                updateCameraStatus('Camera stopped', 'inactive');
+                updateStreamStatus('Inactive');
+            } else {
+                // Start camera
+                try {
+                    const constraints = getCameraConstraints();
+                    cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    
+                    video.srcObject = cameraStream;
+                    video.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    
+                    toggleBtn.textContent = 'Stop Camera';
+                    toggleBtn.classList.remove('bg-primary-600', 'hover:bg-primary-700');
+                    toggleBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+                    
+                    captureBtn.disabled = false;
+                    flashBtn.disabled = false;
+                    
+                    updateCameraStatus('Camera active', 'active');
+                    updateStreamStatus('Active');
+                    updateCurrentCamera();
+                } catch (error) {
+                    console.error('Error starting camera:', error);
+                    updateCameraStatus('Error starting camera: ' + error.message, 'error');
+                    alert('Camera access denied or not available. Please check your browser permissions.');
+                }
+            }
+        }
+
+        /**
+         * Get camera constraints based on current settings
+         */
+        function getCameraConstraints() {
+            const resolution = document.getElementById('resolution-select').value;
+            const [width, height] = resolution.split('x').map(Number);
+            
+            /*const constraints = {
+                video: {
+                    width: { ideal: width },
+                    height: { ideal: height },
+                    facingMode: 'environment' // Prefer back camera
+                }
+            };*/
+
+            const constraints = {
+                video: true
+            };
+
+            /*const constraints = {
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: { ideal: "environment" }
+                }
+            };*/
+            
+            // If specific camera is selected
+            //if (availableCameras.length > 0 && availableCameras[currentCamera]) {
+            //    constraints.video.deviceId = { exact: availableCameras[currentCamera].deviceId };
+            //}
+            if (availableCameras.length > 0 && availableCameras[currentCamera]?.deviceId) {
+                constraints.video.deviceId = { exact: availableCameras[currentCamera].deviceId };
+            }
+            
+            return constraints;
+        }
+
+        /**
+         * Switch between available cameras
+         */
+        async function switchCamera() {
+            if (availableCameras.length <= 1) return;
+            
+            currentCamera = (currentCamera + 1) % availableCameras.length;
+            
+            if (cameraStream) {
+                // Restart camera with new device
+                await toggleCamera(); // Stop current
+                await toggleCamera(); // Start with new camera
+            }
+            
+            updateCurrentCamera();
+        }
+
+        /**
+         * Capture a photo from the video stream
+         */
+        function capturePhoto() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.getElementById('camera-canvas');
+            const format = document.getElementById('format-select').value;
+            const quality = document.getElementById('quality-slider').value / 100;
+            
+            if (!cameraStream) {
+                alert('Please start the camera first');
+                return;
+            }
+            
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Add timestamp if enabled
+            if (document.getElementById('timestamp').checked) {
+                addTimestampToCanvas(ctx, canvas.width, canvas.height);
+            }
+            
+            // Convert to image data
+            const imageDataUrl = canvas.toDataURL(format, quality);
+            
+            // Create image object
+            const imageObj = {
+                id: Date.now(),
+                dataUrl: imageDataUrl,
+                timestamp: new Date().toISOString(),
+                format: format,
+                quality: quality,
+                resolution: `${canvas.width}x${canvas.height}`
+            };
+            
+            // Add to captured images
+            capturedImages.push(imageObj);
+            
+            // Update UI
+            displayCapturedImage(imageObj);
+            updateImageCounter();
+            updateLastCapture();
+            
+            // Auto-save if enabled
+            if (document.getElementById('auto-save').checked) {
+                downloadImage(imageObj);
+            }
+            
+            // Flash effect
+            if (flashEnabled) {
+                flashEffect();
+            }
+            
+            console.log('Photo captured:', imageObj);
+        }
+
+        /**
+         * Add timestamp to canvas
+         */
+        function addTimestampToCanvas(ctx, width, height) {
+            const timestamp = new Date().toLocaleString();
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(10, height - 40, 200, 30);
+            
+            ctx.fillStyle = 'white';
+            ctx.font = '14px Arial';
+            ctx.fillText(timestamp, 15, height - 20);
+        }
+
+        /**
+         * Display captured image in the grid
+         */
+        function displayCapturedImage(imageObj) {
+            const container = document.getElementById('captured-images');
+            const noImagesMessage = document.getElementById('no-images-message');
+            
+            // Hide no images message
+            noImagesMessage.classList.add('hidden');
+            
+            // Create image element
+            const imageDiv = document.createElement('div');
+            imageDiv.className = 'relative group';
+            imageDiv.innerHTML = `
+                <img src="${imageObj.dataUrl}" alt="Captured ${imageObj.timestamp}" class="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600">
+                <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 rounded-lg flex items-center justify-center">
+                    <div class="opacity-0 group-hover:opacity-100 flex flex-col space-y-1 px-2">
+                        <button onclick="useThisImage('${imageObj.id}')" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs hover:bg-blue-700 font-semibold">
+                            ✓ Use This Image
+                        </button>
+                        <button onclick="viewImage('${imageObj.id}')" class="bg-white text-gray-800 px-3 py-1 rounded text-xs hover:bg-gray-100">
+                            View
+                        </button>
+                        <button onclick="downloadSingleImage('${imageObj.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">
+                            Download
+                        </button>
+                        <button onclick="deleteImage('${imageObj.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+                <div class="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
+                    ${new Date(imageObj.timestamp).toLocaleTimeString()}
+                </div>
+            `;
+            
+            container.insertBefore(imageDiv, noImagesMessage);
+        }
+
+        /**
+         * Toggle flash effect
+         */
+        function toggleFlash() {
+            flashEnabled = !flashEnabled;
+            const flashStatus = document.getElementById('flash-status');
+            const flashBtn = document.getElementById('flash-btn');
+            
+            if (flashEnabled) {
+                flashStatus.textContent = 'On';
+                flashBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
+                flashBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+            } else {
+                flashStatus.textContent = 'Off';
+                flashBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                flashBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
+            }
+        }
+
+        /**
+         * Flash effect animation
+         */
+        function flashEffect() {
+            const video = document.getElementById('camera-video');
+            const overlay = document.createElement('div');
+            overlay.className = 'absolute inset-0 bg-white pointer-events-none';
+            overlay.style.zIndex = '1000';
+            
+            video.parentElement.appendChild(overlay);
+            
+            setTimeout(() => {
+                overlay.remove();
+            }, 100);
+        }
+
+        /**
+         * Toggle grid overlay
+         */
+        function toggleGrid() {
+            const overlay = document.getElementById('camera-overlay');
+            const checkbox = document.getElementById('show-grid');
+            
+            if (checkbox.checked) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        /**
+         * Change camera resolution
+         */
+        async function changeResolution() {
+            if (cameraStream) {
+                // Restart camera with new resolution
+                await toggleCamera(); // Stop
+                await toggleCamera(); // Start with new settings
+            }
+        }
+
+        /**
+         * Update quality slider display
+         */
+        function updateQuality() {
+            const slider = document.getElementById('quality-slider');
+            const display = document.getElementById('quality-value');
+            display.textContent = slider.value;
+        }
+
+        /**
+         * Update camera status
+         */
+        function updateCameraStatus(message, status) {
+            const statusText = document.getElementById('camera-status-text');
+            const statusIcon = document.getElementById('camera-status-icon');
+            
+            statusText.textContent = message;
+            
+            statusIcon.className = 'w-3 h-3 rounded-full mr-3';
+            switch (status) {
+                case 'active':
+                    statusIcon.classList.add('bg-green-500');
+                    break;
+                case 'error':
+                    statusIcon.classList.add('bg-red-500');
+                    break;
+                default:
+                    statusIcon.classList.add('bg-gray-400');
+            }
+        }
+
+        /**
+         * Update camera info displays
+         */
+        function updateCameraInfo() {
+            updateCurrentCamera();
+            updateStreamStatus(cameraStream ? 'Active' : 'Inactive');
+        }
+
+        function updateCurrentCamera() {
+            const display = document.getElementById('current-camera');
+            if (availableCameras.length > 0 && availableCameras[currentCamera]) {
+                display.textContent = availableCameras[currentCamera].label || `Camera ${currentCamera + 1}`;
+            } else {
+                display.textContent = 'None';
+            }
+        }
+
+        function updateStreamStatus(status) {
+            document.getElementById('stream-status').textContent = status;
+        }
+
+        function updateImageCounter() {
+            document.getElementById('image-counter').textContent = capturedImages.length;
+        }
+
+        function updateLastCapture() {
+            document.getElementById('last-capture').textContent = new Date().toLocaleTimeString();
+        }
+
+        /**
+         * View image in full size
+         */
+        function viewImage(imageId) {
+            const image = capturedImages.find(img => img.id == imageId);
+            if (!image) return;
+            
+            // Create modal to view image
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="max-w-4xl max-h-full p-4">
+                    <img src="${image.dataUrl}" alt="Captured image" class="max-w-full max-h-full object-contain">
+                    <div class="text-white text-center mt-4">
+                        <p>Captured: ${new Date(image.timestamp).toLocaleString()}</p>
+                        <p>Resolution: ${image.resolution} | Format: ${image.format}</p>
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close on click outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        /**
+         * Download single image
+         */
+        function downloadSingleImage(imageId) {
+            const image = capturedImages.find(img => img.id == imageId);
+            if (!image) return;
+            
+            downloadImage(image);
+        }
+
+        /**
+         * Download image helper
+         */
+        function downloadImage(imageObj) {
+            const link = document.createElement('a');
+            link.download = `capture_${new Date(imageObj.timestamp).toISOString().replace(/[:.]/g, '-')}.${imageObj.format.split('/')[1]}`;
+            link.href = imageObj.dataUrl;
+            link.click();
+        }
+
+        /**
+         * Delete image
+         */
+        function deleteImage(imageId) {
+            if (!confirm('Are you sure you want to delete this image?')) return;
+            
+            // Remove from array
+            capturedImages = capturedImages.filter(img => img.id != imageId);
+            
+            // Remove from DOM
+            const container = document.getElementById('captured-images');
+            const imageElements = container.querySelectorAll('.relative.group');
+            imageElements.forEach(element => {
+                const viewBtn = element.querySelector('button[onclick*="viewImage"]');
+                if (viewBtn && viewBtn.getAttribute('onclick').includes(imageId)) {
+                    element.remove();
+                }
+            });
+            
+            // Show no images message if empty
+            if (capturedImages.length === 0) {
+                document.getElementById('no-images-message').classList.remove('hidden');
+            }
+            
+            updateImageCounter();
+        }
+
+        /**
+         * Clear all images
+         */
+        function clearAllImages() {
+            if (capturedImages.length === 0) return;
+            
+            if (!confirm(`Are you sure you want to delete all ${capturedImages.length} images?`)) return;
+            
+            capturedImages = [];
+            
+            // Clear DOM
+            const container = document.getElementById('captured-images');
+            const imageElements = container.querySelectorAll('.relative.group');
+            imageElements.forEach(element => element.remove());
+            
+            // Show no images message
+            document.getElementById('no-images-message').classList.remove('hidden');
+            
+            updateImageCounter();
+        }
+
+        /**
+         * Download all images as ZIP (simplified version)
+         */
+        function downloadAllImages() {
+            if (capturedImages.length === 0) {
+                alert('No images to download');
+                return;
+            }
+            
+            // For simplicity, download images one by one
+            // In a real app, you'd create a ZIP file
+            capturedImages.forEach((image, index) => {
+                setTimeout(() => {
+                    downloadImage(image);
+                }, index * 500); // Stagger downloads
+            });
+            
+            alert(`Downloading ${capturedImages.length} images...`);
+        }
+
+        /**
+         * Use this image - redirect to scan page with image data
+         */
+        function useThisImage(imageId) {
+            const image = capturedImages.find(img => img.id == imageId);
+            if (!image) return;
+            
+            // Store image in sessionStorage to pass to scan page
+            sessionStorage.setItem('capturedImage', JSON.stringify({
+                dataUrl: image.dataUrl,
+                timestamp: image.timestamp,
+                format: image.format
+            }));
+            
+            // Redirect to scan page
+            window.location.href = "{% url 'polls:scan' %}";
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCameraSection();
+        });
+
+        // Cleanup camera stream when page unloads
+        window.addEventListener('beforeunload', () => {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
+        });
+    </script>
+</body>
+</html>

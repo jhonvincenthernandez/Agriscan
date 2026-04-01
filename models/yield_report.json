@@ -1,0 +1,110 @@
+{
+  "model_type": "Linear Regression",
+  "mae": 0.1895500033871323,
+  "rmse": 0.22821159656473672,
+  "r2": 0.9658218010528575,
+  "n_train": 90,
+  "n_test": 23,
+  "coefficients": {
+    "intercept": 4.889192912937582,
+    "n_features": 16,
+    "top_weights": [
+      {
+        "feature": "variety_Rc218",
+        "weight": -1.2564622995263164
+      },
+      {
+        "feature": "variety_Rc160",
+        "weight": 0.7544397832533698
+      },
+      {
+        "feature": "ecosystem_type_upland",
+        "weight": -0.6810383850471827
+      },
+      {
+        "feature": "ecosystem_type_irrigated",
+        "weight": 0.6168652803757448
+      },
+      {
+        "feature": "variety_Rc222",
+        "weight": 0.35496408272916696
+      },
+      {
+        "feature": "health_status",
+        "weight": -0.26994083249715584
+      },
+      {
+        "feature": "seed_rate_kg_per_ha",
+        "weight": 0.21573705102542554
+      },
+      {
+        "feature": "variety_Rc216",
+        "weight": 0.14705843354377857
+      },
+      {
+        "feature": "historical_yield_tons_per_ha",
+        "weight": 0.1416995845389422
+      },
+      {
+        "feature": "historical_production_tons",
+        "weight": 0.14002238473471346
+      },
+      {
+        "feature": "field_area_ha",
+        "weight": -0.1197581850605346
+      },
+      {
+        "feature": "season_dry",
+        "weight": -0.10708055115951118
+      },
+      {
+        "feature": "season_wet",
+        "weight": 0.10708055115951073
+      },
+      {
+        "feature": "planting_month",
+        "weight": -0.07140521640826539
+      },
+      {
+        "feature": "ecosystem_type_rainfed_lowland",
+        "weight": 0.06417310467144054
+      },
+      {
+        "feature": "average_growth_duration_days",
+        "weight": -0.039464735645506496
+      }
+    ]
+  },
+  "features_used": [
+    "variety",
+    "ecosystem_type",
+    "season",
+    "field_area_ha",
+    "historical_production_tons",
+    "historical_yield_tons_per_ha",
+    "planting_month",
+    "average_growth_duration_days",
+    "health_status",
+    "seed_rate_kg_per_ha"
+  ],
+  "core_features": [
+    "variety",
+    "ecosystem_type",
+    "season",
+    "field_area_ha",
+    "historical_production_tons",
+    "historical_yield_tons_per_ha",
+    "planting_month",
+    "average_growth_duration_days"
+  ],
+  "optional_features": [
+    "health_status",
+    "seed_rate_kg_per_ha"
+  ],
+  "interpretation": {
+    "mae_meaning": "Predictions are off by \u00b10.19 tons/ha on average",
+    "r2_meaning": "Model explains 96.6% of yield variance",
+    "model_equation": "yield_tons_per_ha = intercept + (weights \u00d7 features)",
+    "units": "tons per hectare"
+  }
+}

@@ -1,0 +1,278 @@
+﻿{% extends "base.html" %}
+
+{% block title %}{{ title }} · AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+
+  <!-- Page Header -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <svg class="h-7 w-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+          </svg>
+          {{ title }}
+        </h1>
+        <p class="mt-1 text-sm text-gray-500">
+          {% if is_create %}Create a new announcement for your target audience.{% else %}Update the content of this announcement.{% endif %}
+        </p>
+      </div>
+      <a href="{% url 'polls:announcements_list' %}"
+         onclick="history.back(); return false;"
+         class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium self-start sm:self-auto">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Announcements
+      </a>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+
+    <!-- Email notification notice -->
+    <div class="flex items-start gap-3 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+      <svg class="h-5 w-5 mt-0.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <p class="text-sm text-amber-800">
+        {% if is_create %}
+          <strong>Note:</strong> Saving this announcement will send an
+          <strong>email</strong> to all targeted users (if email is enabled).
+          Uncheck <em>"Active"</em> below to save as a draft without notifying anyone.
+        {% else %}
+          <strong>Note:</strong> Updating this announcement will <strong>not</strong> re-send emails.
+          Toggle <em>"Active"</em> to show or hide it from users.
+        {% endif %}
+      </p>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="space-y-6" novalidate>
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+      <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
+        {{ form.non_field_errors }}
+      </div>
+      {% endif %}
+
+      <!-- ── Basic Information ── -->
+      <div class="border-b border-gray-100 pb-6 space-y-4">
+        <h2 class="text-base font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Basic Information
+        </h2>
+
+        <div>
+          <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.title.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.title }}
+          {% if form.title.errors %}<p class="text-sm text-red-600 mt-1">{{ form.title.errors|join:", " }}</p>{% endif %}
+        </div>
+
+        <div>
+          <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.content.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.content }}
+          {% if form.content.errors %}<p class="text-sm text-red-600 mt-1">{{ form.content.errors|join:", " }}</p>{% endif %}
+          <p class="text-xs text-gray-400 mt-1">Provide clear information: pest alert, recommended action, contact info, etc.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              {{ form.category.label }} <span class="text-red-500">*</span>
+            </label>
+            {{ form.category }}
+            {% if form.category.errors %}<p class="text-sm text-red-600 mt-1">{{ form.category.errors|join:", " }}</p>{% endif %}
+          </div>
+          <div>
+            <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              {{ form.priority.label }} <span class="text-red-500">*</span>
+            </label>
+            {{ form.priority }}
+            {% if form.priority.errors %}<p class="text-sm text-red-600 mt-1">{{ form.priority.errors|join:", " }}</p>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Targeting ── -->
+      <div class="border-b border-gray-100 pb-6 space-y-4">
+        <h2 class="text-base font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          Who Should See This?
+        </h2>
+
+        <div>
+          <label for="{{ form.target_audience.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.target_audience.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.target_audience }}
+          {% if form.target_audience.errors %}<p class="text-sm text-red-600 mt-1">{{ form.target_audience.errors|join:", " }}</p>{% endif %}
+        </div>
+
+        <div id="barangay-field" class="hidden">
+          <label for="{{ form.target_barangay.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.target_barangay.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.target_barangay }}
+          {% if form.target_barangay.errors %}<p class="text-sm text-red-600 mt-1">{{ form.target_barangay.errors|join:", " }}</p>{% endif %}
+        </div>
+
+        <div id="user-field" class="hidden">
+          <label for="{{ form.target_user.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.target_user.label }} <span class="text-red-500">*</span>
+          </label>
+          {{ form.target_user }}
+          {% if form.target_user.errors %}<p class="text-sm text-red-600 mt-1">{{ form.target_user.errors|join:", " }}</p>{% endif %}
+        </div>
+      </div>
+
+      <!-- ── Schedule & Expiration ── -->
+      <div class="border-b border-gray-100 pb-6 space-y-4">
+        <h2 class="text-base font-semibold text-gray-700 flex items-center gap-2">
+          <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+          Schedule & Expiration
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">
+              {{ form.published_at.label }}
+            </label>
+            {% if publish_locked %}
+              {# Read-only locked display — published_at cannot be changed once live #}
+              <div class="flex items-center gap-2 w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed select-none">
+                <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                <span>{{ announcement.published_at|date:"N j, Y, g:i A" }}</span>
+              </div>
+              <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                <svg class="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                Already published — publish date is locked and cannot be changed.
+              </p>
+              {# Hidden input to preserve the value in POST (view backend will restore it anyway) #}
+              <input type="hidden" name="published_at" value="{{ announcement.published_at|date:'Y-m-d\TH:i:s' }}">
+            {% else %}
+              {{ form.published_at }}
+              {% if form.published_at.help_text %}<p class="text-xs text-gray-400 mt-1">{{ form.published_at.help_text }}</p>{% endif %}
+              {% if form.published_at.errors %}<p class="text-sm text-red-600 mt-1">{{ form.published_at.errors|join:", " }}</p>{% endif %}
+            {% endif %}
+          </div>
+          <div>
+            <label for="{{ form.expires_at.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              {{ form.expires_at.label }}
+            </label>
+            {{ form.expires_at }}
+            {% if form.expires_at.help_text %}<p class="text-xs text-gray-400 mt-1">{{ form.expires_at.help_text }}</p>{% endif %}
+            {% if form.expires_at.errors %}<p class="text-sm text-red-600 mt-1">{{ form.expires_at.errors|join:", " }}</p>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Active / Draft toggle ── -->
+      <div class="flex items-start gap-3 p-4 rounded-lg border
+        {% if not is_create and announcement.is_active %}bg-green-50 border-green-200{% else %}bg-yellow-50 border-yellow-200{% endif %}">
+        <div class="flex items-center h-5 mt-0.5">
+          {{ form.is_active }}
+        </div>
+        <div>
+          <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-gray-800 cursor-pointer">
+            {{ form.is_active.label }}
+          </label>
+          <p class="text-xs text-gray-500 mt-0.5">
+            {% if is_create %}
+              Leave unchecked to save as a draft — users won't see it yet.
+            {% else %}
+              {% if announcement.is_active %}
+                Currently <strong class="text-green-700">active</strong> — uncheck to hide from users (draft).
+              {% else %}
+                Currently a <strong class="text-yellow-700">draft</strong> — check to make it visible to users.
+              {% endif %}
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Action buttons ── -->
+      <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div class="flex gap-3">
+          <button type="submit"
+            class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            {{ submit_text }}
+          </button>
+          <a href="{% url 'polls:announcements_list' %}"
+            onclick="history.back(); return false;"
+            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
+            Cancel
+          </a>
+        </div>
+
+        {% if not is_create and is_admin %}
+        <a href="{% url 'polls:announcement_delete' announcement.pk %}"
+           data-open-delete="true"
+           data-delete-label="{{ announcement.title }}"
+           class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition shadow-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          Delete Announcement
+        </a>
+        {% endif %}
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Quick Tips -->
+  <div class="mt-6 bg-blue-50 border-l-4 border-blue-400 p-5 rounded-r-lg flex items-start gap-3">
+    <svg class="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <div>
+      <h3 class="text-sm font-semibold text-blue-800 mb-1">💡 Quick Tips</h3>
+      <ul class="text-blue-700 space-y-1 text-xs">
+        <li>• Use emojis in titles to grab attention (⚠️ 🌾 💧 🦠)</li>
+        <li>• Choose <strong>📕 Urgent</strong> priority for emergencies only</li>
+        <li>• Target a specific <strong>Barangay</strong> for localized pest/disease alerts</li>
+        <li>• Set an <strong>Expiration</strong> date for time-sensitive announcements</li>
+        <li>• Uncheck <strong>Active</strong> to save as draft — publish it later when ready</li>
+      </ul>
+    </div>
+  </div>
+
+</section>
+
+<script>
+function toggleTargetFields(audience) {
+  document.getElementById('barangay-field').classList.toggle('hidden', audience !== 'barangay');
+  document.getElementById('user-field').classList.toggle('hidden', audience !== 'user');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const audienceSelect = document.getElementById('{{ form.target_audience.id_for_label }}');
+  if (audienceSelect) {
+    toggleTargetFields(audienceSelect.value);
+    audienceSelect.addEventListener('change', function () { toggleTargetFields(this.value); });
+  }
+});
+</script>
+{% endblock %}

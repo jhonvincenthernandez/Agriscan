@@ -1,0 +1,444 @@
+﻿{% extends 'base.html' %}
+{% block title %}{{ form_title }} · AgriScan+{% endblock %}
+{% block content %}
+<section class="page-container">
+
+  <!-- ── Page Header ─────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+          <span id="header-icon" class="text-2xl">📋</span>
+          <span id="header-title">{{ form_title }}</span>
+        </h1>
+        <!-- Season context -->
+        <p class="mt-1 text-sm text-gray-500 flex items-center gap-2 flex-wrap">
+          <span class="font-medium text-gray-700">{{ season_log.season_label }}</span>
+          <span>·</span>
+          <span>{{ season_log.field.name }}</span>
+          {% if season_log.field.barangay %}
+          <span>· 📍 {{ season_log.field.barangay }}</span>
+          {% endif %}
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            {{ season_log.field.area_hectares }} ha
+          </span>
+        </p>
+      </div>
+      <a href="{% url 'polls:season_log_detail' season_log.pk %}"
+         class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        Back to Timeline
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Context Hint Banner (dynamic) ─────────────────────────────── -->
+  <div id="activity-hint" class="mb-4 hidden rounded-lg px-4 py-3 text-sm font-medium border"></div>
+
+  <!-- ── Form Card ──────────────────────────────────────────────────── -->
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    {% if form.errors %}
+    <div class="mb-5 bg-red-50 border border-red-200 rounded-lg p-4">
+      <p class="text-sm font-semibold text-red-700 mb-1">Please fix the following errors:</p>
+      <ul class="list-disc list-inside space-y-1">
+        {% for field in form %}
+          {% for error in field.errors %}
+          <li class="text-sm text-red-600">{{ field.label }}: {{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+        {% for error in form.non_field_errors %}
+        <li class="text-sm text-red-600">{{ error }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- ── STEP 1: Activity Type Picker (always visible first) ──── -->
+      <div class="mb-6">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-blue-500">🎯</span> What activity did you do?
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.activity_type.label }} <span class="text-red-500">*</span></label>
+            {{ form.activity_type }}
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.activity_date.label }} <span class="text-red-500">*</span></label>
+            {{ form.activity_date }}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 2: Activity Details (always visible) ─────────────── -->
+      <div class="mb-6" id="section-details">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-blue-500">📋</span> Activity Details
+        </h3>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.title.label }} <span class="text-red-500">*</span></label>
+          {{ form.title }}
+          <p id="title-hint" class="text-xs text-gray-400 mt-1">Brief summary of what was done.</p>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.description.label }}</label>
+          {{ form.description }}
+          <p id="desc-hint" class="text-xs text-gray-400 mt-1">Optional: dosage, brand, area covered, observations, etc.</p>
+        </div>
+      </div>
+
+      <!-- ── STEP 3: Cost & Labor (hidden for non-cost types) ──────── -->
+      <div class="mb-6" id="section-cost">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-yellow-500">💸</span> Cost & Labor
+          <span class="text-xs font-normal text-gray-400">(optional)</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div id="wrap-input-cost">
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.input_cost.label }}</label>
+            {{ form.input_cost }}
+          </div>
+          <div id="wrap-labor-cost">
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.labor_cost.label }}</label>
+            {{ form.labor_cost }}
+          </div>
+          <div id="wrap-workers">
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.workers_count.label }}</label>
+            {{ form.workers_count }}
+          </div>
+        </div>
+      </div>
+
+      <!-- ── STEP 4: Problem / Observation (shown for monitoring types) ── -->
+      <div class="mb-6" id="section-problem">
+        <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 pb-2 border-b border-gray-100 flex items-center gap-2">
+          <span class="text-red-500">⚠️</span> Problem / Observation
+          <span id="problem-optional" class="text-xs font-normal text-gray-400">(if any)</span>
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.problem_observed.label }}</label>
+            {{ form.problem_observed }}
+            <p class="text-xs text-gray-400 mt-1">e.g. "Brown spot on lower leaves", "Rats seen in field"</p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.problem_severity.label }}</label>
+            {{ form.problem_severity }}
+          </div>
+        </div>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.action_taken.label }}</label>
+          {{ form.action_taken }}
+        </div>
+        <!-- AI Scan link — only relevant for observation/disease types -->
+        <div id="wrap-detection">
+          <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.detection_record.label }}</label>
+          {{ form.detection_record }}
+          <p class="text-xs text-blue-600 mt-1">
+            💡 If you used AgriScan AI to identify this problem, link the scan result here.
+          </p>
+        </div>
+      </div>
+
+      <!-- ── STEP 5: Harvest Info reminder ──────────────────────────── -->
+      <div id="section-harvest-tip" class="mb-6 hidden">
+        <div class="rounded-lg bg-amber-50 border border-amber-200 p-4 text-sm text-amber-800">
+          <p class="font-semibold mb-1">🎉 Logging a Harvest?</p>
+          <p>After saving this activity, go back to <strong>Edit Season Log</strong> to enter your <strong>actual yield (sacks)</strong> and <strong>price per sack</strong> — the system will auto-compute your total income and net profit.</p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-3 pt-4 border-t border-gray-100">
+        <button type="submit" data-loading
+          class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {% if is_create %}Log Activity{% else %}Save Changes{% endif %}
+        </button>
+        <a href="{% url 'polls:season_log_detail' season_log.pk %}"
+           class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition">
+          Cancel
+        </a>
+        {% if not is_create and activity %}
+        <a href="{% url 'polls:activity_delete' activity.pk %}"
+           data-open-delete="true"
+           data-delete-label="{{ activity.title }}"
+           data-delete-subtitle="{{ activity.activity_date|date:'M d, Y' }} · {{ activity.get_activity_type_display }}"
+           class="ml-auto px-5 py-2.5 text-red-600 border border-red-200 text-sm font-medium rounded-lg hover:bg-red-50 transition">
+          Delete
+        </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+</section>
+
+<script>
+(function () {
+  // ── Config: per-activity-type behaviour ─────────────────────────────
+  // hint: { bg, border, text, icon, message }
+  // show:  which sections/fields are prominent
+  // titlePlaceholder: pre-fill hint for title input
+  const CONFIG = {
+    land_prep: {
+      icon: '🚜', label: 'Land Preparation',
+      hint: { bg:'bg-green-50', border:'border-green-200', text:'text-green-800',
+              msg:'Record your plowing / harrowing details. Include equipment used and area covered.' },
+      titlePH: 'e.g. "Plowed 1 ha, hired tractor"',
+      descPH:  'Tractor rental, passes made, soil condition after prep…',
+      showCost: true, showWorkers: true, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    irrigation: {
+      icon: '💧', label: 'Irrigation',
+      hint: { bg:'bg-blue-50', border:'border-blue-200', text:'text-blue-800',
+              msg:'Log irrigation events. Note water source, duration, and any pump costs.' },
+      titlePH: 'e.g. "Pumped water, 4 hours"',
+      descPH:  'Water source, pump fuel cost, duration, areas irrigated…',
+      showCost: true, showWorkers: false, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    drainage: {
+      icon: '🏔️', label: 'Drainage',
+      hint: { bg:'bg-blue-50', border:'border-blue-200', text:'text-blue-800',
+              msg:'Record drainage work. Note if done to prevent flooding or waterlogging.' },
+      titlePH: 'e.g. "Drained flooded section, north side"',
+      descPH:  'Reason for drainage, area affected, method used…',
+      showCost: true, showWorkers: true, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    seedbed: {
+      icon: '🌱', label: 'Seedbed / Nursery',
+      hint: { bg:'bg-green-50', border:'border-green-200', text:'text-green-800',
+              msg:'Record seedbed or nursery preparation. Include seed quantity and variety.' },
+      titlePH: 'e.g. "Prepared seedbed, 5 kg NSIC Rc222 seeds"',
+      descPH:  'Seed rate, soaking/sprouting method, seedbed size, seed source…',
+      showCost: true, showWorkers: true, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    transplanting: {
+      icon: '🌾', label: 'Transplanting / Direct Seeding',
+      hint: { bg:'bg-green-50', border:'border-green-200', text:'text-green-800',
+              msg:'Log transplanting or direct seeding. Include number of workers and method used.' },
+      titlePH: 'e.g. "Transplanted, 20 workers, row spacing 20×20 cm"',
+      descPH:  'Method (manual/mechanical), seedling age, spacing, workers, area planted…',
+      showCost: true, showWorkers: true, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    fertilizer: {
+      icon: '🌿', label: 'Fertilizer Application',
+      hint: { bg:'bg-lime-50', border:'border-lime-200', text:'text-lime-800',
+              msg:'Record fertilizer type, rate, and cost. Be specific — this data helps track your input expenses.' },
+      titlePH: 'e.g. "Applied Urea 45-0-0, 1 sack/ha (50 kg)"',
+      descPH:  'Brand, grade (N-P-K), rate per ha, total sacks used, application method…',
+      showCost: true, showWorkers: false, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    foliar: {
+      icon: '🍃', label: 'Foliar / Micronutrient Spray',
+      hint: { bg:'bg-lime-50', border:'border-lime-200', text:'text-lime-800',
+              msg:'Record foliar spray details. Note the product, dilution rate, and target growth stage.' },
+      titlePH: 'e.g. "Sprayed Zincmaster foliar, tillering stage"',
+      descPH:  'Product name, dilution/dose per tank, tanks used, growth stage…',
+      showCost: true, showWorkers: false, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    pesticide: {
+      icon: '🐛', label: 'Pesticide / Insecticide',
+      hint: { bg:'bg-orange-50', border:'border-orange-200', text:'text-orange-800',
+              msg:'Log pesticide application. Record the pest target, product used, and area sprayed.' },
+      titlePH: 'e.g. "Applied Furadan, stem borer infestation"',
+      descPH:  'Product, dose per ha, pest target, area sprayed, PHI (pre-harvest interval)…',
+      showCost: true, showWorkers: false, showProblem: true, showDetection: true, showHarvestTip: false,
+    },
+    fungicide: {
+      icon: '🍄', label: 'Fungicide Application',
+      hint: { bg:'bg-orange-50', border:'border-orange-200', text:'text-orange-800',
+              msg:'Record fungicide spray. Link an AgriScan AI detection if available.' },
+      titlePH: 'e.g. "Sprayed Nativo fungicide, blast symptoms"',
+      descPH:  'Product, dose, disease target, area sprayed, crop stage…',
+      showCost: true, showWorkers: false, showProblem: true, showDetection: true, showHarvestTip: false,
+    },
+    herbicide: {
+      icon: '🌿', label: 'Herbicide / Weeding',
+      hint: { bg:'bg-yellow-50', border:'border-yellow-200', text:'text-yellow-800',
+              msg:'Record weed control activity. Specify whether manual, chemical, or mechanical.' },
+      titlePH: 'e.g. "Sprayed Machete herbicide, 21 DAT"',
+      descPH:  'Weed type, product used or method (manual/chemical), area covered, growth stage…',
+      showCost: true, showWorkers: true, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    scouting: {
+      icon: '🔍', label: 'Field Scouting',
+      hint: { bg:'bg-purple-50', border:'border-purple-200', text:'text-purple-800',
+              msg:'Record your field inspection. Note what you observed — healthy or any pests/diseases. You can link an AgriScan AI scan result.' },
+      titlePH: 'e.g. "Weekly scouting — found minor leaf blast symptoms"',
+      descPH:  'Areas inspected, % affected, pest/disease observed, crop stage, growth uniformity…',
+      showCost: false, showWorkers: false, showProblem: true, showDetection: true, showHarvestTip: false,
+    },
+    disease_obs: {
+      icon: '🦠', label: 'Disease / Pest Observation',
+      hint: { bg:'bg-red-50', border:'border-red-200', text:'text-red-800',
+              msg:'Log a specific disease or pest problem. Use AgriScan AI to scan and identify — then link the result here.' },
+      titlePH: 'e.g. "Neck blast observed, panicle stage, ~15% incidence"',
+      descPH:  'Disease/pest name, % area affected, crop stage, environmental conditions, actions taken…',
+      showCost: false, showWorkers: false, showProblem: true, showDetection: true, showHarvestTip: false,
+    },
+    harvest: {
+      icon: '🎉', label: 'Harvest',
+      hint: { bg:'bg-amber-50', border:'border-amber-200', text:'text-amber-800',
+              msg:'Log your harvest activity. After saving, update your Season Log with actual yield (sacks) and price per sack to compute income.' },
+      titlePH: 'e.g. "Harvested 180 sacks, combine harvester"',
+      descPH:  'Method (manual/combine), total sacks, moisture content, field condition, issues…',
+      showCost: true, showWorkers: true, showProblem: false, showDetection: false, showHarvestTip: true,
+    },
+    drying: {
+      icon: '☀️', label: 'Drying',
+      hint: { bg:'bg-yellow-50', border:'border-yellow-200', text:'text-yellow-800',
+              msg:'Record drying details. Note if sun-dried or mechanical, and days/hours required.' },
+      titlePH: 'e.g. "Sun-dried palay, 3 days"',
+      descPH:  'Method, initial/final moisture content, days dried, drying area…',
+      showCost: true, showWorkers: false, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    milling: {
+      icon: '⚙️', label: 'Milling',
+      hint: { bg:'bg-gray-50', border:'border-gray-200', text:'text-gray-700',
+              msg:'Record milling activity. Note milling recovery rate and cost per sack.' },
+      titlePH: 'e.g. "Milled 180 sacks, 65% recovery"',
+      descPH:  'Mill name/location, sacks milled, cost per sack, recovery rate, output in cavans…',
+      showCost: true, showWorkers: false, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    selling: {
+      icon: '💰', label: 'Selling / Marketing',
+      hint: { bg:'bg-green-50', border:'border-green-200', text:'text-green-800',
+              msg:'Record your sales. Note the buyer, price per sack, and total sacks sold.' },
+      titlePH: 'e.g. "Sold 150 sacks to NFA, ₱1,800/sack"',
+      descPH:  'Buyer name, price per sack, sacks sold, total sales, payment terms…',
+      showCost: false, showWorkers: false, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    labor: {
+      icon: '👷', label: 'Labor / Hired Help',
+      hint: { bg:'bg-gray-50', border:'border-gray-200', text:'text-gray-700',
+              msg:'Record hired labor costs. Note the task, number of workers, and daily wage rate.' },
+      titlePH: 'e.g. "Hired 8 workers for manual weeding"',
+      descPH:  'Task performed, number of workers, daily rate, total days, total cost…',
+      showCost: true, showWorkers: true, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    equipment: {
+      icon: '🔧', label: 'Equipment Use / Repair',
+      hint: { bg:'bg-gray-50', border:'border-gray-200', text:'text-gray-700',
+              msg:'Record equipment use or maintenance costs. Include rental, fuel, and repair expenses.' },
+      titlePH: 'e.g. "Rented 4-wheel tractor, ₱2,500/ha"',
+      descPH:  'Equipment type, hours/area used, fuel consumed, rental or repair cost…',
+      showCost: true, showWorkers: false, showProblem: false, showDetection: false, showHarvestTip: false,
+    },
+    other: {
+      icon: '📝', label: 'Other Activity',
+      hint: { bg:'bg-gray-50', border:'border-gray-200', text:'text-gray-700',
+              msg:'Describe any other farm activity not covered by the categories above.' },
+      titlePH: 'e.g. "Installed rat traps around field borders"',
+      descPH:  'What was done, why, and any costs or observations…',
+      showCost: true, showWorkers: false, showProblem: true, showDetection: false, showHarvestTip: false,
+    },
+  };
+
+  const select     = document.getElementById('{{ form.activity_type.id_for_label }}');
+  const titleInput = document.getElementById('{{ form.title.id_for_label }}');
+  const titleHint  = document.getElementById('title-hint');
+  const descField  = document.querySelector('#{{ form.description.id_for_label }}');
+  const descHint   = document.getElementById('desc-hint');
+
+  const hintBanner       = document.getElementById('activity-hint');
+  const headerIcon       = document.getElementById('header-icon');
+  const sectionCost      = document.getElementById('section-cost');
+  const wrapWorkers      = document.getElementById('wrap-workers');
+  const wrapInputCost    = document.getElementById('wrap-input-cost');
+  const wrapLaborCost    = document.getElementById('wrap-labor-cost');
+  const sectionProblem   = document.getElementById('section-problem');
+  const wrapDetection    = document.getElementById('wrap-detection');
+  const sectionHarvest   = document.getElementById('section-harvest-tip');
+
+  function applyConfig(type) {
+    const c = CONFIG[type];
+    if (!c) {
+      // Unknown type — show everything
+      hintBanner.classList.add('hidden');
+      sectionCost.classList.remove('hidden');
+      wrapWorkers.classList.remove('hidden');
+      sectionProblem.classList.remove('hidden');
+      wrapDetection.classList.remove('hidden');
+      sectionHarvest.classList.add('hidden');
+      return;
+    }
+
+    // ── Header icon ───────────────────────────────────────────────────
+    headerIcon.textContent = c.icon;
+
+    // ── Hint banner ───────────────────────────────────────────────────
+    hintBanner.className = `mb-4 rounded-lg px-4 py-3 text-sm font-medium border ${c.hint.bg} ${c.hint.border} ${c.hint.text}`;
+    hintBanner.textContent = c.hint.msg;
+    hintBanner.classList.remove('hidden');
+
+    // ── Title placeholder ─────────────────────────────────────────────
+    if (titleInput) {
+      titleInput.placeholder = c.titlePH;
+      titleHint.textContent = c.titlePH;
+    }
+
+    // ── Description placeholder ───────────────────────────────────────
+    if (descField) {
+      descField.placeholder = c.descPH;
+      descHint.textContent = c.descPH;
+    }
+
+    // ── Cost section ──────────────────────────────────────────────────
+    if (c.showCost) {
+      sectionCost.classList.remove('hidden');
+      wrapInputCost.style.opacity = '1';
+      wrapLaborCost.style.opacity = '1';
+    } else {
+      sectionCost.classList.add('hidden');
+    }
+
+    // ── Workers ───────────────────────────────────────────────────────
+    if (c.showWorkers) {
+      wrapWorkers.classList.remove('hidden');
+    } else {
+      wrapWorkers.classList.add('hidden');
+    }
+
+    // ── Problem section ───────────────────────────────────────────────
+    if (c.showProblem) {
+      sectionProblem.classList.remove('hidden');
+    } else {
+      sectionProblem.classList.add('hidden');
+    }
+
+    // ── Detection record ──────────────────────────────────────────────
+    if (c.showDetection) {
+      wrapDetection.classList.remove('hidden');
+    } else {
+      wrapDetection.classList.add('hidden');
+    }
+
+    // ── Harvest tip ───────────────────────────────────────────────────
+    if (c.showHarvestTip) {
+      sectionHarvest.classList.remove('hidden');
+    } else {
+      sectionHarvest.classList.add('hidden');
+    }
+  }
+
+  // Initial state when page loads (editing existing or default empty)
+  const initialType = select ? select.value : '';
+  applyConfig(initialType);
+
+  // React to changes
+  if (select) {
+    select.addEventListener('change', function () {
+      applyConfig(this.value);
+    });
+  }
+})();
+</script>
+{% endblock %}

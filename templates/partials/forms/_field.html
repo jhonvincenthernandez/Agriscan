@@ -1,0 +1,30 @@
+<div class="form-field" id="field-{{ field.name }}">
+  <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
+    {{ field.label }}{% if field.field.required %} <span class="text-red-600" aria-hidden="true">*</span>{% endif %}
+  </label>
+  <div class="mt-1">
+    {# Special-case: render planting select with data-* attributes for richer searchable items #}
+    {% if field.name == 'planting' and 'data-searchable' in field.field.widget.attrs %}
+      <select name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="{{ field.field.widget.attrs.class }}" data-searchable="true">
+        <option value="">-- Select --</option>
+        {% for obj in field.field.queryset %}
+          {% with pid=obj.pk|stringformat:"s" val=field.value|stringformat:"s" %}
+            <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-cycle="{{ obj.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ obj.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" {% if pid == val %}selected{% endif %}>
+              {{ obj.field.name }} — {% if obj.variety %}{{ obj.variety.code }}{% else %}No variety{% endif %} ({{ obj.season|default_if_none:''|capfirst }}, Cycle {{ obj.cropping_cycle|default_if_none:'?' }})
+            </option>
+          {% endwith %}
+        {% endfor %}
+      </select>
+    {% else %}
+      {{ field }}
+    {% endif %}
+  </div>
+  {% if field.help_text %}
+  <p id="help-{{ field.name }}" class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+  {% endif %}
+  {% if field.errors %}
+  <p id="error-{{ field.name }}" class="mt-1 text-sm text-red-600 field-error" role="alert">
+    {% for err in field.errors %}{{ err }}{% if not forloop.last %}<br />{% endif %}{% endfor %}
+  </p>
+  {% endif %}
+</div>

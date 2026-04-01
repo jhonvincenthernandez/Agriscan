@@ -1,0 +1,13 @@
+{% if form.non_field_errors %}
+<div
+  role="alert"
+  class="rounded-md bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700"
+>
+  <p class="font-semibold">There was a problem with your submission:</p>
+  <ul class="list-disc pl-5 mt-2">
+    {% for err in form.non_field_errors %}
+    <li>{{ err }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
