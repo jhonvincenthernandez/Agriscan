@@ -108,4 +108,4 @@ dataset/**/*.csv
 !dataset/yield_sample_new.csv
 
 #src
-src
+src/
