@@ -107,5 +107,6 @@ dataset/**/*.csv
 !dataset/yield_sample.csv
 !dataset/yield_sample_new.csv
 
-#src
+# ML development workspace (not required at runtime in production hosting)
 src/
+dataset/
