@@ -238,6 +238,8 @@ def register(request):
         try:
             from django.contrib.auth.models import User as _User
             from . import services as _svc
+            # Tagalog: para walang hardcoded localhost, gamitin ang base URL mula .env.
+            admin_users_url = _svc._app_url('/admin-users/')
             admin_emails = list(
                 _User.objects.filter(profile__role='admin', is_active=True)
                 .exclude(email='')
@@ -254,7 +256,7 @@ def register(request):
                         f"Full name: {user.get_full_name() or '(not set)'}\n"
                         f"Email    : {user.email or '(not set)'}\n\n"
                         f"Review and approve the account here:\n"
-                        f"http://127.0.0.1:8000/admin-users/\n\n"
+                        f"{admin_users_url}\n\n"
                         f"---\nAgriScan+ System"
                     ),
                 )
@@ -495,6 +497,7 @@ def yield_prediction(request):
         # form is re-rendered after validation errors (they are disabled and not posted).
         form = YieldPredictionForm(
             request.POST,
+            request.FILES,
             initial=initial_data,
             variety_choices=variety_choices,
             user=request.user,
@@ -508,6 +511,8 @@ def yield_prediction(request):
                 # planting was selected.  We still KEEP the planting FK for ownership
                 # tracking, but use the form values for the prediction itself.
                 use_manual_data = request.POST.get("use_manual_data", "0") == "1"
+                selected_model = form.cleaned_data.get("selected_model", "linear_regression")
+                canopy_image = form.cleaned_data.get("canopy_image")
 
                 # When arriving from a detection scan, enforce that the planted
                 # cycle is the one from the detection (locked fields). This prevents
@@ -569,11 +574,14 @@ def yield_prediction(request):
                     # ── Manual entry path (or manual-override with planting linked) ──
                     # Use form values for the prediction.
                     # `planting` is kept as-is for ownership/FK — not cleared.
+                    manual_variety = form.cleaned_data.get("variety") or "Rc222"
+                    historical_production = form.cleaned_data.get("historical_production_tons")
+                    historical_yield = form.cleaned_data.get("historical_yield_tons_per_ha")
                     prediction_data = {
-                        "variety": form.cleaned_data["variety"],
+                        "variety": manual_variety,
                         "field_area_ha": float(form.cleaned_data["area"]),
-                        "historical_production_tons": float(form.cleaned_data["historical_production_tons"]),
-                        "historical_yield_tons_per_ha": float(form.cleaned_data["historical_yield_tons_per_ha"]),
+                        "historical_production_tons": float(historical_production) if historical_production is not None else 0.0,
+                        "historical_yield_tons_per_ha": float(historical_yield) if historical_yield is not None else 0.0,
                         "planting_date": form.cleaned_data["planting_date"],
                         "average_growth_duration_days": int(form.cleaned_data["average_growth_duration_days"]),
                     }
@@ -602,7 +610,7 @@ def yield_prediction(request):
                         prediction_data["health_status"] = 0.0
                         health_display = "Healthy"
                     
-                    variety_display = form.cleaned_data["variety"]
+                    variety_display = manual_variety
                     area = float(form.cleaned_data["area"])
 
                     # Only inherit area from detection.planting when this is a
@@ -620,6 +628,8 @@ def yield_prediction(request):
                     prediction_data,
                     detection=detection,
                     override_with_detection=(not use_manual_data),
+                    selected_model=selected_model,
+                    canopy_image=canopy_image,
                 )
                 yield_result = prediction.to_template_dict()
                 yield_result.update(
@@ -627,10 +637,15 @@ def yield_prediction(request):
                         "area": round(area, 2),
                         "variety": variety_display,
                         "health": health_display,
+                        "model": selected_model,
                     }
                 )
                 yield_record = services.store_yield_prediction(
-                    prediction, form.cleaned_data, detection, planting=planting
+                    prediction,
+                    form.cleaned_data,
+                    detection,
+                    planting=planting,
+                    model_version=selected_model,
                 )
                 if yield_record:
                     messages.success(request, f"Yield prediction saved: {yield_result['value_display']} ({yield_result['readiness_display']})")
@@ -1821,7 +1836,7 @@ def export_yields_csv(request):
         return redirect('polls:dashboard')
 
     from datetime import datetime as _dt
-    ALL_COLS = ['id', 'date', 'variety', 'field', 'sacks_per_ha', 'confidence', 'area', 'total_sacks', 'total_tons', 'harvest_date']
+    ALL_COLS = ['id', 'date', 'variety', 'field', 'model', 'sacks_per_ha', 'confidence', 'area', 'total_sacks', 'total_tons', 'harvest_date']
     selected_cols = set(request.GET.getlist('cols')) or set(ALL_COLS)
 
     # Optional date range
@@ -1856,6 +1871,7 @@ def export_yields_csv(request):
 
     COL_LABELS = {
         'id': 'ID', 'date': 'Date', 'variety': 'Variety', 'field': 'Field',
+        'model': 'Model',
         'sacks_per_ha': 'Sacks/ha', 'confidence': 'Confidence (%)',
         'area': 'Area (ha)', 'total_sacks': 'Total Sacks',
         'total_tons': 'Total Tons', 'harvest_date': 'Harvest Date',
@@ -1870,6 +1886,7 @@ def export_yields_csv(request):
             'date':         rec.created_at.strftime('%Y-%m-%d %H:%M'),
             'variety':      variety,
             'field':        field,
+            'model':        rec.model_version or '',
             'sacks_per_ha': rec.predicted_sacks_per_ha or '',
             'confidence':   round(float(rec.confidence_pct or 0), 2) if rec.confidence_pct else '',
             'area':         rec.area_hectares or '',
@@ -2017,7 +2034,7 @@ def export_yields_pdf(request):
     elems.append(Paragraph(cover_line, styles['Normal']))
     elems.append(Spacer(1, 0.3*inch))
 
-    data = [['ID', 'Date', 'Variety', 'Field', 'Sacks/ha', 'Area (ha)', 'Total Sacks', 'Harvest Date']]
+    data = [['ID', 'Date', 'Variety', 'Field', 'Model', 'Sacks/ha', 'Area (ha)', 'Total Sacks', 'Harvest Date']]
     for rec in records:
         variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
         field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
@@ -2026,13 +2043,14 @@ def export_yields_pdf(request):
             rec.created_at.strftime('%Y-%m-%d'),
             variety[:16],
             field[:20],
+            str(rec.model_version or '-')[:24],
             str(rec.predicted_sacks_per_ha or '-'),
             str(rec.area_hectares or '-'),
             str(rec.total_sacks or '-'),
             rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '-',
         ])
 
-    table = Table(data, colWidths=[0.6*inch, 1.2*inch, 1.3*inch, 1.8*inch, 1.1*inch, 1.1*inch, 1.2*inch, 1.2*inch])
+    table = Table(data, colWidths=[0.55*inch, 1.05*inch, 1.0*inch, 1.55*inch, 1.45*inch, 0.95*inch, 0.95*inch, 1.05*inch, 1.05*inch])
     table.setStyle(TableStyle([
         ('BACKGROUND',     (0, 0), (-1, 0), BLUE),
         ('TEXTCOLOR',      (0, 0), (-1, 0), colors.white),
@@ -3045,6 +3063,8 @@ def system_settings(request):
         prev_values = {
             "allowed_past_days_planting": setting.allowed_past_days_planting,
             "detection_confidence_threshold": setting.detection_confidence_threshold,
+            "yield_cnn_enabled": setting.yield_cnn_enabled,
+            "email_enabled": setting.email_enabled,
         }
 
         form = SiteSettingForm(request.POST, instance=setting)
@@ -3067,6 +3087,8 @@ def system_settings(request):
                 "current": {
                     "allowed_past_days_planting": setting.allowed_past_days_planting,
                     "detection_confidence_threshold": setting.detection_confidence_threshold,
+                    "yield_cnn_enabled": setting.yield_cnn_enabled,
+                    "email_enabled": setting.email_enabled,
                 },
                 "changes": changes,
             }
@@ -3093,6 +3115,8 @@ def system_settings(request):
 
     current_allowed_days = services.get_allowed_past_days_for_planting()
     current_confidence_threshold = services.get_detection_confidence_threshold()
+    current_yield_cnn_enabled = services.get_yield_cnn_enabled()
+    current_email_enabled = services.get_email_enabled()
 
     recommended_defaults = getattr(settings, "SYSTEM_SETTING_DEFAULTS", {})
 
@@ -3102,6 +3126,10 @@ def system_settings(request):
         "current_confidence_threshold": current_confidence_threshold,
         "recommended_allowed_past_days": recommended_defaults.get("allowed_past_days_planting", 30),
         "recommended_confidence_threshold": recommended_defaults.get("detection_confidence_threshold", 75),
+        "recommended_yield_cnn_enabled": recommended_defaults.get("yield_cnn_enabled", False),
+        "recommended_email_enabled": recommended_defaults.get("email_enabled", False),
+        "current_yield_cnn_enabled": current_yield_cnn_enabled,
+        "current_email_enabled": current_email_enabled,
         "audits": audits,
     }
     return render(request, "admin/system_settings.html", context)
@@ -3675,6 +3703,8 @@ def admin_user_approve(request, pk: int):
     # Email the farmer: "Your account has been approved"
     try:
         from . import services as _svc
+        # Tagalog: dynamic login URL para tugma sa dev/prod domain.
+        login_url = _svc._app_url('/login/')
         _svc.send_plain_email(
             recipient_email=user.email,
             subject='[AgriScan+] Your Account Has Been Approved',
@@ -3682,7 +3712,7 @@ def admin_user_approve(request, pk: int):
                 f"Hello {user.get_full_name() or user.username},\n\n"
                 f"Great news! Your AgriScan+ farmer account has been approved by an administrator.\n"
                 f"You can now log in and start using the system.\n\n"
-                f"Log in here: http://127.0.0.1:8000/login/\n\n"
+                f"Log in here: {login_url}\n\n"
                 f"---\nAgriScan+ System"
             ),
         )

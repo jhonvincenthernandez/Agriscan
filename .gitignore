@@ -5,6 +5,18 @@ __pycache__/
 *.so
 .Python
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+pip-wheel-metadata/
 
 # Django
 *.log
@@ -16,11 +28,17 @@ db.sqlite3-journal
 venv/
 env/
 ENV/
-.venv
+.venv/
+
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
 
 # IDE
 .vscode/
 .idea/
+.history/
 *.swp
 *.swo
 *~
@@ -29,24 +47,38 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Media uploads (keep structure but ignore files)
-media/detections/*
-!media/detections/.gitkeep
+# Frontend / tooling cache
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build and runtime outputs
+dist/
+build/
+*.tmp
+*.bak
+*.pid
+staticfiles/
+
+# Media uploads (ignore generated files, keep placeholders)
+media/**
+!media/**/.gitkeep
 
 # Test files (temporary scripts)
 check_*.py
 create_sample_*.py
 test_*.py
 
-# Documentation files (not needed in production)
-docs/
-*.md
-!README.md
+# Documentation build output
+docs/_build/
 
 # Model files (large binary files)
 models/*.h5
 models/*.tflite
 models/*.joblib
+models/*.pth
 models/*.png
 
 # Keep only essential model metadata
@@ -55,14 +87,20 @@ models/*.png
 !models/yield_model_meta.json
 !models/yield_report.json
 
-# ML Training & Development (not used in Django production)
-# Keep these files but document they're for model development only
-src/app_flask.py
-src/evaluate.ipynb
-src/evaluate.py
+# Keep required runtime model artifacts for deployment
+!models/agriscan.tflite
+!models/yield_model.joblib
+!models/rice_yield_CNN.pth
 
-# Dataset (large files - should be stored separately)
-dataset/train/
-dataset/test/
-dataset/validation/
-!dataset/yield_sample_new.csv
+# Jupyter
+.ipynb_checkpoints/
+
+# Python packaging artifacts
+*.egg-info/
+.eggs/
+
+# ML development workspace (not required at runtime in production hosting)
+src/
+
+# Dataset and training data (not required at runtime in production hosting)
+dataset/
