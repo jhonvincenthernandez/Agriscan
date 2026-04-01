@@ -1,5 +1,15 @@
 # Rice Yield CNN
 
+## Local Integration Note (AgriScan+)
+
+In this repository, Django runtime inference is configured through environment/settings keys:
+
+- `YIELD_CNN_CHECKPOINT_PATH`
+- `YIELD_CNN_DEVICE`
+- `YIELD_CNN_ENABLED` (fallback toggle when DB setting is unavailable)
+
+Admin-facing enable or disable for CNN in AgriScan+ is managed in System Settings (`yield_cnn_enabled`).
+
 Rice Yield CNN is a model to estimate the rice yield based on RGB image of rice canopy at harvest. The model is developed based on more than 22,000 images and yield database collected across 7 countries.  
 This project is the implementation of the paper "[Deep learning-based estimation of rice yield using RGB image](https://www.researchsquare.com/article/rs-1026695/v1)".
 

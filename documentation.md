@@ -24,23 +24,21 @@ The system is designed for practical deployment in local government or extension
 
 ## 2. Objectives of the Study
 
-The study aims to develop AgriScan+, a CNN-powered mobile-responsive web decision-support system for early rice leaf disease detection and yield prediction for the Department of Agriculture - San Teodoro.
-
-### General objective
-
-- Design, develop, and evaluate an operational AI-assisted agriculture platform that supports mobile-responsive field diagnosis, yield estimation, and data-driven farm management.
+The purpose of this study is to develop AgriScan+, an AI-powered, mobile-responsive web decision-support system for early rice leaf disease detection and yield prediction for the Department of Agriculture - San Teodoro.
 
 ### Specific objectives
 
+Specifically, this study aims to:
+
 1. Design and implement mobile-responsive workflows that allow farmers and agricultural staff to capture or upload rice leaf images using smartphone and desktop browsers for disease screening.
 2. Implement and integrate a Convolutional Neural Network (CNN)-based disease detection pipeline that classifies common rice leaf diseases with usable confidence outputs.
-3. Develop a yield prediction and analytics module that combines detection outcomes, planting context, and historical farm records for decision support.
+3. Develop and integrate a yield prediction and analytics module with support for both Linear Regression and CNN models, combining detection outcomes, planting context, and historical farm records for decision support.
 4. Build a centralized database for user, field, planting, detection, prediction, harvest, and notification records to ensure traceability and longitudinal analysis.
-5. Evaluate the system using technical and user-centered criteria, including model accuracy, usability, reliability, operational efficiency, and mobile usability through user testing and expert validation.
+5. Evaluate the system using technical and user-centered criteria, including model performance, usability, reliability, operational efficiency, and mobile usability through user testing and expert validation.
 
 ### Scope alignment note
 
-- The current implementation follows an intentional web-first, mobile-responsive deployment strategy to maximize accessibility, faster rollout, lower maintenance cost, and cross-device compatibility, while fully operationalizing role-based modules for Admin, Technician, and Farmer users with end-to-end support for disease detection, yield prediction, and crop-cycle record management.
+- The current implementation follows an intentional web-first, mobile-responsive deployment strategy to maximize accessibility, faster rollout, lower maintenance cost, and cross-device compatibility, while fully operationalizing role-based modules for Admin, Technician, and Farmer users with end-to-end support for disease detection, hybrid-model yield prediction, and crop-cycle record management.
 
 ---
 
@@ -128,6 +126,9 @@ Responsibilities:
 
 - Global settings such as allowed past planting days
 - Detection confidence threshold
+- Business toggles managed in admin UI
+   - enable or disable outgoing email notifications
+   - enable or disable user-facing CNN yield mode
 - Change logging for auditability
 
 Key model entities:
@@ -185,6 +186,9 @@ Responsibilities:
 - Predicted yield storage in tons per hectare
 - Total production estimation
 - Actual harvest capture and synchronization
+- Dual-model inference routing
+   - Linear Regression path for tabular agronomic inputs
+   - CNN path for canopy image-based prediction
 
 Key model entities:
 
@@ -242,10 +246,14 @@ Key model entities:
 ### Workflow B: Yield Prediction
 
 1. User opens prediction flow from planting or detection context.
-2. System reads field and planting metadata.
-3. Model returns predicted tons per hectare.
-4. System computes total production estimate.
-5. Prediction is saved for historical reporting.
+2. User selects model mode (Linear Regression or CNN Yield).
+3. System reads field and planting metadata.
+4. Model-specific validation is applied.
+   - CNN requires canopy image and quality checks.
+   - Linear Regression validates tabular core fields.
+5. Selected model returns predicted tons per hectare.
+6. System computes total production estimate.
+7. Prediction is saved for historical reporting.
 
 ### Workflow C: Harvest Finalization
 
@@ -268,6 +276,16 @@ Key model entities:
 - Validate uploads by type and size.
 - Keep secrets in environment variables.
 - Enforce HTTPS and secure host configuration in production.
+
+### Settings governance pattern
+
+- Admin business toggles are DB-backed via `SiteSetting`.
+   - `email_enabled`
+   - `yield_cnn_enabled`
+- Environment toggles are fallback-only when `SiteSetting` is unavailable.
+   - `EMAIL_ENABLED`
+   - `YIELD_CNN_ENABLED`
+- SMTP credentials and model runtime values remain environment-managed.
 
 ### Audit and traceability
 

@@ -24,14 +24,14 @@ These files are kept for **model training and development purposes only**. They 
   - Trains on `dataset/yield_sample_new.csv`
 
 ### Evaluation
-- **evaluate.py** - Model evaluation script
+- **evaluate.ipynb** - Model evaluation notebook
   - Tests model accuracy
   - Generates confusion matrix
   - Creates ROC curves
-  
-- **evaluate.ipynb** - Jupyter notebook for interactive evaluation
-  - Visual analysis of model performance
-  - Plots and metrics
+
+### Yield CNN Integration Files
+- **rice_yield_CNN-develop_integration/** - reference CNN integration assets
+  - Architecture and checkpoint guidance for canopy-image yield inference
 
 ### Flask Demo (Legacy)
 - **app_flask.py** - Standalone Flask API demo
@@ -66,7 +66,7 @@ python src/train.py
 python src/yield_train.py
 
 # Evaluate model
-python src/evaluate.py
+jupyter notebook src/evaluate.ipynb
 ```
 
 ### Converting to TFLite
@@ -79,17 +79,21 @@ python src/convert_tflite.py
 After training, these files are created in `models/`:
 - `rice_disease_model.h5` - Disease detection CNN
 - `yield_model.joblib` - Yield prediction model
+- `rice_yield_CNN.pth` - CNN yield checkpoint (PyTorch)
 - `class_names.json` - Disease class mappings
 - `rice_disease_model_history.json` - Training metrics
 - `agriscan.tflite` - Mobile-optimized model
 
 ## 🔗 Django Integration
 
-The Django app (`polls/views.py`) loads the trained models:
+The Django app uses service-layer loading for runtime models:
 ```python
-# In Django views
-model = tf.keras.models.load_model('models/rice_disease_model.h5')
-yield_model = joblib.load('models/yield_model.joblib')
+# Disease detection
+interpreter = tf.lite.Interpreter(model_path='models/agriscan.tflite')
+
+# Yield prediction
+yield_lr = joblib.load('models/yield_model.joblib')
+# CNN path uses checkpoint from settings/env (YIELD_CNN_CHECKPOINT_PATH)
 ```
 
 **The training scripts are NOT imported by Django.**
@@ -131,7 +135,7 @@ dataset/
 1. Collect new training data
 2. Update `dataset/` directory
 3. Run `python src/train.py`
-4. Evaluate with `python src/evaluate.py`
+4. Evaluate with `jupyter notebook src/evaluate.ipynb`
 5. If satisfied, replace model in `models/`
 6. Test in Django app
 7. Deploy updated model
@@ -141,4 +145,4 @@ dataset/
 **Purpose**: ML development and model training  
 **Used in Django**: ❌ No  
 **Delete?**: ❌ No - Keep for model maintenance  
-**Last Updated**: 2026-02-22
+**Last Updated**: 2026-04-01

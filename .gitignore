@@ -8,9 +8,15 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pyre/
+.hypothesis/
 .coverage
 .coverage.*
 htmlcov/
+coverage.xml
+.tox/
+.nox/
+pip-wheel-metadata/
 
 # Django
 *.log
@@ -22,7 +28,7 @@ db.sqlite3-journal
 venv/
 env/
 ENV/
-.venv
+.venv/
 
 # Environment variables and local secrets
 .env
@@ -32,6 +38,7 @@ ENV/
 # IDE
 .vscode/
 .idea/
+.history/
 *.swp
 *.swo
 *~
@@ -51,6 +58,9 @@ pnpm-debug.log*
 dist/
 build/
 *.tmp
+*.bak
+*.pid
+staticfiles/
 
 # Media uploads (ignore generated files, keep placeholders)
 media/**
@@ -68,6 +78,7 @@ docs/_build/
 models/*.h5
 models/*.tflite
 models/*.joblib
+models/*.pth
 models/*.png
 
 # Keep only essential model metadata
@@ -76,11 +87,17 @@ models/*.png
 !models/yield_model_meta.json
 !models/yield_report.json
 
-# ML Training & Development (not used in Django production)
-# Keep these files but document they're for model development only
-src/app_flask.py
-src/evaluate.ipynb
-src/evaluate.py
+# Keep required runtime model artifacts for deployment
+!models/agriscan.tflite
+!models/yield_model.joblib
+!models/rice_yield_CNN.pth
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Python packaging artifacts
+*.egg-info/
+.eggs/
 
 # Dataset (large files - should be stored separately)
 dataset/train/
@@ -89,3 +106,6 @@ dataset/validation/
 dataset/**/*.csv
 !dataset/yield_sample.csv
 !dataset/yield_sample_new.csv
+
+#src
+src

@@ -194,6 +194,10 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SYSTEM_SETTING_DEFAULTS = {
     "allowed_past_days_planting": 30,
     "detection_confidence_threshold": 75,
+    # Admin UI default for CNN toggle (env still acts as fallback when DB setting is absent).
+    "yield_cnn_enabled": False,
+    # Admin UI default for email toggle (SMTP credentials remain env-managed).
+    "email_enabled": False,
 }
 
 # Email config: lahat configurable via .env para walang hardcoded credentials sa repo.
@@ -207,4 +211,12 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AgriScan+ <noreply@ex
 
 # I-enable lang ang email sending kapag handa na ang SMTP credentials.
 EMAIL_ENABLED = _env_bool('EMAIL_ENABLED', default=False)
+
+# Yield model switches/config for dual-model inference.
+YIELD_CNN_ENABLED = _env_bool('YIELD_CNN_ENABLED', default=False)
+YIELD_CNN_CHECKPOINT_PATH = os.environ.get(
+    'YIELD_CNN_CHECKPOINT_PATH',
+    str(BASE_DIR / 'models' / 'rice_yield_CNN.pth'),
+)
+YIELD_CNN_DEVICE = os.environ.get('YIELD_CNN_DEVICE', 'cpu')
 
