@@ -26,6 +26,10 @@
         </p>
       </div>
       <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+        <span id="unsaved-chip" class="hidden inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+          <span class="h-1.5 w-1.5 rounded-full bg-amber-600"></span>
+          Unsaved changes
+        </span>
         <a href="{% url 'polls:dashboard' %}"
            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,7 +45,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M4 4v6h6M20 20v-6h-6" />
           </svg>
-          Reset to Recommended
+          Fill Recommended Values
         </button>
         <a href="{% url 'polls:system_settings_audit_list' %}"
            class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition text-sm font-medium">
@@ -55,7 +59,7 @@
   </div>
 
   <!-- Current effective settings summary -->
-  <div class="grid md:grid-cols-2 gap-4 mb-6">
+  <div class="grid md:grid-cols-4 gap-4 mb-6">
     <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4 shadow-sm">
       <div class="flex items-center justify-between">
         <div>
@@ -101,10 +105,58 @@
         </div>
       </div>
     </div>
+
+    <div class="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-4 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-amber-700 uppercase tracking-wide">Yield CNN Mode</p>
+          <p class="mt-1 text-2xl font-bold text-amber-900">
+            {% if current_yield_cnn_enabled %}Enabled{% else %}Disabled{% endif %}  
+          </p>
+          <p class="mt-1 text-xs text-amber-800">
+            Controls whether users can select <strong>CNN Yield</strong> in the Yield Tool.
+          </p>
+        </div>
+        <div class="hidden sm:block">
+          <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-inner">
+            <svg class="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 3v18m9-9H3" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gradient-to-br from-violet-50 to-violet-100 border border-violet-200 rounded-xl p-4 shadow-sm">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-xs font-semibold text-violet-700 uppercase tracking-wide">Email Notifications</p>
+          <p class="mt-1 text-2xl font-bold text-violet-900">
+            {% if current_email_enabled %}Enabled{% else %}Disabled{% endif %}
+          </p>
+          <p class="mt-1 text-xs text-violet-800">
+            Controls whether system email alerts are sent.
+          </p>
+        </div>
+        <div class="hidden sm:block">
+          <span class="inline-flex items-center justify-center h-12 w-12 rounded-full bg-white shadow-inner">
+            <svg class="h-6 w-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 8l9 6 9-6m-18 8h18V8H3v8z" />
+            </svg>
+          </span>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Settings Form -->
-  <form method="post" class="space-y-6" id="system-settings-form">
+    <form method="post" class="space-y-6" id="system-settings-form"
+      data-recommended-allowed-past-days="{{ recommended_allowed_past_days|default:30 }}"
+      data-recommended-confidence-threshold="{{ recommended_confidence_threshold|default:75 }}"
+      data-recommended-yield-cnn-enabled="{% if recommended_yield_cnn_enabled %}true{% else %}false{% endif %}"
+      data-recommended-email-enabled="{% if recommended_email_enabled %}true{% else %}false{% endif %}">
     {% csrf_token %}
 
     {% if form.non_field_errors %}
@@ -123,10 +175,12 @@
 
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm divide-y divide-gray-100">
       <div class="px-6 py-4">
-        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Planting Date Rule</h2>
+        <h2 class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Global Rules</h2>
+        <p class="mt-1 text-xs text-gray-500">Edit values below, then click Save Settings to apply globally.</p>
       </div>
       <div class="px-6 py-5 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <div>
+          <h3 class="text-sm font-semibold text-gray-800 mb-3">Planting Constraints</h3>
           <label for="{{ form.allowed_past_days_planting.id_for_label }}"
                  class="block text-sm font-medium text-gray-700 mb-1">
             Allowed Past Days for Planting Date
@@ -149,6 +203,7 @@
           {% endif %}
 
           <div class="mt-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Detection Quality Gate</h3>
             <label for="{{ form.detection_confidence_threshold.id_for_label }}"
                    class="block text-sm font-medium text-gray-700 mb-1">
               AI Detection Confidence Threshold
@@ -167,6 +222,64 @@
                         clip-rule="evenodd" />
                 </svg>
                 {{ form.detection_confidence_threshold.errors.0 }}
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Yield Model Access</h3>
+            <label for="{{ form.yield_cnn_enabled.id_for_label }}"
+                   class="block text-sm font-medium text-gray-700 mb-1">
+              Enable CNN Yield Model
+            </label>
+            <div class="flex items-center gap-2">
+              {{ form.yield_cnn_enabled }}
+              <span id="cnn-toggle-text" class="text-xs text-gray-600">
+                {% if current_yield_cnn_enabled %}CNN Yield is currently enabled for users.{% else %}CNN Yield is currently disabled for users.{% endif %}
+              </span>
+            </div>
+            {% if form.yield_cnn_enabled.help_text %}
+              <p class="mt-1 text-xs text-gray-500">
+                {{ form.yield_cnn_enabled.help_text }}
+              </p>
+            {% endif %}
+            {% if form.yield_cnn_enabled.errors %}
+              <p class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clip-rule="evenodd" />
+                </svg>
+                {{ form.yield_cnn_enabled.errors.0 }}
+              </p>
+            {% endif %}
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-sm font-semibold text-gray-800 mb-3">Email Notifications</h3>
+            <label for="{{ form.email_enabled.id_for_label }}"
+                   class="block text-sm font-medium text-gray-700 mb-1">
+              Enable System Email Notifications
+            </label>
+            <div class="flex items-center gap-2">
+              {{ form.email_enabled }}
+              <span id="email-toggle-text" class="text-xs text-gray-600">
+                {% if current_email_enabled %}System email notifications are currently enabled.{% else %}System email notifications are currently disabled.{% endif %}
+              </span>
+            </div>
+            {% if form.email_enabled.help_text %}
+              <p class="mt-1 text-xs text-gray-500">
+                {{ form.email_enabled.help_text }}
+              </p>
+            {% endif %}
+            {% if form.email_enabled.errors %}
+              <p class="mt-1 text-xs text-red-600 flex items-center gap-1">
+                <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clip-rule="evenodd" />
+                </svg>
+                {{ form.email_enabled.errors.0 }}
               </p>
             {% endif %}
           </div>
@@ -196,6 +309,10 @@
         Save Settings
       </button>
     </div>
+
+    <p class="text-xs text-gray-500">
+      Tip: "Fill Recommended Values" only updates form inputs. Changes are not applied until you click Save Settings.
+    </p>
 
   </form>
 
@@ -247,26 +364,86 @@
     const resetButton = document.getElementById('reset-recommended');
     const form = document.getElementById('system-settings-form');
     const submitButton = document.getElementById('system-settings-submit');
+    const unsavedChip = document.getElementById('unsaved-chip');
+    const cnnToggle = form ? form.querySelector('[name="yield_cnn_enabled"]') : null;
+    const cnnToggleText = document.getElementById('cnn-toggle-text');
+    const emailToggle = form ? form.querySelector('[name="email_enabled"]') : null;
+    const emailToggleText = document.getElementById('email-toggle-text');
     if (!resetButton || !form || !submitButton) return;
+
+    const trackedInputs = Array.from(form.querySelectorAll('input, select, textarea'));
+    const initialState = trackedInputs.map((el) => (
+      el.type === 'checkbox' ? String(!!el.checked) : String(el.value)
+    ));
+
+    function hasUnsavedChanges() {
+      return trackedInputs.some((el, idx) => {
+        const curr = el.type === 'checkbox' ? String(!!el.checked) : String(el.value);
+        return curr !== initialState[idx];
+      });
+    }
+
+    function syncUnsavedChip() {
+      if (!unsavedChip) return;
+      const dirty = hasUnsavedChanges();
+      unsavedChip.classList.toggle('hidden', !dirty);
+    }
+
+    function syncCnnText() {
+      if (!cnnToggle || !cnnToggleText) return;
+      cnnToggleText.textContent = cnnToggle.checked
+        ? 'CNN Yield is currently enabled for users.'
+        : 'CNN Yield is currently disabled for users.';
+    }
+
+    function syncEmailText() {
+      if (!emailToggle || !emailToggleText) return;
+      emailToggleText.textContent = emailToggle.checked
+        ? 'System email notifications are currently enabled.'
+        : 'System email notifications are currently disabled.';
+    }
+
+    trackedInputs.forEach((el) => {
+      el.addEventListener('input', () => {
+        syncUnsavedChip();
+        syncCnnText();
+        syncEmailText();
+      });
+      el.addEventListener('change', () => {
+        syncUnsavedChip();
+        syncCnnText();
+        syncEmailText();
+      });
+    });
 
     resetButton.addEventListener('click', function () {
       // These should match the recommended defaults in the code.
       const defaults = {
-        allowed_past_days_planting: {{ recommended_allowed_past_days|default:30 }},
-        detection_confidence_threshold: {{ recommended_confidence_threshold|default:75 }},
+        allowed_past_days_planting: Number(form.dataset.recommendedAllowedPastDays || 30),
+        detection_confidence_threshold: Number(form.dataset.recommendedConfidenceThreshold || 75),
+        yield_cnn_enabled: (form.dataset.recommendedYieldCnnEnabled || 'false') === 'true',
+        email_enabled: (form.dataset.recommendedEmailEnabled || 'false') === 'true',
       };
 
       for (const [name, value] of Object.entries(defaults)) {
         const input = form.querySelector(`[name="${name}"]`);
         if (input) {
-          input.value = value;
+          if (input.type === 'checkbox') {
+            input.checked = !!value;
+          } else {
+            input.value = value;
+          }
         }
       }
 
-      // Trigger the native submit button so the base page loader can show the
-      // progress bar and button spinner (via the global [data-loading] handler).
-      submitButton.click();
+      syncUnsavedChip();
+      syncCnnText();
+      syncEmailText();
     });
+
+    syncUnsavedChip();
+    syncCnnText();
+    syncEmailText();
   })();
   </script>
 </section>

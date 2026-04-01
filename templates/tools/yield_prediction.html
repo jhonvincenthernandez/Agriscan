@@ -69,7 +69,7 @@
         </div>
         {% endif %}
         
-        <form method="post" class="space-y-4" id="yield-prediction-form">
+        <form method="post" enctype="multipart/form-data" class="space-y-4" id="yield-prediction-form">
         {% csrf_token %}
         {# Hidden flag: 1 = user manually edited fields while a planting was selected #}
         <input type="hidden" name="use_manual_data" id="id_use_manual_data" value="0">
@@ -89,13 +89,38 @@
         {% endif %}
         
         {% include 'partials/forms/_errors.html' %}
-        {% for field in form %}
-          {% if from_detection and field.name == 'planting' %}
-            {# Hide planting selector when coming from detection - already auto-filled #}
-          {% else %}
-            {% include 'partials/forms/_field.html' with field=field %}
-          {% endif %}
-        {% endfor %}
+
+        {# Flow 1 (Tagalog): Piliin muna ang prediction model para alam agad ang required inputs. #}
+        {% include 'partials/forms/_field.html' with field=form.selected_model %}
+        <div id="model-required-hint" class="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800">
+          <p class="font-semibold">Model-specific required fields</p>
+          <p id="model-required-hint-text" class="mt-1">
+            Linear Regression:Planting data and Historical data are required.
+          </p>
+        </div>
+        {% include 'partials/forms/_field.html' with field=form.canopy_image %}
+
+        {# Flow 2 (Tagalog): Piliin ang planting record para auto-fill, maliban kung galing sa detection. #}
+        {% if not from_detection %}
+          {% include 'partials/forms/_field.html' with field=form.planting %}
+        {% endif %}
+        
+        {# Flow 3 (Tagalog): Core agronomic inputs na kailangan ng prediction computation. #}
+        {% include 'partials/forms/_field.html' with field=form.area %}
+        {% include 'partials/forms/_field.html' with field=form.planting_date %}
+        {% include 'partials/forms/_field.html' with field=form.average_growth_duration_days %}
+        {% include 'partials/forms/_field.html' with field=form.variety %}
+
+        {# Flow 4 (Tagalog): Optional/quality enhancer fields para mas accurate ang output. #}
+        {% include 'partials/forms/_field.html' with field=form.historical_production_tons %}
+        {% include 'partials/forms/_field.html' with field=form.historical_yield_tons_per_ha %}
+        {% include 'partials/forms/_field.html' with field=form.health %}
+
+        {# Flow 5 (Tagalog): Read-only context fields mula sa planting/field metadata. #}
+        {% include 'partials/forms/_field.html' with field=form.season %}
+        {% include 'partials/forms/_field.html' with field=form.ecosystem_type %}
+
+        
         <button type="submit" id="yield-submit-btn" data-loading class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
@@ -132,6 +157,10 @@
               <p class="text-xs text-purple-600 font-semibold uppercase mb-1">Variety</p>
               <p class="text-lg font-bold text-gray-900">{{ yield_result.variety }}</p>
             </div>
+            <div class="bg-sky-50 rounded-lg p-4">
+              <p class="text-xs text-sky-600 font-semibold uppercase mb-1">Model Used</p>
+              <p class="text-sm font-medium text-gray-900">{{ yield_result.model|default:"Linear Regression" }}</p>
+            </div>
             <div class="bg-amber-50 rounded-lg p-4">
               <p class="text-xs text-amber-600 font-semibold uppercase mb-1">Health Status</p>
               <p class="text-sm font-medium text-gray-900">{{ yield_result.health }}</p>
@@ -146,6 +175,7 @@
             <p class="text-xs text-gray-600 font-semibold uppercase mb-2">Projected Total Harvest</p>
             <p class="text-2xl font-bold text-gray-900">{{ yield_result.total_tons }} tons</p>
             <p class="text-sm text-gray-600">{{ yield_result.total_sacks }} sacks total</p>
+            <p class="text-xs text-gray-500 mt-2">Note: 1 sack = 50 kg, so 1 ton = 20 sacks.</p>
           </div>
 
           {% if yield_record %}
@@ -279,7 +309,73 @@
 <script>
 // BEST PRACTICE: Searchable Health Status Dropdown
 document.addEventListener('DOMContentLoaded', function() {
-    // Health Status Search Filter
+  // Flow JS-1 (Tagalog): Dynamic visibility base sa napiling yield model (LR vs CNN).
+  const modelSelect = document.getElementById('id_selected_model');
+  const FIELD_NAMES = {
+    canopy: 'canopy_image',
+    variety: 'variety',
+    historicalProduction: 'historical_production_tons',
+    historicalYield: 'historical_yield_tons_per_ha',
+    health: 'health',
+    season: 'season',
+    ecosystem: 'ecosystem_type',
+  };
+  const hintText = document.getElementById('model-required-hint-text');
+
+  function getFieldWrapper(name) {
+    return document.getElementById(`field-${name}`);
+  }
+
+  function setFieldVisibilityAndState(name, shouldShow) {
+    const wrapper = getFieldWrapper(name);
+    if (!wrapper) return;
+
+    wrapper.style.display = shouldShow ? '' : 'none';
+
+    // Disable hidden fields para hindi masamang sumama sa POST payload.
+    const controls = wrapper.querySelectorAll('input, select, textarea');
+    controls.forEach((control) => {
+      control.disabled = !shouldShow;
+    });
+  }
+
+  function syncYieldModelFields() {
+    if (!modelSelect) {
+      return;
+    }
+
+    const isCnn = modelSelect.value === 'cnn_yield';
+
+    // CNN required field
+    setFieldVisibilityAndState(FIELD_NAMES.canopy, isCnn);
+
+    const canopyInput = document.getElementById('id_canopy_image');
+    if (canopyInput) {
+      canopyInput.required = isCnn;
+      canopyInput.disabled = !isCnn;
+    }
+
+    // Tagalog: LR-only fields, itago kapag CNN para mas malinis ang form.
+    setFieldVisibilityAndState(FIELD_NAMES.variety, !isCnn);
+    setFieldVisibilityAndState(FIELD_NAMES.historicalProduction, !isCnn);
+    setFieldVisibilityAndState(FIELD_NAMES.historicalYield, !isCnn);
+    setFieldVisibilityAndState(FIELD_NAMES.health, !isCnn);
+    setFieldVisibilityAndState(FIELD_NAMES.season, !isCnn);
+    setFieldVisibilityAndState(FIELD_NAMES.ecosystem, !isCnn);
+
+    if (hintText) {
+      hintText.textContent = isCnn
+        ? 'CNN Yield: Canopy Image, Area, Planting Date, and Growth Duration are required. Variety and historical fields are hidden because they are not used by CNN prediction.'
+        : 'Linear Regression: Area, Variety, Planting Date, and Growth Duration are required. Historical and health fields are optional but improve prediction quality.';
+    }
+  }
+
+  if (modelSelect) {
+    modelSelect.addEventListener('change', syncYieldModelFields);
+    syncYieldModelFields();
+  }
+
+    // Flow JS-2 (Tagalog): Searchable Health Status dropdown para mabilis pumili.
     const healthSelect = document.getElementById('id_health_select');
     if (healthSelect) {
         // Create search input
@@ -333,7 +429,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ✨ BEST PRACTICE: Auto-fill and lock fields when coming from detection
+    // Flow JS-3 (Tagalog): Kapag galing sa detection, i-lock ang auto-filled fields.
     {% if from_detection %}
     // Use setTimeout to ensure DOM is fully rendered
     setTimeout(function lockAutoFilledFields() {
@@ -554,7 +650,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 100); // 100ms delay to ensure DOM is ready
     {% endif %}
     
-    // ── Searchable dropdown for planting record ────────────────────────────
+    // Flow JS-4 (Tagalog): Searchable planting dropdown + auto-fill per selected planting.
     const plantingSelect = document.getElementById('id_planting');
 
     // Kung ang dropdown ng pagtatanim ay may 'data-searchable="true"', gawing searchable
@@ -775,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ✨ AUTO-CALCULATE: Historical Yield = Production ÷ Area (BEST PRACTICE)
+    // Flow JS-5 (Tagalog): Auto-calculate ng historical yield (Production ÷ Area).
     const areaField = document.getElementById('id_area');
     const productionField = document.getElementById('id_historical_production_tons');
     const yieldField = document.getElementById('id_historical_yield_tons_per_ha');
@@ -947,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // I-remove ang readonly at disabled bago mag-submit para masend ang lahat ng values
+    // Flow JS-6 (Tagalog): Bago submit, siguraduhing naisusumite ang required values.
     const form = document.getElementById('yield-prediction-form');
     if (form) {
         form.addEventListener('submit', function() {

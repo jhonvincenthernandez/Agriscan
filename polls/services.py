@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib
 import re
 import threading
 import uuid
@@ -79,6 +80,44 @@ def get_detection_confidence_threshold() -> int:
 
     return getattr(settings, "SYSTEM_SETTING_DEFAULTS", {}).get("detection_confidence_threshold", 75)
 
+
+def get_yield_cnn_enabled() -> bool:
+    """Return whether CNN yield mode is enabled for users.
+
+    Priority:
+    1. SiteSetting.yield_cnn_enabled (admin UI)
+    2. Env/settings fallback (YIELD_CNN_ENABLED)
+    """
+    try:
+        from .models import SiteSetting
+
+        setting = SiteSetting.objects.first()
+        if setting is not None:
+            return bool(setting.yield_cnn_enabled)
+    except (OperationalError, ProgrammingError):
+        pass
+
+    return bool(getattr(settings, "YIELD_CNN_ENABLED", False))
+
+
+def get_email_enabled() -> bool:
+    """Return whether outgoing email notifications are enabled.
+
+    Priority:
+    1. SiteSetting.email_enabled (admin UI)
+    2. Env/settings fallback (EMAIL_ENABLED)
+    """
+    try:
+        from .models import SiteSetting
+
+        setting = SiteSetting.objects.first()
+        if setting is not None:
+            return bool(setting.email_enabled)
+    except (OperationalError, ProgrammingError):
+        pass
+
+    return bool(getattr(settings, "EMAIL_ENABLED", False))
+
 # Cache objects so we do not reload heavy assets on every request
 _INTERPRETER: Optional[tf.lite.Interpreter] = None  # type: ignore
 _INPUT_DETAILS: Optional[List[Dict[str, Any]]] = None
@@ -91,6 +130,10 @@ _CLASS_LABELS_LOCK = threading.Lock()
 _YIELD_MODEL = None
 _YIELD_MODEL_LOCK = threading.Lock()
 _YIELD_REPORT: Optional[Dict[str, Any]] = None
+_YIELD_CNN_MODEL = None
+_YIELD_CNN_DEVICE = None
+_YIELD_CNN_LOCK = threading.Lock()
+_TORCH = None
 
 IMG_SIZE = (224, 224)
 DEFAULT_TIPS = (
@@ -165,17 +208,18 @@ class YieldPredictionResult:
     total_sacks: float   # Legacy compatibility
 
     def to_template_dict(self) -> Dict[str, Any]:
-        # Round tons_per_ha FIRST so all derived values (sacks, totals)
-        # are consistent with what gets saved to the database.
+        # Tagalog: Isang rounding policy lang para pare-pareho sa card, records, at exports.
         tons = round(self.tons_per_ha, 2)
-        total = round(tons * (self.total_tons / self.tons_per_ha), 2) if self.tons_per_ha else 0.0
+        total_tons = round(self.total_tons, 2)
+        sacks_per_ha = round(tons * 20, 2)
+        total_sacks = round(total_tons * 20, 2)
         return {
             "value": tons,
             "value_display": f"{tons} tons/ha",
             "confidence": self.confidence_pct,
-            "sacks_per_ha": round(tons * 20, 1),
-            "total_tons": round(self.total_tons, 2),
-            "total_sacks": round(self.total_sacks, 1),
+            "sacks_per_ha": sacks_per_ha,
+            "total_tons": total_tons,
+            "total_sacks": total_sacks,
             "harvest_date": self.harvest_date.strftime("%b %d, %Y"),
             "yield_readiness": self.yield_readiness,
             "readiness_display": self._format_readiness(self.yield_readiness),
@@ -847,6 +891,238 @@ def _load_yield_report() -> Dict[str, Any]:
     return _YIELD_REPORT
 
 
+def _build_rice_yield_cnn(torch_mod):
+    nn = torch_mod.nn
+
+    class RiceYieldCNN(nn.Module):
+        def __init__(self):
+            super().__init__()
+
+            self.conv_1 = nn.Conv2d(3, 45, (3, 3), stride=(1, 1), padding=(1, 1))
+            self.pool_1 = nn.AvgPool2d((2, 1), stride=(2, 1))
+            self.norm_1 = nn.BatchNorm2d(45)
+            self.act_1 = nn.ReLU()
+            self.conv_2 = nn.Conv2d(45, 25, (3, 3), stride=(1, 1), padding=(1, 1))
+            self.norm_2 = nn.BatchNorm2d(25)
+            self.act_2 = nn.LeakyReLU(0.1)
+            self.pool_2 = nn.MaxPool2d((2, 2), stride=(2, 2))
+
+            self.conv_3 = nn.Conv2d(25, 50, (3, 3), stride=(1, 1), padding=(1, 1))
+            self.norm_3 = nn.BatchNorm2d(50)
+            self.pool_3 = nn.AvgPool2d((2, 3), stride=(2, 3))
+            self.norm_4 = nn.BatchNorm2d(50)
+            self.act_3 = nn.ReLU()
+            self.pool_4 = nn.MaxPool2d((3, 3), stride=(3, 3))
+
+            self.conv_4 = nn.Conv2d(25, 25, (3, 3), stride=(1, 1), padding=(1, 1))
+            self.norm_5 = nn.BatchNorm2d(25)
+            self.pool_5 = nn.AvgPool2d((2, 3), stride=(2, 3))
+            self.norm_6 = nn.BatchNorm2d(25)
+            self.act_4 = nn.ReLU()
+            self.pool_6 = nn.MaxPool2d((3, 3), stride=(3, 3))
+
+            self.conv_5 = nn.Conv2d(50, 16, (1, 1), stride=(1, 1), padding=(1, 1))
+            self.norm_7 = nn.BatchNorm2d(16)
+            self.act_5 = nn.ELU(1.0)
+
+            self.conv_6 = nn.Conv2d(75, 16, (1, 1), stride=(1, 1), padding=(1, 1))
+            self.norm_8 = nn.BatchNorm2d(16)
+            self.act_6 = nn.ELU(1.0)
+
+            self.conv_7 = nn.Conv2d(16, 16, (3, 3), stride=(1, 1), padding=(1, 1))
+            self.pool_7 = nn.AvgPool2d((2, 2), stride=(2, 2))
+            self.norm_9 = nn.BatchNorm2d(16)
+            self.act_7 = nn.ReLU()
+
+            self.conv_8 = nn.Conv2d(16, 16, (3, 3), stride=(1, 1), padding=(1, 1))
+            self.norm_10 = nn.BatchNorm2d(16)
+            self.act_8 = nn.ReLU()
+            self.conv_9 = nn.Conv2d(16, 16, (3, 3), stride=(1, 1), padding=(1, 1))
+            self.pool_8 = nn.AvgPool2d((2, 2), stride=(2, 2))
+            self.norm_11 = nn.BatchNorm2d(16)
+
+            self.flat = nn.Flatten()
+            self.fc = nn.Linear(2640, 1)
+            self.act_9 = nn.ReLU()
+
+        def forward(self, x):
+            x = self.conv_1(x)
+            x = self.pool_1(x)
+            x = self.norm_1(x)
+            x = self.act_1(x)
+            x = self.conv_2(x)
+            x = self.norm_2(x)
+            x = self.act_2(x)
+            x = self.pool_2(x)
+
+            x_1 = x.clone()
+            x_1 = self.conv_3(x_1)
+            x_1 = self.norm_3(x_1)
+            x_1 = self.pool_3(x_1)
+            x_1 = self.norm_4(x_1)
+            x_1 = self.act_3(x_1)
+            x_1 = self.pool_4(x_1)
+
+            x_2 = x.clone()
+            x_2 = self.conv_4(x_2)
+            x_2 = self.norm_5(x_2)
+            x_2 = self.pool_5(x_2)
+            x_2 = self.norm_6(x_2)
+            x_2 = self.act_4(x_2)
+            x_2 = self.pool_6(x_2)
+
+            x_3 = self.conv_5(x_1)
+            x_3 = self.norm_7(x_3)
+            x_3 = self.act_5(x_3)
+
+            x_4 = torch_mod.cat([x_1, x_2], dim=1)
+            x_4 = self.conv_6(x_4)
+            x_4 = self.norm_8(x_4)
+            x_4 = self.act_6(x_4)
+
+            x_5 = torch_mod.mul(x_3, x_4)
+            x_5 = self.conv_7(x_5)
+            x_5 = self.pool_7(x_5)
+            x_5 = self.norm_9(x_5)
+            x_5 = self.act_7(x_5)
+
+            x_6 = self.conv_8(x_4)
+            x_6 = self.norm_10(x_6)
+            x_6 = self.act_8(x_6)
+            x_6 = self.conv_9(x_6)
+            x_6 = self.pool_8(x_6)
+            x_6 = self.norm_11(x_6)
+
+            x_m = torch_mod.add(x_5, x_6)
+            x_m = self.flat(x_m)
+            x_m = self.fc(x_m)
+            return self.act_9(x_m)
+
+    return RiceYieldCNN()
+
+
+def _ensure_yield_cnn_model():
+    global _TORCH
+    if _TORCH is None:
+        try:
+            torch_mod = importlib.import_module("torch")
+        except Exception as exc:  # pragma: no cover - runtime dependency
+            raise RuntimeError(
+                "PyTorch is required for CNN yield prediction. Please install torch/torchvision."
+            ) from exc
+        _TORCH = torch_mod
+
+    torch = _TORCH
+
+    checkpoint_path = Path(getattr(settings, "YIELD_CNN_CHECKPOINT_PATH", MODELS_DIR / "rice_yield_CNN.pth"))
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"Missing CNN checkpoint at {checkpoint_path}")
+
+    global _YIELD_CNN_MODEL, _YIELD_CNN_DEVICE
+    if _YIELD_CNN_MODEL is None:
+        with _YIELD_CNN_LOCK:
+            if _YIELD_CNN_MODEL is None:
+                requested_device = str(getattr(settings, "YIELD_CNN_DEVICE", "cpu")).lower()
+                if requested_device.startswith("cuda") and torch.cuda.is_available():
+                    device = torch.device(requested_device)
+                else:
+                    device = torch.device("cpu")
+
+                model = _build_rice_yield_cnn(torch)
+                checkpoint = torch.load(str(checkpoint_path), map_location=device)
+                state_dict = checkpoint.get("state_dict", checkpoint)
+                model.load_state_dict(state_dict, strict=True)
+                model.to(device)
+                model.eval()
+
+                _YIELD_CNN_MODEL = model
+                _YIELD_CNN_DEVICE = device
+    return _YIELD_CNN_MODEL, _YIELD_CNN_DEVICE
+
+
+def _predict_yield_cnn_tons_per_ha(image_file: Any) -> float:
+    if image_file is None:
+        raise ValueError("Canopy image is required for CNN yield prediction.")
+
+    _validate_cnn_canopy_image(image_file)
+
+    model, device = _ensure_yield_cnn_model()
+    torch = _TORCH
+
+    # Tagalog: I-match ang preprocess sa reference implementation (512x512, mean/std=0.5).
+    img = Image.open(image_file).convert("RGB").resize((512, 512))
+    arr = np.asarray(img).astype(np.float32) / 255.0
+    arr = (arr - np.float32(0.5)) / np.float32(0.5)
+    arr = arr.transpose(2, 0, 1)
+
+    tensor = torch.tensor(arr, dtype=torch.float32).unsqueeze(0).to(device)
+    with torch.no_grad():
+        pred_gpm2 = float(model(tensor).squeeze().detach().cpu().numpy())
+
+    # g/m^2 to t/ha conversion.
+    return pred_gpm2 / 100.0
+
+
+def _validate_cnn_canopy_image(image_file: Any) -> None:
+    # Tagalog: Basic quality gate para iwas noisy/bad predictions sa sobrang dilim, silaw, o malabong larawan.
+    try:
+        if hasattr(image_file, "seek"):
+            image_file.seek(0)
+        img = Image.open(image_file).convert("RGB")
+        arr = np.asarray(img).astype(np.float32)
+        gray = arr.mean(axis=2)
+
+        brightness = float(gray.mean())
+        contrast = float(gray.std())
+        # Lightweight sharpness proxy using neighboring pixel differences.
+        sharpness = float(np.var(np.diff(gray, axis=0)) + np.var(np.diff(gray, axis=1)))
+
+        if hasattr(image_file, "seek"):
+            image_file.seek(0)
+
+        if brightness < 35:
+            raise ValueError("Canopy image is too dark for reliable CNN prediction. Please retake in better light.")
+        if brightness > 230:
+            raise ValueError("Canopy image is overexposed for reliable CNN prediction. Please avoid direct glare.")
+        if contrast < 15:
+            raise ValueError("Canopy image has very low contrast. Please retake with clearer canopy texture.")
+        if sharpness < 20:
+            raise ValueError("Canopy image appears blurry. Please retake with stable focus.")
+    except ValueError:
+        raise
+    except Exception as exc:
+        raise ValueError("Unable to process canopy image for CNN quality checks.") from exc
+
+
+def _resolve_harvest_and_readiness(planting_date, growth_days: int) -> Tuple[datetime, str]:
+    if planting_date is None:
+        planting_date = datetime.now().date()
+
+    harvest_date = planting_date + timedelta(days=growth_days)
+    harvest_datetime = datetime.combine(harvest_date, datetime.min.time(), tzinfo=dt_timezone.utc)
+
+    days_since_planting = (datetime.now().date() - planting_date).days
+    progress_pct = (days_since_planting / growth_days) * 100 if growth_days > 0 else 0
+
+    if progress_pct < 40:
+        readiness = 'early'
+    elif progress_pct < 65:
+        readiness = 'vegetative'
+    elif progress_pct < 85:
+        readiness = 'reproductive'
+    elif progress_pct < 100:
+        readiness = 'ripening'
+    else:
+        readiness = 'harvest_ready'
+    return harvest_datetime, readiness
+
+
+def _normalize_yield_model_version(selected_model: str) -> str:
+    if selected_model == "cnn_yield":
+        return "RiceYieldCNN_v1.0"
+    return "LinearRegression_v2.0"
+
+
 def _parse_health_value(value: Any) -> float:
     if value is None:
         return float("nan")
@@ -869,7 +1145,13 @@ def _parse_health_value(value: Any) -> float:
         return float("nan")
 
 
-def predict_yield(features: Dict[str, Any], detection=None, override_with_detection: bool = True) -> YieldPredictionResult:
+def predict_yield(
+    features: Dict[str, Any],
+    detection=None,
+    override_with_detection: bool = True,
+    selected_model: str = "linear_regression",
+    canopy_image: Any = None,
+) -> YieldPredictionResult:
     """
     Predict rice yield from features using the new model structure.
     
@@ -896,15 +1178,6 @@ def predict_yield(features: Dict[str, Any], detection=None, override_with_detect
     Returns:
         YieldPredictionResult with predicted yield values and readiness
     """
-    model = _ensure_yield_model()
-    report = _load_yield_report()
-
-    if pd is None:
-        raise RuntimeError("pandas is required to prepare features for the yield model. Install pandas to continue.")
-
-    # IMPORTANT: Retrain model after this change:
-    # python src/yield_train.py --from-db
-
     # Ensure ecosystem_type is always present (it is used as a categorical feature)
     features.setdefault('ecosystem_type', '')
 
@@ -960,85 +1233,66 @@ def predict_yield(features: Dict[str, Any], detection=None, override_with_detect
     except Exception:
         growth_days = 120  # fallback default
 
-    planting_month = 1
-    if planting_date:
-        planting_month = int(getattr(planting_date, 'month', 1))
+    area = float(features.get("field_area_ha", 0.0))
+    if area <= 0:
+        raise ValueError("Field area must be greater than 0.")
 
-    # Build feature row for prediction (CORE FEATURES ONLY)
-    # Tagalog: Isama ang season (wet/dry) mula sa planting record bilang categorical feature.
-    # Ito ay kinakailangan ng model dahil ang wet at dry season ay may malaking epekto sa yield potential.
-    # Tagalog: Isama ang seed rate kung meron (optional). Kahit wala, dapat umiiral ang column para hindi ma-skip ng model.
-    seed_rate = features.get("seed_rate_kg_per_ha")
-    try:
-        seed_rate_val = float(seed_rate) if seed_rate is not None else np.nan
-    except Exception:
-        seed_rate_val = np.nan
+    harvest_datetime, yield_readiness = _resolve_harvest_and_readiness(planting_date, growth_days)
 
-    row = {
-        "variety": features["variety"],
-        "field_area_ha": float(features["field_area_ha"]),
-        "historical_production_tons": float(features.get("historical_production_tons", 0.0)),
-        "historical_yield_tons_per_ha": float(features.get("historical_yield_tons_per_ha", 0.0)),
-        "planting_month": planting_month,
-        "average_growth_duration_days": growth_days,
-        # Ecosystem type is important for yield potential (irrigated vs rainfed vs upland)
-        "ecosystem_type": str(features.get("ecosystem_type", "")),
-        "season": str(features.get("season", "")),
-        "seed_rate_kg_per_ha": seed_rate_val,
-    }
-    
-    # Add optional health_status if available (from disease detection)
-    row["health_status"] = _parse_health_value(features.get("health_status", 0.0))
+    if selected_model == "cnn_yield":
+        if not get_yield_cnn_enabled():
+            raise RuntimeError("CNN yield model is currently disabled by system settings.")
+        tons_per_ha = _predict_yield_cnn_tons_per_ha(canopy_image)
+        confidence_pct = 70
+    else:
+        model = _ensure_yield_model()
+        report = _load_yield_report()
 
-    df = pd.DataFrame([row])
-    tons_per_ha = float(model.predict(df)[0])
+        if pd is None:
+            raise RuntimeError("pandas is required to prepare features for the yield model. Install pandas to continue.")
 
-    # Calculate totals
-    area = float(row["field_area_ha"])
+        planting_month = 1
+        if planting_date:
+            planting_month = int(getattr(planting_date, 'month', 1))
+
+        seed_rate = features.get("seed_rate_kg_per_ha")
+        try:
+            seed_rate_val = float(seed_rate) if seed_rate is not None else np.nan
+        except Exception:
+            seed_rate_val = np.nan
+
+        row = {
+            "variety": features["variety"],
+            "field_area_ha": area,
+            "historical_production_tons": float(features.get("historical_production_tons", 0.0)),
+            "historical_yield_tons_per_ha": float(features.get("historical_yield_tons_per_ha", 0.0)),
+            "planting_month": planting_month,
+            "average_growth_duration_days": growth_days,
+            "ecosystem_type": str(features.get("ecosystem_type", "")),
+            "season": str(features.get("season", "")),
+            "seed_rate_kg_per_ha": seed_rate_val,
+            "health_status": _parse_health_value(features.get("health_status", 0.0)),
+        }
+
+        df = pd.DataFrame([row])
+        tons_per_ha = float(model.predict(df)[0])
+
+        r2 = report.get("r2", 0.65)
+        if pd is not None and pd.isna(r2):
+            r2 = 0.0
+        else:
+            r2 = float(r2)
+
+        base_confidence = max(55, min(95, int(round(r2 * 100))))
+        has_historical = (
+            row.get("historical_production_tons", 0.0) > 0
+            or row.get("historical_yield_tons_per_ha", 0.0) > 0
+        )
+        confidence_pct = base_confidence if has_historical else min(base_confidence, 70)
+
     total_tons = tons_per_ha * area
-    
-    # Legacy conversions (1 ton ≈ 20 sacks @ 50kg each)
     sacks_per_ha = tons_per_ha * 20
     total_sacks = total_tons * 20
-
-    # Calculate confidence from model R²
-    # Penalize when historical data is missing — the model relies heavily on
-    # historical_production_tons and historical_yield_tons_per_ha.
-    # Zero values mean the model is extrapolating with no prior harvest data,
-    # so we cap confidence at 70% in that case.
-    r2 = report.get("r2", 0.65)
-    # Guard against NaN R² (e.g., too few samples) to avoid int(NaN) errors.
-    if pd is not None and pd.isna(r2):
-        r2 = 0.0
-    else:
-        r2 = float(r2)
-
-    base_confidence = max(55, min(95, int(round(r2 * 100))))
-    has_historical = (
-        row.get("historical_production_tons", 0.0) > 0
-        or row.get("historical_yield_tons_per_ha", 0.0) > 0
-    )
-    confidence_pct = base_confidence if has_historical else min(base_confidence, 70)
-
-    # Calculate harvest date and yield readiness
-    harvest_date = planting_date + timedelta(days=row["average_growth_duration_days"])
-    harvest_datetime = datetime.combine(harvest_date, datetime.min.time(), tzinfo=dt_timezone.utc)
-    
-    # Determine yield readiness based on growth duration
-    days_since_planting = (datetime.now().date() - planting_date).days
-    growth_duration = row["average_growth_duration_days"]
-    progress_pct = (days_since_planting / growth_duration) * 100 if growth_duration > 0 else 0
-    
-    if progress_pct < 40:
-        yield_readiness = 'early'
-    elif progress_pct < 65:
-        yield_readiness = 'vegetative'
-    elif progress_pct < 85:
-        yield_readiness = 'reproductive'
-    elif progress_pct < 100:
-        yield_readiness = 'ripening'
-    else:
-        yield_readiness = 'harvest_ready'
 
     return YieldPredictionResult(
         tons_per_ha=tons_per_ha,
@@ -1051,7 +1305,13 @@ def predict_yield(features: Dict[str, Any], detection=None, override_with_detect
     )
 
 
-def store_yield_prediction(result: YieldPredictionResult, form_data: Dict[str, Any], detection=None, planting=None):
+def store_yield_prediction(
+    result: YieldPredictionResult,
+    form_data: Dict[str, Any],
+    detection=None,
+    planting=None,
+    model_version: str = "linear_regression",
+):
     """
     Persist yield prediction output to the database.
 
@@ -1096,6 +1356,7 @@ def store_yield_prediction(result: YieldPredictionResult, form_data: Dict[str, A
         meta_segments = [
             f"variety={form_data.get('variety', 'unknown')}",
             f"readiness={result.yield_readiness}",
+            f"model={model_version}",
         ]
         if form_data.get('season'):
             meta_segments.append(f"season={form_data.get('season')}")
@@ -1107,7 +1368,7 @@ def store_yield_prediction(result: YieldPredictionResult, form_data: Dict[str, A
             predicted_yield_tons_per_ha=tons_per_ha,
             predicted_total_production_tons=total_tons,
             confidence_pct=confidence,
-            model_version="LinearRegression_v2.0",
+            model_version=_normalize_yield_model_version(model_version),
             yield_readiness=result.yield_readiness,
             estimated_harvest_date=result.harvest_date.date(),
             # Legacy fields for backward compatibility
@@ -1527,7 +1788,7 @@ def _emails_are_enabled() -> bool:
     1) Kailangan naka-on ang EMAIL_ENABLED.
     2) Kailangan kumpleto ang critical SMTP fields.
     """
-    if not getattr(settings, 'EMAIL_ENABLED', False):
+    if not get_email_enabled():
         return False
 
     required = (

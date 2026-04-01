@@ -57,6 +57,8 @@ Current defaults are set in mysite/settings.py. Before production use:
 - Set ALLOWED_HOSTS
 - Configure secure database credentials
 - Configure email credentials via environment variables
+- Configure yield CNN runtime via environment variables (checkpoint and device)
+- Use System Settings for business toggles (email enable, CNN enable)
 
 Recommended environment variables:
 
@@ -73,7 +75,24 @@ DB_PORT=3306
 EMAIL_ENABLED=True
 EMAIL_HOST_USER=your_email@example.com
 EMAIL_HOST_PASSWORD=your_email_app_password
+YIELD_CNN_ENABLED=False
+YIELD_CNN_CHECKPOINT_PATH=models/rice_yield_CNN.pth
+YIELD_CNN_DEVICE=cpu
 ```
+
+Configuration rule of thumb:
+
+- Environment variables: secrets and infrastructure/runtime configuration
+  - SMTP credentials
+  - model checkpoint path
+  - model device (cpu/cuda)
+- System Settings (admin UI): business toggles and operational controls
+  - `email_enabled`
+  - `yield_cnn_enabled`
+
+Fallback behavior:
+
+- `EMAIL_ENABLED` and `YIELD_CNN_ENABLED` are used only when the `SiteSetting` row is missing or unavailable.
 
 ## Key Features
 
@@ -89,13 +108,16 @@ EMAIL_HOST_PASSWORD=your_email_app_password
 - Two entry modes:
   - from detection (auto-filled context)
   - direct/manual input
-- Historical production-aware prediction flow
+- Two model modes:
+  - Linear Regression (tabular agronomic features)
+  - CNN Yield (canopy image + area/date/growth context)
+- Historical production-aware prediction flow for Linear Regression
 - Real-time historical yield calculation in form UX
 
 Formula used in UI and validation flow:
 
 $$
-  ext{Historical Yield (tons/ha)} = \frac{\text{Historical Production (tons)}}{\text{Field Area (ha)}}
+	ext{Historical Yield (tons/ha)} = \frac{\text{Historical Production (tons)}}{\text{Field Area (ha)}}
 $$
 
 ### Field and Planting Management
@@ -172,6 +194,13 @@ Typical response fields:
 
 ## Troubleshooting
 
+### CNN model not available in Yield Tool
+
+- Ensure `models/rice_yield_CNN.pth` exists.
+- Ensure `torch`/`torchvision` are installed in the active environment.
+- Check System Settings: `yield_cnn_enabled` is ON.
+- If System Settings row is absent, verify `YIELD_CNN_ENABLED=True` in env for fallback.
+
 ### Signals not firing for farm size
 
 - Confirm polls.apps.PollsConfig is in INSTALLED_APPS
@@ -187,6 +216,12 @@ Typical response fields:
 
 - Confirm planting records exist
 - Confirm role-based queryset filtering is correct for the logged-in user
+
+### Emails not sending
+
+- Check System Settings: `email_enabled` is ON.
+- If SiteSetting row is absent, verify env fallback `EMAIL_ENABLED=True`.
+- Verify SMTP values (`EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`).
 
 ## Security Notes
 
