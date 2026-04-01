@@ -22,19 +22,25 @@ The system is designed for practical deployment in local government or extension
 
 ---
 
-## 2. Objectives
+## 2. Objectives of the Study
 
-### Primary objectives
+The study aims to develop AgriScan+, a CNN-powered mobile-responsive web decision-support system for early rice leaf disease detection and yield prediction for the Department of Agriculture - San Teodoro.
 
-- Detect likely rice diseases quickly from uploaded images.
-- Estimate expected yield per hectare and total projected production.
-- Maintain complete crop-cycle records from planting to harvest.
+### General objective
 
-### Secondary objectives
+- Design, develop, and evaluate an operational AI-assisted agriculture platform that supports mobile-responsive field diagnosis, yield estimation, and data-driven farm management.
 
-- Provide traceable historical data for analytics and policy decisions.
-- Support extension staff workflows across multiple farmers and fields.
-- Build a clean data foundation for future model retraining.
+### Specific objectives
+
+1. Design and implement mobile-responsive workflows that allow farmers and agricultural staff to capture or upload rice leaf images using smartphone and desktop browsers for disease screening.
+2. Implement and integrate a Convolutional Neural Network (CNN)-based disease detection pipeline that classifies common rice leaf diseases with usable confidence outputs.
+3. Develop a yield prediction and analytics module that combines detection outcomes, planting context, and historical farm records for decision support.
+4. Build a centralized database for user, field, planting, detection, prediction, harvest, and notification records to ensure traceability and longitudinal analysis.
+5. Evaluate the system using technical and user-centered criteria, including model accuracy, usability, reliability, operational efficiency, and mobile usability through user testing and expert validation.
+
+### Scope alignment note
+
+- The current implementation follows an intentional web-first, mobile-responsive deployment strategy to maximize accessibility, faster rollout, lower maintenance cost, and cross-device compatibility, while fully operationalizing role-based modules for Admin, Technician, and Farmer users with end-to-end support for disease detection, yield prediction, and crop-cycle record management.
 
 ---
 
