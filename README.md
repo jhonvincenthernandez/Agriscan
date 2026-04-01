@@ -1,3 +1,4 @@
+# Hernandez, Jhon Vincent
 # AgriScan+
 
 AgriScan+ is a Django-based rice farm management system with AI-assisted disease detection and yield prediction.
