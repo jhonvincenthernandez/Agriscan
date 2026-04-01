@@ -5,6 +5,12 @@ __pycache__/
 *.so
 .Python
 *.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
 
 # Django
 *.log
@@ -18,6 +24,11 @@ env/
 ENV/
 .venv
 
+# Environment variables and local secrets
+.env
+.env.*
+!.env.example
+
 # IDE
 .vscode/
 .idea/
@@ -29,19 +40,29 @@ ENV/
 .DS_Store
 Thumbs.db
 
-# Media uploads (keep structure but ignore files)
-media/detections/*
-!media/detections/.gitkeep
+# Frontend / tooling cache
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build and runtime outputs
+dist/
+build/
+*.tmp
+
+# Media uploads (ignore generated files, keep placeholders)
+media/**
+!media/**/.gitkeep
 
 # Test files (temporary scripts)
 check_*.py
 create_sample_*.py
 test_*.py
 
-# Documentation files (not needed in production)
-docs/
-*.md
-!README.md
+# Documentation build output
+docs/_build/
 
 # Model files (large binary files)
 models/*.h5
@@ -65,4 +86,6 @@ src/evaluate.py
 dataset/train/
 dataset/test/
 dataset/validation/
+dataset/**/*.csv
+!dataset/yield_sample.csv
 !dataset/yield_sample_new.csv
