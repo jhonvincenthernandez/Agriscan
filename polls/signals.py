@@ -150,6 +150,7 @@ def notify_disease_detected(sender, instance, created, **kwargs):
         # ── Escalation: severity ≥70% → also alert all admin & technician staff ──
         if severity >= 70:
             from .models import Profile
+            from . import services as _svc
             staff_profiles = Profile.objects.select_related('user').filter(
                 role__in=['admin', 'technician'],
                 user__is_active=True,
@@ -174,7 +175,7 @@ def notify_disease_detected(sender, instance, created, **kwargs):
                         f"Farmer   : {farmer_name}\n"
                         f"Field    : {field_name}\n\n"
                         f"Please review and follow up with the farmer immediately.\n"
-                        f"View detection records: http://127.0.0.1:8000/detections/\n\n"
+                        f"View detection records: {_svc._app_url('/detections/')}\n\n"
                         f"---\nAgriScan+ System"
                     ),
                 )

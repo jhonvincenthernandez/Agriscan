@@ -63,11 +63,14 @@ Recommended environment variables:
 ```env
 DEBUG=False
 SECRET_KEY=replace-with-strong-secret
+ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+APP_BASE_URL=https://your-domain.com
 DB_NAME=agriscan_db
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
 DB_HOST=localhost
 DB_PORT=3306
+EMAIL_ENABLED=True
 EMAIL_HOST_USER=your_email@example.com
 EMAIL_HOST_PASSWORD=your_email_app_password
 ```

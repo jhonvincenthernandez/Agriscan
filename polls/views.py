@@ -238,6 +238,8 @@ def register(request):
         try:
             from django.contrib.auth.models import User as _User
             from . import services as _svc
+            # Tagalog: para walang hardcoded localhost, gamitin ang base URL mula .env.
+            admin_users_url = _svc._app_url('/admin-users/')
             admin_emails = list(
                 _User.objects.filter(profile__role='admin', is_active=True)
                 .exclude(email='')
@@ -254,7 +256,7 @@ def register(request):
                         f"Full name: {user.get_full_name() or '(not set)'}\n"
                         f"Email    : {user.email or '(not set)'}\n\n"
                         f"Review and approve the account here:\n"
-                        f"http://127.0.0.1:8000/admin-users/\n\n"
+                        f"{admin_users_url}\n\n"
                         f"---\nAgriScan+ System"
                     ),
                 )
@@ -3675,6 +3677,8 @@ def admin_user_approve(request, pk: int):
     # Email the farmer: "Your account has been approved"
     try:
         from . import services as _svc
+        # Tagalog: dynamic login URL para tugma sa dev/prod domain.
+        login_url = _svc._app_url('/login/')
         _svc.send_plain_email(
             recipient_email=user.email,
             subject='[AgriScan+] Your Account Has Been Approved',
@@ -3682,7 +3686,7 @@ def admin_user_approve(request, pk: int):
                 f"Hello {user.get_full_name() or user.username},\n\n"
                 f"Great news! Your AgriScan+ farmer account has been approved by an administrator.\n"
                 f"You can now log in and start using the system.\n\n"
-                f"Log in here: http://127.0.0.1:8000/login/\n\n"
+                f"Log in here: {login_url}\n\n"
                 f"---\nAgriScan+ System"
             ),
         )

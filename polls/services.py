@@ -1520,13 +1520,38 @@ def get_announcement_stats(announcement):
     }
 
 
+def _emails_are_enabled() -> bool:
+    """I-check kung handa ang SMTP config bago mag-send ng email.
+
+    Flow:
+    1) Kailangan naka-on ang EMAIL_ENABLED.
+    2) Kailangan kumpleto ang critical SMTP fields.
+    """
+    if not getattr(settings, 'EMAIL_ENABLED', False):
+        return False
+
+    required = (
+        'EMAIL_HOST',
+        'EMAIL_PORT',
+        'EMAIL_HOST_USER',
+        'EMAIL_HOST_PASSWORD',
+        'DEFAULT_FROM_EMAIL',
+    )
+    return all(bool(getattr(settings, key, '')) for key in required)
+
+
+def _app_url(path: str) -> str:
+    """Bumuo ng absolute URL gamit APP_BASE_URL para env-driven ang links."""
+    base = getattr(settings, 'APP_BASE_URL', 'http://127.0.0.1:8000').rstrip('/')
+    return f"{base}/{path.lstrip('/')}"
+
+
 def send_notification_email(notification):
     """
     Send an email alert for a system Notification (disease / yield_drop / announcement).
 
     Only sends if:
-    - settings.EMAIL_ENABLED = True
-    - settings.EMAIL_HOST_PASSWORD is set (not empty)
+    - EMAIL is enabled and SMTP settings are complete
     - The recipient has an email address on their User account
 
     Called from signals.py after each Notification is created.
@@ -1536,11 +1561,8 @@ def send_notification_email(notification):
     logger = logging.getLogger(__name__)
 
     try:
-        from django.conf import settings
-        # Guard: only send if email is explicitly enabled and password is configured
-        if not getattr(settings, 'EMAIL_ENABLED', False):
-            return
-        if not getattr(settings, 'EMAIL_HOST_PASSWORD', ''):
+        # Tagalog: iwas failed sends kung kulang pa ang env SMTP config.
+        if not _emails_are_enabled():
             return
 
         from django.core.mail import send_mail
@@ -1568,22 +1590,22 @@ def send_notification_email(notification):
 
         # Add a link to the relevant page
         if notification.type == 'disease' and notification.related_detection:
-            body += f"View your detection records: http://127.0.0.1:8000/detections/\n\n"
+            body += f"View your detection records: {_app_url('/detections/')}\n\n"
         elif notification.type == 'yield_drop':
-            body += f"View your yield records: http://127.0.0.1:8000/yield-records/\n\n"
+            body += f"View your yield records: {_app_url('/yield-records/')}\n\n"
         elif notification.type == 'advisory':
-            body += f"View announcements: http://127.0.0.1:8000/announcements/\n\n"
+            body += f"View announcements: {_app_url('/announcements/')}\n\n"
         elif notification.type == 'knowledge':
-            body += f"View the knowledge base: http://127.0.0.1:8000/knowledge/\n\n"
+            body += f"View the knowledge base: {_app_url('/knowledge/')}\n\n"
         elif notification.type == 'treatment':
-            body += f"View treatment recommendations: http://127.0.0.1:8000/treatments/\n\n"
+            body += f"View treatment recommendations: {_app_url('/treatments/')}\n\n"
         elif notification.type == 'system':
-            body += f"View system settings: http://127.0.0.1:8000/system-settings/\n\n"
+            body += f"View system settings: {_app_url('/system-settings/')}\n\n"
 
         body += (
             f"---\n"
             f"This is an automated alert from AgriScan+.\n"
-            f"Log in to view and manage your notifications: http://127.0.0.1:8000/notifications/\n"
+            f"Log in to view and manage your notifications: {_app_url('/notifications/')}\n"
         )
 
         send_mail(
@@ -1603,16 +1625,14 @@ def send_plain_email(recipient_email, subject, body):
     """
     Low-level helper — send a plain-text email to any address.
 
-    Respects EMAIL_ENABLED / EMAIL_HOST_PASSWORD guards.
+    Respects EMAIL_ENABLED + complete SMTP env config guard.
     Fails silently — never breaks the calling request.
     """
     import logging
     _logger = logging.getLogger(__name__)
     try:
-        from django.conf import settings
-        if not getattr(settings, 'EMAIL_ENABLED', False):
-            return
-        if not getattr(settings, 'EMAIL_HOST_PASSWORD', ''):
+        # Tagalog: isang guard lang para consistent ang behavior ng lahat ng email senders.
+        if not _emails_are_enabled():
             return
         if not recipient_email:
             return
@@ -1642,14 +1662,10 @@ def send_announcement_emails_to_targets(announcement):
     import logging
     _logger = logging.getLogger(__name__)
     try:
-        from django.conf import settings
-        if not getattr(settings, 'EMAIL_ENABLED', False):
-            return
-        if not getattr(settings, 'EMAIL_HOST_PASSWORD', ''):
+        if not _emails_are_enabled():
             return
 
         from .models import Profile
-        from django.db.models import Q
 
         audience = announcement.target_audience
 
@@ -1694,7 +1710,7 @@ def send_announcement_emails_to_targets(announcement):
                 f"{announcement.content}\n\n"
                 f"---\n"
                 f"This is an automated announcement from AgriScan+.\n"
-                f"Log in to read it: http://127.0.0.1:8000/announcements/\n"
+                f"Log in to read it: {_app_url('/announcements/')}\n"
             )
             send_plain_email(email, subject, body)
             sent += 1
@@ -1709,13 +1725,10 @@ def send_announcement_emails_to_targets(announcement):
 def send_announcement_emails(announcement_id):
     """[FUTURE] Send email notifications for an announcement (REQUIRES INTERNET).
     
-    Uncomment and configure SMTP settings in settings.py when ready:
-    - EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    - EMAIL_HOST = 'smtp.gmail.com'
-    - EMAIL_PORT = 587
-    - EMAIL_USE_TLS = True
-    - EMAIL_HOST_USER = 'your-email@gmail.com'
-    - EMAIL_HOST_PASSWORD = 'your-app-password'
+    Configure SMTP values in .env when ready (see .env.example):
+    - EMAIL_BACKEND / EMAIL_HOST / EMAIL_PORT / EMAIL_USE_TLS
+    - EMAIL_HOST_USER / EMAIL_HOST_PASSWORD
+    - DEFAULT_FROM_EMAIL / EMAIL_ENABLED
     
     Args:
         announcement_id: Announcement ID
