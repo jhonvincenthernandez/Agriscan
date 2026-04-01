@@ -99,9 +99,8 @@ models/*.png
 *.egg-info/
 .eggs/
 
-# Dataset (large files - should be stored separately)
-
-
 # ML development workspace (not required at runtime in production hosting)
 src/
+
+# Dataset and training data (not required at runtime in production hosting)
 dataset/
