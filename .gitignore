@@ -100,12 +100,7 @@ models/*.png
 .eggs/
 
 # Dataset (large files - should be stored separately)
-dataset/train/
-dataset/test/
-dataset/validation/
-dataset/**/*.csv
-!dataset/yield_sample.csv
-!dataset/yield_sample_new.csv
+
 
 # ML development workspace (not required at runtime in production hosting)
 src/
