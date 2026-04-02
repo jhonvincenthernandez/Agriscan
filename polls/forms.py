@@ -1039,50 +1039,14 @@ class PlantingRecordForm(forms.ModelForm):
                     'readonly': 'readonly',
                 })
             else:
-                # When creating NEW planting, exclude fields with active plantings
-                # Tagalog: I-lock ang field kung ang planting ay
-                # planned o ongoing pa lang — hindi na kailangang
-                # tingnan ang expected_harvest_date.
-                # Kapag harvested, failed, o cancelled na ang status,
-                # available na ulit ang field para sa bagong planting.
-                fields_with_active_plantings = PlantingRecord.objects.filter(
-                    field__in=all_fields,
-                    status__in=['planned', 'ongoing'],
-                    is_active=True,
-                ).values_list('field_id', flat=True)
-
-                # Also exclude fields that already hit the yearly max of 3 cycles
-                # (counting all statuses, including archived/failed/cancelled)
-                from django.utils import timezone
-                from django.db.models import Count
-
-                current_year = timezone.now().year
-                max_cycle_field_ids = PlantingRecord.objects.filter(
-                    field__in=all_fields,
-                    planting_date__year=current_year,
-                ).values('field').annotate(count=Count('pk')).filter(count__gte=3).values_list('field', flat=True)
-
-                # Exclude those fields from the queryset
-                available_fields = all_fields.exclude(
-                    id__in=list(fields_with_active_plantings) + list(max_cycle_field_ids)
+                # When creating NEW planting, keep field choices broad.
+                # Yearly 3-cycle enforcement depends on the selected planting_date,
+                # so we validate it in clean() using field + planting_date.year.
+                self.fields['field'].queryset = all_fields
+                self.fields['field'].help_text = (
+                    'Select the field for this planting. '
+                    'Maximum of 3 planting cycles per field per selected year is enforced on save.'
                 )
-                self.fields['field'].queryset = available_fields
-
-                # Update help text to explain exclusions
-                if fields_with_active_plantings.exists() or max_cycle_field_ids.exists():
-                    self.fields['field'].help_text = (
-                        '✓ Only fields without active plantings are shown. '
-                        'Fields with ongoing crops or 3 cycles already recorded this year are hidden.'
-                    )
-                else:
-                    self.fields['field'].help_text = 'Select the field for this planting'
-                
-                # Check if no fields available
-                if not available_fields.exists():
-                    self.fields['field'].help_text = (
-                        '⚠️ No fields available. All your fields have active plantings. '
-                        'Please wait for harvest or create a new field.'
-                    )
         
         # Make notes and expected_harvest_date optional
         self.fields['notes'].required = False
@@ -1139,26 +1103,8 @@ class PlantingRecordForm(forms.ModelForm):
             elif area_planted > float(field.area_hectares):
                 self.add_error('area_planted_ha', 'Area planted cannot exceed the field size.')
 
-        # Check if field already has active planting (double-check at validation level)
-        if field and not self.instance.pk:  # Only check for NEW plantings
-            from .models import PlantingRecord
-
-            # Tagalog: I-lock ang field kung ang planting ay
-            # planned o ongoing pa lang — hindi na kailangang
-            # tingnan ang expected_harvest_date.
-            # Kapag harvested, failed, o cancelled na ang status,
-            # available na ulit ang field para sa bagong planting.
-            existing_active = PlantingRecord.objects.filter(
-                field=field,
-                status__in=['planned', 'ongoing'],
-                is_active=True,
-            ).exists()
-            
-            if existing_active:
-                raise forms.ValidationError(
-                    f'Field "{field.name}" already has an active planting cycle. '
-                    f'Please wait until the current crop is harvested before planting again.'
-                )
+        # Yearly 3-cycle rule is enforced centrally in PlantingRecord.clean().
+        # Tagalog: Iwas duplicate logic para walang divergence sa forms/admin/API.
         
         return cleaned_data
 

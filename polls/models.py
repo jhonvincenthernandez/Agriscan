@@ -1116,6 +1116,35 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         null=True, blank=True
     )
 
+    MAX_CYCLES_PER_YEAR = 3
+
+    def _get_existing_cycles_count(self) -> int:
+        """Count existing planting cycles in the same field/year, excluding self on update."""
+        if not self.field or not self.planting_date:
+            return 0
+
+        qs = PlantingRecord.all_objects.filter(
+            field=self.field,
+            planting_date__year=self.planting_date.year,
+        )
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        return qs.count()
+
+    def _validate_yearly_cycle_limit(self):
+        """Enforce maximum planting cycles per field per year."""
+        existing_count = self._get_existing_cycles_count()
+        if existing_count >= self.MAX_CYCLES_PER_YEAR:
+            raise ValidationError(
+                {
+                    'planting_date': (
+                        f"There are already {existing_count} planting cycles recorded for {self.planting_date.year}. "
+                        "Maximum is 3 crops per year. "
+                        "If one of these is archived, restore it from Trash instead of creating a new one."
+                    )
+                }
+            )
+
     def clean(self):
         """Model-level validation para sa planting record."""
         super().clean()
@@ -1152,6 +1181,11 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
                     }
                 )
 
+        # Enforce yearly 3-cycle limit for this field/year.
+        # Tagalog: Dito inilagay para iisang source of truth ang validation
+        # at tumakbo sa forms, admin, shell scripts, at API integrations.
+        self._validate_yearly_cycle_limit()
+
     def save(self, *args, **kwargs):
         """Auto-compute derived fields and validate before saving."""
         self.full_clean()
@@ -1163,8 +1197,6 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         # IMPORTANT: Only assign the cycle number once (when the record is created).
         #            Do NOT recompute on updates to avoid renumbering existing records.
         if self.field and self.planting_date and self.pk is None:
-            year = self.planting_date.year
-
             # Count existing planting records for this field/year (all statuses, even archived)
             # Tagalog: Gamitin ang all_objects (hindi objects) para
             # ma-count ang LAHAT ng planting records para sa field/year —
@@ -1174,20 +1206,7 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
             # sa isang taon — bug ito sa data integrity.
             # Kahit na-archive ang isang planting, nangyari pa rin
             # ang pagtatanim — dapat pa rin itong mabilang sa quota.
-            existing_count = PlantingRecord.all_objects.filter(
-                field=self.field,
-                planting_date__year=year,
-            ).count()
-
-            # Enforce realistic maximum: 3 crops per year (Dry/Wet/3rd crop in PH rice farming)
-            if existing_count >= 3:
-                raise ValidationError({
-                    'planting_date': (
-                        f"There are already {existing_count} planting cycles recorded for {year}. "
-                        "Maximum is 3 crops per year. "
-                        "If one of these is archived, restore it from Trash instead of creating a new one."
-                    )
-                })
+            existing_count = self._get_existing_cycles_count()
 
             # Assign the next sequential cycle number (1..3)
             self.cropping_cycle = existing_count + 1

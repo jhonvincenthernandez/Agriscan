@@ -2508,7 +2508,7 @@ def planting_create(request):
             year = timezone.now().year
             field_qs = form.fields['field'].queryset
             field_ids = list(field_qs.values_list('pk', flat=True))
-            counts = PlantingRecord.objects.filter(
+            counts = PlantingRecord.all_objects.filter(
                 field_id__in=field_ids,
                 planting_date__year=year,
             ).values('field_id').annotate(count=Count('pk'))
@@ -2559,7 +2559,7 @@ def planting_create(request):
     year = timezone.now().year
     field_qs = form.fields['field'].queryset
     field_ids = list(field_qs.values_list('pk', flat=True))
-    counts = PlantingRecord.objects.filter(
+    counts = PlantingRecord.all_objects.filter(
         field_id__in=field_ids,
         planting_date__year=year,
     ).values('field_id').annotate(count=Count('pk'))
