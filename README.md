@@ -49,6 +49,28 @@ python manage.py runserver
 
 Open: http://127.0.0.1:8000
 
+## Frontend CSS (Tailwind Watch)
+
+For development, run Tailwind in watch mode in a separate terminal so template/style changes compile automatically.
+
+Windows PowerShell (multi-line):
+
+```powershell
+.\tailwindcss.exe `
+  --input polls\static\polls\css\input.css `
+  --output polls\static\polls\css\tailwind.css `
+  --content "./templates/*.html","./templates/**/*.html" `
+  --watch
+```
+
+One-line equivalent:
+
+```powershell
+.\tailwindcss.exe --input polls\static\polls\css\input.css --output polls\static\polls\css\tailwind.css --content "./templates/*.html","./templates/**/*.html" --watch
+```
+
+Tip: Keep this watcher running while `python manage.py runserver` is running.
+
 ## Required Configuration
 
 Current defaults are set in mysite/settings.py. Before production use:
