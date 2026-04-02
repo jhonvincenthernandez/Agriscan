@@ -16,28 +16,49 @@
 
     <form method="post" enctype="multipart/form-data" class="mt-6 space-y-6">
       {% csrf_token %}
+      {% include 'partials/forms/_errors.html' %}
+
       {% for field in form %}
-      <div>
-        <label class="block text-sm font-medium text-gray-700">{{ field.label }}{% if field.field.required %} <span class="text-red-500">*</span>{% endif %}</label>
-        {{ field }}
-        {% if field.help_text %}
-          <p class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+        {% if field.name == 'name' %}
+          <div class="grid md:grid-cols-2 gap-4">
+            {% include 'partials/forms/_field.html' with field=field %}
+            {% include 'partials/forms/_field.html' with field=form.category %}
+          </div>
+        {% elif field.name == 'category' %}
+          {# Rendered with name #}
+        {% elif field.name == 'description' %}
+          <div class="grid md:grid-cols-2 gap-4">
+            {% include 'partials/forms/_field.html' with field=field %}
+            {% include 'partials/forms/_field.html' with field=form.symptoms %}
+          </div>
+        {% elif field.name == 'symptoms' %}
+          {# Rendered with description #}
+        {% elif field.name == 'causes' %}
+          <div class="grid md:grid-cols-2 gap-4">
+            {% include 'partials/forms/_field.html' with field=field %}
+            {% include 'partials/forms/_field.html' with field=form.prevention %}
+          </div>
+        {% elif field.name == 'prevention' %}
+          {# Rendered with causes #}
+        {% elif field.name == 'is_published' %}
+          <div>
+            <div class="flex items-center gap-2">
+              {{ field }}
+              <label for="{{ field.id_for_label }}" class="text-sm font-medium text-gray-700">{{ field.label }}</label>
+            </div>
+            {% if field.help_text %}
+              <p class="mt-1 text-xs text-gray-500 ml-6">{{ field.help_text }}</p>
+            {% endif %}
+            {% for error in field.errors %}
+              <p class="text-xs text-red-600 mt-1 ml-6">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% else %}
+          {% include 'partials/forms/_field.html' with field=field %}
         {% endif %}
-        {% for error in field.errors %}
-          <p class="text-xs text-red-600 mt-1">{{ error }}</p>
-        {% endfor %}
-      </div>
       {% endfor %}
 
-      {% if form.non_field_errors %}
-      <div class="text-sm text-red-600">
-        {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
-        {% endfor %}
-      </div>
-      {% endif %}
-
-      <div class="flex gap-2">
+      <div class="flex gap-2 pt-4">
         <button type="submit" class="inline-flex items-center justify-center px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold">
           Save
         </button>

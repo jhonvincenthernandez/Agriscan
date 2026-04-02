@@ -65,6 +65,20 @@
             </p>
             {% endif %}
           </div>
+        {% elif field.name == 'harvest_date' %}
+          <div class="grid md:grid-cols-2 gap-4">
+            {% include 'partials/forms/_field.html' with field=field %}
+            {% include 'partials/forms/_field.html' with field=form.grain_quality %}
+          </div>
+        {% elif field.name == 'actual_yield_tons' %}
+          {# Rendered together with area_harvested_ha for consistent two-column layout. #}
+        {% elif field.name == 'area_harvested_ha' %}
+          <div class="grid md:grid-cols-2 gap-4">
+            {% include 'partials/forms/_field.html' with field=form.actual_yield_tons %}
+            {% include 'partials/forms/_field.html' with field=field %}
+          </div>
+        {% elif field.name == 'grain_quality' %}
+          {# Rendered together with harvest_date for consistent two-column layout. #}
         {% else %}
           {% include 'partials/forms/_field.html' with field=field %}
         {% endif %}

@@ -80,71 +80,75 @@
       </div>
       {% endif %}
 
-      <!-- Field Selection -->
-      <div>
-        <label for="id_field" class="block text-sm font-medium text-gray-700 mb-1">
-          {{ form.field.label }} <span class="text-red-500">*</span>
-          {% if is_edit %}
-          <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-            <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-            Read-Only
-          </span>
-        {% endif %}
-        </label>
-        {{ form.field }}
-        {% if form.field.errors %}
-        <p class="mt-1 text-sm text-red-600">
-          {% for err in form.field.errors %}{{ err }}{% endfor %}
-        </p>
-        {% endif %}
-        {% if form.field.help_text %}
-        <p class="mt-1 text-xs {% if is_edit %}text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1{% else %}text-gray-500{% endif %}">
-          {{ form.field.help_text }}
-        </p>
-        {% endif %}
+      <div class="grid md:grid-cols-2 gap-4">
+        <!-- Field Selection -->
+        <div>
+          <label for="id_field" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.field.label }} <span class="text-red-500">*</span>
+            {% if is_edit %}
+            <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+              <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
+              Read-Only
+            </span>
+          {% endif %}
+          </label>
+          {{ form.field }}
+          {% if form.field.errors %}
+          <p class="mt-1 text-sm text-red-600">
+            {% for err in form.field.errors %}{{ err }}{% endfor %}
+          </p>
+          {% endif %}
+          {% if form.field.help_text %}
+          <p class="mt-1 text-xs {% if is_edit %}text-amber-600 bg-amber-50 border border-amber-200 rounded px-2 py-1{% else %}text-gray-500{% endif %}">
+            {{ form.field.help_text }}
+          </p>
+          {% endif %}
 
-        {% if not is_edit %}
-        <div id="crop-slot-indicator" class="hidden mt-2"></div>
-        {% endif %}
+          {% if not is_edit %}
+          <div id="crop-slot-indicator" class="hidden mt-2"></div>
+          {% endif %}
 
-        {% if not form.field.field.queryset and not is_edit %}
-        <p class="mt-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <strong>No fields available.</strong> Please <a href="{% url 'polls:field_create' %}" class="underline font-semibold">create a field</a> first.
-        </p>
-        {% endif %}
-      </div>
+          {% if not form.field.field.queryset and not is_edit %}
+          <p class="mt-2 text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg p-3">
+            <strong>No fields available.</strong> Please <a href="{% url 'polls:field_create' %}" class="underline font-semibold">create a field</a> first.
+          </p>
+          {% endif %}
+        </div>
 
-      <!-- Variety Selection -->
-      <div>
-        <label for="id_variety" class="block text-sm font-medium text-gray-700 mb-1">
-          {{ form.variety.label }} <span class="text-red-500">*</span>
-        </label>
-        <select
-          id="id_variety"
-          name="{{ form.variety.html_name }}"
-          data-searchable="true"
-          required
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-        >
-          <option value="">Select a rice variety</option>
-          {% with current_value=form.variety.value|default:form.instance.variety_id %}
-          {% for variety in form.variety.field.queryset %}
-          <option value="{{ variety.pk }}" {% if current_value|stringformat:"s" == variety.pk|stringformat:"s" %}selected{% endif %} data-growth-days="{{ variety.average_growth_days }}">
-            {{ variety.code }} - {{ variety.name }} ({{ variety.average_growth_days }} days)
-          </option>
-          {% endfor %}
-          {% endwith %}
-        </select>
-        {% if form.variety.errors %}
-        <p class="mt-1 text-sm text-red-600">
-          {% for err in form.variety.errors %}{{ err }}{% endfor %}
-        </p>
-        {% endif %}
-        {% if form.variety.help_text %}
-        <p class="mt-1 text-xs text-gray-500">{{ form.variety.help_text }}</p>
-        {% endif %}
+        <!-- Variety Selection -->
+        <div>
+          <label for="id_variety" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.variety.label }} <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="id_variety"
+            name="{{ form.variety.html_name }}"
+            data-searchable="true"
+            required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          >
+            <option value="">Select a rice variety</option>
+            {% with current_value=form.variety.value|default:form.instance.variety_id %}
+            {% for variety in form.variety.field.queryset %}
+            <option value="{{ variety.pk }}" {% if current_value|stringformat:"s" == variety.pk|stringformat:"s" %}selected{% endif %} data-growth-days="{{ variety.average_growth_days }}">
+              {{ variety.code }} - {{ variety.name }} ({{ variety.average_growth_days }} days)
+            </option>
+            {% endfor %}
+            {% endwith %}
+          </select>
+          {% if form.variety.errors %}
+          <p class="mt-1 text-sm text-red-600">
+            {% for err in form.variety.errors %}{{ err }}{% endfor %}
+          </p>
+          {% endif %}
+          {% if form.variety.help_text %}
+          <p class="mt-1 text-xs text-gray-500">{{ form.variety.help_text }}</p>
+          {% endif %}
+
+          <div id="variety-info-indicator" class="hidden mt-2"></div>
+        </div>
       </div>
 
 <script>
@@ -285,26 +289,54 @@
         </div>
       </div>
 
-      <!-- Planting Date -->
-      <div>
-        <label for="id_planting_date" class="block text-sm font-medium text-gray-700 mb-1">
-          🌱 {{ form.planting_date.label }} <span class="text-red-500">*</span>
-        </label>
-        <input
-          type="date"
-          id="id_planting_date"
-          name="{{ form.planting_date.html_name }}"
-          value="{% if form.planting_date.value %}{{ form.planting_date.value|date:'Y-m-d' }}{% endif %}"
-          required
-          data-allowed-past="{{ allowed_past_days_planting|default:30 }}"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-        />
-        {% if form.planting_date.errors %}
-        <p class="mt-1 text-sm text-red-600">
-          {% for err in form.planting_date.errors %}{{ err }}{% endfor %}
-        </p>
-        {% endif %}
-        <p class="mt-1 text-xs text-gray-500">Set harvest date below → this date will auto-compute. Or set this date → harvest auto-computes.</p>
+      <div class="grid md:grid-cols-2 gap-4">
+        <!-- Planting Date -->
+        <div>
+          <label for="id_planting_date" class="block text-sm font-medium text-gray-700 mb-1">
+            🌱 {{ form.planting_date.label }} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="date"
+            id="id_planting_date"
+            name="{{ form.planting_date.html_name }}"
+            value="{% if form.planting_date.value %}{{ form.planting_date.value|date:'Y-m-d' }}{% endif %}"
+            required
+            data-allowed-past="{{ allowed_past_days_planting|default:30 }}"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          />
+          {% if form.planting_date.errors %}
+          <p class="mt-1 text-sm text-red-600">
+            {% for err in form.planting_date.errors %}{{ err }}{% endfor %}
+          </p>
+          {% endif %}
+          <p class="mt-1 text-xs text-gray-500">Set harvest date below → this date will auto-compute. Or set this date → harvest auto-computes.</p>
+        </div>
+
+        <!-- Expected Harvest Date -->
+        <div>
+          <label for="id_expected_harvest_date" class="block text-sm font-medium text-gray-700 mb-1">
+            🌾 {{ form.expected_harvest_date.label }}
+            <span id="harvest-auto-badge" class="hidden ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">
+              ✨ Auto-computed
+            </span>
+            <span id="planting-auto-badge" class="hidden ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
+              ✨ Planting date auto-computed
+            </span>
+          </label>
+          <input
+            type="date"
+            id="id_expected_harvest_date"
+            name="{{ form.expected_harvest_date.html_name }}"
+            value="{% if form.expected_harvest_date.value %}{{ form.expected_harvest_date.value|date:'Y-m-d' }}{% endif %}"
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          />
+          {% if form.expected_harvest_date.errors %}
+          <p class="mt-1 text-sm text-red-600">
+            {% for err in form.expected_harvest_date.errors %}{{ err }}{% endfor %}
+          </p>
+          {% endif %}
+          <p class="mt-1 text-xs text-gray-500">Set this → planting date auto-computes. Or set planting date above → this auto-computes.</p>
+        </div>
       </div>
 
       <!-- Auto-compute info badge -->
@@ -313,32 +345,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
         <span id="date-info-text"></span>
-      </div>
-
-      <!-- Expected Harvest Date -->
-      <div>
-        <label for="id_expected_harvest_date" class="block text-sm font-medium text-gray-700 mb-1">
-          🌾 {{ form.expected_harvest_date.label }}
-          <span id="harvest-auto-badge" class="hidden ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">
-            ✨ Auto-computed
-          </span>
-          <span id="planting-auto-badge" class="hidden ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">
-            ✨ Planting date auto-computed
-          </span>
-        </label>
-        <input
-          type="date"
-          id="id_expected_harvest_date"
-          name="{{ form.expected_harvest_date.html_name }}"
-          value="{% if form.expected_harvest_date.value %}{{ form.expected_harvest_date.value|date:'Y-m-d' }}{% endif %}"
-          class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-        />
-        {% if form.expected_harvest_date.errors %}
-        <p class="mt-1 text-sm text-red-600">
-          {% for err in form.expected_harvest_date.errors %}{{ err }}{% endfor %}
-        </p>
-        {% endif %}
-        <p class="mt-1 text-xs text-gray-500">Set this → planting date auto-computes. Or set planting date above → this auto-computes.</p>
       </div>
 
       <div class="grid md:grid-cols-2 gap-4">
@@ -515,6 +521,7 @@
   const infoText       = document.getElementById('date-info-text');
   const harvestBadge   = document.getElementById('harvest-auto-badge');
   const plantingBadge  = document.getElementById('planting-auto-badge');
+  const varietyIndicator = document.getElementById('variety-info-indicator');
 
   // Defensive early-exit: page might render without these inputs (list, partials, etc.)
   if (!varietySelect || !plantingInput || !harvestInput) return;
@@ -545,6 +552,59 @@
     return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
+  function getVarietyMeta() {
+    const opt = varietySelect.selectedOptions && varietySelect.selectedOptions[0];
+    if (!opt || !opt.value) return null;
+    return {
+      label: (opt.textContent || '').trim(),
+      growthDays: parseInt(opt.dataset.growthDays || 0, 10) || 0,
+    };
+  }
+
+  function getMaturityLabel(days) {
+    if (!days) return 'Unknown maturity group';
+    if (days <= 105) return 'Early-maturing variety';
+    if (days <= 120) return 'Medium-maturing variety';
+    return 'Late-maturing variety';
+  }
+
+  function renderVarietyIndicator() {
+    if (!varietyIndicator) return;
+
+    const meta = getVarietyMeta();
+    if (!meta) {
+      varietyIndicator.classList.add('hidden');
+      return;
+    }
+
+    const hasDays = meta.growthDays > 0;
+    const hasPlantingDate = !!plantingInput.value;
+    const canEstimate = hasDays && hasPlantingDate;
+    const estimatedHarvest = canEstimate ? addDays(plantingInput.value, meta.growthDays) : '';
+
+    const step = function (done) {
+      if (done) {
+        return '<span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs font-semibold">✓</span>';
+      }
+      return '<span class="h-6 w-6 rounded-full bg-gray-200"></span>';
+    };
+
+    varietyIndicator.className = 'mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800';
+    varietyIndicator.innerHTML = `
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-2">${step(true)}${step(hasDays)}${step(canEstimate)}</div>
+        <p class="text-sm">
+          <span class="font-semibold">${meta.label}</span> · 
+          ${hasDays ? `<span class="font-semibold">${meta.growthDays}</span> days (<span class="font-medium">${getMaturityLabel(meta.growthDays)}</span>)` : 'No growth days configured'}
+        </p>
+        <p class="text-xs text-blue-800/80">
+          ${canEstimate ? `🌾 <strong>Auto-guidance:</strong> Expected harvest is around <strong>${formatDate(estimatedHarvest)}</strong>.` : '💡 Set planting date to calculate harvest schedule.'}
+        </p>
+      </div>
+    `;
+    varietyIndicator.classList.remove('hidden');
+  }
+
   function showBadge(mode, growthDays, computedDate) {
     // mode: 'harvest' = harvest was computed, 'planting' = planting was computed
     harvestBadge.classList.toggle('hidden', mode !== 'harvest');
@@ -573,6 +633,7 @@
   // Re-compute harvest from planting (or planting from harvest if only harvest is set)
   varietySelect.addEventListener('change', function () {
     const days = getGrowthDays();
+    renderVarietyIndicator();
     if (!days) { clearBadges(); return; }
 
     if (plantingInput.value) {
@@ -593,6 +654,7 @@
   // ── When PLANTING DATE changes ─────────────────────────────────────────────
   // Forward compute: harvest = planting + growthDays
   plantingInput.addEventListener('change', function () {
+    renderVarietyIndicator();
     if (lastAutoComputed === 'planting') {
       // This change was triggered by our own reverse-compute — skip to avoid loop
       lastAutoComputed = null;
@@ -627,6 +689,7 @@
   // ── On page load: if both dates exist (edit mode), show the info badge ─────
   (function initBadge() {
     const days = getGrowthDays();
+    renderVarietyIndicator();
     if (days && plantingInput.value && harvestInput.value) {
       showBadge('harvest', days, harvestInput.value);
     }
