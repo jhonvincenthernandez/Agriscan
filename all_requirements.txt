@@ -1,0 +1,16 @@
+tensorflow>=2.8
+numpy
+pandas
+matplotlib
+scikit-learn
+opencv-python
+pillow
+flask
+gunicorn
+seaborn
+mysqlclient
+django
+reportlab
+jupyter
+torch
+torchvision
