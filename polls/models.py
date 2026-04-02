@@ -159,7 +159,10 @@ class SiteSetting(models.Model):
                 )
 
 
-class SiteSettingAudit(SoftDeleteModel, models.Model):
+class SiteSettingAudit(SoftDeleteModel):
+    # Tagalog: Tinanggal ang models.Model dahil kasama na ito
+    # sa SoftDeleteModel. Ang duplicate base class ay
+    # mag-ca-cause ng TypeError sa Django startup.
     """Audit log of changes to `SiteSetting`.
 
     Stores who changed what and when.
@@ -777,8 +780,6 @@ class TreatmentRecommendation(SoftDeleteModel, TimeStampedModel):
     # Additional metadata
     priority = models.PositiveSmallIntegerField(default=5, help_text="Display priority: 1-10 scale (1=least critical, 10=most severe/critical)")
     is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["disease", "-priority", "severity_min", "-pk"]
@@ -1165,7 +1166,15 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
             year = self.planting_date.year
 
             # Count existing planting records for this field/year (all statuses, even archived)
-            existing_count = PlantingRecord.objects.filter(
+            # Tagalog: Gamitin ang all_objects (hindi objects) para
+            # ma-count ang LAHAT ng planting records para sa field/year —
+            # kasama ang archived/soft-deleted na hindi pa na-purge.
+            # Kung objects lang ang gagamitin, ang archived plantings ay
+            # hindi mabilang, kaya posibleng makapag-plant ng 4th crop
+            # sa isang taon — bug ito sa data integrity.
+            # Kahit na-archive ang isang planting, nangyari pa rin
+            # ang pagtatanim — dapat pa rin itong mabilang sa quota.
+            existing_count = PlantingRecord.all_objects.filter(
                 field=self.field,
                 planting_date__year=year,
             ).count()
@@ -1175,7 +1184,8 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
                 raise ValidationError({
                     'planting_date': (
                         f"There are already {existing_count} planting cycles recorded for {year}. "
-                        "Maximum is 3 crops per year."
+                        "Maximum is 3 crops per year. "
+                        "If one of these is archived, restore it from Trash instead of creating a new one."
                     )
                 })
 
@@ -1338,7 +1348,10 @@ class YieldPrediction(SoftDeleteModel, TimeStampedModel):
         super().hard_delete()
 
 
-class HarvestRecord(SoftDeleteModel, models.Model):
+class HarvestRecord(SoftDeleteModel):
+    # Tagalog: Parehong dahilan sa SiteSettingAudit —
+    # SoftDeleteModel ay nag-e-extend na ng models.Model
+    # kaya hindi na kailangan i-declare ulit.
     """Actual harvest results recorded after harvest.
 
     This is separate from YieldPrediction (which stores model estimates).
