@@ -15,7 +15,7 @@
           </svg>
           System Notifications
         </h1>
-        <p class="mt-1 text-sm text-gray-500">Auto-generated alerts for disease detections, yield drops, and new advisories.</p>
+        <p class="mt-1 text-sm text-gray-500">Auto-generated alerts for disease detections, yield drops, advisories, knowledge updates, treatments, and system changes.</p>
       </div>
       <div class="flex items-center gap-3 flex-wrap">
         {% if unread_count > 0 %}
@@ -56,9 +56,9 @@
         <select name="type" onchange="this.form.submit()"
           class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[130px]">
           <option value="" {% if not type_filter %}selected{% endif %}>All Types</option>
-          <option value="disease" {% if type_filter == 'disease' %}selected{% endif %}>🦠 Disease</option>
-          <option value="yield_drop" {% if type_filter == 'yield_drop' %}selected{% endif %}>📉 Yield Drop</option>
-          <option value="advisory" {% if type_filter == 'advisory' %}selected{% endif %}>� Announcement</option>
+          {% for type_value, type_label in type_choices %}
+          <option value="{{ type_value }}" {% if type_filter == type_value %}selected{% endif %}>{{ type_label }}</option>
+          {% endfor %}
         </select>
         <select name="status" onchange="this.form.submit()"
           class="text-sm border border-gray-300 rounded-lg px-3 py-1.5 bg-white appearance-none bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat pr-8 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[110px]">
@@ -119,6 +119,31 @@
                 d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
           </div>
+          {% elif notif.type == 'knowledge' %}
+          <div class="h-10 w-10 rounded-full bg-emerald-100 flex items-center justify-center">
+            <svg class="h-5 w-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253m0-9C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9a4.5 4.5 0 00-4.5-4.5c-1.746 0-3.332.477-4.5 1.253"/>
+            </svg>
+          </div>
+          {% elif notif.type == 'treatment' %}
+          <div class="h-10 w-10 rounded-full bg-violet-100 flex items-center justify-center">
+            <svg class="h-5 w-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a4 4 0 00-5.656-5.656l-8.486 8.485a2 2 0 102.829 2.829l8.485-8.486a1 1 0 00-1.414-1.414l-8.485 8.485"/>
+            </svg>
+          </div>
+          {% elif notif.type == 'system' %}
+          <div class="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center">
+            <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l1.49.596a1 1 0 00.77 0l1.49-.596a1 1 0 011.35.936l.072 1.58a1 1 0 00.562.84l1.36.68a1 1 0 01.454 1.34l-.596 1.49a1 1 0 000 .77l.596 1.49a1 1 0 01-.454 1.34l-1.36.68a1 1 0 00-.562.84l-.072 1.58a1 1 0 01-1.35.936l-1.49-.596a1 1 0 00-.77 0l-1.49.596a1 1 0 01-1.35-.936l-.072-1.58a1 1 0 00-.562-.84l-1.36-.68a1 1 0 01-.454-1.34l.596-1.49a1 1 0 000-.77l-.596-1.49a1 1 0 01.454-1.34l1.36-.68a1 1 0 00.562-.84l.072-1.58z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          {% else %}
+          <div class="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center">
+            <svg class="h-5 w-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
           {% endif %}
         </div>
 
@@ -135,7 +160,11 @@
               <p class="text-xs text-gray-500 mt-0.5">
                 {% if notif.type == 'disease' %}🦠 Disease Alert
                 {% elif notif.type == 'yield_drop' %}📉 Yield Drop
-                {% elif notif.type == 'advisory' %}� Announcement
+                {% elif notif.type == 'advisory' %}📢 Announcement
+                {% elif notif.type == 'knowledge' %}📚 Knowledge Update
+                {% elif notif.type == 'treatment' %}💊 Treatment Recommendation
+                {% elif notif.type == 'system' %}⚙️ System Update
+                {% else %}{{ notif.get_type_display }}
                 {% endif %}
                 &nbsp;·&nbsp;
                 {{ notif.created_at|timesince }} ago

@@ -4322,7 +4322,7 @@ def notifications_list(request):
     - A new Announcement is published (bell alert)
 
     Supports:
-    - Filter by type (disease / yield_drop / announcement)
+    - Filter by type (role-aware)
     - Filter by read status (all / unread / read)
     - Mark all as read (POST)
     - Pagination (20 per page)
@@ -4343,9 +4343,22 @@ def notifications_list(request):
         'related_announcement',
     )
 
-    # Filter by type
+    # Role-aware type visibility.
+    # Knowledge alerts are farmer-facing only; treatment alerts are staff-facing only.
+    role_allowed_types = {
+        'farmer': {'disease', 'yield_drop', 'advisory', 'knowledge', 'system'},
+        'technician': {'disease', 'yield_drop', 'advisory', 'treatment', 'system'},
+        'admin': {'disease', 'yield_drop', 'advisory', 'treatment', 'system'},
+    }
+    allowed_types = role_allowed_types.get(profile.role, {choice[0] for choice in Notification.TYPE_CHOICES})
+    notifications_qs = notifications_qs.filter(type__in=allowed_types)
+
+    type_choices = [choice for choice in Notification.TYPE_CHOICES if choice[0] in allowed_types]
+
+    # Filter by type (backend-driven from Notification.TYPE_CHOICES)
     type_filter = request.GET.get('type', '')
-    if type_filter in ('disease', 'yield_drop', 'advisory'):
+    valid_types = {choice[0] for choice in type_choices}
+    if type_filter in valid_types:
         notifications_qs = notifications_qs.filter(type=type_filter)
 
     # Filter by read status
@@ -4355,7 +4368,11 @@ def notifications_list(request):
     elif status_filter == 'read':
         notifications_qs = notifications_qs.filter(is_read=True)
 
-    unread_count = Notification.objects.filter(recipient=profile, is_read=False).count()
+    unread_count = Notification.objects.filter(
+        recipient=profile,
+        is_read=False,
+        type__in=allowed_types,
+    ).count()
 
     # Pagination
     allowed_page_sizes = [10, 20, 50, 100]
@@ -4379,6 +4396,7 @@ def notifications_list(request):
         'page_range': notifications_page.paginator.get_elided_page_range(notifications_page.number, on_each_side=1, on_ends=1),
         'unread_count': unread_count,
         'type_filter': type_filter,
+        'type_choices': type_choices,
         'status_filter': status_filter,
         'total_count': paginator.count,
         'page_size': page_size,
