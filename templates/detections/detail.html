@@ -72,7 +72,6 @@
             </p>
           </div>
 
-          <div class="grid grid-cols-2 gap-3">
             <!-- Confidence -->
             <div class="bg-blue-50 rounded-lg p-3">
               <p class="text-xs text-blue-600 font-semibold uppercase mb-1">Confidence</p>
@@ -84,11 +83,10 @@
               <p class="text-xs text-amber-600 font-semibold uppercase mb-1">Severity</p>
               <p class="text-lg font-bold text-gray-900">{{ detection.severity_pct|default:"0" }}%</p>
             </div>
-          </div>
 
           <!-- Field Info -->
           {% if detection.planting %}
-          <div class="bg-gray-50 rounded-lg p-3">
+          <div class="bg-green-100 rounded-lg p-3">
             <p class="text-xs text-gray-600 font-semibold uppercase mb-1">Field</p>
             <p class="text-sm font-medium text-gray-900">{{ detection.planting.field.name }}</p>
             {% if detection.planting.field.area_hectares %}
@@ -121,16 +119,18 @@
           
           {% if detection.disease.name != UNKNOWN_LABEL %}
           <a href="{% url 'polls:yield_prediction' %}?detection_id={{ detection.pk }}" 
-             class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg transition-colors">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+             class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
-            Predict Yield
+            Yield Prediction Tool
+            <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">Auto-filled from Detection</span>
           </a>
           {% endif %}
         </div>
       </div>
     </div>
+    
 
     <!-- Right Column: Detailed Treatment Information -->
     <div class="lg:col-span-2 space-y-6">

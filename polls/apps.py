@@ -8,7 +8,7 @@ class PollsConfig(AppConfig):
     name = 'polls'
     
     def ready(self):
-        logger.warning("POLLS APPS LOADED,tyaga lang at tiwala sa sarili palagi nothing impossible boss hehe!🥺")
+        logger.warning("POLLS APPS LOADED,tyaga lang at tiwala sa sarili palagi nothing impossible boss hehe!🔥")
         """
         Import signals when Django starts.
         

@@ -1,0 +1,94 @@
+{% load static %}
+<!--
+  System Settings Loader Modal
+  Layunin: Ipakita ang staged progress habang nagse-save ng global settings.
+  Note: Parehong visual language/logo ng AI scan loader para consistent ang UX.
+-->
+<div
+  id="system-settings-loader"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="system-settings-loader-title"
+  aria-describedby="system-settings-loader-status"
+  style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center;"
+>
+  <!-- Backdrop para i-focus ang user sa processing state -->
+  <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm"></div>
+
+  <!-- Main modal card -->
+  <div class="relative z-10 w-full max-w-sm mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+    <div class="h-1 w-full bg-gradient-to-r from-green-400 via-blue-500 to-indigo-500 scan-accent-bar"></div>
+
+    <div class="px-8 py-8">
+      <!-- Brand/logo cluster: same motion + branding as AI loader -->
+      <div class="flex justify-center mb-6">
+        <div class="relative inline-flex items-center justify-center">
+          <div class="absolute inset-0 rounded-full bg-green-100 scan-pulse-ring"></div>
+          <div class="absolute inset-0 rounded-full scan-pulse-ring-2"></div>
+          <div class="relative flex items-center justify-center h-20 w-20 rounded-full bg-gradient-to-br from-green-500 to-blue-600 shadow-lg">
+            <img
+              src="{% static 'polls/img/logo.jpg' %}"
+              alt=""
+              aria-hidden="true"
+              width="44"
+              height="44"
+              class="rounded-full"
+            >
+            <div class="scan-orbit-dot">
+              <div class="scan-orbit-inner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2 id="system-settings-loader-title" class="text-center text-xl font-bold text-gray-900 mb-1">
+        Applying System Settings
+      </h2>
+      <p class="text-center text-sm text-gray-500 mb-6">
+        Powered by AgriScan AI
+      </p>
+
+      <!-- Step timeline: ina-update ng JS ang active/done state kada stage -->
+      <ol id="system-settings-steps" class="space-y-3 mb-6" aria-label="System settings processing steps">
+        <li class="scan-step flex items-center gap-3" data-step="0">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Loading current settings</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="1">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Validating configuration</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="2">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m9-9H3"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Applying global rules</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="3">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Updating AI thresholds</span>
+        </li>
+        <li class="scan-step flex items-center gap-3" data-step="4">
+          <span class="scan-step-icon flex-shrink-0 h-7 w-7 rounded-full border-2 border-gray-200 bg-white flex items-center justify-center transition-all duration-300">
+            <svg class="h-3.5 w-3.5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </span>
+          <span class="text-sm text-gray-400 font-medium scan-step-label">Saving audit trail</span>
+        </li>
+      </ol>
+
+      <!-- Live status text para sa visual + screen readers -->
+      <p
+        id="system-settings-loader-status"
+        class="text-center text-xs text-gray-400 min-h-[1.25rem]"
+        aria-live="polite"
+        aria-atomic="true"
+      ></p>
+    </div>
+  </div>
+</div>

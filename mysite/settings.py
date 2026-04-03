@@ -195,9 +195,9 @@ SYSTEM_SETTING_DEFAULTS = {
     "allowed_past_days_planting": 30,
     "detection_confidence_threshold": 75,
     # Admin UI default for CNN toggle (env still acts as fallback when DB setting is absent).
-    "yield_cnn_enabled": False,
+    "yield_cnn_enabled": True,
     # Admin UI default for email toggle (SMTP credentials remain env-managed).
-    "email_enabled": False,
+    "email_enabled": True,
 }
 
 # Email config: lahat configurable via .env para walang hardcoded credentials sa repo.

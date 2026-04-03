@@ -361,6 +361,11 @@
 
   <script>
   (function () {
+    // UI Form Helper Flow:
+    // 1) I-track ang initial values
+    // 2) Ipakita ang unsaved chip kapag may pagbabago
+    // 3) I-sync ang helper text ng toggles
+    // 4) I-apply ang recommended defaults kapag ni-reset
     const resetButton = document.getElementById('reset-recommended');
     const form = document.getElementById('system-settings-form');
     const submitButton = document.getElementById('system-settings-submit');
@@ -372,6 +377,7 @@
     if (!resetButton || !form || !submitButton) return;
 
     const trackedInputs = Array.from(form.querySelectorAll('input, select, textarea'));
+    // Baseline state na paghahambingan para malaman kung "dirty" ang form.
     const initialState = trackedInputs.map((el) => (
       el.type === 'checkbox' ? String(!!el.checked) : String(el.value)
     ));
@@ -417,7 +423,7 @@
     });
 
     resetButton.addEventListener('click', function () {
-      // These should match the recommended defaults in the code.
+      // Dapat naka-sync ito sa backend recommended defaults.
       const defaults = {
         allowed_past_days_planting: Number(form.dataset.recommendedAllowedPastDays || 30),
         detection_confidence_threshold: Number(form.dataset.recommendedConfidenceThreshold || 75),
@@ -445,7 +451,136 @@
     syncCnnText();
     syncEmailText();
   })();
+
+  (function () {
+    // Loader Flow (System Settings Submit):
+    // - Kapag valid ang form submit, buksan ang modal loader
+    // - I-animate ang step progression para may visual feedback
+    // - I-reset sa pageshow para hindi mag-stuck kapag back/forward navigation
+    const STEPS = [
+      'Loading current settings...',
+      'Validating configuration...',
+      'Applying global rules...',
+      'Updating AI thresholds...',
+      'Saving audit trail...',
+    ];
+    const TIMINGS = [500, 900, 1400, 900, 800];
+
+    // Hintayin muna ang full DOM para siguradong present na ang modal partial.
+    document.addEventListener('DOMContentLoaded', function () {
+      const form = document.getElementById('system-settings-form');
+      const submitButton = document.getElementById('system-settings-submit');
+      if (!form || !submitButton) return;
+
+      let timers = [];
+
+      function getModal() {
+        // Lazy lookup: robust kahit magbago ang render order ng blocks.
+        return document.getElementById('system-settings-loader');
+      }
+
+      function setStep(index) {
+        const modal = getModal();
+        if (!modal) return;
+
+        // I-update ang bawat step sa tatlong estado: done, active, pending.
+        const stepEls = modal.querySelectorAll('#system-settings-steps .scan-step');
+        stepEls.forEach((el, i) => {
+          el.classList.remove('is-active', 'is-done');
+          const iconEl = el.querySelector('.scan-step-icon');
+          const labelEl = el.querySelector('.scan-step-label');
+
+          if (i < index) {
+            el.classList.add('is-done');
+            if (iconEl) {
+              iconEl.style.borderColor = '#16a34a';
+              iconEl.style.background = '#16a34a';
+              iconEl.innerHTML = `<svg class="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>`;
+            }
+            if (labelEl) {
+              labelEl.style.color = '#16a34a';
+              labelEl.style.fontWeight = '600';
+            }
+          } else if (i === index) {
+            el.classList.add('is-active');
+            if (iconEl) {
+              iconEl.style.borderColor = '#22c55e';
+              iconEl.style.background = '#f0fdf4';
+              iconEl.style.boxShadow = '0 0 0 3px rgba(34,197,94,.2)';
+              iconEl.innerHTML = `<span style="display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid #22c55e;border-top-color:transparent;animation:step-spin .75s linear infinite;"></span>`;
+            }
+            if (labelEl) {
+              labelEl.style.color = '#15803d';
+              labelEl.style.fontWeight = '600';
+            }
+          } else {
+            if (iconEl) {
+              iconEl.style.borderColor = '#d1d5db';
+              iconEl.style.background = '#f9fafb';
+              iconEl.style.boxShadow = '';
+              const svg = iconEl.querySelector('svg');
+              if (svg) svg.style.color = '#d1d5db';
+            }
+            if (labelEl) {
+              labelEl.style.color = '#9ca3af';
+              labelEl.style.fontWeight = '500';
+            }
+          }
+        });
+
+        const statusEl = document.getElementById('system-settings-loader-status');
+        if (statusEl && STEPS[index]) {
+          // Live progress text para sa user at assistive tech.
+          statusEl.textContent = `Step ${index + 1} of ${STEPS.length}: ${STEPS[index]}`;
+        }
+      }
+
+      function start() {
+        const modal = getModal();
+        if (!modal) return;
+
+        modal.style.display = 'flex';
+        document.body.classList.add('loader-open');
+        submitButton.disabled = true;
+
+        setStep(0);
+
+        // Sequential timers para sa staged animation ng progress.
+        let elapsed = TIMINGS[0];
+        for (let i = 1; i < STEPS.length; i++) {
+          const idx = i;
+          const timer = setTimeout(() => setStep(idx), elapsed);
+          timers.push(timer);
+          elapsed += TIMINGS[i];
+        }
+      }
+
+      function stop() {
+        // Cleanup timers + UI state para iwas stuck modal sa navigation.
+        const modal = getModal();
+        timers.forEach(clearTimeout);
+        timers = [];
+        if (modal) modal.style.display = 'none';
+        document.body.classList.remove('loader-open');
+        submitButton.disabled = false;
+      }
+
+      form.addEventListener('submit', function () {
+        // Huwag magpakita ng loader kapag may native validation errors.
+        if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+          return;
+        }
+        start();
+      });
+
+      window.addEventListener('pageshow', stop);
+    });
+  })();
   </script>
 </section>
+{% endblock %}
+
+{% block modals %}
+{% include 'partials/_system_settings_loader.html' %}
 {% endblock %}
 
