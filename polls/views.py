@@ -1542,8 +1542,11 @@ def detections_delete(request, pk: int):
         return redirect('polls:detections_list')
     
     if request.method == "POST":
-        detection.is_active = False
-        detection.save(update_fields=['is_active'])
+        # Tagalog: Gamitin ang SoftDeleteModel.delete() para consistent ang
+        # behavior — nagse-set ng PAREHONG is_active=False AT deleted_at=now().
+        # Ang manual na is_active=False ay hindi nagse-set ng deleted_at
+        # kaya may gap sa audit trail kung kailan na-archive ang record.
+        detection.delete()
         messages.success(request, f"📦 Detection #{pk} archived. Restore it anytime from Trash.")
         return redirect("polls:detections_list")
     return redirect("polls:detections_list")
@@ -3291,7 +3294,12 @@ def system_settings_audit_bulk_archive(request):
         return redirect('polls:system_settings_audit_list')
 
     qs = SiteSettingAudit.objects.filter(pk__in=selected_ids, is_active=True)
-    updated = qs.update(is_active=False)
+    # Tagalog: Gamitin ang SoftDeleteQuerySet.delete() para consistent ang
+    # behavior — nagse-set ng PAREHONG is_active=False AT deleted_at=now()
+    # sa lahat ng selected records sa iisang query.
+    # Ang SoftDeleteManager queryset ay may custom delete() method na
+    # gumagamit ng .update(is_active=False, deleted_at=timezone.now()).
+    updated = qs.delete()
 
     if updated:
         messages.success(request, f"{updated} audit entr{'y' if updated == 1 else 'ies'} archived. They can be restored from Trash & Archive.")
@@ -3308,8 +3316,9 @@ def system_settings_audit_archive(request, pk: int):
     audit = get_object_or_404(SiteSettingAudit, pk=pk)
 
     if request.method == 'POST':
-        audit.is_active = False
-        audit.save(update_fields=['is_active'])
+        # Tagalog: Gamitin ang SoftDeleteModel.delete() para consistent ang
+        # behavior — nagse-set ng PAREHONG is_active=False AT deleted_at=now().
+        audit.delete()
         messages.success(request, "Audit entry archived. It can be restored from Trash & Archive.")
         return redirect('polls:system_settings_audit_list')
 
@@ -5231,8 +5240,9 @@ def season_log_delete(request, pk):
         return redirect('polls:season_log_list')
 
     if request.method == 'POST':
-        log.is_active = False
-        log.save(update_fields=['is_active'])
+        # Tagalog: Gamitin ang SoftDeleteModel.delete() para consistent ang
+        # behavior — nagse-set ng PAREHONG is_active=False AT deleted_at=now().
+        log.delete()
         messages.success(request, f"Season log '{log.season_label}' deleted.")
         return redirect('polls:season_log_list')
     return redirect('polls:season_log_list')

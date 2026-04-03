@@ -17,7 +17,13 @@
           </h1>
           <p class="mt-1 text-sm text-gray-600">Manage disease treatment guidelines and recommendations</p>
         </div>
-        <div class="flex gap-2">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
+            <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            <span class="text-sm font-semibold text-green-700">{{ total_count }} Record{{ total_count|pluralize }}</span>
+          </div>
           <a
             href="{% url 'polls:treatments_create' %}"
             class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition"
@@ -124,7 +130,6 @@
                 {% endfor %}
               </select>
             </div>
-            <span class="ml-auto text-sm text-gray-400">{{ total_count }} treatment{{ total_count|pluralize }}</span>
           </div>
         </form>
       </div>
