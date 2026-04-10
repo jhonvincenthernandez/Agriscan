@@ -280,14 +280,31 @@ def notify_yield_drop(sender, instance, created, **kwargs):
 @receiver(post_save, sender='polls.Announcement')
 def notify_new_announcement(sender, instance, created, **kwargs):
     """
-    Auto-create in-app Notifications for targeted users when a new Announcement
-    is published (created=True and is_active=True), OR when a draft is
-    activated for the first time (created=False, is_active flipped True).
+    Auto-create in-app Notifications only when an announcement is newly
+    published:
+    - created=True and is_active=True and not deleted
+    - created=False and transition draft -> active (not deleted)
 
-    Also re-sends emails when transitioning draft → active.
+    Important: do NOT send during archive/restore/edit-only saves.
     """
-    if not instance.is_active:
-        return  # Draft — no bell notification yet
+    # Ignore archived announcements entirely.
+    if instance.is_deleted:
+        return
+
+    # Created: notify only if immediately published.
+    if created:
+        if not instance.is_active:
+            return
+    else:
+        # Update path: notify only on draft -> active transition.
+        prev = _PRE_SAVE_STATE_CACHE.pop(('announcement', instance.pk), None)
+        if not prev:
+            return
+        if prev.get('is_deleted'):
+            return
+        became_active = (not prev.get('is_active')) and instance.is_active
+        if not became_active:
+            return
 
     try:
         from .models import Notification, Profile
@@ -325,16 +342,27 @@ def notify_new_announcement(sender, instance, created, **kwargs):
             for profile in target_profiles
         ]
         if notifs:
-            created_notifs = Notification.objects.bulk_create(notifs, ignore_conflicts=True)
-            # Email only the newly created bell notifications
-            from . import services as _svc
-            for n in created_notifs:
-                _svc.send_notification_email(n)
+            Notification.objects.bulk_create(notifs, ignore_conflicts=True)
 
     except Exception:
         logger.exception(
             "Failed to create announcement notifications for Announcement pk=%s", instance.pk
         )
+
+
+@receiver(pre_save, sender='polls.Announcement')
+def _cache_prev_announcement_state(sender, instance, **kwargs):
+    """Cache previous announcement publish/archive flags for transition checks."""
+    if not instance.pk:
+        return
+    try:
+        old = sender.objects.only('is_active', 'is_deleted').get(pk=instance.pk)
+        _PRE_SAVE_STATE_CACHE[('announcement', instance.pk)] = {
+            'is_active': old.is_active,
+            'is_deleted': old.is_deleted,
+        }
+    except sender.DoesNotExist:
+        pass
 
 
 # ---------------------------------------------------------------------------

@@ -144,6 +144,7 @@
 
       // Clean up any leftover injected purge fields
       if (deleteForm) deleteForm.querySelectorAll(".injected-purge").forEach(function (el) { el.remove(); });
+      if (deleteForm) deleteForm.querySelectorAll(".injected-next").forEach(function (el) { el.remove(); });
 
       // --- Purge path (Trash page) vs normal archive path ---
       var purgeUrl   = btn.dataset.purgeUrl;
@@ -167,6 +168,16 @@
         if (deleteForm && deleteHref) deleteForm.action = deleteHref;
       }
 
+      // Preserve the exact origin page (with filters/pagination) for post-archive redirect.
+      if (deleteForm) {
+        var nextInput = document.createElement("input");
+        nextInput.type = "hidden";
+        nextInput.name = "_next";
+        nextInput.value = window.location.href;
+        nextInput.className = "injected-next";
+        deleteForm.appendChild(nextInput);
+      }
+
       // Focus management
       try { window._prevFocus = document.activeElement; } catch (_) {}
       setTimeout(function () { deleteModalConfirm.focus(); }, 50);
@@ -182,6 +193,7 @@
     deleteModal.setAttribute("aria-hidden", "true");
     deleteHref = null;
     if (deleteForm) deleteForm.querySelectorAll(".injected-purge").forEach(function (el) { el.remove(); });
+    if (deleteForm) deleteForm.querySelectorAll(".injected-next").forEach(function (el) { el.remove(); });
     try { if (window._prevFocus) window._prevFocus.focus(); } catch (_) {}
   }
 

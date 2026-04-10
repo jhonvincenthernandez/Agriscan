@@ -1,6 +1,8 @@
 from typing import Dict, List
 import csv
 from io import BytesIO
+import logging
+import threading
 
 from django.conf import settings
 from django.contrib import messages
@@ -10,9 +12,10 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse, reverse_lazy
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.http import HttpResponse
-from django.db import models
+from django.db import models, transaction
 from reportlab.lib.pagesizes import letter, A4, landscape
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -51,6 +54,7 @@ from .decorators import admin_only, technician_or_admin, role_required, filter_q
 
 
 RECENT_ACTIVITY_SESSION_KEY = "polls_recent_activity"
+logger = logging.getLogger(__name__)
 
 
 def _get_recent_activity(request) -> List[Dict[str, str]]:
@@ -75,6 +79,47 @@ def _build_query_string(request, remove_keys=('page',)):
         params.pop(key, None)
     qs = params.urlencode()
     return f"&{qs}" if qs else ""
+
+
+def _redirect_back_or_default(request, fallback_url_name: str):
+    """Redirect back to originating page (same host) with a named-url fallback."""
+    next_url = (
+        request.POST.get('_next')
+        or request.GET.get('next')
+        or request.META.get('HTTP_REFERER')
+    )
+    if next_url and url_has_allowed_host_and_scheme(
+        url=next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return redirect(next_url)
+    return redirect(fallback_url_name)
+
+
+def _send_announcement_emails_background(announcement_pk: int) -> None:
+    """Send announcement emails out-of-band so the request can return quickly."""
+    try:
+        from .models import Announcement
+        announcement = Announcement.objects.get(pk=announcement_pk)
+        if announcement.is_deleted or not announcement.is_active:
+            return
+        services.send_announcement_emails_to_targets(announcement)
+    except Exception:
+        logger.exception("Background announcement email send failed for pk=%s", announcement_pk)
+
+
+def _queue_announcement_email_send(announcement_pk: int) -> None:
+    """Start background email work after transaction commit."""
+    def _start_worker():
+        worker = threading.Thread(
+            target=_send_announcement_emails_background,
+            args=(announcement_pk,),
+            daemon=True,
+        )
+        worker.start()
+
+    transaction.on_commit(_start_worker)
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -1520,8 +1565,8 @@ def detections_bulk_delete(request):
     # deleted_at kaya may gap sa audit trail kung kailan na-archive.
     count = qs.count()
     qs.delete()
-    messages.success(request, f"📦 {count} detection{'s' if count != 1 else ''} archived successfully.")
-    return redirect('polls:detections_list')
+    messages.success(request, f"📦 {count} detection{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
+    return _redirect_back_or_default(request, 'polls:detections_list')
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -1552,9 +1597,9 @@ def detections_delete(request, pk: int):
         # Ang manual na is_active=False ay hindi nagse-set ng deleted_at
         # kaya may gap sa audit trail kung kailan na-archive ang record.
         detection.delete()
-        messages.success(request, f"📦 Detection #{pk} archived. Restore it anytime from Trash.")
-        return redirect("polls:detections_list")
-    return redirect("polls:detections_list")
+        messages.success(request, f"📦 Detection #{pk} archived. Manage from Trash & Archive.")
+        return _redirect_back_or_default(request, 'polls:detections_list')
+    return _redirect_back_or_default(request, 'polls:detections_list')
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -1738,8 +1783,8 @@ def yield_records_bulk_delete(request):
     # ang behavior at mase-set ang deleted_at sa lahat ng records.
     count = qs.count()
     qs.delete()
-    messages.success(request, f"📦 {count} yield record{'s' if count != 1 else ''} archived successfully.")
-    return redirect('polls:yield_records_list')
+    messages.success(request, f"📦 {count} yield record{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
+    return _redirect_back_or_default(request, 'polls:yield_records_list')
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -1768,9 +1813,9 @@ def yield_record_delete(request, pk: int):
     
     if request.method == "POST":
         record.delete()
-        messages.success(request, f"📦 Yield record #{pk} archived. Restore it anytime from Trash.")
-        return redirect("polls:yield_records_list")
-    return redirect("polls:yield_records_list")
+        messages.success(request, f"📦 Yield record #{pk} archived. Manage from Trash & Archive.")
+        return _redirect_back_or_default(request, 'polls:yield_records_list')
+    return _redirect_back_or_default(request, 'polls:yield_records_list')
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -2344,9 +2389,9 @@ def field_delete(request, pk: int):
     if request.method == 'POST':
         field_name = field.name
         field.delete()
-        messages.success(request, f"📦 Field '{field_name}' archived. Restore it anytime from Trash.")
-        return redirect('polls:fields_list')
-    return redirect('polls:fields_list')
+        messages.success(request, f"📦 Field '{field_name}' archived. Manage from Trash & Archive.")
+        return _redirect_back_or_default(request, 'polls:fields_list')
+    return _redirect_back_or_default(request, 'polls:fields_list')
 
 
 # ============================================================================
@@ -2667,9 +2712,9 @@ def planting_delete(request, pk: int):
     if request.method == 'POST':
         field_name = planting.field.name
         planting.delete()
-        messages.success(request, f"📦 Planting record for field '{field_name}' archived. Restore it anytime from Trash.")
-        return redirect('polls:plantings_list')
-    return redirect('polls:plantings_list')
+        messages.success(request, f"📦 Planting record for field '{field_name}' archived. Manage from Trash & Archive.")
+        return _redirect_back_or_default(request, 'polls:plantings_list')
+    return _redirect_back_or_default(request, 'polls:plantings_list')
 
 
 # ============================================================================
@@ -2875,10 +2920,10 @@ def harvest_archive(request, pk: int):
 
     if request.method == 'POST':
         record.delete()
-        messages.success(request, "Harvest record archived successfully.")
-        return redirect('polls:harvests_list')
+        messages.success(request, "📦 Harvest record archived. Manage from Trash & Archive.")
+        return _redirect_back_or_default(request, 'polls:harvests_list')
 
-    return redirect('polls:harvests_list')
+    return _redirect_back_or_default(request, 'polls:harvests_list')
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -3309,11 +3354,11 @@ def system_settings_audit_bulk_archive(request):
     updated = qs.delete()
 
     if updated:
-        messages.success(request, f"{updated} audit entr{'y' if updated == 1 else 'ies'} archived. They can be restored from Trash & Archive.")
+        messages.success(request, f"📦 {updated} audit entr{'y' if updated == 1 else 'ies'} archived. Manage from Trash & Archive.")
     else:
         messages.info(request, "No audit entries were archived.")
 
-    return redirect('polls:system_settings_audit_list')
+    return _redirect_back_or_default(request, 'polls:system_settings_audit_list')
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -3326,10 +3371,10 @@ def system_settings_audit_archive(request, pk: int):
         # Tagalog: Gamitin ang SoftDeleteModel.delete() para consistent ang
         # behavior — nagse-set ng PAREHONG is_active=False AT deleted_at=now().
         audit.delete()
-        messages.success(request, "Audit entry archived. It can be restored from Trash & Archive.")
-        return redirect('polls:system_settings_audit_list')
+        messages.success(request, "📦 Audit entry archived. Manage from Trash & Archive.")
+        return _redirect_back_or_default(request, 'polls:system_settings_audit_list')
 
-    return redirect('polls:system_settings_audit_list')
+    return _redirect_back_or_default(request, 'polls:system_settings_audit_list')
 
 
 # -----------------------------------------------------------------------------
@@ -3621,8 +3666,8 @@ def knowledge_archive(request, pk: int):
         entry.is_published = False
         entry.save(update_fields=['is_published'])
         entry.delete()
-        messages.success(request, 'Knowledge entry archived. It can be restored from Trash & Archive.')
-    return redirect(f"{reverse('polls:trash_management')}?section=knowledge")
+        messages.success(request, '📦 Knowledge entry archived. Manage from Trash & Archive.')
+    return _redirect_back_or_default(request, 'polls:knowledge_admin_list')
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -3971,9 +4016,9 @@ def treatments_delete(request, pk):
     if request.method == 'POST':
         disease_name = treatment.disease.name
         treatment.delete()
-        messages.success(request, f'📦 Treatment for "{disease_name}" archived. Restore it anytime from Trash.')
-        return redirect('polls:treatments_list')
-    return redirect('polls:treatments_list')
+        messages.success(request, f'📦 Treatment for "{disease_name}" archived. Manage from Trash & Archive.')
+        return _redirect_back_or_default(request, 'polls:treatments_list')
+    return _redirect_back_or_default(request, 'polls:treatments_list')
 
 
 # ============================================================================
@@ -4175,16 +4220,8 @@ def announcement_create(request):
             # signal notify_new_announcement fires automatically if is_active=True
 
             if announcement.is_active:
-                # Also bulk-email (signal handles bell; we handle email here)
-                try:
-                    from . import services as _svc
-                    sent = _svc.send_announcement_emails_to_targets(announcement) or 0
-                except Exception:
-                    sent = 0
-                if sent:
-                    messages.success(request, f'Announcement "{announcement.title}" published and emailed to {sent} user(s).')
-                else:
-                    messages.success(request, f'Announcement "{announcement.title}" published successfully!')
+                _queue_announcement_email_send(announcement.pk)
+                messages.success(request, f'Announcement "{announcement.title}" published. Notifications are being sent in the background.')
             else:
                 messages.success(request, f'Announcement "{announcement.title}" saved as draft. Activate it later to notify users.')
             return redirect('polls:announcements_list')
@@ -4232,56 +4269,11 @@ def announcement_edit(request, pk):
                 updated.published_at = announcement.published_at
             updated.save()
 
-            # Draft → Active: send bell notifications + emails (only on first activation)
+            # Draft -> Active: signal handles bell notifications.
+            # Queue email sending in background to keep request responsive.
             if not was_active and updated.is_active:
-                from .models import Notification, Profile
-                from . import services as _svc
-                from django.db.models import Q
-
-                # Resolve target profiles
-                audience = updated.target_audience
-                if audience == 'all':
-                    target_profiles = Profile.objects.filter(user__is_active=True).select_related('user')
-                elif audience == 'farmers':
-                    target_profiles = Profile.objects.filter(role='farmer', user__is_active=True).select_related('user')
-                elif audience == 'technicians':
-                    target_profiles = Profile.objects.filter(role='technician', user__is_active=True).select_related('user')
-                elif audience == 'barangay' and updated.target_barangay:
-                    target_profiles = Profile.objects.filter(
-                        role='farmer', user__is_active=True,
-                        fields__barangay__iexact=updated.target_barangay,
-                    ).distinct().select_related('user')
-                elif audience == 'user' and updated.target_user_id:
-                    target_profiles = Profile.objects.filter(pk=updated.target_user_id).select_related('user')
-                else:
-                    target_profiles = Profile.objects.none()
-
-                # Bell notifications (bulk_create, ignore duplicates)
-                notifs = [
-                    Notification(
-                        recipient=profile,
-                        type='advisory',
-                        title=f'New Announcement: {updated.title}',
-                        message=updated.content[:200] + ('...' if len(updated.content) > 200 else ''),
-                        related_announcement=updated,
-                    )
-                    for profile in target_profiles
-                ]
-                created_notifs = []
-                if notifs:
-                    created_notifs = Notification.objects.bulk_create(notifs, ignore_conflicts=True)
-                    for n in created_notifs:
-                        _svc.send_notification_email(n)
-
-                # Bulk email
-                sent = _svc.send_announcement_emails_to_targets(updated) or 0
-                target_count = target_profiles.count()
-                messages.success(
-                    request,
-                    f'Announcement "{updated.title}" published! '
-                    f'{target_count} user(s) notified via bell alert'
-                    f'{f" and emailed to {sent}" if sent else ""}.'
-                )
+                _queue_announcement_email_send(updated.pk)
+                messages.success(request, f'Announcement "{updated.title}" published. Notifications are being sent in the background.')
             else:
                 messages.success(request, f'Announcement "{updated.title}" updated successfully!')
             return redirect('polls:announcements_list')
@@ -4309,16 +4301,15 @@ def announcement_delete(request, pk):
     """
     from .models import Announcement
     
-    announcement = get_object_or_404(Announcement, pk=pk)
+    announcement = get_object_or_404(Announcement, pk=pk, is_deleted=False)
     
     if request.method == 'POST':
         title = announcement.title
-        announcement.is_deleted = True
-        announcement.save(update_fields=['is_deleted'])
-        messages.success(request, f'📦 Announcement "{title}" archived. Restore it anytime from Trash.')
-        return redirect('polls:announcements_list')
+        announcement.archive()
+        messages.success(request, f'📦 Announcement "{title}" archived. Manage from Trash & Archive.')
+        return _redirect_back_or_default(request, 'polls:announcements_list')
     
-    return redirect('polls:announcements_list')
+    return _redirect_back_or_default(request, 'polls:announcements_list')
 
 
 # ============================================================================
@@ -4479,7 +4470,7 @@ def varieties_list(request):
             qs = RiceVariety.objects.filter(pk__in=pks, is_active=True)
             updated = qs.count()
             qs.delete()
-            messages.success(request, f'📦 {updated} variet{"y" if updated == 1 else "ies"} archived.')
+            messages.success(request, f'📦 {updated} variet{"y" if updated == 1 else "ies"} archived. Manage from Trash & Archive.')
         return redirect(request.get_full_path())
 
     # Base queryset — active only, annotate planting count for sort + display
@@ -4655,10 +4646,10 @@ def variety_delete(request, pk):
         messages.success(
             request,
             f'📦 Variety "{variety.code}" archived. '
-            f'Existing plantings are preserved. You can restore it anytime from Trash.'
+            f'Existing plantings are preserved. Manage from Trash & Archive.'
         )
-        return redirect('polls:varieties_list')
-    return redirect('polls:varieties_list')
+        return _redirect_back_or_default(request, 'polls:varieties_list')
+    return _redirect_back_or_default(request, 'polls:varieties_list')
 
 
 @login_required
@@ -4703,11 +4694,10 @@ def trash_management(request):
             try:
                 obj = Announcement.objects.get(pk=obj_pk, is_deleted=True)
                 if action == 'restore':
-                    obj.is_deleted = False
-                    obj.save(update_fields=['is_deleted'])
+                    obj.restore()
                     messages.success(request, f'✅ Announcement #{obj_pk} restored successfully.')
                 elif action == 'purge':
-                    obj.delete()
+                    obj.hard_delete()
                     messages.warning(request, f'🗑️ Announcement #{obj_pk} permanently deleted.')
             except Announcement.DoesNotExist:
                 messages.error(request, 'Announcement not found or not in trash.')

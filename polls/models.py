@@ -1571,6 +1571,12 @@ class Announcement(TimeStampedModel):
         db_index=True,
         help_text="True = soft-deleted / in Trash"
     )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="Timestamp when announcement was archived"
+    )
     published_at = models.DateTimeField(
         null=True, 
         blank=True,
@@ -1610,6 +1616,19 @@ class Announcement(TimeStampedModel):
     def __str__(self):
         priority_emoji = dict(self.PRIORITY_CHOICES).get(self.priority, '')
         return f"{priority_emoji} {self.title}"
+
+    def archive(self):
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['is_deleted', 'deleted_at'])
+
+    def restore(self):
+        self.is_deleted = False
+        self.deleted_at = None
+        self.save(update_fields=['is_deleted', 'deleted_at'])
+
+    def hard_delete(self, using=None, keep_parents=False):
+        return super().delete(using=using, keep_parents=keep_parents)
     
     def is_visible(self):
         """Check if announcement should be visible now."""
