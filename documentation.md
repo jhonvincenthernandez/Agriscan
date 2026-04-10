@@ -24,7 +24,7 @@ The system is designed for practical deployment in local government or extension
 
 ## 2. Objectives of the Study
 
-The purpose of this study is to develop AgriScan+, an AI-powered, mobile-responsive web decision-support system for early rice leaf disease detection and yield prediction for the Department of Agriculture - San Teodoro.
+The purpose of this study is to develop AgriScan+, a CNN-powered, mobile-responsive web decision-support system for early rice leaf disease detection and yield prediction for the Department of Agriculture - San Teodoro.
 
 ### Specific objectives
 

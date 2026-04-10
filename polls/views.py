@@ -1513,8 +1513,13 @@ def detections_bulk_delete(request):
     if role not in ('admin', 'technician'):
         qs = qs.filter(user=user_profile)
 
+    # Tagalog: Gamitin ang SoftDeleteQuerySet.delete() para consistent ang
+    # behavior — nagse-set ng PAREHONG is_active=False AT deleted_at=now()
+    # sa lahat ng selected records sa iisang query.
+    # Ang manual na qs.update(is_active=False) ay hindi nagse-set ng
+    # deleted_at kaya may gap sa audit trail kung kailan na-archive.
     count = qs.count()
-    qs.update(is_active=False)
+    qs.delete()
     messages.success(request, f"📦 {count} detection{'s' if count != 1 else ''} archived successfully.")
     return redirect('polls:detections_list')
 
@@ -1728,8 +1733,11 @@ def yield_records_bulk_delete(request):
             Q(planting__field__owner=user_profile) |
             Q(detection__planting__field__owner=user_profile)
         )
+    # Tagalog: Parehong dahilan sa detections_bulk_delete —
+    # gamitin ang SoftDeleteQuerySet.delete() para consistent
+    # ang behavior at mase-set ang deleted_at sa lahat ng records.
     count = qs.count()
-    qs.update(is_active=False)
+    qs.delete()
     messages.success(request, f"📦 {count} yield record{'s' if count != 1 else ''} archived successfully.")
     return redirect('polls:yield_records_list')
 
@@ -4716,8 +4724,12 @@ def trash_management(request):
                 try:
                     obj = model_cls.all_objects.get(pk=obj_pk, is_active=False)
                     if action == 'restore':
-                        obj.is_active = True
-                        obj.save(update_fields=['is_active'])
+                        # Use model-level restore to keep soft-delete fields consistent.
+                        if hasattr(obj, 'restore'):
+                            obj.restore()
+                        else:
+                            obj.is_active = True
+                            obj.save(update_fields=['is_active'])
                         messages.success(request, f'✅ {model_name.capitalize()} #{obj_pk} restored successfully.')
                     elif action == 'purge':
                         try:
@@ -4749,10 +4761,28 @@ def trash_management(request):
     if order   not in {'asc', 'desc'}: order  = 'desc'
 
     def _sort_qs(qs, name_field='name'):
+        field_names = {f.name for f in qs.model._meta.get_fields()}
+
         if sort == 'newest':
-            return qs.order_by('-updated_at') if hasattr(qs.model, 'updated_at') else qs.order_by('-pk')
+            if 'deleted_at' in field_names:
+                return qs.order_by('-deleted_at')
+            if 'updated_at' in field_names:
+                return qs.order_by('-updated_at')
+            if 'changed_at' in field_names:
+                return qs.order_by('-changed_at')
+            if 'created_at' in field_names:
+                return qs.order_by('-created_at')
+            return qs.order_by('-pk')
         if sort == 'oldest':
-            return qs.order_by('updated_at') if hasattr(qs.model, 'updated_at') else qs.order_by('pk')
+            if 'deleted_at' in field_names:
+                return qs.order_by('deleted_at')
+            if 'updated_at' in field_names:
+                return qs.order_by('updated_at')
+            if 'changed_at' in field_names:
+                return qs.order_by('changed_at')
+            if 'created_at' in field_names:
+                return qs.order_by('created_at')
+            return qs.order_by('pk')
         if sort == 'name':
             return qs.order_by(name_field if order == 'asc' else f'-{name_field}')
         if sort == 'id':
@@ -4867,6 +4897,7 @@ def trash_management(request):
     plantings_qs      = _sort_qs(plantings_qs,      'field__name')
     detections_qs     = _sort_qs(detections_qs,     'disease__name')
     yields_qs         = _sort_qs(yields_qs,         'planting__field__name')
+    harvests_qs       = _sort_qs(harvests_qs,       'planting__field__name')
     season_logs_qs    = _sort_qs(season_logs_qs,    'field__name')
     announcements_qs  = _sort_qs(announcements_qs,  'title')
     audit_qs          = _sort_qs(audit_qs,          'changed_at')
