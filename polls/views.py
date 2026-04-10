@@ -1767,8 +1767,7 @@ def yield_record_delete(request, pk: int):
         record = get_object_or_404(YieldPrediction, pk=pk)
     
     if request.method == "POST":
-        record.is_active = False
-        record.save(update_fields=['is_active'])
+        record.delete()
         messages.success(request, f"📦 Yield record #{pk} archived. Restore it anytime from Trash.")
         return redirect("polls:yield_records_list")
     return redirect("polls:yield_records_list")
@@ -3619,9 +3618,9 @@ def knowledge_archive(request, pk: int):
     """Archive (soft-delete) a knowledge base entry via global Trash & Archive."""
     entry = get_object_or_404(KnowledgeBaseEntry, pk=pk, is_active=True)
     if request.method == 'POST':
-        entry.is_active = False
         entry.is_published = False
-        entry.save(update_fields=['is_active', 'is_published'])
+        entry.save(update_fields=['is_published'])
+        entry.delete()
         messages.success(request, 'Knowledge entry archived. It can be restored from Trash & Archive.')
     return redirect(f"{reverse('polls:trash_management')}?section=knowledge")
 
@@ -3971,8 +3970,7 @@ def treatments_delete(request, pk):
     
     if request.method == 'POST':
         disease_name = treatment.disease.name
-        treatment.is_active = False
-        treatment.save(update_fields=['is_active'])
+        treatment.delete()
         messages.success(request, f'📦 Treatment for "{disease_name}" archived. Restore it anytime from Trash.')
         return redirect('polls:treatments_list')
     return redirect('polls:treatments_list')
@@ -4478,7 +4476,9 @@ def varieties_list(request):
         action = request.POST.get('bulk_action')
         pks    = request.POST.getlist('selected_ids')
         if action == 'archive' and pks:
-            updated = RiceVariety.objects.filter(pk__in=pks, is_active=True).update(is_active=False)
+            qs = RiceVariety.objects.filter(pk__in=pks, is_active=True)
+            updated = qs.count()
+            qs.delete()
             messages.success(request, f'📦 {updated} variet{"y" if updated == 1 else "ies"} archived.')
         return redirect(request.get_full_path())
 
@@ -4668,8 +4668,7 @@ def variety_restore(request, pk):
     variety = get_object_or_404(RiceVariety, pk=pk)
 
     if request.method == 'POST':
-        variety.is_active = True
-        variety.save(update_fields=['is_active'])
+        variety.restore()
         messages.success(
             request,
             f'✅ Variety "{variety.code}" restored and is now active again.'
@@ -4724,12 +4723,7 @@ def trash_management(request):
                 try:
                     obj = model_cls.all_objects.get(pk=obj_pk, is_active=False)
                     if action == 'restore':
-                        # Use model-level restore to keep soft-delete fields consistent.
-                        if hasattr(obj, 'restore'):
-                            obj.restore()
-                        else:
-                            obj.is_active = True
-                            obj.save(update_fields=['is_active'])
+                        obj.restore()
                         messages.success(request, f'✅ {model_name.capitalize()} #{obj_pk} restored successfully.')
                     elif action == 'purge':
                         try:
