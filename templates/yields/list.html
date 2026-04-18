@@ -202,7 +202,16 @@
                   </svg>
                 </a>
               </th>
-              <th class="px-4 py-3 whitespace-nowrap">Model</th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == 'model_version' %}-model_version{% else %}model_version{% endif %}{% if p %}&search={{ p }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Model
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'model_version' or sb == '-model_version' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'model_version' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
               <th class="px-4 py-3 whitespace-nowrap">
                 <a href="?sort={% if sb == 'planting__planting_date' %}-planting__planting_date{% else %}planting__planting_date{% endif %}{% if p %}&search={{ p }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
                    class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
@@ -233,8 +242,26 @@
                   </svg>
                 </a>
               </th>
-              <th class="px-4 py-3 whitespace-nowrap">Area (ha)</th>
-              <th class="px-4 py-3 whitespace-nowrap">Readiness</th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == 'area_hectares' %}-area_hectares{% else %}area_hectares{% endif %}{% if p %}&search={{ p }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Area (ha)
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'area_hectares' or sb == '-area_hectares' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'area_hectares' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
+              <th class="px-4 py-3 whitespace-nowrap">
+                <a href="?sort={% if sb == 'yield_readiness' %}-yield_readiness{% else %}yield_readiness{% endif %}{% if p %}&search={{ p }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
+                   class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
+                  Readiness
+                  <svg class="w-3 h-3 flex-shrink-0 {% if sb == 'yield_readiness' or sb == '-yield_readiness' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                    {% if sb == 'yield_readiness' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                    {% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}
+                  </svg>
+                </a>
+              </th>
               <th class="px-4 py-3 whitespace-nowrap">
                 <a href="?sort={% if sb == 'estimated_harvest_date' %}-estimated_harvest_date{% else %}estimated_harvest_date{% endif %}{% if p %}&search={{ p }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
                    class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
