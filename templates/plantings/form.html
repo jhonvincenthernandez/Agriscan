@@ -579,8 +579,12 @@
 
     const hasDays = meta.growthDays > 0;
     const hasPlantingDate = !!plantingInput.value;
+    const harvestValue = (harvestInput.value || '').trim();
+    const hasHarvestValue = !!harvestValue;
     const canEstimate = hasDays && hasPlantingDate;
-    const estimatedHarvest = canEstimate ? addDays(plantingInput.value, meta.growthDays) : '';
+    const guidanceDate = hasHarvestValue
+      ? harvestValue
+      : (canEstimate ? addDays(plantingInput.value, meta.growthDays) : '');
 
     const step = function (done) {
       if (done) {
@@ -598,7 +602,7 @@
           ${hasDays ? `<span class="font-semibold">${meta.growthDays}</span> days (<span class="font-medium">${getMaturityLabel(meta.growthDays)}</span>)` : 'No growth days configured'}
         </p>
         <p class="text-xs text-blue-800/80">
-          ${canEstimate ? `🌾 <strong>Auto-guidance:</strong> Expected harvest is around <strong>${formatDate(estimatedHarvest)}</strong>.` : '💡 Set planting date to calculate harvest schedule.'}
+          ${guidanceDate ? `🌾 <strong>Auto-guidance:</strong> Expected harvest is around <strong>${formatDate(guidanceDate)}</strong>.` : '💡 Set planting date to calculate harvest schedule.'}
         </p>
       </div>
     `;
@@ -633,7 +637,6 @@
   // Re-compute harvest from planting (or planting from harvest if only harvest is set)
   varietySelect.addEventListener('change', function () {
     const days = getGrowthDays();
-    renderVarietyIndicator();
     if (!days) { clearBadges(); return; }
 
     if (plantingInput.value) {
@@ -649,15 +652,17 @@
       lastAutoComputed = 'planting';
       showBadge('planting', days, plantingInput.value);
     }
+
+    renderVarietyIndicator();
   });
 
   // ── When PLANTING DATE changes ─────────────────────────────────────────────
   // Forward compute: harvest = planting + growthDays
   plantingInput.addEventListener('change', function () {
-    renderVarietyIndicator();
     if (lastAutoComputed === 'planting') {
       // This change was triggered by our own reverse-compute — skip to avoid loop
       lastAutoComputed = null;
+      renderVarietyIndicator();
       return;
     }
     const days = getGrowthDays();
@@ -667,6 +672,7 @@
     harvestInput.value = computed;
     lastAutoComputed = 'harvest';
     showBadge('harvest', days, computed);
+    renderVarietyIndicator();
   });
 
   // ── When HARVEST DATE changes ──────────────────────────────────────────────
@@ -675,6 +681,7 @@
     if (lastAutoComputed === 'harvest') {
       // This change was triggered by our own forward-compute — skip to avoid loop
       lastAutoComputed = null;
+      renderVarietyIndicator();
       return;
     }
     const days = getGrowthDays();
@@ -684,6 +691,7 @@
     plantingInput.value = computed;
     lastAutoComputed = 'planting';
     showBadge('planting', days, computed);
+    renderVarietyIndicator();
   });
 
   // ── On page load: if both dates exist (edit mode), show the info badge ─────
