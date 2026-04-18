@@ -4220,8 +4220,11 @@ def announcement_create(request):
             # signal notify_new_announcement fires automatically if is_active=True
 
             if announcement.is_active:
-                _queue_announcement_email_send(announcement.pk)
-                messages.success(request, f'Announcement "{announcement.title}" published. Notifications are being sent in the background.')
+                if announcement.published_at is None:
+                    _queue_announcement_email_send(announcement.pk)
+                    messages.success(request, f'Announcement "{announcement.title}" published. Email and notifications are being sent in the background.')
+                else:
+                    messages.success(request, f'Announcement "{announcement.title}" scheduled. Recipients will get notifications at publish time.')
             else:
                 messages.success(request, f'Announcement "{announcement.title}" saved as draft. Activate it later to notify users.')
             return redirect('polls:announcements_list')
@@ -4257,8 +4260,8 @@ def announcement_edit(request, pk):
     announcement = get_object_or_404(Announcement, pk=pk)
     was_active = announcement.is_active  # snapshot before POST
 
-    # published_at is locked once the announcement has gone live (was_active=True and published_at set)
-    publish_locked = was_active and announcement.published_at is not None
+    # Lock publish controls once announcement has gone live.
+    publish_locked = was_active
 
     if request.method == 'POST':
         form = AnnouncementForm(request.POST, instance=announcement)
@@ -4272,8 +4275,11 @@ def announcement_edit(request, pk):
             # Draft -> Active: signal handles bell notifications.
             # Queue email sending in background to keep request responsive.
             if not was_active and updated.is_active:
-                _queue_announcement_email_send(updated.pk)
-                messages.success(request, f'Announcement "{updated.title}" published. Notifications are being sent in the background.')
+                if updated.published_at is None:
+                    _queue_announcement_email_send(updated.pk)
+                    messages.success(request, f'Announcement "{updated.title}" published. Email and notifications are being sent in the background.')
+                else:
+                    messages.success(request, f'Announcement "{updated.title}" scheduled. Recipients will get notifications at publish time.')
             else:
                 messages.success(request, f'Announcement "{updated.title}" updated successfully!')
             return redirect('polls:announcements_list')
@@ -4307,9 +4313,9 @@ def announcement_delete(request, pk):
         title = announcement.title
         announcement.archive()
         messages.success(request, f'📦 Announcement "{title}" archived. Manage from Trash & Archive.')
-        return _redirect_back_or_default(request, 'polls:announcements_list')
+        return redirect('polls:announcements_list')
     
-    return _redirect_back_or_default(request, 'polls:announcements_list')
+    return redirect('polls:announcements_list')
 
 
 # ============================================================================

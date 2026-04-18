@@ -76,7 +76,7 @@ AgriScan+ uses three role classes defined in profile records:
 
 ### Runtime flow
 
-Client request -> Django routing and auth -> business validation -> DB read or write -> optional model inference -> persisted result -> rendered response.
+Client request -> Django routing and auth -> business validation -> DB read or write -> model inference as required by workflow -> persisted result -> rendered response.
 
 ---
 
@@ -84,8 +84,8 @@ Client request -> Django routing and auth -> business validation -> DB read or w
 
 ### Core
 
-- Python 3.8+
-- Django 5.x
+- Python 3.10+
+- Django
 - MySQL via mysqlclient
 - TensorFlow and TensorFlow Lite artifacts
 
@@ -128,7 +128,7 @@ Responsibilities:
 - Detection confidence threshold
 - Business toggles managed in admin UI
    - enable or disable outgoing email notifications
-   - enable or disable user-facing CNN yield mode
+   - control availability of CNN yield workflow
 - Change logging for auditability
 
 Key model entities:
@@ -202,6 +202,13 @@ Responsibilities:
 - In-app alerting for key events
 - Broadcast or targeted advisories
 - Read-state tracking per user
+- Current delivery policy:
+   - Immediate announcement publish: in-app advisory notification + email send
+   - Scheduled announcement publish: in-app advisory notification only (no email)
+   - Scheduled advisory notifications are dispatched when publish time is due
+- Operational note:
+   - Due scheduled dispatch is request-driven in the current simple deployment
+   - With low/no traffic, due advisory creation may occur on the next incoming request
 
 Key model entities:
 
@@ -306,10 +313,9 @@ Key model entities:
 
 ### Suggested production improvements
 
-- Add asynchronous workers for heavy inference.
-- Move media files to object storage with backups.
-- Add scheduled jobs for reporting and maintenance tasks.
-- Implement centralized logging and monitoring.
+- Use process supervision and reverse proxy in production.
+- Keep regular database backup and media backup routines.
+- Monitor application logs and model-related runtime errors.
 
 ---
 
@@ -328,25 +334,16 @@ Minimum recommended test coverage:
 ## 12. Known Constraints
 
 - AI output quality depends on model quality and input image quality.
-- Offline-first sync strategy exists at record level but can be expanded.
-- Some advanced integrations (email automation, richer API layer) are staged for future hardening.
+- Prediction consistency depends on complete and correct field and planting inputs.
+- CNN yield workflow depends on availability of model checkpoint and runtime dependencies.
 
 ---
 
-## 13. Roadmap
-
-- Expose stable API endpoints for mobile clients.
-- Add model performance dashboard and drift monitoring.
-- Integrate weather and geospatial signals for better forecasting.
-- Formalize retraining pipeline with validated harvest labels.
-
----
-
-## 14. Conclusion
+## 13. Conclusion
 
 AgriScan+ provides a complete digital workflow for rice disease and yield decision support. Its current implementation already combines practical field operations with structured, research-grade data capture. The architecture is modular and suitable for phased scaling in local agricultural programs.
 
 ---
 
 Document owner: AgriScan+ Development Team  
-Last updated: 2026-04-01
+Last updated: 2026-04-17

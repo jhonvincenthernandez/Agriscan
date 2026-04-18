@@ -1,7 +1,7 @@
 # Hernandez development
 # AgriScan+
 
-AgriScan+ is a Django-based rice farm management system with AI-assisted disease detection and yield prediction.
+AgriScan+ is a Django-based, web-first rice farm management system with AI-assisted disease detection and dual-model yield prediction.
 
 ## What This Project Does
 
@@ -14,10 +14,11 @@ AgriScan+ is a Django-based rice farm management system with AI-assisted disease
 ## Tech Stack
 
 - Python (3.10+ recommended)
-- Django 5.x
+- Django
 - MySQL 8.x
 - TensorFlow / TensorFlow Lite
 - scikit-learn, pandas, numpy
+- PyTorch + torchvision (CNN yield path)
 - Tailwind CSS (template styling)
 
 ## Quick Start (Local Development)
@@ -80,7 +81,7 @@ Current defaults are set in mysite/settings.py. Before production use:
 - Set ALLOWED_HOSTS
 - Configure secure database credentials
 - Configure email credentials via environment variables
-- Configure yield CNN runtime via environment variables (checkpoint and device)
+- Configure dual-model yield runtime settings via environment variables (checkpoint, device, fallback toggle)
 - Use System Settings for business toggles (email enable, CNN enable)
 
 Recommended environment variables:
@@ -98,7 +99,7 @@ DB_PORT=3306
 EMAIL_ENABLED=True
 EMAIL_HOST_USER=your_email@example.com
 EMAIL_HOST_PASSWORD=your_email_app_password
-YIELD_CNN_ENABLED=False
+YIELD_CNN_ENABLED=True
 YIELD_CNN_CHECKPOINT_PATH=models/rice_yield_CNN.pth
 YIELD_CNN_DEVICE=cpu
 ```
@@ -140,7 +141,7 @@ Fallback behavior:
 Formula used in UI and validation flow:
 
 $$
-	ext{Historical Yield (tons/ha)} = \frac{\text{Historical Production (tons)}}{\text{Field Area (ha)}}
+  ext{Historical Yield (tons/ha)} = \frac{\text{Historical Production (tons)}}{\text{Field Area (ha)}}
 $$
 
 ### Field and Planting Management
@@ -154,6 +155,24 @@ $$
 - Admin: full access
 - Technician: operational access across farmers
 - Farmer: own data only
+
+### Announcement Delivery Policy (Current)
+
+Current implementation is intentionally simple (no Celery/Redis worker):
+
+- Immediate Publish:
+  - sends announcement email (if email is enabled and SMTP is configured)
+  - creates in-app advisory notification
+  - announcement becomes visible to target users
+- Scheduled Publish:
+  - does not send announcement email
+  - creates in-app advisory notification when schedule becomes due
+  - announcement becomes visible when publish time is due
+
+Scheduling behavior note:
+
+- Due scheduled dispatch runs through normal app traffic.
+- If there is no incoming request around the due time, notification creation can be delayed until the next request.
 
 ## Project Structure
 
@@ -222,7 +241,7 @@ Typical response fields:
 - Ensure `models/rice_yield_CNN.pth` exists.
 - Ensure `torch`/`torchvision` are installed in the active environment.
 - Check System Settings: `yield_cnn_enabled` is ON.
-- If System Settings row is absent, verify `YIELD_CNN_ENABLED=True` in env for fallback.
+- If System Settings row is absent, verify `YIELD_CNN_ENABLED=True` in env for fallback behavior.
 
 ### Signals not firing for farm size
 
@@ -245,6 +264,8 @@ Typical response fields:
 - Check System Settings: `email_enabled` is ON.
 - If SiteSetting row is absent, verify env fallback `EMAIL_ENABLED=True`.
 - Verify SMTP values (`EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`, `EMAIL_HOST_PASSWORD`).
+- For announcements, email is sent only for Immediate Publish.
+- Scheduled Publish is notification-only by current system policy.
 
 ## Security Notes
 
@@ -259,7 +280,6 @@ Proprietary - Department of Agriculture
 ## Maintainer Notes
 
 - Keep this README focused on operational setup and core workflows
-- Put deep technical docs in documentation.md and doc.md
-
+- Put deep technical docs in documentation.md 
 Version: 1.6.0
 Last updated: 2026-04-01

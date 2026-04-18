@@ -1548,6 +1548,20 @@ class TreatmentRecommendationForm(forms.ModelForm):
 
 class AnnouncementForm(forms.ModelForm):
     """Form for creating and editing announcements"""
+
+    publish_timing = forms.ChoiceField(
+        choices=[
+            ('immediate', 'Immediate Publish'),
+            ('scheduled', 'Scheduled Publish'),
+        ],
+        required=False,
+        initial='immediate',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
+        }),
+        label='Publishing Mode',
+        help_text='Choose Immediate to publish now, or Scheduled to publish at a specific date/time.',
+    )
     
     class Meta:
         from .models import Announcement
@@ -1583,9 +1597,11 @@ class AnnouncementForm(forms.ModelForm):
             }),
             'target_barangay': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
+                'data-searchable': 'true',
             }),
             'target_user': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
+                'data-searchable': 'true',
             }),
             'priority': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
@@ -1637,10 +1653,14 @@ class AnnouncementForm(forms.ModelForm):
         # Get current time in local timezone (Asia/Manila)
         current_time = timezone.localtime(timezone.now())
         
-        # Set initial value for published_at to now if not editing
-        # BEST PRACTICE: Include seconds for precise scheduling
-        if not self.instance.pk and not self.initial.get('published_at'):
-            self.initial['published_at'] = current_time.strftime('%Y-%m-%dT%H:%M:%S')
+        # For new forms, default to immediate mode (empty published_at).
+        if not self.instance.pk:
+            self.initial.setdefault('publish_timing', 'immediate')
+            self.initial.setdefault('published_at', '')
+        elif self.instance.published_at:
+            self.initial['publish_timing'] = 'scheduled'
+        else:
+            self.initial['publish_timing'] = 'immediate'
         
         # BEST PRACTICE: Set min attribute to current datetime (with seconds) to prevent past dates
         self.fields['published_at'].widget.attrs['min'] = current_time.strftime('%Y-%m-%dT%H:%M:%S')
@@ -1668,6 +1688,7 @@ class AnnouncementForm(forms.ModelForm):
             required=False,
             widget=forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
+                'data-searchable': 'true',
             }),
             label='Select Barangay',
             help_text='Only shown if "Specific Barangay" is selected above'
@@ -1676,8 +1697,11 @@ class AnnouncementForm(forms.ModelForm):
         # Keep user selection with Profile queryset
         self.fields['target_user'].queryset = Profile.objects.select_related('user').order_by('user__username')
         
-        # Customize target_user choices to show username and role
-        self.fields['target_user'].label_from_instance = lambda obj: f"{obj.user.username} ({obj.get_role_display()})"
+        # Show username, role, and email in target user dropdown labels.
+        self.fields['target_user'].label_from_instance = lambda obj: (
+            f"{obj.user.username} ({obj.get_role_display()}) - {obj.user.email}"
+            if obj.user.email else f"{obj.user.username} ({obj.get_role_display()})"
+        )
     
     def clean(self):
         """Validate announcement form data with timezone-aware datetime checks."""
@@ -1687,6 +1711,13 @@ class AnnouncementForm(forms.ModelForm):
         target_user = cleaned_data.get('target_user')
         published_at = cleaned_data.get('published_at')
         expires_at = cleaned_data.get('expires_at')
+        publish_timing = cleaned_data.get('publish_timing')
+
+        if publish_timing == 'immediate':
+            cleaned_data['published_at'] = None
+            published_at = None
+        elif publish_timing == 'scheduled' and not published_at:
+            self.add_error('published_at', 'Please set a publish date/time for scheduled announcements.')
         
         # Validate target fields based on audience selection
         if target_audience == 'barangay' and not target_barangay:

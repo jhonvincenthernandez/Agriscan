@@ -15,6 +15,7 @@ import logging
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 # Cache previous model state between pre_save and post_save handlers so we can
 # detect transitions (e.g. unpublished → published) without requiring extra
@@ -305,6 +306,10 @@ def notify_new_announcement(sender, instance, created, **kwargs):
         became_active = (not prev.get('is_active')) and instance.is_active
         if not became_active:
             return
+
+    # Scheduled future announcements are dispatched by due-time jobs.
+    if instance.published_at and instance.published_at > timezone.now():
+        return
 
     try:
         from .models import Notification, Profile

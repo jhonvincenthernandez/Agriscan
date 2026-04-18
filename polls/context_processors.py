@@ -92,7 +92,10 @@ def system_notifications_processor(request):
         return {'unread_notifications_count': 0}
 
     try:
+        from . import services
         from .models import Notification
+        # Keep scheduled announcement bell notifications in sync without extra worker infra.
+        services.dispatch_due_announcement_notifications()
         count = Notification.objects.filter(recipient=profile, is_read=False).count()
         return {'unread_notifications_count': count}
     except Exception:

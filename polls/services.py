@@ -135,6 +135,11 @@ _YIELD_CNN_DEVICE = None
 _YIELD_CNN_LOCK = threading.Lock()
 _TORCH = None
 
+# Throttle due announcement dispatch so it runs at most once per interval per process.
+_DUE_ANNOUNCEMENT_DISPATCH_LOCK = threading.Lock()
+_LAST_DUE_ANNOUNCEMENT_DISPATCH_AT: Optional[datetime] = None
+_DUE_ANNOUNCEMENT_DISPATCH_INTERVAL_SECONDS = 30
+
 IMG_SIZE = (224, 224)
 DEFAULT_TIPS = (
     "Check fields 7 days after spraying to adjust follow-up treatments.",
@@ -1723,6 +1728,90 @@ def get_unread_announcements_count(user_profile):
     return get_user_announcements(user_profile, unread_only=True).count()
 
 
+def dispatch_due_announcement_notifications(force: bool = False) -> int:
+    """Create missing bell notifications for scheduled announcements that are already due.
+
+    This is idempotent and safe to call often:
+    - Processes only active, non-deleted announcements with published_at <= now
+    - Skips recipients that already have a related advisory notification
+    - Uses a small in-process throttle to avoid frequent re-scans on every request
+    """
+    import logging
+    from .models import Announcement, Notification, Profile
+
+    logger = logging.getLogger(__name__)
+    now = timezone.now()
+
+    global _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT
+    with _DUE_ANNOUNCEMENT_DISPATCH_LOCK:
+        if not force and _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT is not None:
+            elapsed = (now - _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT).total_seconds()
+            if elapsed < _DUE_ANNOUNCEMENT_DISPATCH_INTERVAL_SECONDS:
+                return 0
+        _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT = now
+
+    created_count = 0
+
+    try:
+        due_announcements = Announcement.objects.filter(
+            is_deleted=False,
+            is_active=True,
+            published_at__isnull=False,
+            published_at__lte=now,
+        )
+
+        for announcement in due_announcements.iterator():
+            audience = announcement.target_audience
+            if audience == 'all':
+                target_profiles = Profile.objects.filter(user__is_active=True).only('id')
+            elif audience == 'farmers':
+                target_profiles = Profile.objects.filter(role='farmer', user__is_active=True).only('id')
+            elif audience == 'technicians':
+                target_profiles = Profile.objects.filter(role='technician', user__is_active=True).only('id')
+            elif audience == 'barangay' and announcement.target_barangay:
+                target_profiles = Profile.objects.filter(
+                    role='farmer',
+                    user__is_active=True,
+                    fields__barangay__iexact=announcement.target_barangay,
+                ).distinct().only('id')
+            elif audience == 'user' and announcement.target_user_id:
+                target_profiles = Profile.objects.filter(pk=announcement.target_user_id, user__is_active=True).only('id')
+            else:
+                continue
+
+            existing_recipient_ids = set(
+                Notification.objects.filter(
+                    related_announcement=announcement,
+                    type='advisory',
+                ).values_list('recipient_id', flat=True)
+            )
+
+            new_notifs = []
+            preview = f'{announcement.content[:200]}{"..." if len(announcement.content) > 200 else ""}'
+            for profile in target_profiles:
+                if profile.pk in existing_recipient_ids:
+                    continue
+                new_notifs.append(
+                    Notification(
+                        recipient_id=profile.pk,
+                        type='advisory',
+                        title=f'New Announcement: {announcement.title}',
+                        message=preview,
+                        related_announcement=announcement,
+                    )
+                )
+
+            if new_notifs:
+                Notification.objects.bulk_create(new_notifs)
+                created_count += len(new_notifs)
+
+    except Exception:
+        logger.exception('Failed to dispatch due scheduled announcement notifications')
+        return 0
+
+    return created_count
+
+
 def mark_announcement_as_read(announcement, user_profile):
     """Mark an announcement as read by a user (NO INTERNET REQUIRED).
     
@@ -1926,6 +2015,15 @@ def send_announcement_emails_to_targets(announcement):
         if not _emails_are_enabled():
             return
 
+        # Immediate-only policy: scheduled announcements should send notifications only.
+        if announcement.published_at is not None:
+            return
+
+        # Legacy send_email flag is ignored for announcement flow.
+        # Current product rule: immediate publish should send email.
+        if announcement.email_sent:
+            return
+
         from .models import Profile
 
         audience = announcement.target_audience
@@ -1977,6 +2075,13 @@ def send_announcement_emails_to_targets(announcement):
             sent += 1
 
         _logger.info("Announcement #%s emailed to %d recipients", announcement.pk, sent)
+
+        # Mark as sent so repeated publish/edit actions do not resend.
+        from django.utils import timezone as django_timezone
+        announcement.email_sent = True
+        announcement.email_sent_at = django_timezone.now()
+        announcement.save(update_fields=['email_sent', 'email_sent_at'])
+
         return sent
     except Exception:
         _logger.exception("Failed to send announcement emails for Announcement pk=%s", announcement.pk)
