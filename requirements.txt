@@ -17,3 +17,6 @@ reportlab==4.4.10
 # Optional: only needed when YIELD_CNN_ENABLED=true
 torch==2.11.0
 torchvision==0.26.0
+
+psycopg2-binary==2.9.9
+whitenoise==6.7.0
