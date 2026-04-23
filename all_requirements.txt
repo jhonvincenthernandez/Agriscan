@@ -15,4 +15,3 @@ jupyter
 torch
 torchvision
 
-tensorflow==2.21.0
