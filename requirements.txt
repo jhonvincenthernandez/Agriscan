@@ -4,7 +4,7 @@ gunicorn==25.3.0
 mysqlclient==2.2.8
 
 # ML inference stack used by polls/services.py
-tensorflow==2.21.0
+tensorflow==2.15.0
 numpy==2.4.4
 pandas==3.0.2
 scikit-learn==1.7.2
