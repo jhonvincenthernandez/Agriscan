@@ -1,19 +1,19 @@
-# Core runtime (Render + Python 3.11 compatible)
-Django==5.2.8
-gunicorn==23.0.0
-mysqlclient==2.2.4
+# Production runtime dependencies (pinned from current working venv)
+Django==6.0.3
+gunicorn==25.3.0
+mysqlclient==2.2.8
 
 # ML inference stack used by polls/services.py
-tensorflow==2.15.0
-numpy==1.26.4
-pandas==2.2.3
-scikit-learn==1.5.2
-joblib==1.4.2
-pillow==10.4.0
+tensorflow==2.21.0
+numpy==2.4.4
+pandas==3.0.2
+scikit-learn==1.7.2
+joblib==1.5.3
+pillow==12.2.0
 
 # PDF/report generation
-reportlab==4.2.5
+reportlab==4.4.10
 
-# Optional: install only when YIELD_CNN_ENABLED=true (heavy on free tiers)
-torch==2.2.2
-torchvision==0.17.2
+# Optional: only needed when YIELD_CNN_ENABLED=true
+torch==2.11.0
+torchvision==0.26.0
