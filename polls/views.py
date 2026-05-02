@@ -145,6 +145,7 @@ def dashboard(request):
         disease_stats = (
             disease_qs
             .exclude(disease__isnull=True)
+            .exclude(disease__name__icontains='healthy')
             .exclude(disease__name__iexact='Unknown/Not Rice')
             .exclude(disease__name__iexact='Unknown')
             .values('disease__name')
