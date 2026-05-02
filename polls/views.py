@@ -2568,18 +2568,20 @@ def planting_create(request):
         if is_staff and request.POST.get('change_owner') == '1':
             form = PlantingRecordForm(user=request.user, target_profile=target_profile)
 
-            # Compute crop counts per field for current year (3-crop max)
+            # Compute crop counts per field for the rolling 12-month window (3-crop max).
             # Includes ALL statuses (harvested/failed/cancelled/archived) like PlantingRecord.save().
             from .models import PlantingRecord
             from django.db.models import Count
             import json
 
-            year = timezone.now().year
+            window_end = timezone.now().date()
+            window_start = window_end - timezone.timedelta(days=PlantingRecord.CYCLE_WINDOW_DAYS)
             field_qs = form.fields['field'].queryset
             field_ids = list(field_qs.values_list('pk', flat=True))
             counts = PlantingRecord.all_objects.filter(
                 field_id__in=field_ids,
-                planting_date__year=year,
+                planting_date__gt=window_start,
+                planting_date__lte=window_end,
             ).values('field_id').annotate(count=Count('pk'))
 
             mapping = {str(fid): 0 for fid in field_ids}
@@ -2619,18 +2621,20 @@ def planting_create(request):
     else:
         form = PlantingRecordForm(user=request.user, target_profile=target_profile)
 
-    # Compute crop counts per field for current year (3-crop max).
+    # Compute crop counts per field for the rolling 12-month window (3-crop max).
     # Includes ALL statuses (harvested/failed/cancelled/archived) like PlantingRecord.save().
     from .models import PlantingRecord
     from django.db.models import Count
     import json
 
-    year = timezone.now().year
+    window_end = timezone.now().date()
+    window_start = window_end - timezone.timedelta(days=PlantingRecord.CYCLE_WINDOW_DAYS)
     field_qs = form.fields['field'].queryset
     field_ids = list(field_qs.values_list('pk', flat=True))
     counts = PlantingRecord.all_objects.filter(
         field_id__in=field_ids,
-        planting_date__year=year,
+        planting_date__gt=window_start,
+        planting_date__lte=window_end,
     ).values('field_id').annotate(count=Count('pk'))
 
     mapping = {str(fid): 0 for fid in field_ids}

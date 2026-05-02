@@ -746,7 +746,7 @@
     }
   })();
 
-  const currentYear = new Date().getFullYear();
+  const windowLabel = 'last 12 months';
 
   function renderIndicatorFor(fieldId) {
     if (!fieldId) {
@@ -763,8 +763,8 @@
         <div class="flex items-start gap-2">
           <span class="text-lg">⚠️</span>
           <div>
-            <p class="font-semibold">Maximum 3 crops per year reached for this field.</p>
-            <p class="text-sm">No more slots available in ${currentYear}.</p>
+            <p class="font-semibold">Maximum 3 crops per 12 months reached for this field.</p>
+            <p class="text-sm">No more slots available in the ${windowLabel}.</p>
           </div>
         </div>
       `;
@@ -784,7 +784,7 @@
           <div class="flex items-center gap-2">${slots.join('')}</div>
           <p class="text-sm">
             <span class="font-semibold">${used}</span> of <span class="font-semibold">3</span> crop slots used ·
-            <span class="font-semibold">${remaining}</span> slot${remaining === 1 ? '' : 's'} remaining for ${currentYear}
+            <span class="font-semibold">${remaining}</span> slot${remaining === 1 ? '' : 's'} remaining (${windowLabel})
           </p>
           <p class="text-xs text-emerald-800/80">Count includes archived records for data integrity.</p>
         </div>

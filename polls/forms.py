@@ -1045,7 +1045,7 @@ class PlantingRecordForm(forms.ModelForm):
                 self.fields['field'].queryset = all_fields
                 self.fields['field'].help_text = (
                     'Select the field for this planting. '
-                    'Maximum of 3 planting cycles per field per selected year is enforced on save.'
+                    'Maximum of 3 planting cycles per field within any rolling 12-month period is enforced on save.'
                 )
         
         # Make notes and expected_harvest_date optional

@@ -1063,7 +1063,8 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
 
     Tagalog:
     - Dito nakatala ang cycle ng tanim, kung kailan pinatanim, anong variety, at status.
-    - Ang `cropping_cycle` ay awtomatikong kinakalkula (bilang ng planting para sa taon).
+    - Ang `cropping_cycle` ay awtomatikong kinakalkula (sequence number ng planting para sa calendar year).
+    - Ang quota/limit ay rolling 12 months (hindi calendar-year based) para tama kahit tumawid ng taon.
     - Hindi nilalagyan ng actual yield (nasa HarvestRecord o YieldPrediction).
     """
 
@@ -1116,10 +1117,15 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         null=True, blank=True
     )
 
-    MAX_CYCLES_PER_YEAR = 3
+    # Quota rule:
+    # - Enforce max 3 planting cycles per field within the last 12 months (ending today).
+    # - This avoids edge cases where a cycle spans across calendar years, and keeps
+    #   the backend rule consistent with the create-form indicator panel.
+    MAX_CYCLES_PER_12_MONTHS = 3
+    CYCLE_WINDOW_DAYS = 365
 
-    def _get_existing_cycles_count(self) -> int:
-        """Count existing planting cycles in the same field/year, excluding self on update."""
+    def _get_existing_cycles_count_for_year(self) -> int:
+        """Count existing planting cycles in the same field/year (for cropping_cycle numbering)."""
         if not self.field or not self.planting_date:
             return 0
 
@@ -1131,15 +1137,34 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
             qs = qs.exclude(pk=self.pk)
         return qs.count()
 
-    def _validate_yearly_cycle_limit(self):
-        """Enforce maximum planting cycles per field per year."""
-        existing_count = self._get_existing_cycles_count()
-        if existing_count >= self.MAX_CYCLES_PER_YEAR:
+    def _get_existing_cycles_count_in_window(self) -> int:
+        """Count existing planting cycles within the rolling window ending today."""
+        if not self.field:
+            return 0
+
+        window_end = timezone.now().date()
+        window_start = window_end - timezone.timedelta(days=self.CYCLE_WINDOW_DAYS)
+        qs = PlantingRecord.all_objects.filter(
+            field=self.field,
+            planting_date__gt=window_start,
+            planting_date__lte=window_end,
+        )
+        if self.pk:
+            qs = qs.exclude(pk=self.pk)
+        return qs.count()
+
+    def _validate_cycle_limit_in_window(self):
+        """Enforce maximum planting cycles per field within the last 12 months."""
+        existing_count = self._get_existing_cycles_count_in_window()
+        if existing_count >= self.MAX_CYCLES_PER_12_MONTHS:
+            window_end = timezone.now().date()
+            window_start = window_end - timezone.timedelta(days=self.CYCLE_WINDOW_DAYS)
             raise ValidationError(
                 {
                     'planting_date': (
-                        f"There are already {existing_count} planting cycles recorded for {self.planting_date.year}. "
-                        "Maximum is 3 crops per year. "
+                        f"There are already {existing_count} planting cycles recorded within the last 12 months "
+                        f"({window_start:%Y-%m-%d} to {window_end:%Y-%m-%d}). "
+                        "Maximum is 3 crops per 12 months. "
                         "If one of these is archived, restore it from Trash instead of creating a new one."
                     )
                 }
@@ -1181,10 +1206,28 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
                     }
                 )
 
-        # Enforce yearly 3-cycle limit for this field/year.
-        # Tagalog: Dito inilagay para iisang source of truth ang validation
-        # at tumakbo sa forms, admin, shell scripts, at API integrations.
-        self._validate_yearly_cycle_limit()
+        # Enforce rolling 12-month 3-cycle limit for this field.
+        # IMPORTANT:
+        # - Do NOT enforce during archive/restore (is_active=False → True) to avoid blocking maintenance actions.
+        # - Enforce on CREATE.
+        # - Enforce on EDIT only if field/planting_date changes (prevents bypass via date edits).
+        if not self.is_active:
+            return
+
+        should_enforce_quota = self.pk is None
+        if self.pk is not None:
+            prev = PlantingRecord.all_objects.filter(pk=self.pk).values('field_id', 'planting_date', 'is_active').first()
+            if prev and prev.get('is_active') is False:
+                # Restoring/editing an archived historical record should not be blocked by the quota.
+                should_enforce_quota = False
+            elif prev:
+                prev_field_id = prev.get('field_id')
+                prev_planting_date = prev.get('planting_date')
+                if prev_field_id != self.field_id or prev_planting_date != self.planting_date:
+                    should_enforce_quota = True
+
+        if should_enforce_quota:
+            self._validate_cycle_limit_in_window()
 
     def save(self, *args, **kwargs):
         """Auto-compute derived fields and validate before saving."""
@@ -1201,12 +1244,9 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
             # Tagalog: Gamitin ang all_objects (hindi objects) para
             # ma-count ang LAHAT ng planting records para sa field/year —
             # kasama ang archived/soft-deleted na hindi pa na-purge.
-            # Kung objects lang ang gagamitin, ang archived plantings ay
-            # hindi mabilang, kaya posibleng makapag-plant ng 4th crop
-            # sa isang taon — bug ito sa data integrity.
             # Kahit na-archive ang isang planting, nangyari pa rin
-            # ang pagtatanim — dapat pa rin itong mabilang sa quota.
-            existing_count = self._get_existing_cycles_count()
+            # ang pagtatanim — kaya dapat kasama pa rin sa sequence numbering.
+            existing_count = self._get_existing_cycles_count_for_year()
 
             # Assign the next sequential cycle number (1..3)
             self.cropping_cycle = existing_count + 1
