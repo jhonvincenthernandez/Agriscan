@@ -414,208 +414,237 @@
 {{ knowledge_trend|default:"[]"|json_script:"dashboardKnowledgeTrend" }}
 
 <script>
-// Safely load JSON data directly from the template (avoids Django/Python None issues)
-const diseaseData = JSON.parse(document.getElementById('dashboardDiseaseStats').textContent);
-const diseaseLabels = diseaseData.map(d => d.disease__name || 'Unknown');
-const diseaseCounts = diseaseData.map(d => d.count);
-
-if (diseaseLabels.length > 0) {
-  new Chart(document.getElementById('diseaseChart'), {
-    type: 'doughnut',
-    data: {
-      labels: diseaseLabels,
-      datasets: [{
-        data: diseaseCounts,
-        backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'bottom' }
-      }
-    }
-  });
-} else {
-  document.getElementById('diseaseChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No data yet</p>';
-}
-
-// Detection Trends Line Chart
-const trendData = JSON.parse(document.getElementById('dashboardTrendData').textContent);
-const trendLabels = trendData.map(d => d.date);
-const trendCounts = trendData.map(d => d.count);
-
-new Chart(document.getElementById('trendChart'), {
-  type: 'line',
-  data: {
-    labels: trendLabels,
-    datasets: [{
-      label: 'Detections',
-      data: trendCounts,
-      borderColor: '#3b82f6',
-      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-      tension: 0.4,
-      fill: true
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false }
-    },
-    scales: {
-      y: { beginAtZero: true, ticks: { stepSize: 1 } }
-    }
-  }
-});
-
-// Severity Distribution Bar Chart
-const severityDataRaw = JSON.parse(document.getElementById('dashboardSeverityData').textContent);
-const severityData = Array.isArray(severityDataRaw) ? severityDataRaw : [];
-const severityLabels = severityData.map(d => d.label);
-const severityCounts = severityData.map(d => d.count);
-
-if (severityCounts.some(c => c > 0)) {
-  new Chart(document.getElementById('severityChart'), {
-    type: 'bar',
-    data: {
-      labels: severityLabels,
-      datasets: [{
-        label: 'Detections',
-        data: severityCounts,
-        backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444']
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-      }
-    }
-  });
-} else {
-  document.getElementById('severityChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No severity data yet</p>';
-}
-
-// Average Yield Chart (Barangay for admin/technician, Field for farmers)
-const yieldByBarangay = JSON.parse(document.getElementById('dashboardYieldByBarangay').textContent);
-const yieldByField = JSON.parse(document.getElementById('dashboardYieldByField').textContent);
+const chartAvailable = typeof window.Chart === 'function';
 const isAdmin = {{ is_admin|yesno:"true,false" }};
 const isTechnician = {{ is_technician|yesno:"true,false" }};
 
-// Variety Trend Chart
-const varietyTrend = JSON.parse(document.getElementById('dashboardVarietyTrend').textContent);
+function getArrayFromScript(id) {
+  const node = document.getElementById(id);
+  if (!node) {
+    return [];
+  }
 
-// Knowledge Trend Chart
-const knowledgeTrendRaw = JSON.parse(document.getElementById('dashboardKnowledgeTrend').textContent);
-const knowledgeTrend = Array.isArray(knowledgeTrendRaw) ? knowledgeTrendRaw : [];
-
-let yieldLabels, yieldValues;
-if (isAdmin || isTechnician) {
-  yieldLabels = yieldByBarangay.map(d => d.planting__field__barangay || 'N/A');
-  yieldValues = yieldByBarangay.map(d => parseFloat(d.avg_yield || 0).toFixed(2));
-} else {
-  yieldLabels = yieldByField.map(d => d.planting__field__name || 'Field ' + d.planting__field__id);
-  yieldValues = yieldByField.map(d => parseFloat(d.avg_yield || 0).toFixed(2));
+  try {
+    const parsed = JSON.parse(node.textContent);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
 }
 
-if (yieldLabels && yieldLabels.length > 0) {
-  new Chart(document.getElementById('yieldChart'), {
-    type: 'bar',
-    data: {
-      labels: yieldLabels,
-      datasets: [{
-        label: 'Avg Yield (tons/ha)',
-        data: yieldValues,
-        backgroundColor: '#10b981'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y',
-      plugins: {
-        legend: { display: false }
+function setChartPlaceholder(canvasId, message) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !canvas.parentElement) {
+    return;
+  }
+
+  canvas.parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">' + message + '</p>';
+}
+
+if (!chartAvailable) {
+  const message = 'Charts are unavailable. Allow Chart.js or disable tracking prevention for this site.';
+  ['diseaseChart', 'trendChart', 'severityChart', 'yieldChart', 'varietyChart', 'knowledgeChart']
+    .forEach((id) => setChartPlaceholder(id, message));
+} else {
+  // Safely load JSON data directly from the template (avoids Django/Python None issues)
+  const diseaseData = getArrayFromScript('dashboardDiseaseStats');
+  const diseaseLabels = diseaseData.map(d => d.disease__name || 'Unknown');
+  const diseaseCounts = diseaseData.map(d => d.count);
+
+  if (diseaseLabels.length > 0) {
+    new Chart(document.getElementById('diseaseChart'), {
+      type: 'doughnut',
+      data: {
+        labels: diseaseLabels,
+        datasets: [{
+          data: diseaseCounts,
+          backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
+        }]
       },
-      scales: {
-        x: { 
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Tons per Hectare'
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  } else {
+    setChartPlaceholder('diseaseChart', 'No data yet');
+  }
+
+  // Detection Trends Line Chart
+  const trendData = getArrayFromScript('dashboardTrendData');
+  const trendLabels = trendData.map(d => d.date);
+  const trendCounts = trendData.map(d => d.count);
+
+  if (trendLabels.length > 0) {
+    new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: {
+        labels: trendLabels,
+        datasets: [{
+          label: 'Detections',
+          data: trendCounts,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+  } else {
+    setChartPlaceholder('trendChart', 'No trend data yet');
+  }
+
+  // Severity Distribution Bar Chart
+  const severityData = getArrayFromScript('dashboardSeverityData');
+  const severityLabels = severityData.map(d => d.label);
+  const severityCounts = severityData.map(d => d.count);
+
+  if (severityCounts.some(c => c > 0)) {
+    new Chart(document.getElementById('severityChart'), {
+      type: 'bar',
+      data: {
+        labels: severityLabels,
+        datasets: [{
+          label: 'Detections',
+          data: severityCounts,
+          backgroundColor: ['#10b981', '#f59e0b', '#f97316', '#ef4444']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+      }
+    });
+  } else {
+    setChartPlaceholder('severityChart', 'No severity data yet');
+  }
+
+  // Average Yield Chart (Barangay for admin/technician, Field for farmers)
+  const yieldByBarangay = getArrayFromScript('dashboardYieldByBarangay');
+  const yieldByField = getArrayFromScript('dashboardYieldByField');
+
+  let yieldLabels, yieldValues;
+  if (isAdmin || isTechnician) {
+    yieldLabels = yieldByBarangay.map(d => d.planting__field__barangay || 'N/A');
+    yieldValues = yieldByBarangay.map(d => parseFloat(d.avg_yield || 0).toFixed(2));
+  } else {
+    yieldLabels = yieldByField.map(d => d.planting__field__name || 'Field ' + d.planting__field__id);
+    yieldValues = yieldByField.map(d => parseFloat(d.avg_yield || 0).toFixed(2));
+  }
+
+  if (yieldLabels && yieldLabels.length > 0) {
+    new Chart(document.getElementById('yieldChart'), {
+      type: 'bar',
+      data: {
+        labels: yieldLabels,
+        datasets: [{
+          label: 'Avg Yield (tons/ha)',
+          data: yieldValues,
+          backgroundColor: '#10b981'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Tons per Hectare'
+            }
           }
         }
       }
-    }
-  });
-} else {
-  document.getElementById('yieldChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No yield data yet</p>';
-}
+    });
+  } else {
+    setChartPlaceholder('yieldChart', 'No yield data yet');
+  }
 
-// Variety Trend Bar Chart
-const varietyLabels = varietyTrend.map(d => d.variety__name || 'Unknown');
-const varietyValues = varietyTrend.map(d => d.count);
+  // Variety Trend Bar Chart
+  const varietyTrend = getArrayFromScript('dashboardVarietyTrend');
+  const varietyLabels = varietyTrend.map(d => d.variety__name || 'Unknown');
+  const varietyValues = varietyTrend.map(d => d.count);
 
-if (varietyLabels.length > 0) {
-  new Chart(document.getElementById('varietyChart'), {
-    type: 'bar',
-    data: {
-      labels: varietyLabels,
-      datasets: [{
-        label: 'Plantings',
-        data: varietyValues,
-        backgroundColor: '#8b5cf6'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
+  if (varietyLabels.length > 0) {
+    new Chart(document.getElementById('varietyChart'), {
+      type: 'bar',
+      data: {
+        labels: varietyLabels,
+        datasets: [{
+          label: 'Plantings',
+          data: varietyValues,
+          backgroundColor: '#8b5cf6'
+        }]
       },
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
       }
-    }
-  });
-} else {
-  document.getElementById('varietyChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No variety data yet</p>';
-}
+    });
+  } else {
+    setChartPlaceholder('varietyChart', 'No variety data yet');
+  }
 
-// Knowledge Trend Bar Chart
-const knowledgeLabels = knowledgeTrend.map(d => d.name || 'Unknown');
-const knowledgeValues = knowledgeTrend.map(d => d.view_count);
+  // Knowledge Trend Bar Chart
+  const knowledgeTrend = getArrayFromScript('dashboardKnowledgeTrend');
+  const knowledgeLabels = knowledgeTrend.map(d => d.name || 'Unknown');
+  const knowledgeValues = knowledgeTrend.map(d => d.view_count);
 
-if (knowledgeLabels.length > 0) {
-  new Chart(document.getElementById('knowledgeChart'), {
-    type: 'bar',
-    data: {
-      labels: knowledgeLabels,
-      datasets: [{
-        label: 'Views',
-        data: knowledgeValues,
-        backgroundColor: '#22c55e'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false }
+  if (knowledgeLabels.length > 0) {
+    new Chart(document.getElementById('knowledgeChart'), {
+      type: 'bar',
+      data: {
+        labels: knowledgeLabels,
+        datasets: [{
+          label: 'Views',
+          data: knowledgeValues,
+          backgroundColor: '#22c55e'
+        }]
       },
-      scales: {
-        y: { beginAtZero: true, ticks: { stepSize: 1 } }
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
       }
-    }
-  });
-} else {
-  document.getElementById('knowledgeChart').parentElement.innerHTML = '<p class="text-sm text-gray-500 text-center py-8">No knowledge trend data yet</p>';
+    });
+  } else {
+    setChartPlaceholder('knowledgeChart', 'No knowledge trend data yet');
+  }
 }
 
 /* ============================================================

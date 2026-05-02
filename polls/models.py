@@ -1446,6 +1446,16 @@ class HarvestRecord(SoftDeleteModel):
 
     def purge(self):
         """Permanently delete this harvest record."""
+        planting_id = self.planting_id
+
+        # ASSUMPTION: A planting with a deleted harvest should be selectable again.
+        # Revert status and clear harvest date for that planting.
+        PlantingRecord.objects.filter(pk=planting_id).update(
+            status='ongoing',
+            actual_harvest_date=None,
+        )
+        YieldPrediction.objects.filter(planting_id=planting_id).update(actual_harvest_date=None)
+
         super().hard_delete()
 
     def __str__(self):
