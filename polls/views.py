@@ -4697,6 +4697,67 @@ def trash_management(request):
         action     = request.POST.get('action')
         model_name = request.POST.get('model')
         obj_pk     = request.POST.get('pk')
+        selected_ids = [pk for pk in request.POST.getlist('selected_ids') if pk]
+
+        if selected_ids and model_name:
+            if model_name == 'announcement':
+                qs = Announcement.objects.filter(pk__in=selected_ids, is_deleted=True)
+                if action == 'restore':
+                    restored = 0
+                    for obj in qs:
+                        obj.restore()
+                        restored += 1
+                    messages.success(request, f'✅ {restored} announcement{"" if restored == 1 else "s"} restored successfully.')
+                elif action == 'purge':
+                    deleted = 0
+                    failed = 0
+                    for obj in qs:
+                        try:
+                            obj.hard_delete()
+                            deleted += 1
+                        except ProtectedError:
+                            failed += 1
+                    if deleted:
+                        messages.warning(request, f'🗑️ {deleted} announcement{"" if deleted == 1 else "s"} permanently deleted.')
+                    if failed:
+                        messages.error(request, f'{failed} announcement{"" if failed == 1 else "s"} could not be deleted due to protected related records.')
+            else:
+                model_map  = {
+                    'field': Field, 'planting': PlantingRecord, 'detection': DetectionRecord,
+                    'yield': YieldPrediction, 'harvest': HarvestRecord, 'variety': RiceVariety,
+                    'season_log': SeasonLog, 'audit': SiteSettingAudit,
+                    'knowledge': KnowledgeBaseEntry, 'treatment': TreatmentRecommendation,
+                }
+                model_cls = model_map.get(model_name)
+                if model_cls:
+                    qs = model_cls.all_objects.filter(pk__in=selected_ids, is_active=False)
+                    if action == 'restore':
+                        restored = 0
+                        for obj in qs:
+                            obj.restore()
+                            restored += 1
+                        messages.success(request, f'✅ {restored} {model_name.replace("_", " ")}{"" if restored == 1 else "s"} restored successfully.')
+                    elif action == 'purge':
+                        deleted = 0
+                        failed = 0
+                        for obj in qs:
+                            try:
+                                if hasattr(obj, 'purge'):
+                                    obj.purge()
+                                elif hasattr(obj, 'hard_delete'):
+                                    obj.hard_delete()
+                                else:
+                                    obj.delete()
+                                deleted += 1
+                            except ProtectedError:
+                                failed += 1
+                        if deleted:
+                            messages.warning(request, f'🗑️ {deleted} {model_name.replace("_", " ")}{"" if deleted == 1 else "s"} permanently deleted.')
+                        if failed:
+                            messages.error(request, f'{failed} {model_name.replace("_", " ")}{"" if failed == 1 else "s"} could not be deleted due to protected related records.')
+
+            qs_str = request.POST.get('qs', '')
+            return redirect(f"{reverse('polls:trash_management')}{'?' + qs_str if qs_str else ''}")
 
         # Announcement uses is_deleted flag (not is_active) — handle separately
         if model_name == 'announcement':
@@ -4738,7 +4799,7 @@ def trash_management(request):
                 except model_cls.DoesNotExist:
                     messages.error(request, 'Record not found or already active.')
         # Preserve section/search/sort/order on redirect
-        qs_str = request.POST.get('_qs', '')
+        qs_str = request.POST.get('qs', '')
         return redirect(f"{reverse('polls:trash_management')}{'?' + qs_str if qs_str else ''}")
 
     # ── GET params ────────────────────────────────────────────────────────────
@@ -4941,7 +5002,7 @@ def trash_management(request):
         'sort': sort,
         'order': order,
         # querystring for POST redirect preservation
-        '_qs': request.GET.urlencode(),
+        'qs': request.GET.urlencode(),
     }
     return render(request, 'trash/management.html', context)
 

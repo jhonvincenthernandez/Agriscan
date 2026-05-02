@@ -341,6 +341,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
+    // Move required validation to the visible input
+    const wasRequired = ownerSelect.required;
+    ownerSelect.required = false;
+    searchInput.required = wasRequired;
+
     // Hide original select
     ownerSelect.style.display = 'none';
     
@@ -376,6 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
           div.addEventListener('click', function() {
             ownerSelect.value = this.dataset.value;
             searchInput.value = this.textContent;
+            searchInput.setCustomValidity('');
             dropdown.classList.add('hidden');
           });
           
@@ -393,7 +399,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     searchInput.addEventListener('input', function() {
       filterOptions(this.value);
+      searchInput.setCustomValidity('');
     });
+
+    // Enforce required selection on submit
+    const form = ownerSelect.closest('form');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        if (wasRequired && !ownerSelect.value) {
+          e.preventDefault();
+          searchInput.setCustomValidity('Please select an owner.');
+          searchInput.reportValidity();
+          searchInput.focus();
+        }
+      });
+    }
     
     document.addEventListener('click', function(e) {
       if (!wrapper.contains(e.target)) {
