@@ -123,71 +123,71 @@
         </div>
       </div>
 
-      <!-- Barangay / Municipality / Province -->
+      <!-- Province / Municipality / Barangay -->
       <div class="grid md:grid-cols-3 gap-4">
         <div>
-          <label for="id_barangay" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.barangay.label }}
-          </label>
-          <input
-            type="text"
-            id="id_barangay"
-            name="{{ form.barangay.html_name }}"
-            value="{{ form.barangay.value|default:'' }}"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            placeholder="e.g., San Jose"
-          />
-          {% if form.barangay.errors %}
-          <p class="mt-1 text-sm text-red-600">
-            {% for err in form.barangay.errors %}{{ err }}{% endfor %}
-          </p>
-          {% endif %}
-          {% if form.barangay.help_text %}
-          <p class="mt-1 text-xs text-gray-500">{{ form.barangay.help_text }}</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="id_municipality" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.municipality.label }}
-          </label>
-          <input
-            type="text"
-            id="id_municipality"
-            name="{{ form.municipality.html_name }}"
-            value="{{ form.municipality.value|default:'' }}"
-            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            placeholder="e.g., Malaybalay"
-          />
-          {% if form.municipality.errors %}
-          <p class="mt-1 text-sm text-red-600">
-            {% for err in form.municipality.errors %}{{ err }}{% endfor %}
-          </p>
-          {% endif %}
-          {% if form.municipality.help_text %}
-          <p class="mt-1 text-xs text-gray-500">{{ form.municipality.help_text }}</p>
-          {% endif %}
-        </div>
-
-        <div>
           <label for="id_province" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.province.label }}
+            {{ form.province.label }} <span class="text-red-500">*</span>
           </label>
           <input
             type="text"
             id="id_province"
             name="{{ form.province.html_name }}"
             value="{{ form.province.value|default:'' }}"
+            list="province-list"
+            required
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
             placeholder="e.g., Bukidnon"
           />
+          <datalist id="province-list"></datalist>
           {% if form.province.errors %}
           <p class="mt-1 text-sm text-red-600">
             {% for err in form.province.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
-          {% if form.province.help_text %}
-          <p class="mt-1 text-xs text-gray-500">{{ form.province.help_text }}</p>
+        </div>
+
+        <div>
+          <label for="id_municipality" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.municipality.label }} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="id_municipality"
+            name="{{ form.municipality.html_name }}"
+            value="{{ form.municipality.value|default:'' }}"
+            list="municipality-list"
+            required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            placeholder="e.g., Malaybalay"
+          />
+          <datalist id="municipality-list"></datalist>
+          {% if form.municipality.errors %}
+          <p class="mt-1 text-sm text-red-600">
+            {% for err in form.municipality.errors %}{{ err }}{% endfor %}
+          </p>
+          {% endif %}
+        </div>
+
+        <div>
+          <label for="id_barangay" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ form.barangay.label }} <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            id="id_barangay"
+            name="{{ form.barangay.html_name }}"
+            value="{{ form.barangay.value|default:'' }}"
+            list="barangay-list"
+            required
+            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+            placeholder="e.g., San Jose"
+          />
+          <datalist id="barangay-list"></datalist>
+          {% if form.barangay.errors %}
+          <p class="mt-1 text-sm text-red-600">
+            {% for err in form.barangay.errors %}{{ err }}{% endfor %}
+          </p>
           {% endif %}
         </div>
       </div>
@@ -419,6 +419,169 @@ document.addEventListener('DOMContentLoaded', function() {
       if (!wrapper.contains(e.target)) {
         dropdown.classList.add('hidden');
       }
+    });
+  }
+
+  // PSGC location autocomplete (Province -> Municipality -> Barangay)
+  const psgcBase = 'https://psgc.gitlab.io/api';
+  const provinceInput = document.getElementById('id_province');
+  const municipalityInput = document.getElementById('id_municipality');
+  const barangayInput = document.getElementById('id_barangay');
+  const provinceList = document.getElementById('province-list');
+  const municipalityList = document.getElementById('municipality-list');
+  const barangayList = document.getElementById('barangay-list');
+
+  const cache = {
+    provinces: null,
+    municipalitiesByProvince: {},
+    allMunicipalities: null,
+    barangaysByMunicipality: {},
+  };
+
+  function debounce(fn, wait) {
+    let t;
+    return function () {
+      const args = arguments;
+      clearTimeout(t);
+      t = setTimeout(function () { fn.apply(null, args); }, wait);
+    };
+  }
+
+  function toOptionList(datalist, items) {
+    if (!datalist) return;
+    datalist.innerHTML = '';
+    items.forEach(function (item) {
+      const opt = document.createElement('option');
+      opt.value = item.name || '';
+      if (item.code) opt.dataset.code = item.code;
+      datalist.appendChild(opt);
+    });
+  }
+
+  function matchCode(input, datalist) {
+    if (!input || !datalist) return '';
+    const val = (input.value || '').trim();
+    if (!val) return '';
+    const match = Array.from(datalist.options).find(function (opt) {
+      return (opt.value || '').trim().toLowerCase() === val.toLowerCase();
+    });
+    return match ? (match.dataset.code || '') : '';
+  }
+
+  async function fetchJson(url) {
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) throw new Error('PSGC fetch failed');
+    return await res.json();
+  }
+
+  async function loadProvinces() {
+    if (cache.provinces) return cache.provinces;
+    const data = await fetchJson(psgcBase + '/provinces/');
+    cache.provinces = Array.isArray(data) ? data : [];
+    return cache.provinces;
+  }
+
+  async function loadMunicipalities(provinceCode) {
+    if (provinceCode) {
+      if (cache.municipalitiesByProvince[provinceCode]) {
+        return cache.municipalitiesByProvince[provinceCode];
+      }
+      const data = await fetchJson(psgcBase + '/provinces/' + provinceCode + '/cities-municipalities/');
+      cache.municipalitiesByProvince[provinceCode] = Array.isArray(data) ? data : [];
+      return cache.municipalitiesByProvince[provinceCode];
+    }
+    if (cache.allMunicipalities) return cache.allMunicipalities;
+    const data = await fetchJson(psgcBase + '/cities-municipalities/');
+    cache.allMunicipalities = Array.isArray(data) ? data : [];
+    return cache.allMunicipalities;
+  }
+
+  async function loadBarangays(municipalityCode) {
+    if (!municipalityCode) return [];
+    if (cache.barangaysByMunicipality[municipalityCode]) {
+      return cache.barangaysByMunicipality[municipalityCode];
+    }
+    const data = await fetchJson(psgcBase + '/cities-municipalities/' + municipalityCode + '/barangays/');
+    cache.barangaysByMunicipality[municipalityCode] = Array.isArray(data) ? data : [];
+    return cache.barangaysByMunicipality[municipalityCode];
+  }
+
+  if (provinceInput && municipalityInput && barangayInput) {
+    async function refreshProvinces() {
+      try {
+        const provinces = await loadProvinces();
+        toOptionList(provinceList, provinces);
+      } catch (err) {
+        console.warn('PSGC provinces unavailable, manual entry allowed.');
+      }
+    }
+
+    provinceInput.addEventListener('focus', function () {
+      refreshProvinces();
+    });
+
+    provinceInput.addEventListener('input', debounce(function () {
+      refreshProvinces();
+    }, 250));
+
+    provinceInput.addEventListener('change', function () {
+      const code = matchCode(provinceInput, provinceList);
+      provinceInput.dataset.code = code;
+      if (!code) return;
+      municipalityInput.value = '';
+      barangayInput.value = '';
+      municipalityInput.dataset.code = '';
+      barangayInput.dataset.code = '';
+    });
+
+    async function refreshMunicipalities() {
+      try {
+        const provCode = provinceInput.dataset.code || '';
+        const list = await loadMunicipalities(provCode || '');
+        toOptionList(municipalityList, list);
+      } catch (err) {
+        console.warn('PSGC municipalities unavailable, manual entry allowed.');
+      }
+    }
+
+    municipalityInput.addEventListener('focus', function () {
+      refreshMunicipalities();
+    });
+
+    municipalityInput.addEventListener('input', debounce(function () {
+      refreshMunicipalities();
+    }, 250));
+
+    municipalityInput.addEventListener('change', function () {
+      const code = matchCode(municipalityInput, municipalityList);
+      municipalityInput.dataset.code = code;
+      if (!code) return;
+      barangayInput.value = '';
+      barangayInput.dataset.code = '';
+    });
+
+    async function refreshBarangays() {
+      try {
+        const muniCode = municipalityInput.dataset.code || '';
+        if (!muniCode) return;
+        const list = await loadBarangays(muniCode);
+        toOptionList(barangayList, list);
+      } catch (err) {
+        console.warn('PSGC barangays unavailable, manual entry allowed.');
+      }
+    }
+
+    barangayInput.addEventListener('focus', function () {
+      refreshBarangays();
+    });
+
+    barangayInput.addEventListener('input', debounce(function () {
+      refreshBarangays();
+    }, 250));
+
+    barangayInput.addEventListener('change', function () {
+      const code = matchCode(barangayInput, barangayList);
+      barangayInput.dataset.code = code;
     });
   }
 });

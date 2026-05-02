@@ -2267,6 +2267,7 @@ def field_create(request):
     BEST PRACTICE: Admin/Technician can select owner, Farmer creates for themselves.
     """
     from .forms import FieldForm
+    from django.db import IntegrityError
     
     user_profile = getattr(request.user, 'profile', None)
     if not user_profile:
@@ -2288,7 +2289,16 @@ def field_create(request):
                 # Farmer: Always use their own profile
                 field.owner = user_profile
             
-            field.save()
+            try:
+                field.save()
+            except IntegrityError:
+                form.add_error('name', 'A field with this name already exists for the selected owner.')
+                context = {
+                    'form': form,
+                    'is_edit': False,
+                    'role': role,
+                }
+                return render(request, 'fields/form.html', context)
             
             # Success message with owner info for admin/technician
             if role in ['admin', 'technician']:
