@@ -314,8 +314,10 @@
                       </svg>
                       Treatment
                     </a>
-                    {% if not is_farmer or detection.user == request.user.profile %}
+                    {% if not is_farmer %}
                     <a href="{% url 'polls:detections_edit' detection.pk %}" class="text-blue-600 hover:text-blue-700 text-sm font-medium transition" aria-label="Edit detection {{ detection.pk }}">Edit</a>
+                    {% endif %}
+                    {% if not is_farmer or detection.user == request.user.profile %}
                     <a href="{% url 'polls:detections_delete' detection.pk %}" data-open-delete="true" data-delete-label="Detection #{{ detection.pk }}" class="text-red-600 hover:text-red-700 text-sm font-medium transition" aria-label="Delete detection {{ detection.pk }}">Delete</a>
                     {% endif %}
                   </div>
