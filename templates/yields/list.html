@@ -335,7 +335,11 @@
                 </td>
                 <td class="px-4 py-3 text-xs text-gray-600">{{ record.area_hectares|default:'—' }}</td>
                 <td class="px-4 py-3">
-                  {% if record.yield_readiness %}
+                  {% if record.planting and record.planting.status == 'harvested' %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                      Harvested
+                    </span>
+                  {% elif record.yield_readiness %}
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
                       {% if record.yield_readiness == 'harvest_ready' %}bg-green-100 text-green-800
                       {% elif record.yield_readiness == 'ripening' %}bg-lime-100 text-lime-800

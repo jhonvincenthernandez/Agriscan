@@ -1551,8 +1551,9 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
         diseased_count = classified_qs.exclude(disease__name__icontains='healthy').count()
 
         try:
-            harvest_ready_count = yield_qs.filter(yield_readiness='harvest_ready').count()
-            still_growing_count = yield_qs.exclude(yield_readiness='harvest_ready').count()
+            readiness_qs = yield_qs.exclude(planting__status='harvested')
+            harvest_ready_count = readiness_qs.filter(yield_readiness='harvest_ready').count()
+            still_growing_count = readiness_qs.exclude(yield_readiness='harvest_ready').count()
         except (OperationalError, ProgrammingError):
             pass
         
