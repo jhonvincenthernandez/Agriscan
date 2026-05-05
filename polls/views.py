@@ -491,6 +491,7 @@ def yield_prediction(request):
     historical_source = None
     historical_record_count = None
     historical_yield_tons_per_ha = None
+    historical_season_display = None
     
     if detection_id:
         from_detection = True  # Coming from scan - hide planting selector
@@ -522,16 +523,25 @@ def yield_prediction(request):
                 # legacy manual values stored on the PlantingRecord.
                 hist = services.get_historical_yield_data(planting)
                 hist_record_count = int(hist.get('record_count', 0) or 0)
-                if hist_record_count > 0:
-                    initial_data['historical_production_tons'] = float(hist.get('historical_production') or 0.0)
-                    initial_data['historical_yield_tons_per_ha'] = float(hist.get('historical_yield') or 0.0)
+                hist_yield = float(hist.get('historical_yield') or 0.0)
+                hist_prod = float(hist.get('historical_production') or 0.0)
+                has_baseline = hist_record_count > 0 or hist_yield > 0
+                if has_baseline:
+                    initial_data['historical_production_tons'] = hist_prod
+                    initial_data['historical_yield_tons_per_ha'] = hist_yield
                 else:
                     initial_data['historical_production_tons'] = ''
                     initial_data['historical_yield_tons_per_ha'] = ''
 
-                historical_source = hist.get('source') if hist_record_count > 0 else 'none'
+                historical_source = hist.get('source') or 'none'
                 historical_record_count = hist_record_count
-                historical_yield_tons_per_ha = float(hist.get('historical_yield') or 0.0) if hist_record_count > 0 else None
+                historical_yield_tons_per_ha = hist_yield if has_baseline else None
+                if planting and planting.season:
+                    historical_season_display = (
+                        planting.get_season_display()
+                        if hasattr(planting, "get_season_display")
+                        else planting.season
+                    )
             
             # Set health from detection
             initial_data['health'] = str(detection_id)
@@ -585,12 +595,11 @@ def yield_prediction(request):
                     # ── Pure planting-record path ──────────────────────────────
                     # Core prediction inputs come from the linked PlantingRecord.
                     hist = services.get_historical_yield_data(planting)
-                    hist_has_records = int(hist.get('record_count', 0) or 0) > 0
                     prediction_data = {
                         "variety": planting.variety.code,
                         "field_area_ha": float(planting.field.area_hectares),
-                        "historical_production_tons": float(hist.get('historical_production') or 0.0) if hist_has_records else 0.0,
-                        "historical_yield_tons_per_ha": float(hist.get('historical_yield') or 0.0) if hist_has_records else 0.0,
+                        "historical_production_tons": float(hist.get('historical_production') or 0.0),
+                        "historical_yield_tons_per_ha": float(hist.get('historical_yield') or 0.0),
                         "planting_date": planting.planting_date,
                         "average_growth_duration_days": planting.average_growth_duration_days or 120,
                     }
@@ -729,6 +738,7 @@ def yield_prediction(request):
         "historical_source": historical_source,
         "historical_record_count": historical_record_count,
         "historical_yield_tons_per_ha": historical_yield_tons_per_ha,
+        "historical_season_display": historical_season_display,
     }
     return render(request, "tools/yield_prediction.html", context)
 
@@ -3871,7 +3881,6 @@ def api_planting_data(request, pk):
         
         hist = services.get_historical_yield_data(planting)
         record_count = int(hist.get('record_count', 0) or 0)
-        has_records = record_count > 0
         data = {
             'variety': planting.variety.code if planting.variety else '',
             'area': float(planting.field.area_hectares),
@@ -3880,9 +3889,9 @@ def api_planting_data(request, pk):
             'field_name': planting.field.name,
             'expected_harvest': planting.expected_harvest_date.strftime('%Y-%m-%d') if planting.expected_harvest_date else None,
             # Historical data from HarvestRecord history (2-year average)
-            'historical_production_tons': float(hist.get('historical_production') or 0.0) if has_records else '',
-            'historical_yield_tons_per_ha': float(hist.get('historical_yield') or 0.0) if has_records else '',
-            'historical_source': hist.get('source') if has_records else 'none',
+            'historical_production_tons': float(hist.get('historical_production') or 0.0),
+            'historical_yield_tons_per_ha': float(hist.get('historical_yield') or 0.0),
+            'historical_source': hist.get('source') or 'variety_default',
             'historical_record_count': record_count,
             # Include season/ecosystem for display in the front-end (read-only)
             'season': planting.season if planting and planting.season else None,

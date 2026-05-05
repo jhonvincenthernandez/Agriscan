@@ -587,23 +587,24 @@ def get_historical_yield_data(planting) -> dict:
         }
 
     # 2) Same field + same variety (any season)
-    field_any_season_qs = HarvestRecord.objects.filter(
-        planting__field=planting.field,
-        planting__variety=planting.variety,
-        harvest_date__gte=two_years_ago,
-    ).exclude(planting=planting)
+    if not season:
+        field_any_season_qs = HarvestRecord.objects.filter(
+            planting__field=planting.field,
+            planting__variety=planting.variety,
+            harvest_date__gte=two_years_ago,
+        ).exclude(planting=planting)
 
-    field_any_season_avg = field_any_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
-    if field_any_season_avg is not None:
-        yield_avg = float(field_any_season_avg)
-        production = yield_avg * float(planting.field.area_hectares or 0)
-        return {
-            'historical_yield': yield_avg,
-            'historical_production': production,
-            'record_count': field_any_season_qs.count(),
-            'source': 'harvest_records_field',
-            'season': 'any',
-        }
+        field_any_season_avg = field_any_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
+        if field_any_season_avg is not None:
+            yield_avg = float(field_any_season_avg)
+            production = yield_avg * float(planting.field.area_hectares or 0)
+            return {
+                'historical_yield': yield_avg,
+                'historical_production': production,
+                'record_count': field_any_season_qs.count(),
+                'source': 'harvest_records_field',
+                'season': 'any',
+            }
 
     # 3) Same variety + same season (any field)
     variety_same_season_qs = HarvestRecord.objects.filter(
@@ -625,22 +626,23 @@ def get_historical_yield_data(planting) -> dict:
         }
 
     # 4) Same variety (any season)
-    variety_any_season_qs = HarvestRecord.objects.filter(
-        planting__variety=planting.variety,
-        harvest_date__gte=two_years_ago,
-    ).exclude(planting=planting)
+    if not season:
+        variety_any_season_qs = HarvestRecord.objects.filter(
+            planting__variety=planting.variety,
+            harvest_date__gte=two_years_ago,
+        ).exclude(planting=planting)
 
-    variety_any_season_avg = variety_any_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
-    if variety_any_season_avg is not None:
-        yield_avg = float(variety_any_season_avg)
-        production = yield_avg * float(planting.field.area_hectares or 0)
-        return {
-            'historical_yield': yield_avg,
-            'historical_production': production,
-            'record_count': variety_any_season_qs.count(),
-            'source': 'harvest_records_variety',
-            'season': 'any',
-        }
+        variety_any_season_avg = variety_any_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
+        if variety_any_season_avg is not None:
+            yield_avg = float(variety_any_season_avg)
+            production = yield_avg * float(planting.field.area_hectares or 0)
+            return {
+                'historical_yield': yield_avg,
+                'historical_production': production,
+                'record_count': variety_any_season_qs.count(),
+                'source': 'harvest_records_variety',
+                'season': 'any',
+            }
 
     # Fallback: variety default - typically stored on RiceVariety
     variety_yield = getattr(planting.variety, 'average_yield_t_ha', None)

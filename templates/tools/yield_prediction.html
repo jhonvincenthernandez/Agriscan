@@ -369,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (hintText) {
       hintText.textContent = isCnn
         ? 'CNN Yield: Canopy Image, Area, Planting Date, and Growth Duration are required. Variety and historical fields are hidden because they are not used by CNN prediction.'
-        : 'Linear Regression: Area, Variety, Planting Date, and Growth Duration are required. Historical and health fields are optional but improve prediction quality.';
+        : 'Linear Regression: Area, Variety, Planting Date, and Growth Duration are required. Historical and health fields improve accuracy; if missing, we use an estimated baseline from variety averages.';
     }
   }
 
@@ -925,6 +925,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const record_count = data.historical_record_count || 0;
+        const seasonLabel = data.season_display || data.season || '';
         const yieldValue =
             data.historical_yield_tons_per_ha != null
                 ? parseFloat(data.historical_yield_tons_per_ha).toFixed(2)
@@ -941,25 +942,27 @@ document.addEventListener('DOMContentLoaded', function() {
           border = 'border-yellow-200';
           textColor = 'text-yellow-800';
           icon = '⚠️';
-          message = `No harvest records yet. Enter Historical Production and Yield manually.`;
+          message = 'No baseline available yet. Please enter Historical Production and Yield manually.';
         } else if (data.historical_source === 'harvest_records_field') {
             bg = 'bg-green-50';
             border = 'border-green-200';
             textColor = 'text-green-700';
             icon = '🧮';
-            message = `Historical yield based on ${record_count} actual harvest record${record_count === 1 ? '' : 's'} (same field + variety, last 2 years)`;
+            const seasonSuffix = seasonLabel && data.season !== 'any' ? `, ${seasonLabel} season` : '';
+            message = `Historical yield based on ${record_count} actual harvest record${record_count === 1 ? '' : 's'} (same field + variety${seasonSuffix}, last 2 years)`;
         } else if (data.historical_source === 'harvest_records_variety') {
             bg = 'bg-blue-50';
             border = 'border-blue-200';
             textColor = 'text-blue-700';
             icon = '🧮';
-            message = `Historical yield based on ${record_count} harvest record${record_count === 1 ? '' : 's'} (same variety across fields, last 2 years)`;
+            const seasonSuffix = seasonLabel && data.season !== 'any' ? `, ${seasonLabel} season` : '';
+            message = `Historical yield based on ${record_count} harvest record${record_count === 1 ? '' : 's'} (same variety${seasonSuffix}, last 2 years)`;
         } else {
             bg = 'bg-amber-50';
             border = 'border-amber-200';
             textColor = 'text-amber-700';
             icon = '⚠️';
-            message = 'No harvest records yet — using variety average as baseline. Prediction may be less accurate.';
+          message = 'Estimated from variety average (no harvest records yet). Prediction may be less accurate.';
         }
 
         badge.className = `mt-2 text-sm font-medium ${bg} ${border} ${textColor} rounded-lg px-3 py-2`;
@@ -980,6 +983,8 @@ document.addEventListener('DOMContentLoaded', function() {
         historical_source: "{{ historical_source|default:''|escapejs }}",
         historical_record_count: {{ historical_record_count|default:0 }},
         historical_yield_tons_per_ha: {{ historical_yield_tons_per_ha|default_if_none:"null" }},
+        season_display: "{{ historical_season_display|default:''|escapejs }}",
+        season: "{{ historical_season_display|default:''|escapejs }}",
       });
       {% endif %}
     
