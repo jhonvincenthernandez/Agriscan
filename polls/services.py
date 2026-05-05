@@ -545,6 +545,27 @@ def get_historical_yield_data(planting) -> dict:
 
     season = planting.season or ''
 
+    # 0) Use the planting's own harvest record if it exists and is recent.
+    # This avoids showing "no records" when the only record is tied to this planting.
+    own_harvest_qs = HarvestRecord.objects.filter(
+        planting=planting,
+        harvest_date__gte=two_years_ago,
+    )
+    own_harvest = own_harvest_qs.first()
+    if own_harvest and own_harvest.yield_tons_per_ha is not None:
+        yield_avg = float(own_harvest.yield_tons_per_ha)
+        if own_harvest.actual_yield_tons is not None:
+            production = float(own_harvest.actual_yield_tons)
+        else:
+            production = yield_avg * float(planting.field.area_hectares or 0)
+        return {
+            'historical_yield': yield_avg,
+            'historical_production': production,
+            'record_count': 1,
+            'source': 'harvest_records_field',
+            'season': season,
+        }
+
     # 1) Same field + same variety + same season (e.g. wet-wet, dry-dry)
     field_same_season_qs = HarvestRecord.objects.filter(
         planting__field=planting.field,
