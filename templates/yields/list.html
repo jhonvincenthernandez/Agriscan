@@ -356,8 +356,10 @@
                 <td class="px-4 py-3 text-xs text-gray-500">{{ record.created_at|date:'Y-m-d H:i' }}</td>
                 <td class="px-4 py-3 text-right">
                   <div class="inline-flex items-center justify-end gap-2">
-                    {% if not is_farmer or record.planting.field.owner == request.user.profile or record.detection.planting.field.owner == request.user.profile %}
+                    {% if not is_farmer %}
                     <a href="{% url 'polls:yield_record_edit' record.pk %}" class="text-green-600 hover:text-green-700 text-sm font-medium transition" aria-label="Edit record {{ record.pk }}">Edit</a>
+                    {% endif %}
+                    {% if not is_farmer or record.planting.field.owner == request.user.profile or record.detection.planting.field.owner == request.user.profile %}
                     <a href="{% url 'polls:yield_record_delete' record.pk %}" data-open-delete="true" data-delete-label="Yield Record #{{ record.pk }}" class="text-red-600 hover:text-red-700 text-sm font-medium transition" aria-label="Delete record {{ record.pk }}">Delete</a>
                     {% endif %}
                   </div>
