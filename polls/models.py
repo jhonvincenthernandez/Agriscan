@@ -976,11 +976,9 @@ class TreatmentRecommendation(SoftDeleteModel, TimeStampedModel):
     def get_section_status(self) -> dict:
         """Return per-section fill status and overall completeness for list display."""
         sections = {
-            'symptoms':      bool(self.get_aggregated_text('symptoms').strip()),
             'factors':       bool(self.factors_favoring and self.factors_favoring.strip()),
             'cultural':      bool(self.cultural_practices and self.cultural_practices.strip()),
             'chemical':      bool(self.chemical_control and self.chemical_control.strip()),
-            'prevention':    bool(self.get_aggregated_text('prevention').strip()),
             'severity_esc':  bool(self.severity_high_msg and self.severity_high_msg.strip()),
         }
         filled = sum(sections.values())

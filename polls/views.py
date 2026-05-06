@@ -3923,8 +3923,8 @@ def treatments_list(request):
     status_filter = request.GET.get('status', 'all')
     sort_by = request.GET.get('sort', 'disease__name')
     
-    # Base queryset
-    treatments = TreatmentRecommendation.objects.select_related('disease')
+    # Base queryset: include inactive, exclude archived (deleted_at set).
+    treatments = TreatmentRecommendation.all_objects.select_related('disease').filter(deleted_at__isnull=True)
     
     # Apply filters
     if disease_filter:
@@ -4030,7 +4030,7 @@ def treatments_edit(request, pk):
     from .models import TreatmentRecommendation
     from .forms import TreatmentRecommendationForm
     
-    treatment = get_object_or_404(TreatmentRecommendation, pk=pk)
+    treatment = get_object_or_404(TreatmentRecommendation.all_objects, pk=pk)
     
     if request.method == 'POST':
         form = TreatmentRecommendationForm(request.POST, instance=treatment)
@@ -4057,7 +4057,7 @@ def treatments_delete(request, pk):
     """Archive a treatment recommendation (Admin only)."""
     from .models import TreatmentRecommendation
     
-    treatment = get_object_or_404(TreatmentRecommendation, pk=pk)
+    treatment = get_object_or_404(TreatmentRecommendation.all_objects, pk=pk)
     
     if request.method == 'POST':
         disease_name = treatment.disease.name
@@ -4773,7 +4773,10 @@ def trash_management(request):
                 }
                 model_cls = model_map.get(model_name)
                 if model_cls:
-                    qs = model_cls.all_objects.filter(pk__in=selected_ids, is_active=False)
+                    if model_name == 'treatment':
+                        qs = model_cls.all_objects.filter(pk__in=selected_ids, deleted_at__isnull=False)
+                    else:
+                        qs = model_cls.all_objects.filter(pk__in=selected_ids, is_active=False)
                     if action == 'restore':
                         restored = 0
                         for obj in qs:
@@ -4824,7 +4827,10 @@ def trash_management(request):
             model_cls = model_map.get(model_name)
             if model_cls and obj_pk:
                 try:
-                    obj = model_cls.all_objects.get(pk=obj_pk, is_active=False)
+                    if model_name == 'treatment':
+                        obj = model_cls.all_objects.get(pk=obj_pk, deleted_at__isnull=False)
+                    else:
+                        obj = model_cls.all_objects.get(pk=obj_pk, is_active=False)
                     if action == 'restore':
                         obj.restore()
                         messages.success(request, f'✅ {model_name.capitalize()} #{obj_pk} restored successfully.')
@@ -4897,7 +4903,7 @@ def trash_management(request):
     announcements_qs  = Announcement.objects.filter(is_deleted=True).select_related('created_by__user')
     audit_qs          = SiteSettingAudit.all_objects.filter(is_active=False).select_related('changed_by')
     knowledge_qs      = KnowledgeBaseEntry.all_objects.filter(is_active=False).select_related('created_by')
-    treatments_qs     = TreatmentRecommendation.all_objects.filter(is_active=False).select_related('disease')
+    treatments_qs     = TreatmentRecommendation.all_objects.filter(deleted_at__isnull=False).select_related('disease')
 
     # ── Apply search ──────────────────────────────────────────────────────────
     if search:
@@ -5028,7 +5034,7 @@ def trash_management(request):
         'announcement': Announcement.objects.filter(is_deleted=True).count(),
         'audit':        SiteSettingAudit.all_objects.filter(is_active=False).count(),
         'knowledge':    KnowledgeBaseEntry.all_objects.filter(is_active=False).count(),
-        'treatment':    TreatmentRecommendation.all_objects.filter(is_active=False).count(),
+        'treatment':    TreatmentRecommendation.all_objects.filter(deleted_at__isnull=False).count(),
     }
     total_archived  = sum(counts.values())
     total_displayed = sum(qs.count() for qs in trash.values())

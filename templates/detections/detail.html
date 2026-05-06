@@ -223,7 +223,7 @@
       {% endif %}
 
       <!-- Cultural/Agronomic Practices -->
-      {% if detailed_treatment.cultural_practices %}
+      {% if detailed_treatment.cultural_practices and detection.severity_pct|default:0 >= detailed_treatment.severity_threshold|default:70 %}
       <div id="sec-cultural" class="bg-white rounded-lg shadow-sm border-2 border-green-200 p-6">
         <div class="flex items-start gap-3 mb-4">
           <div class="p-2 bg-green-100 rounded-lg">
@@ -244,7 +244,7 @@
       {% endif %}
 
       <!-- Chemical Control -->
-      {% if detailed_treatment.chemical_control %}
+      {% if detailed_treatment.chemical_control and detection.severity_pct|default:0 >= detailed_treatment.severity_threshold|default:70 %}
       <div id="sec-chemical" class="bg-white rounded-lg shadow-sm border-2 border-red-200 p-6">
         <div class="flex items-start gap-3 mb-4">
           <div class="p-2 bg-red-100 rounded-lg">

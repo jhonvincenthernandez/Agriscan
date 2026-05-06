@@ -425,9 +425,6 @@
             <div class="border-t border-gray-100 pt-3">
               <p class="text-xs font-semibold text-gray-600 mb-2">Sections Filled</p>
               <div class="grid grid-cols-2 gap-1.5" id="section-status-grid">
-                <div data-sec="symptoms" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
-                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Symptoms
-                </div>
                 <div data-sec="factors" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
                   <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Factors
                 </div>
@@ -436,9 +433,6 @@
                 </div>
                 <div data-sec="chemical" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
                   <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Chemical
-                </div>
-                <div data-sec="prevent" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
-                  <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Prevention
                 </div>
                 <div data-sec="severity-esc" class="sec-dot text-xs text-gray-400 flex items-center gap-1.5">
                   <span class="dot w-2 h-2 rounded-full bg-gray-300 inline-block flex-shrink-0"></span>Escalation
@@ -581,7 +575,7 @@
   if (diseaseSelect) diseaseSelect.addEventListener('change', updateDisease);
 
   /* ── Completeness tracker ──────────────────────────────── */
-  const SECTIONS    = ['basic','symptoms','factors','cultural','chemical','prevent','severity-esc','notes'];
+  const SECTIONS    = ['basic','factors','cultural','chemical','severity-esc','notes'];
   const sectionFill = {};
   SECTIONS.forEach(s => sectionFill[s] = false);
 
@@ -613,10 +607,8 @@
 
   // Watch text fields
   const watchFields = {
-    symptoms: '{{ form.symptoms.id_for_label }}',
     cultural: '{{ form.cultural_practices.id_for_label }}',
     chemical: '{{ form.chemical_control.id_for_label }}',
-    prevent:  '{{ form.preventive_measures.id_for_label }}',
     notes:    '{{ form.detailed_text.id_for_label }}',
   };
   Object.entries(watchFields).forEach(([key, id]) => {
