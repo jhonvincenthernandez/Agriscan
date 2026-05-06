@@ -1060,9 +1060,7 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
     This is the central link between Field → Detection → Yield Prediction.
 
     Tagalog:
-    - Dito nakatala ang cycle ng tanim, kung kailan pinatanim, anong variety, at status.
-    - Ang `cropping_cycle` ay awtomatikong kinakalkula (sequence number ng planting para sa calendar year).
-    - Ang cropping cycle ay sequence number lang ng planting sa field/year (hindi quota).
+    - Dito nakatala ang planting, kung kailan pinatanim, anong variety, at status.
     - Hindi nilalagyan ng actual yield (nasa HarvestRecord o YieldPrediction).
     """
 
@@ -1087,17 +1085,13 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
     field = models.ForeignKey(Field, on_delete=models.PROTECT, related_name="plantings")
     variety = models.ForeignKey(RiceVariety, on_delete=models.PROTECT, null=True, blank=True, related_name="plantings")
 
-    # Core cycle fields
+    # Core planting fields
     planting_date = models.DateField(default=timezone.now)
     expected_harvest_date = models.DateField(null=True, blank=True)
     actual_harvest_date = models.DateField(null=True, blank=True)
 
     # Seasonal & management
     season = models.CharField(max_length=20, choices=SEASON_CHOICES, default='wet')
-    cropping_cycle = models.PositiveIntegerField(
-        null=True, blank=True, editable=False,
-        help_text="Auto-computed cycle number for this field/year",
-    )
     planting_method = models.CharField(max_length=50, choices=PLANTING_METHOD_CHOICES, default='direct_seeding')
 
     # Area & agronomic inputs (used downstream for yield prediction)
@@ -1115,18 +1109,6 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         null=True, blank=True
     )
 
-    def _get_existing_cycles_count_for_year(self) -> int:
-        """Count existing planting cycles in the same field/year (for cropping_cycle numbering)."""
-        if not self.field or not self.planting_date:
-            return 0
-
-        qs = PlantingRecord.all_objects.filter(
-            field=self.field,
-            planting_date__year=self.planting_date.year,
-        )
-        if self.pk:
-            qs = qs.exclude(pk=self.pk)
-        return qs.count()
 
     def clean(self):
         """Model-level validation para sa planting record."""
@@ -1178,24 +1160,6 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
     def save(self, *args, **kwargs):
         """Auto-compute derived fields and validate before saving."""
         self.full_clean()
-
-        # Compute cropping cycle (count of ALL plantings for the same field/year)
-        # NOTE: We count archived/soft-deleted and failed/cancelled plantings too so
-        #       cycle numbers remain stable and we do not create gaps.
-        #
-        # IMPORTANT: Only assign the cycle number once (when the record is created).
-        #            Do NOT recompute on updates to avoid renumbering existing records.
-        if self.field and self.planting_date and self.pk is None:
-            # Count existing planting records for this field/year (all statuses, even archived)
-            # Tagalog: Gamitin ang all_objects (hindi objects) para
-            # ma-count ang LAHAT ng planting records para sa field/year —
-            # kasama ang archived/soft-deleted na hindi pa na-purge.
-            # Kahit na-archive ang isang planting, nangyari pa rin
-            # ang pagtatanim — kaya dapat kasama pa rin sa sequence numbering.
-            existing_count = self._get_existing_cycles_count_for_year()
-
-            # Assign the next sequential cycle number (1..3)
-            self.cropping_cycle = existing_count + 1
 
         # Maintain expected harvest date when average growth duration is set
         if self.planting_date and self.average_growth_duration_days and not self.expected_harvest_date:
