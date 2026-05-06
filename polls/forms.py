@@ -593,7 +593,7 @@ class HarvestRecordForm(forms.ModelForm):
         # Display rich label for planting selector
         self.fields['planting'].label_from_instance = lambda obj: (
             f"{obj.field.name} — {obj.variety.code if obj.variety else 'No variety'} "
-            f"({obj.season.capitalize()}, Cycle {obj.cropping_cycle or '?'})"
+            f"({obj.season.capitalize()})"
         )
 
         # Auto-fill grain quality from the selected planting's variety (read-only).
@@ -1069,8 +1069,7 @@ class PlantingRecordForm(forms.ModelForm):
                 # so we validate it in clean() using field + planting_date.year.
                 self.fields['field'].queryset = all_fields
                 self.fields['field'].help_text = (
-                    'Select the field for this planting. '
-                    'Maximum of 3 planting cycles per field within any rolling 12-month period is enforced on save.'
+                    'Select the field for this planting.'
                 )
         
         # Make notes and expected_harvest_date optional

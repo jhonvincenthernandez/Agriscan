@@ -39,15 +39,15 @@
                   <select name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="{{ field.field.widget.attrs.class }}" data-searchable="true">
                     <option value="">-- Select --</option>
                     {% if form.instance.planting %}
-                      <option value="{{ form.instance.planting.pk }}" data-ecosystem-type="{{ form.instance.planting.ecosystem_type|default_if_none:'' }}" data-cycle="{{ form.instance.planting.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ form.instance.planting.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ form.instance.planting.planting_date|date:'Y-m-d' }}" data-grain-quality="{{ form.instance.planting.variety.grain_quality|default_if_none:'' }}" {% if not current_value_str or current_value_str == instance_value %}selected{% endif %}>
-                        {{ form.instance.planting.field.name }} — {% if form.instance.planting.variety %}{{ form.instance.planting.variety.code }}{% else %}No variety{% endif %} ({{ form.instance.planting.season|default_if_none:''|capfirst }}, Cycle {{ form.instance.planting.cropping_cycle|default_if_none:'?' }})
+                      <option value="{{ form.instance.planting.pk }}" data-ecosystem-type="{{ form.instance.planting.ecosystem_type|default_if_none:'' }}" data-area-ha="{{ form.instance.planting.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ form.instance.planting.planting_date|date:'Y-m-d' }}" data-grain-quality="{{ form.instance.planting.variety.grain_quality|default_if_none:'' }}" {% if not current_value_str or current_value_str == instance_value %}selected{% endif %}>
+                        {{ form.instance.planting.field.name }} — {% if form.instance.planting.variety %}{{ form.instance.planting.variety.code }}{% else %}No variety{% endif %} ({{ form.instance.planting.season|default_if_none:''|capfirst }})
                       </option>
                     {% endif %}
                     {% for obj in field.field.queryset %}
                       {% if not form.instance.planting or obj.pk != form.instance.planting.pk %}
                         {% with pid=obj.pk|stringformat:"s" %}
-                          <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-cycle="{{ obj.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ obj.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" data-grain-quality="{{ obj.variety.grain_quality|default_if_none:'' }}" {% if pid == current_value_str or pid == instance_value %}selected{% endif %}>
-                            {{ obj.field.name }} — {% if obj.variety %}{{ obj.variety.code }}{% else %}No variety{% endif %} ({{ obj.season|default_if_none:''|capfirst }}, Cycle {{ obj.cropping_cycle|default_if_none:'?' }})
+                          <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-area-ha="{{ obj.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" data-grain-quality="{{ obj.variety.grain_quality|default_if_none:'' }}" {% if pid == current_value_str or pid == instance_value %}selected{% endif %}>
+                            {{ obj.field.name }} — {% if obj.variety %}{{ obj.variety.code }}{% else %}No variety{% endif %} ({{ obj.season|default_if_none:''|capfirst }})
                           </option>
                         {% endwith %}
                       {% endif %}
@@ -58,6 +58,19 @@
             </div>
             {% if field.help_text %}
             <p id="help-{{ field.name }}" class="mt-1 text-xs text-gray-500">{{ field.help_text }}</p>
+            {% endif %}
+            {% if not field.field.queryset %}
+            <div class="mt-2 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+              <p class="text-sm text-yellow-800">
+                <strong>No planting cycles found.</strong> Create a planting cycle first so you can record a harvest.
+              </p>
+              <a href="{% url 'polls:planting_create' %}" class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-yellow-700 hover:text-yellow-900 underline">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create a planting cycle
+              </a>
+            </div>
             {% endif %}
             {% if field.errors %}
             <p id="error-{{ field.name }}" class="mt-1 text-sm text-red-600 field-error" role="alert">
@@ -177,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function () {
         li.setAttribute('role', 'option');
 
         // Build a richer display if the original <option> had data-* attributes (e.g. data-ecosystem-type,
-        // data-cycle, data-area-ha, data-planting-date). This helps users quickly pick the correct planting
+        // data-area-ha, data-planting-date). This helps users quickly pick the correct planting
         // when creating a harvest record.
         const el = opt.el;
         const title = opt.text;
@@ -186,7 +199,6 @@ document.addEventListener('DOMContentLoaded', function () {
           if (el) {
             const d = el.dataset || {};
             if (d.ecosystemType) metaParts.push(d.ecosystemType);
-            if (d.cycle) metaParts.push('Cycle ' + d.cycle);
             if (d.areaHa) metaParts.push(d.areaHa + ' ha');
             if (d.plantingDate) metaParts.push(d.plantingDate);
           }

@@ -1062,7 +1062,7 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
     Tagalog:
     - Dito nakatala ang cycle ng tanim, kung kailan pinatanim, anong variety, at status.
     - Ang `cropping_cycle` ay awtomatikong kinakalkula (sequence number ng planting para sa calendar year).
-    - Ang quota/limit ay rolling 12 months (hindi calendar-year based) para tama kahit tumawid ng taon.
+    - Ang cropping cycle ay sequence number lang ng planting sa field/year (hindi quota).
     - Hindi nilalagyan ng actual yield (nasa HarvestRecord o YieldPrediction).
     """
 
@@ -1115,13 +1115,6 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         null=True, blank=True
     )
 
-    # Quota rule:
-    # - Enforce max 3 planting cycles per field within the last 12 months (ending today).
-    # - This avoids edge cases where a cycle spans across calendar years, and keeps
-    #   the backend rule consistent with the create-form indicator panel.
-    MAX_CYCLES_PER_12_MONTHS = 3
-    CYCLE_WINDOW_DAYS = 365
-
     def _get_existing_cycles_count_for_year(self) -> int:
         """Count existing planting cycles in the same field/year (for cropping_cycle numbering)."""
         if not self.field or not self.planting_date:
@@ -1134,39 +1127,6 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         if self.pk:
             qs = qs.exclude(pk=self.pk)
         return qs.count()
-
-    def _get_existing_cycles_count_in_window(self) -> int:
-        """Count existing planting cycles within the rolling window ending today."""
-        if not self.field:
-            return 0
-
-        window_end = timezone.now().date()
-        window_start = window_end - timezone.timedelta(days=self.CYCLE_WINDOW_DAYS)
-        qs = PlantingRecord.all_objects.filter(
-            field=self.field,
-            planting_date__gt=window_start,
-            planting_date__lte=window_end,
-        )
-        if self.pk:
-            qs = qs.exclude(pk=self.pk)
-        return qs.count()
-
-    def _validate_cycle_limit_in_window(self):
-        """Enforce maximum planting cycles per field within the last 12 months."""
-        existing_count = self._get_existing_cycles_count_in_window()
-        if existing_count >= self.MAX_CYCLES_PER_12_MONTHS:
-            window_end = timezone.now().date()
-            window_start = window_end - timezone.timedelta(days=self.CYCLE_WINDOW_DAYS)
-            raise ValidationError(
-                {
-                    'planting_date': (
-                        f"There are already {existing_count} planting cycles recorded within the last 12 months "
-                        f"({window_start:%Y-%m-%d} to {window_end:%Y-%m-%d}). "
-                        "Maximum is 3 crops per 12 months. "
-                        "If one of these is archived, restore it from Trash instead of creating a new one."
-                    )
-                }
-            )
 
     def clean(self):
         """Model-level validation para sa planting record."""
@@ -1213,28 +1173,7 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
                     }
                 )
 
-        # Enforce rolling 12-month 3-cycle limit for this field.
-        # IMPORTANT:
-        # - Do NOT enforce during archive/restore (is_active=False → True) to avoid blocking maintenance actions.
-        # - Enforce on CREATE.
-        # - Enforce on EDIT only if field/planting_date changes (prevents bypass via date edits).
-        if not self.is_active:
-            return
-
-        should_enforce_quota = self.pk is None
-        if self.pk is not None:
-            prev = PlantingRecord.all_objects.filter(pk=self.pk).values('field_id', 'planting_date', 'is_active').first()
-            if prev and prev.get('is_active') is False:
-                # Restoring/editing an archived historical record should not be blocked by the quota.
-                should_enforce_quota = False
-            elif prev:
-                prev_field_id = prev.get('field_id')
-                prev_planting_date = prev.get('planting_date')
-                if prev_field_id != self.field_id or prev_planting_date != self.planting_date:
-                    should_enforce_quota = True
-
-        if should_enforce_quota:
-            self._validate_cycle_limit_in_window()
+        # NOTE: No hard cap on planting cycles; only date/area validations apply.
 
     def save(self, *args, **kwargs):
         """Auto-compute derived fields and validate before saving."""

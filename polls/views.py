@@ -2601,30 +2601,6 @@ def planting_create(request):
         if is_staff and request.POST.get('change_owner') == '1':
             form = PlantingRecordForm(user=request.user, target_profile=target_profile)
 
-            # Compute crop counts per field for the rolling 12-month window (3-crop max).
-            # Includes ALL statuses (harvested/failed/cancelled/archived) like PlantingRecord.save().
-            from .models import PlantingRecord
-            from django.db.models import Count
-            import json
-
-            window_end = timezone.now().date()
-            window_start = window_end - timezone.timedelta(days=PlantingRecord.CYCLE_WINDOW_DAYS)
-            field_qs = form.fields['field'].queryset
-            field_ids = list(field_qs.values_list('pk', flat=True))
-            counts = PlantingRecord.all_objects.filter(
-                field_id__in=field_ids,
-                planting_date__gt=window_start,
-                planting_date__lte=window_end,
-            ).values('field_id').annotate(count=Count('pk'))
-
-            mapping = {str(fid): 0 for fid in field_ids}
-            for row in counts:
-                mapping[str(row['field_id'])] = row['count']
-            field_crop_counts_json = json.dumps(mapping)
-
-            # Attach to form render so template can use it without complex template calls
-            form.fields['field'].widget.attrs['data-crop-counts'] = field_crop_counts_json
-
             context = {
                 'form': form,
                 'is_edit': False,
@@ -2632,7 +2608,6 @@ def planting_create(request):
                 'target_profile': target_profile,
                 'allowed_past_days_planting': services.get_allowed_past_days_for_planting(),
                 'today': timezone.now().date(),
-                'field_crop_counts_json': field_crop_counts_json,
             }
             return render(request, 'plantings/form.html', context)
 
@@ -2654,30 +2629,6 @@ def planting_create(request):
     else:
         form = PlantingRecordForm(user=request.user, target_profile=target_profile)
 
-    # Compute crop counts per field for the rolling 12-month window (3-crop max).
-    # Includes ALL statuses (harvested/failed/cancelled/archived) like PlantingRecord.save().
-    from .models import PlantingRecord
-    from django.db.models import Count
-    import json
-
-    window_end = timezone.now().date()
-    window_start = window_end - timezone.timedelta(days=PlantingRecord.CYCLE_WINDOW_DAYS)
-    field_qs = form.fields['field'].queryset
-    field_ids = list(field_qs.values_list('pk', flat=True))
-    counts = PlantingRecord.all_objects.filter(
-        field_id__in=field_ids,
-        planting_date__gt=window_start,
-        planting_date__lte=window_end,
-    ).values('field_id').annotate(count=Count('pk'))
-
-    mapping = {str(fid): 0 for fid in field_ids}
-    for row in counts:
-        mapping[str(row['field_id'])] = row['count']
-    field_crop_counts_json = json.dumps(mapping)
-
-    # Attach to form field widget attrs so template can use it without invoking as_widget()
-    form.fields['field'].widget.attrs['data-crop-counts'] = field_crop_counts_json
-
     context = {
         'form': form,
         'is_edit': False,
@@ -2686,7 +2637,6 @@ def planting_create(request):
         'allowed_past_days_planting': services.get_allowed_past_days_for_planting(),
         'detection_confidence_threshold': services.get_detection_confidence_threshold(),
         'today': timezone.now().date(),
-        'field_crop_counts_json': field_crop_counts_json,
     }
     return render(request, 'plantings/form.html', context)
 

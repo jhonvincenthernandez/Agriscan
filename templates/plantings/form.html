@@ -107,7 +107,6 @@
           {% endif %}
 
           {% if not is_edit %}
-          <div id="crop-slot-indicator" class="hidden mt-2"></div>
           {% endif %}
 
           {% if not form.field.field.queryset and not is_edit %}
@@ -147,7 +146,6 @@
           <p class="mt-1 text-xs text-gray-500">{{ form.variety.help_text }}</p>
           {% endif %}
 
-          <div id="variety-info-indicator" class="hidden mt-2"></div>
         </div>
       </div>
 
@@ -522,7 +520,6 @@
   const infoText       = document.getElementById('date-info-text');
   const harvestBadge   = document.getElementById('harvest-auto-badge');
   const plantingBadge  = document.getElementById('planting-auto-badge');
-  const varietyIndicator = document.getElementById('variety-info-indicator');
 
   // Defensive early-exit: page might render without these inputs (list, partials, etc.)
   if (!varietySelect || !plantingInput || !harvestInput) return;
@@ -553,62 +550,6 @@
     return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 
-  function getVarietyMeta() {
-    const opt = varietySelect.selectedOptions && varietySelect.selectedOptions[0];
-    if (!opt || !opt.value) return null;
-    return {
-      label: (opt.textContent || '').trim(),
-      growthDays: parseInt(opt.dataset.growthDays || 0, 10) || 0,
-    };
-  }
-
-  function getMaturityLabel(days) {
-    if (!days) return 'Unknown maturity group';
-    if (days <= 105) return 'Early-maturing variety';
-    if (days <= 120) return 'Medium-maturing variety';
-    return 'Late-maturing variety';
-  }
-
-  function renderVarietyIndicator() {
-    if (!varietyIndicator) return;
-
-    const meta = getVarietyMeta();
-    if (!meta) {
-      varietyIndicator.classList.add('hidden');
-      return;
-    }
-
-    const hasDays = meta.growthDays > 0;
-    const hasPlantingDate = !!plantingInput.value;
-    const harvestValue = (harvestInput.value || '').trim();
-    const hasHarvestValue = !!harvestValue;
-    const canEstimate = hasDays && hasPlantingDate;
-    const guidanceDate = hasHarvestValue
-      ? harvestValue
-      : (canEstimate ? addDays(plantingInput.value, meta.growthDays) : '');
-
-    const step = function (done) {
-      if (done) {
-        return '<span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs font-semibold">✓</span>';
-      }
-      return '<span class="h-6 w-6 rounded-full bg-gray-200"></span>';
-    };
-
-    varietyIndicator.className = 'mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800';
-    varietyIndicator.innerHTML = `
-      <div class="flex flex-col gap-2">
-        <div class="flex items-center gap-2">${step(true)}${step(hasDays)}${step(canEstimate)}</div>
-        <p class="text-sm">
-          <span class="font-semibold">${meta.label}</span> · 
-          ${hasDays ? `<span class="font-semibold">${meta.growthDays}</span> days (<span class="font-medium">${getMaturityLabel(meta.growthDays)}</span>)` : 'No growth days configured'}
-        </p>
-        <p class="text-xs text-blue-800/80">
-          ${guidanceDate ? `🌾 <strong>Auto-guidance:</strong> Expected harvest is around <strong>${formatDate(guidanceDate)}</strong>.` : '💡 Set planting date to calculate harvest schedule.'}
-        </p>
-      </div>
-    `;
-    varietyIndicator.classList.remove('hidden');
-  }
 
   function showBadge(mode, growthDays, computedDate) {
     // mode: 'harvest' = harvest was computed, 'planting' = planting was computed
@@ -654,14 +595,13 @@
       showBadge('planting', days, plantingInput.value);
     }
 
-    renderVarietyIndicator();
   });
 
   function handlePlantingChange() {
     if (lastAutoComputed === 'planting') {
       // This change was triggered by our own reverse-compute — skip to avoid loop
       lastAutoComputed = null;
-      renderVarietyIndicator();
+      
       return;
     }
     const days = getGrowthDays();
@@ -671,7 +611,6 @@
     harvestInput.value = computed;
     lastAutoComputed = 'harvest';
     showBadge('harvest', days, computed);
-    renderVarietyIndicator();
   }
 
   // ── When PLANTING DATE changes ─────────────────────────────────────────────
@@ -683,7 +622,7 @@
     if (lastAutoComputed === 'harvest') {
       // This change was triggered by our own forward-compute — skip to avoid loop
       lastAutoComputed = null;
-      renderVarietyIndicator();
+      
       return;
     }
     const days = getGrowthDays();
@@ -693,7 +632,6 @@
     plantingInput.value = computed;
     lastAutoComputed = 'planting';
     showBadge('planting', days, computed);
-    renderVarietyIndicator();
   }
 
   // ── When HARVEST DATE changes ──────────────────────────────────────────────
@@ -740,81 +678,6 @@
 </script>
 
 {% if not is_edit %}
-<script>
-(function () {
-  const fieldSelect = document.getElementById('id_field');
-  const indicator  = document.getElementById('crop-slot-indicator');
-  if (!fieldSelect || !indicator) return;
-
-  // Tagalog: Base sa form field dataset (JSON), alamin kung ilang crops na ang na-record sa taon.
-  const cropCounts = (function () {
-    try {
-      return JSON.parse(fieldSelect.dataset.cropCounts || '{}');
-    } catch (e) {
-      return {};
-    }
-  })();
-
-  const windowLabel = 'last 12 months';
-
-  function renderIndicatorFor(fieldId) {
-    if (!fieldId) {
-      indicator.classList.add('hidden');
-      return;
-    }
-
-    const used = parseInt(cropCounts[fieldId] || 0, 10) || 0;
-    const remaining = Math.max(0, 3 - used);
-
-    if (remaining === 0) {
-      indicator.className = 'mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700';
-      indicator.innerHTML = `
-        <div class="flex items-start gap-2">
-          <span class="text-lg">⚠️</span>
-          <div>
-            <p class="font-semibold">Maximum 3 crops per 12 months reached for this field.</p>
-            <p class="text-sm">No more slots available in the ${windowLabel}.</p>
-          </div>
-        </div>
-      `;
-    } else {
-      // Tagalog: Ipakita kung ilang slots ang nagamit at natitira
-      const slots = [];
-      for (let i = 0; i < used; i += 1) {
-        slots.push('<span class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-blue-600 text-white text-xs font-semibold">✓</span>');
-      }
-      for (let i = 0; i < remaining; i += 1) {
-        slots.push('<span class="h-6 w-6 rounded-full bg-gray-200"></span>');
-      }
-
-      indicator.className = 'mt-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-700';
-      indicator.innerHTML = `
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-2">${slots.join('')}</div>
-          <p class="text-sm">
-            <span class="font-semibold">${used}</span> of <span class="font-semibold">3</span> crop slots used ·
-            <span class="font-semibold">${remaining}</span> slot${remaining === 1 ? '' : 's'} remaining (${windowLabel})
-          </p>
-          <p class="text-xs text-emerald-800/80">Count includes archived records for data integrity.</p>
-        </div>
-      `;
-    }
-    indicator.classList.remove('hidden');
-  }
-
-  function onFieldChange() {
-    renderIndicatorFor(fieldSelect.value);
-  }
-
-  fieldSelect.addEventListener('change', onFieldChange);
-
-  // On page load if a field is already selected (e.g., re-render after validation error)
-  if (fieldSelect.value) {
-    renderIndicatorFor(fieldSelect.value);
-  }
-})();
-</script>
-
 <script>
 (function () {
   // Make the main field select searchable (create mode only)
