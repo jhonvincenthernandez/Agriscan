@@ -1532,8 +1532,13 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
             fields_qs = Field.objects.filter(is_active=True)
             plantings_qs = PlantingRecord.objects.filter(is_active=True)
 
-        # Real-time dashboard: exclude detections from harvested cycles.
-        detections_qs = detections_qs.exclude(planting__status='harvested')
+        excluded_statuses = ['harvested', 'failed', 'cancelled']
+
+        # Real-time dashboard: exclude detections from closed planting cycles.
+        detections_qs = detections_qs.exclude(planting__status__in=excluded_statuses)
+
+        # Real-time dashboard: exclude yield predictions from closed planting cycles.
+        yield_qs = yield_qs.exclude(planting__status__in=excluded_statuses)
 
         # Exclude model-rejected / unclassified scans from all dashboard counts
         classified_qs = detections_qs.exclude(
@@ -1561,7 +1566,7 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
         diseased_count = classified_qs.exclude(disease__name__icontains='healthy').count()
 
         try:
-            readiness_qs = yield_qs.exclude(planting__status='harvested')
+            readiness_qs = yield_qs
             harvest_ready_count = readiness_qs.filter(yield_readiness='harvest_ready').count()
             still_growing_count = readiness_qs.exclude(yield_readiness='harvest_ready').count()
         except (OperationalError, ProgrammingError):
