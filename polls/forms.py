@@ -140,11 +140,11 @@ class LeafScanForm(forms.Form):
             
             # BEST PRACTICE: Role-based access control
             if role in ['admin', 'technician']:
-                # Admin/Technician can see ALL active planting cycles
-                queryset = PlantingRecord.objects.filter(is_active=True)
+                # Admin/Technician can see ALL active, non-harvested/failed/cancelled cycles
+                queryset = PlantingRecord.objects.filter(is_active=True).exclude(status__in=['harvested', 'failed', 'cancelled'])
             else:
-                # Farmers see only their own active planting cycles
-                queryset = PlantingRecord.objects.filter(field__owner=user_profile, is_active=True)
+                # Farmers see only their own active, non-harvested/failed/cancelled cycles
+                queryset = PlantingRecord.objects.filter(field__owner=user_profile, is_active=True).exclude(status__in=['harvested', 'failed', 'cancelled'])
             
             self.fields['planting'].queryset = queryset.select_related(
                 'field', 
@@ -165,7 +165,7 @@ class LeafScanForm(forms.Form):
             # Fallback: show active-only (shouldn't happen with @login_required)
             self.fields['planting'].queryset = PlantingRecord.objects.filter(
                 is_active=True
-            ).select_related(
+            ).exclude(status__in=['harvested', 'failed', 'cancelled']).select_related(
                 'field', 'variety'
             ).order_by('-planting_date')
     
@@ -347,22 +347,22 @@ class YieldPredictionForm(forms.Form):
             if hasattr(user, 'profile'):
                 profile = user.profile
                 if profile.role == 'admin' or profile.role == 'technician':
-                    # Admin/tech see all plantings
-                    self.fields['planting'].queryset = PlantingRecord.objects.select_related(
-                        'field', 'variety', 'field__owner'
-                    ).order_by('-planting_date')
+                    # Admin/tech see active, non-harvested/failed/cancelled plantings
+                    self.fields['planting'].queryset = PlantingRecord.objects.exclude(
+                        status__in=['harvested', 'failed', 'cancelled']
+                    ).select_related('field', 'variety', 'field__owner').order_by('-planting_date')
                 else:
-                    # Farmers see only their plantings
+                    # Farmers see only their active, non-harvested/failed/cancelled plantings
                     self.fields['planting'].queryset = PlantingRecord.objects.filter(
                         field__owner=profile
-                    ).select_related('field', 'variety').order_by('-planting_date')
+                    ).exclude(status__in=['harvested', 'failed', 'cancelled']).select_related('field', 'variety').order_by('-planting_date')
             else:
                 self.fields['planting'].queryset = PlantingRecord.objects.none()
         else:
             from .models import PlantingRecord
-            self.fields['planting'].queryset = PlantingRecord.objects.all().select_related(
-                'field', 'variety'
-            ).order_by('-planting_date')
+            self.fields['planting'].queryset = PlantingRecord.objects.exclude(
+                status__in=['harvested', 'failed', 'cancelled']
+            ).select_related('field', 'variety').order_by('-planting_date')
     
     def clean(self):
         cleaned_data = super().clean()
