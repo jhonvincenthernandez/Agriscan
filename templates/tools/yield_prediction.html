@@ -342,6 +342,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  let lastHistoricalData = null;
+
   function syncYieldModelFields() {
     if (!modelSelect) {
       return;
@@ -370,6 +372,16 @@ document.addEventListener('DOMContentLoaded', function() {
       hintText.textContent = isCnn
         ? 'CNN Yield: Canopy Image, Area Planted, Planting Date, and Growth Duration are required. Variety and historical fields are hidden because they are not used by CNN prediction.'
         : 'Linear Regression: Area Planted, Variety, Planting Date, and Growth Duration are required. Historical and health fields improve accuracy; if missing, we use an estimated baseline from variety averages.';
+    }
+
+    const badge = document.getElementById('historical-source-badge');
+    if (badge) {
+      if (isCnn) {
+        badge.classList.add('hidden');
+        badge.innerHTML = '';
+      } else if (lastHistoricalData) {
+        handleHistoricalSourceBadge(lastHistoricalData);
+      }
     }
   }
 
@@ -909,6 +921,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function handleHistoricalSourceBadge(data) {
+      lastHistoricalData = data || null;
       const modelSelect = document.getElementById('id_selected_model');
       if (modelSelect && modelSelect.value === 'cnn_yield') {
         const badge = getOrCreateSourceBadge();
