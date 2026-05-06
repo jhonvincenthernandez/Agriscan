@@ -506,7 +506,9 @@ def yield_prediction(request):
                 if planting.variety:
                     initial_data['variety'] = planting.variety.code
                 if planting.field:
-                    initial_data['area'] = float(planting.field.area_hectares)
+                    area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+                    if area_value is not None:
+                        initial_data['area'] = float(area_value)
                 if planting.planting_date:
                     initial_data['planting_date'] = planting.planting_date
                     
@@ -525,10 +527,12 @@ def yield_prediction(request):
                 hist_record_count = int(hist.get('record_count', 0) or 0)
                 hist_yield = float(hist.get('historical_yield') or 0.0)
                 hist_prod = float(hist.get('historical_production') or 0.0)
+                formatted_hist_yield = f"{hist_yield:.2f}" if hist_yield else ""
+                formatted_hist_prod = f"{hist_prod:.2f}" if hist_prod else ""
                 has_baseline = hist_record_count > 0 or hist_yield > 0
                 if has_baseline:
-                    initial_data['historical_production_tons'] = hist_prod
-                    initial_data['historical_yield_tons_per_ha'] = hist_yield
+                    initial_data['historical_production_tons'] = formatted_hist_prod
+                    initial_data['historical_yield_tons_per_ha'] = formatted_hist_yield
                 else:
                     initial_data['historical_production_tons'] = ''
                     initial_data['historical_yield_tons_per_ha'] = ''
@@ -595,9 +599,10 @@ def yield_prediction(request):
                     # ── Pure planting-record path ──────────────────────────────
                     # Core prediction inputs come from the linked PlantingRecord.
                     hist = services.get_historical_yield_data(planting)
+                    area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
                     prediction_data = {
                         "variety": planting.variety.code,
-                        "field_area_ha": float(planting.field.area_hectares),
+                        "field_area_ha": float(area_value) if area_value is not None else 0.0,
                         "historical_production_tons": float(hist.get('historical_production') or 0.0),
                         "historical_yield_tons_per_ha": float(hist.get('historical_yield') or 0.0),
                         "planting_date": planting.planting_date,
@@ -636,7 +641,7 @@ def yield_prediction(request):
                         detection = None
 
                     variety_display = planting.variety.code
-                    area = float(planting.field.area_hectares)
+                    area = float(area_value) if area_value is not None else 0.0
 
                 else:
                     # ── Manual entry path (or manual-override with planting linked) ──
@@ -686,7 +691,8 @@ def yield_prediction(request):
                     # When use_manual_data=1, the user intentionally typed their own
                     # area value — respect it.
                     if not use_manual_data and detection and detection.planting and detection.planting.field:
-                        area = float(detection.planting.field.area_hectares)
+                        det_area = detection.planting.area_planted_ha if detection.planting.area_planted_ha is not None else detection.planting.field.area_hectares
+                        area = float(det_area) if det_area is not None else 0.0
                 
                 # BEST PRACTICE: Pass detection to predict_yield
                 # When use_manual_data=1 the user's typed values are already in
@@ -3882,9 +3888,10 @@ def api_planting_data(request, pk):
         
         hist = services.get_historical_yield_data(planting)
         record_count = int(hist.get('record_count', 0) or 0)
+        area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
         data = {
             'variety': planting.variety.code if planting.variety else '',
-            'area': float(planting.field.area_hectares),
+            'area': float(area_value) if area_value is not None else 0.0,
             'planting_date': planting.planting_date.strftime('%Y-%m-%d'),
             'growth_duration_days': growth_days,
             'field_name': planting.field.name,

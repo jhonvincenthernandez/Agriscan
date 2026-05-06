@@ -1184,8 +1184,8 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
             if self.expected_harvest_date <= self.planting_date:
                 raise ValidationError({'expected_harvest_date': 'Expected harvest date must be after planting date.'})
 
-        # Ensure planting date is not too far in the past (based on system setting)
-        if self.planting_date:
+        # Ensure planting/expected harvest dates are not too far in the past
+        if self.planting_date or self.expected_harvest_date:
             from . import services  # local import to avoid circular dependencies
 
             today = timezone.now().date()
@@ -1194,11 +1194,20 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
                 allowed_days = 0
 
             min_allowed_date = today - timezone.timedelta(days=allowed_days)
-            if self.planting_date < min_allowed_date:
+            if self.planting_date and self.planting_date < min_allowed_date:
                 raise ValidationError(
                     {
                         'planting_date': (
-                            'Planting date is too far in the past. ' 
+                            'Planting date is too far in the past. '
+                            f'Admin allows only up to {allowed_days} day(s) back from today.'
+                        )
+                    }
+                )
+            if self.expected_harvest_date and self.expected_harvest_date < min_allowed_date:
+                raise ValidationError(
+                    {
+                        'expected_harvest_date': (
+                            'Expected harvest date is too far in the past. '
                             f'Admin allows only up to {allowed_days} day(s) back from today.'
                         )
                     }
@@ -1257,6 +1266,17 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         # get_historical_yield_data(). The legacy PlantingRecord fields are no longer
         # used for historical yield calculations.
         super().save(*args, **kwargs)
+
+    def delete(self, using=None, keep_parents=False, hard=False):
+        """Soft-delete without full_clean to allow archiving historical records."""
+        if hard:
+            return super().delete(using=using, keep_parents=keep_parents, hard=True)
+
+        now = timezone.now()
+        if self.pk:
+            type(self).all_objects.filter(pk=self.pk).update(is_active=False, deleted_at=now)
+        self.is_active = False
+        self.deleted_at = now
 
     def __str__(self):
         variety_label = "Unknown Variety"

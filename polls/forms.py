@@ -225,10 +225,10 @@ class YieldPredictionForm(forms.Form):
         min_value=0.01,
         max_digits=7,
         decimal_places=2,
-        label="Field Area (hectares) *",
+        label="Area Planted (ha) *",
         widget=forms.NumberInput(attrs={"step": "0.01", "class": INPUT_CLASS}),
         required=False,
-        help_text="Size of the planted field"
+        help_text="Actual area planted (must be <= field size)"
     )
 
     historical_production_tons = forms.DecimalField(
@@ -1066,8 +1066,8 @@ class PlantingRecordForm(forms.ModelForm):
             if expected_harvest_date <= planting_date:
                 raise forms.ValidationError('Expected harvest date must be after the planting date.')
         
-        # Validate na hindi masyadong malayo sa nakaraan ang planting_date
-        if planting_date:
+        # Validate na hindi masyadong malayo sa nakaraan ang planting/harvest dates
+        if planting_date or expected_harvest_date:
             from django.utils import timezone
             from . import services
 
@@ -1081,10 +1081,18 @@ class PlantingRecordForm(forms.ModelForm):
 
             min_allowed_date = today - timezone.timedelta(days=allowed_days)
 
-            if planting_date < min_allowed_date:
+            if planting_date and planting_date < min_allowed_date:
                 raise forms.ValidationError(
                     f'Planting date is too far in the past. '
                     f'Currently, admin allows only up to {allowed_days} day(s) back from today.'
+                )
+            if expected_harvest_date and expected_harvest_date < min_allowed_date:
+                self.add_error(
+                    'expected_harvest_date',
+                    (
+                        'Expected harvest date is too far in the past. '
+                        f'Currently, admin allows only up to {allowed_days} day(s) back from today.'
+                    )
                 )
         
         # Ensure required selections are present (some fields are nullable in the database for legacy records)

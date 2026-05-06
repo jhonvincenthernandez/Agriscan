@@ -9,7 +9,7 @@
         <option value="">-- Select --</option>
         {% for obj in field.field.queryset %}
           {% with pid=obj.pk|stringformat:"s" val=field.value|stringformat:"s" %}
-            <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-cycle="{{ obj.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ obj.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" {% if pid == val %}selected{% endif %}>
+            <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-cycle="{{ obj.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ obj.area_planted_ha|default_if_none:obj.field.area_hectares|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" {% if pid == val %}selected{% endif %}>
               {{ obj.field.name }} — {% if obj.variety %}{{ obj.variety.code }}{% else %}No variety{% endif %} ({{ obj.season|default_if_none:''|capfirst }}, Cycle {{ obj.cropping_cycle|default_if_none:'?' }})
             </option>
           {% endwith %}

@@ -557,7 +557,8 @@ def get_historical_yield_data(planting) -> dict:
         if own_harvest.actual_yield_tons is not None:
             production = float(own_harvest.actual_yield_tons)
         else:
-            production = yield_avg * float(planting.field.area_hectares or 0)
+            area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+            production = yield_avg * float(area_value or 0)
         return {
             'historical_yield': yield_avg,
             'historical_production': production,
@@ -577,7 +578,8 @@ def get_historical_yield_data(planting) -> dict:
     field_same_season_avg = field_same_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
     if field_same_season_avg is not None:
         yield_avg = float(field_same_season_avg)
-        production = yield_avg * float(planting.field.area_hectares or 0)
+        area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+        production = yield_avg * float(area_value or 0)
         return {
             'historical_yield': yield_avg,
             'historical_production': production,
@@ -597,7 +599,8 @@ def get_historical_yield_data(planting) -> dict:
         field_any_season_avg = field_any_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
         if field_any_season_avg is not None:
             yield_avg = float(field_any_season_avg)
-            production = yield_avg * float(planting.field.area_hectares or 0)
+            area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+            production = yield_avg * float(area_value or 0)
             return {
                 'historical_yield': yield_avg,
                 'historical_production': production,
@@ -616,7 +619,8 @@ def get_historical_yield_data(planting) -> dict:
     variety_same_season_avg = variety_same_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
     if variety_same_season_avg is not None:
         yield_avg = float(variety_same_season_avg)
-        production = yield_avg * float(planting.field.area_hectares or 0)
+        area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+        production = yield_avg * float(area_value or 0)
         return {
             'historical_yield': yield_avg,
             'historical_production': production,
@@ -635,7 +639,8 @@ def get_historical_yield_data(planting) -> dict:
         variety_any_season_avg = variety_any_season_qs.aggregate(avg=Avg('yield_tons_per_ha'))['avg']
         if variety_any_season_avg is not None:
             yield_avg = float(variety_any_season_avg)
-            production = yield_avg * float(planting.field.area_hectares or 0)
+            area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+            production = yield_avg * float(area_value or 0)
             return {
                 'historical_yield': yield_avg,
                 'historical_production': production,
@@ -647,7 +652,8 @@ def get_historical_yield_data(planting) -> dict:
     # Fallback: variety default - typically stored on RiceVariety
     variety_yield = getattr(planting.variety, 'average_yield_t_ha', None)
     yield_avg = float(variety_yield or 0.0)
-    production = yield_avg * float(planting.field.area_hectares or 0)
+    area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+    production = yield_avg * float(area_value or 0)
     return {
         'historical_yield': yield_avg,
         'historical_production': production,
@@ -1218,7 +1224,8 @@ def predict_yield(
             if planting.variety:
                 features["variety"] = planting.variety.code
             if planting.field:
-                features["field_area_ha"] = float(planting.field.area_hectares)
+                area_value = planting.area_planted_ha if planting.area_planted_ha is not None else planting.field.area_hectares
+                features["field_area_ha"] = float(area_value or 0.0)
                 features["ecosystem_type"] = planting.field.ecosystem_type or ""
                 # Tagalog: Isama ang season (wet/dry) mula sa planting record.
                 # Ang season ay mahalagang categorical feature para sa model.
@@ -1375,7 +1382,7 @@ def store_yield_prediction(
         # Get area from planting if available
         area_dec = None
         if resolved_planting and resolved_planting.field:
-            area_dec = resolved_planting.field.area_hectares
+            area_dec = resolved_planting.area_planted_ha if resolved_planting.area_planted_ha is not None else resolved_planting.field.area_hectares
         elif form_data.get("area"):
             area = form_data.get("area")
             area_dec = Decimal(str(area)).quantize(Decimal("0.01"))

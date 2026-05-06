@@ -328,6 +328,7 @@
             id="id_expected_harvest_date"
             name="{{ form.expected_harvest_date.html_name }}"
             value="{% if form.expected_harvest_date.value %}{{ form.expected_harvest_date.value|date:'Y-m-d' }}{% endif %}"
+            data-allowed-past="{{ allowed_past_days_planting|default:30 }}"
             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
           />
           {% if form.expected_harvest_date.errors %}
@@ -656,9 +657,7 @@
     renderVarietyIndicator();
   });
 
-  // ── When PLANTING DATE changes ─────────────────────────────────────────────
-  // Forward compute: harvest = planting + growthDays
-  plantingInput.addEventListener('change', function () {
+  function handlePlantingChange() {
     if (lastAutoComputed === 'planting') {
       // This change was triggered by our own reverse-compute — skip to avoid loop
       lastAutoComputed = null;
@@ -673,11 +672,14 @@
     lastAutoComputed = 'harvest';
     showBadge('harvest', days, computed);
     renderVarietyIndicator();
-  });
+  }
 
-  // ── When HARVEST DATE changes ──────────────────────────────────────────────
-  // Reverse compute: planting = harvest - growthDays
-  harvestInput.addEventListener('change', function () {
+  // ── When PLANTING DATE changes ─────────────────────────────────────────────
+  // Forward compute: harvest = planting + growthDays
+  plantingInput.addEventListener('input', handlePlantingChange);
+  plantingInput.addEventListener('change', handlePlantingChange);
+
+  function handleHarvestChange() {
     if (lastAutoComputed === 'harvest') {
       // This change was triggered by our own forward-compute — skip to avoid loop
       lastAutoComputed = null;
@@ -692,7 +694,12 @@
     lastAutoComputed = 'planting';
     showBadge('planting', days, computed);
     renderVarietyIndicator();
-  });
+  }
+
+  // ── When HARVEST DATE changes ──────────────────────────────────────────────
+  // Reverse compute: planting = harvest - growthDays
+  harvestInput.addEventListener('input', handleHarvestChange);
+  harvestInput.addEventListener('change', handleHarvestChange);
 
   // ── On page load: if both dates exist (edit mode), show the info badge ─────
   (function initBadge() {
@@ -708,7 +715,8 @@
 <script>
 (function () {
   const plantingInput = document.getElementById('id_planting_date');
-  if (!plantingInput) return;
+  const expectedInput = document.getElementById('id_expected_harvest_date');
+  if (!plantingInput || !expectedInput) return;
 
   function toIsoDate(d) {
     const yyyy = d.getFullYear();
@@ -725,6 +733,7 @@
   minDateObj.setDate(minDateObj.getDate() - allowedPast);
 
   plantingInput.setAttribute('min', toIsoDate(minDateObj));
+  expectedInput.setAttribute('min', toIsoDate(minDateObj));
   // Prevent selecting a future date
   //plantingInput.setAttribute('max', toIsoDate(today));
 })();

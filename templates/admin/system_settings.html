@@ -464,7 +464,7 @@
       'Updating AI thresholds...',
       'Saving audit trail...',
     ];
-    const TIMINGS = [500, 900, 1400, 900, 800];
+    const TIMINGS = [200, 300, 400, 300, 200];
 
     // Hintayin muna ang full DOM para siguradong present na ang modal partial.
     document.addEventListener('DOMContentLoaded', function () {
@@ -473,6 +473,7 @@
       if (!form || !submitButton) return;
 
       let timers = [];
+      let longWaitTimer = null;
 
       function getModal() {
         // Lazy lookup: robust kahit magbago ang render order ng blocks.
@@ -545,6 +546,14 @@
 
         setStep(0);
 
+        // Fallback: if the server is slow, show a clear status so it doesn't feel stuck.
+        longWaitTimer = setTimeout(function () {
+          const statusEl = document.getElementById('system-settings-loader-status');
+          if (statusEl) {
+            statusEl.textContent = 'Still saving... This can take longer on slow disk or busy server.';
+          }
+        }, 4000);
+
         // Sequential timers para sa staged animation ng progress.
         let elapsed = TIMINGS[0];
         for (let i = 1; i < STEPS.length; i++) {
@@ -560,6 +569,10 @@
         const modal = getModal();
         timers.forEach(clearTimeout);
         timers = [];
+        if (longWaitTimer) {
+          clearTimeout(longWaitTimer);
+          longWaitTimer = null;
+        }
         if (modal) modal.style.display = 'none';
         document.body.classList.remove('loader-open');
         submitButton.disabled = false;
