@@ -1403,6 +1403,7 @@ def detections_list(request):
         "disease__name", "-disease__name",
         "planting__variety__code", "-planting__variety__code",
         "planting__field__name", "-planting__field__name",
+        "planting__status", "-planting__status",
     }
     if sort not in allowed_sorts:
         sort = "-severity_pct"

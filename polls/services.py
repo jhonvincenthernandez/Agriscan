@@ -1525,6 +1525,9 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
             fields_qs = Field.objects.filter(is_active=True)
             plantings_qs = PlantingRecord.objects.filter(is_active=True)
 
+        # Real-time dashboard: exclude detections from harvested cycles.
+        detections_qs = detections_qs.exclude(planting__status='harvested')
+
         # Exclude model-rejected / unclassified scans from all dashboard counts
         classified_qs = detections_qs.exclude(
             Q(disease__isnull=True) |
