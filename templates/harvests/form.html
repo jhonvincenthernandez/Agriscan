@@ -39,14 +39,14 @@
                   <select name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="{{ field.field.widget.attrs.class }}" data-searchable="true">
                     <option value="">-- Select --</option>
                     {% if form.instance.planting %}
-                      <option value="{{ form.instance.planting.pk }}" data-ecosystem-type="{{ form.instance.planting.ecosystem_type|default_if_none:'' }}" data-cycle="{{ form.instance.planting.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ form.instance.planting.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ form.instance.planting.planting_date|date:'Y-m-d' }}" {% if not current_value_str or current_value_str == instance_value %}selected{% endif %}>
+                      <option value="{{ form.instance.planting.pk }}" data-ecosystem-type="{{ form.instance.planting.ecosystem_type|default_if_none:'' }}" data-cycle="{{ form.instance.planting.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ form.instance.planting.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ form.instance.planting.planting_date|date:'Y-m-d' }}" data-grain-quality="{{ form.instance.planting.variety.grain_quality|default_if_none:'' }}" {% if not current_value_str or current_value_str == instance_value %}selected{% endif %}>
                         {{ form.instance.planting.field.name }} — {% if form.instance.planting.variety %}{{ form.instance.planting.variety.code }}{% else %}No variety{% endif %} ({{ form.instance.planting.season|default_if_none:''|capfirst }}, Cycle {{ form.instance.planting.cropping_cycle|default_if_none:'?' }})
                       </option>
                     {% endif %}
                     {% for obj in field.field.queryset %}
                       {% if not form.instance.planting or obj.pk != form.instance.planting.pk %}
                         {% with pid=obj.pk|stringformat:"s" %}
-                          <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-cycle="{{ obj.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ obj.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" {% if pid == current_value_str or pid == instance_value %}selected{% endif %}>
+                          <option value="{{ obj.pk }}" data-ecosystem-type="{{ obj.ecosystem_type|default_if_none:'' }}" data-cycle="{{ obj.cropping_cycle|default_if_none:'' }}" data-area-ha="{{ obj.field.area_ha|default_if_none:''|floatformat:2 }}" data-planting-date="{{ obj.planting_date|date:'Y-m-d' }}" data-grain-quality="{{ obj.variety.grain_quality|default_if_none:'' }}" {% if pid == current_value_str or pid == instance_value %}selected{% endif %}>
                             {{ obj.field.name }} — {% if obj.variety %}{{ obj.variety.code }}{% else %}No variety{% endif %} ({{ obj.season|default_if_none:''|capfirst }}, Cycle {{ obj.cropping_cycle|default_if_none:'?' }})
                           </option>
                         {% endwith %}
@@ -104,6 +104,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const yieldField = document.getElementById('id_yield_tons_per_ha');
   const actualField = document.getElementById('id_actual_yield_tons');
   const areaField = document.getElementById('id_area_harvested_ha');
+  const plantingField = document.getElementById('id_planting');
+  const grainQualityField = document.getElementById('id_grain_quality');
 
   function recalcYield() {
     if (!yieldField || !actualField || !areaField) return;
@@ -124,6 +126,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Trigger initial calculation on load
   recalcYield();
+
+  function syncGrainQualityFromPlanting() {
+    if (!plantingField || !grainQualityField) return;
+    const selected = plantingField.options[plantingField.selectedIndex];
+    const quality = selected && selected.dataset ? (selected.dataset.grainQuality || '') : '';
+    grainQualityField.value = quality;
+  }
+
+  if (plantingField) {
+    plantingField.addEventListener('change', syncGrainQualityFromPlanting);
+    syncGrainQualityFromPlanting();
+  }
 });
 </script>
 <script>

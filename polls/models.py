@@ -1440,14 +1440,6 @@ class HarvestRecord(SoftDeleteModel):
     - Ang `yield_tons_per_ha` ay awtomatikong kinakalkula mula sa ani at area.
     """
 
-    GRAIN_QUALITY_CHOICES = [
-        ('',               'Not assessed'),
-        ('premium',        'Premium'),
-        ('well_milled',    'Well Milled'),
-        ('regular_milled', 'Regular Milled'),
-        ('under_grade',    'Under Grade'),
-        ('other',          'Iba pa'),
-    ]
 
     planting = models.OneToOneField(
         'PlantingRecord',
@@ -1459,10 +1451,10 @@ class HarvestRecord(SoftDeleteModel):
     area_harvested_ha = models.DecimalField(max_digits=6, decimal_places=2)
     yield_tons_per_ha = models.DecimalField(max_digits=8, decimal_places=2, editable=False)
     grain_quality = models.CharField(
-        max_length=50,
-        choices=GRAIN_QUALITY_CHOICES,
+        max_length=100,
         null=True,
         blank=True,
+        help_text="Free-text grain quality (from variety or manual notes).",
     )
     notes = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(

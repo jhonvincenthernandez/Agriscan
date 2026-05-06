@@ -122,6 +122,16 @@ class LeafScanForm(forms.Form):
     
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        # Ensure grain_quality is a read-only text field (not a choices select).
+        self.fields['grain_quality'] = forms.CharField(
+            required=False,
+            label="Grain Quality",
+            widget=forms.TextInput(attrs={
+                "class": INPUT_CLASS + " bg-gray-50 cursor-not-allowed",
+                "readonly": "readonly",
+            }),
+        )
         from .models import PlantingRecord
         
         if user and hasattr(user, 'profile'):
@@ -519,6 +529,15 @@ class HarvestRecordForm(forms.ModelForm):
         widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "readonly": "readonly"}),
     )
 
+    grain_quality = forms.CharField(
+        required=False,
+        label="Grain Quality",
+        widget=forms.TextInput(attrs={
+            "class": INPUT_CLASS + " bg-gray-50 cursor-not-allowed",
+            "readonly": "readonly",
+        }),
+    )
+
     class Meta:
         model = HarvestRecord
         fields = [
@@ -543,7 +562,6 @@ class HarvestRecordForm(forms.ModelForm):
             "harvest_date": forms.DateInput(attrs={"type": "date", "class": INPUT_CLASS}),
             "actual_yield_tons": forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0"}),
             "area_harvested_ha": forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.01", "min": "0"}),
-            "grain_quality": forms.Select(attrs={"class": INPUT_CLASS}),
             "notes": forms.Textarea(attrs={"class": INPUT_CLASS + " resize-y", "rows": 3}),
         }
 
@@ -578,9 +596,16 @@ class HarvestRecordForm(forms.ModelForm):
             f"({obj.season.capitalize()}, Cycle {obj.cropping_cycle or '?'})"
         )
 
+        # Auto-fill grain quality from the selected planting's variety (read-only).
+        if self.instance and getattr(self.instance, 'planting', None) and self.instance.planting.variety:
+            self.fields['grain_quality'].initial = self.instance.planting.variety.grain_quality or ''
+
     def clean(self):
         cleaned = super().clean()
         planting = cleaned.get('planting')
+
+        if planting and planting.variety:
+            cleaned['grain_quality'] = planting.variety.grain_quality or ''
 
         # Allow editing an existing harvest record even if the planting already has one.
         # The `planting.harvest_record_id` is only validated when it's a different record.
