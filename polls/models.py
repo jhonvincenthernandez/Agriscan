@@ -1855,7 +1855,7 @@ class SeasonLog(SoftDeleteModel, TimeStampedModel):
 
     @property
     def season_label(self):
-        labels = {'dry': 'Dry Season', 'wet': 'Wet Season', '3rd': '3rd Crop'}
+        labels = {'dry': 'Dry Season', 'wet': 'Wet Season', '3rd': '3rd Season'}
         return f"{labels.get(self.season_type, self.season_type)} {self.season_year}"
 
     def __str__(self):

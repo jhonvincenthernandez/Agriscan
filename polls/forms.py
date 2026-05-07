@@ -2060,9 +2060,13 @@ class SeasonLogForm(forms.ModelForm):
         queryset=PlantingRecord.objects.none(),
         required=False,
         label='Link to Existing Planting (optional)',
-        empty_label='— Or fill manually below —',
-        widget=forms.Select(attrs={'class': _SELECT, 'id': 'id_planting_picker'}),
-        help_text='Selecting a planting auto-fills Field, Variety, and Dates below.',
+        widget=forms.Select(attrs={
+            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent',
+            'id': 'id_planting_picker',
+            'data-searchable': 'true',
+            'data-search-placeholder': 'Search and select a planting',
+        }),
+        help_text='Select a planting to auto-fill Season Year, Field, Variety, and Dates.',
     )
 
     class Meta:
@@ -2124,8 +2128,8 @@ class SeasonLogForm(forms.ModelForm):
             'variety':           'Rice Variety',
             'season_year':       'Season Year',
             'season_type':       'Season Type',
-            'date_started':      'Season Start Date',
-            'date_planted':      'Transplanting / Seeding Date',
+            'date_started':      'Planting Date',
+            'date_planted':      'Planting Date',
             'date_harvested':    'Harvest Date',
             'actual_yield_sacks':'Actual Harvest (sacks)',
             'price_per_sack':    'Selling Price / Sack (PHP)',
@@ -2133,8 +2137,31 @@ class SeasonLogForm(forms.ModelForm):
             'summary_notes':     'Season Notes',
         }
 
+    def _resolve_planting_source(self):
+        planting_id = None
+        if self.is_bound:
+            planting_id = self.data.get('planting') or None
+        elif self.initial.get('planting'):
+            planting_id = getattr(self.initial.get('planting'), 'pk', self.initial.get('planting'))
+        elif self.instance and getattr(self.instance, 'planting_id', None):
+            planting_id = self.instance.planting_id
+
+        if not planting_id:
+            return None
+
+        try:
+            return PlantingRecord.objects.select_related('field', 'variety').get(pk=planting_id)
+        except PlantingRecord.DoesNotExist:
+            return None
+
     def __init__(self, *args, owner_profile=None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['field'].empty_label = 'Select Field / Farm'
+        self.fields['variety'].empty_label = 'Select Rice Variety'
+        self.fields['season_type'].choices = [
+            ('dry', '☀️ Dry Season'),
+            ('wet', '🌧️ Wet Season'),
+        ]
         if owner_profile:
             self.fields['field'].queryset = Field.objects.filter(
                 owner=owner_profile, is_active=True
@@ -2153,10 +2180,43 @@ class SeasonLogForm(forms.ModelForm):
         self.fields['actual_yield_sacks'].required = False
         self.fields['price_per_sack'].required  = False
         self.fields['total_expenses'].required = False
+
+        planting = self._resolve_planting_source()
+        if planting:
+            planting_harvest_date = planting.actual_harvest_date or planting.expected_harvest_date
+            planting_year = planting.planting_date.year if planting.planting_date else None
+            planting_values = {
+                'field': planting.field_id,
+                'variety': planting.variety_id,
+                'season_year': planting_year,
+                'season_type': planting.season,
+                'date_started': planting.planting_date,
+                'date_planted': planting.planting_date,
+                'date_harvested': planting_harvest_date,
+            }
+            for field_name, value in planting_values.items():
+                self.fields[field_name].initial = value
+                self.fields[field_name].disabled = True
+
         # Default date_started to today if not already set (e.g. on create)
-        if not self.initial.get('date_started') and not self.data.get('date_started'):
+        if not planting and not self.initial.get('date_started') and not self.data.get('date_started'):
             from django.utils import timezone
             self.initial['date_started'] = timezone.localdate()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        planting = cleaned_data.get('planting') or self._resolve_planting_source()
+
+        if planting:
+            cleaned_data['field'] = planting.field
+            cleaned_data['variety'] = planting.variety
+            cleaned_data['season_year'] = planting.planting_date.year if planting.planting_date else cleaned_data.get('season_year')
+            cleaned_data['season_type'] = planting.season
+            cleaned_data['date_started'] = planting.planting_date
+            cleaned_data['date_planted'] = planting.planting_date
+            cleaned_data['date_harvested'] = planting.actual_harvest_date or planting.expected_harvest_date
+
+        return cleaned_data
 
 
 class FarmActivityForm(forms.ModelForm):

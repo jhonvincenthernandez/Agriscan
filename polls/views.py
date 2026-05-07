@@ -5272,9 +5272,18 @@ def _build_plantings_json(farmer):
     for p in qs:
         data[str(p.pk)] = {
             'field_id':      p.field_id,
+            'field_display':  str(p.field),
             'variety_id':    p.variety_id,
+            'variety_display': str(p.variety) if p.variety_id else '',
+            'planting_year': p.planting_date.year if p.planting_date else '',
+            'season':        p.season,
+            'season_display': p.get_season_display() if hasattr(p, 'get_season_display') else p.season,
+            'status':        p.status,
+            'status_display': p.get_status_display() if hasattr(p, 'get_status_display') else p.status,
+            'date_started':  p.planting_date.isoformat() if p.planting_date else '',
             'date_planted':  p.planting_date.isoformat() if p.planting_date else '',
-            'date_harvested': p.expected_harvest_date.isoformat() if p.expected_harvest_date else '',
+            'date_harvested': (p.actual_harvest_date or p.expected_harvest_date).isoformat()
+                              if (p.actual_harvest_date or p.expected_harvest_date) else '',
         }
     return json.dumps(data)
 

@@ -134,6 +134,41 @@
         {% endif %}
         {% endif %}
 
+        {% if is_create %}
+        <!-- Planting picker: auto-fills season year, field, variety, and dates -->
+        {% if form.planting.field.queryset.exists %}
+        <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <label class="block text-sm font-semibold text-blue-800 mb-1">
+            🔗 {{ form.planting.label }}
+          </label>
+          {{ form.planting }}
+          <div id="planting-summary" class="hidden mt-4 rounded-lg border border-blue-200 bg-white p-4 shadow-sm">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-700 mb-3">Linked Planting Summary</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div><span class="text-gray-500">Season</span><div id="summary-season" class="font-semibold text-gray-900"></div></div>
+              <div><span class="text-gray-500">Status</span><div id="summary-status" class="font-semibold text-gray-900"></div></div>
+              <div><span class="text-gray-500">Field</span><div id="summary-field" class="font-semibold text-gray-900"></div></div>
+              <div><span class="text-gray-500">Variety</span><div id="summary-variety" class="font-semibold text-gray-900"></div></div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <div class="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-start gap-3">
+          <svg class="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <p class="text-sm font-medium text-gray-600">No available planting records</p>
+            <p class="text-xs text-gray-500 mt-0.5">
+              All active plantings already have a season log, or no planting records exist yet.
+              Fill in the fields below manually, or
+              <a href="{% url 'polls:planting_create' %}" class="text-blue-600 hover:underline font-medium">create a planting record first</a>.
+            </p>
+          </div>
+        </div>
+        {% endif %}
+        {% endif %}
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.season_year.label }} <span class="text-red-500">*</span></label>
@@ -180,33 +215,6 @@
           <span class="text-blue-500">🌾</span> Field & Variety
         </h3>
 
-        {% if is_create %}
-        <!-- Planting picker: auto-fills field/variety/dates -->
-        {% if form.planting.field.queryset.exists %}
-        <div class="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <label class="block text-sm font-semibold text-blue-800 mb-1">
-            🔗 {{ form.planting.label }}
-          </label>
-          <p class="text-xs text-blue-600 mb-2">{{ form.planting.help_text }}</p>
-          {{ form.planting }}
-        </div>
-        {% else %}
-        <div class="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-start gap-3">
-          <svg class="h-5 w-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-          </svg>
-          <div>
-            <p class="text-sm font-medium text-gray-600">No available planting records</p>
-            <p class="text-xs text-gray-500 mt-0.5">
-              All active plantings already have a season log, or no planting records exist yet.
-              Fill in the fields below manually, or
-              <a href="{% url 'polls:planting_create' %}" class="text-blue-600 hover:underline font-medium">create a planting record first</a>.
-            </p>
-          </div>
-        </div>
-        {% endif %}
-        {% endif %}
-
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.field.label }} <span class="text-red-500">*</span></label>
@@ -224,16 +232,10 @@
         <h3 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
           <span class="text-orange-500">📆</span> Key Dates
         </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.date_started.label }} <span class="text-red-500">*</span></label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Planting Date <span class="text-red-500">*</span></label>
             {{ form.date_started }}
-            <p class="text-xs text-gray-400 mt-1">When did this season begin? (defaults to today)</p>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.date_planted.label }}</label>
-            {{ form.date_planted }}
-            <p class="text-xs text-gray-400 mt-1">Leave blank if not yet transplanted</p>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">{{ form.date_harvested.label }}</label>
@@ -241,6 +243,7 @@
             <p class="text-xs text-gray-400 mt-1">Fill after harvest</p>
           </div>
         </div>
+        {{ form.date_planted.as_hidden }}
       </div>
 
       <!-- Section 4: Harvest & Income (optional) -->
@@ -310,79 +313,106 @@
 
 </section>
 
-<!-- Searchable profile dropdown for admin/tech -->
 <script>
 (function () {
-  const profileSelect = document.getElementById('profile-select');
-  if (!profileSelect || profileSelect.dataset.searchable !== 'true') return;
+  const searchableSelects = Array.from(document.querySelectorAll('select[data-searchable="true"]'));
+  searchableSelects.forEach(function (select) {
+    if (select.dataset._searchableInit === '1') return;
+    select.dataset._searchableInit = '1';
 
-  const form           = profileSelect.closest('form');
-  const profileIdInput = document.getElementById('profile-id-input');
-  const changeFlag     = document.getElementById('change-owner-flag');
+    const wrapper = document.createElement('div');
+    wrapper.className = 'relative';
+    select.parentNode.insertBefore(wrapper, select);
 
-  /* ---- build searchable UI ---- */
-  const wrapper = document.createElement('div');
-  wrapper.className = 'relative';
-  profileSelect.parentNode.insertBefore(wrapper, profileSelect);
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.placeholder = select.dataset.searchPlaceholder || 'Type to search...';
+    input.className = select.className;
+    input.style.paddingRight = '2.5rem';
 
-  const searchInput = document.createElement('input');
-  searchInput.type        = 'text';
-  searchInput.placeholder = 'Type to search user...';
-  searchInput.className   = profileSelect.className;
-  searchInput.style.paddingRight = '2.5rem';
+    const icon = document.createElement('div');
+    icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
+    icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
 
-  const icon = document.createElement('div');
-  icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
-  icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
-
-  const options = Array.from(profileSelect.options);
-  const originalValue = profileSelect.value;
-  if (originalValue) {
-    const sel = options.find(o => o.value === originalValue);
-    if (sel) searchInput.value = sel.text.replace(/^\S+\s/, '').trim();
-  }
-
-  profileSelect.style.display = 'none';
-
-  const dropdown = document.createElement('div');
-  dropdown.className = 'absolute z-50 w-full mt-1 bg-white border border-blue-200 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
-
-  wrapper.appendChild(searchInput);
-  wrapper.appendChild(icon);
-  wrapper.appendChild(profileSelect);
-  wrapper.appendChild(dropdown);
-
-  function filterOptions(term) {
-    dropdown.innerHTML = '';
-    const t = term.toLowerCase();
-    const filtered = options.filter(o => o.value && o.text.toLowerCase().includes(t));
-    if (filtered.length === 0) {
-      dropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No matches found</div>';
+    const options = Array.from(select.options);
+    const selectedOption = options.find(function (option) { return option.value === select.value; });
+    // Only set input value when a real option (non-empty) is selected;
+    // otherwise leave the input blank so the placeholder shows.
+    if (selectedOption && select.value) {
+      input.value = selectedOption.text;
     } else {
-      filtered.forEach(function (opt) {
-        const div = document.createElement('div');
-        div.className     = 'px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm';
-        div.textContent   = opt.text;
-        div.dataset.value = opt.value;
-        div.addEventListener('click', function () {
-          searchInput.value = this.textContent.replace(/^\S+\s/, '').trim();
-          dropdown.classList.add('hidden');
-          /* set hidden inputs then submit to reload fields */
-          if (profileIdInput) profileIdInput.value = this.dataset.value;
-          if (changeFlag)     changeFlag.value     = '1';
-          form.submit();
-        });
-        dropdown.appendChild(div);
-      });
+      input.value = '';
     }
-    dropdown.classList.remove('hidden');
-  }
 
-  searchInput.addEventListener('focus', function () { filterOptions(this.value); });
-  searchInput.addEventListener('input', function () { filterOptions(this.value); });
-  document.addEventListener('click', function (e) {
-    if (!wrapper.contains(e.target)) dropdown.classList.add('hidden');
+    select.style.display = 'none';
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
+
+    wrapper.appendChild(input);
+    wrapper.appendChild(icon);
+    wrapper.appendChild(select);
+    wrapper.appendChild(dropdown);
+
+    function filterOptions(term) {
+      dropdown.innerHTML = '';
+      const searchTerm = term.trim().toLowerCase();
+      const filtered = options.filter(function (option) {
+        return option.value && option.text.toLowerCase().includes(searchTerm);
+      });
+
+      if (!filtered.length) {
+        const empty = document.createElement('div');
+        empty.className = 'px-4 py-2 text-gray-500 text-sm';
+        empty.textContent = 'No matches found';
+        dropdown.appendChild(empty);
+      } else {
+        filtered.forEach(function (option) {
+          const item = document.createElement('div');
+          item.className = 'px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm';
+          item.textContent = option.text;
+          item.dataset.value = option.value;
+          item.addEventListener('click', function () {
+            select.value = this.dataset.value;
+            input.value = this.textContent;
+            dropdown.classList.add('hidden');
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+          dropdown.appendChild(item);
+        });
+      }
+
+      dropdown.classList.remove('hidden');
+    }
+
+    input.addEventListener('focus', function () {
+      filterOptions(this.value);
+    });
+    input.addEventListener('input', function () {
+      filterOptions(this.value);
+    });
+    select.addEventListener('change', function () {
+      const selected = options.find(function (option) { return option.value === select.value; });
+      input.value = selected ? selected.text : '';
+    });
+    document.addEventListener('click', function (event) {
+      if (!wrapper.contains(event.target)) dropdown.classList.add('hidden');
+    });
   });
+
+  const profileSelect = document.getElementById('profile-select');
+  if (profileSelect) {
+    const form = profileSelect.closest('form');
+    const profileIdInput = document.getElementById('profile-id-input');
+    const changeFlag = document.getElementById('change-owner-flag');
+
+    profileSelect.addEventListener('change', function () {
+      if (!this.value) return;
+      if (profileIdInput) profileIdInput.value = this.value;
+      if (changeFlag) changeFlag.value = '1';
+      if (form) form.submit();
+    });
+  }
 })();
 </script>
 
@@ -392,22 +422,63 @@
   const PLANTINGS = {{ plantings_json|safe }};
 
   const picker   = document.getElementById('id_planting_picker');
+  const yearField = document.getElementById('id_season_year');
   const fldField = document.getElementById('id_field');
   const varField = document.getElementById('id_variety');
+  const seasonField = document.getElementById('id_season_type');
+  const startField = document.getElementById('id_date_started');
   const dtPlant  = document.getElementById('id_date_planted');
   const dtHarv   = document.getElementById('id_date_harvested');
+  const summary  = document.getElementById('planting-summary');
+  const summarySeason = document.getElementById('summary-season');
+  const summaryStatus = document.getElementById('summary-status');
+  const summaryField = document.getElementById('summary-field');
+  const summaryVariety = document.getElementById('summary-variety');
+
+  const syncFields = function (data) {
+    const hasPlanting = !!data;
+    const setValue = function (el, value) {
+      if (!el) return;
+      el.value = value || '';
+      el.disabled = hasPlanting;
+    };
+
+    if (summary) {
+      if (hasPlanting) {
+        summary.classList.remove('hidden');
+        if (summarySeason) summarySeason.textContent = data.season_display || data.season || '';
+        if (summaryStatus) summaryStatus.textContent = data.status_display || data.status || '';
+        if (summaryField) summaryField.textContent = data.field_display || '';
+        if (summaryVariety) summaryVariety.textContent = data.variety_display || '';
+      } else {
+        summary.classList.add('hidden');
+      }
+    }
+
+    if (!hasPlanting) {
+      [yearField, fldField, varField, seasonField, startField, dtPlant, dtHarv].forEach(function (el) {
+        if (el) el.disabled = false;
+      });
+      return;
+    }
+
+    setValue(yearField, data.planting_year);
+    setValue(fldField, data.field_id);
+    setValue(varField, data.variety_id);
+    setValue(seasonField, data.season);
+    setValue(startField, data.date_started);
+    setValue(dtPlant, data.date_planted);
+    setValue(dtHarv, data.date_harvested);
+  };
 
   if (!picker) return;
+
+  syncFields(PLANTINGS[picker.value] || null);
 
   picker.addEventListener('change', function () {
     const pk   = this.value;
     const data = PLANTINGS[pk];
-    if (!data) return; // "— fill manually —" selected
-
-    if (fldField && data.field_id)    fldField.value = data.field_id;
-    if (varField && data.variety_id)  varField.value = data.variety_id;
-    if (dtPlant  && data.date_planted)  dtPlant.value  = data.date_planted;
-    if (dtHarv   && data.date_harvested) dtHarv.value  = data.date_harvested;
+    syncFields(data || null);
   });
 })();
 </script>
