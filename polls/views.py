@@ -893,8 +893,6 @@ def reports(request):
     total_detections = detection_total_qs.count()
     healthy_count    = detection_total_qs.filter(disease__name__iexact='healthy').count()
     diseased_count   = total_detections - healthy_count
-    high_confidence  = detection_total_qs.filter(confidence_pct__gte=80).count()
-    confidence_rate  = round((high_confidence / total_detections * 100) if total_detections > 0 else 0, 1)
 
     # Disease frequency ranking (top 10 — exclude healthy, unknown/not-rice, and null disease)
     _EXCLUDE_FROM_DISEASE_FREQ = ['healthy', 'unknown/not rice', 'unknown']
@@ -939,7 +937,6 @@ def reports(request):
         'disease_freq': disease_freq,
         'unclassified_count': unclassified_count,
         'model_accuracy': model_accuracy,
-        'confidence_rate': confidence_rate,
         'total_detections': total_detections,
         'total_yields': yield_qs.count(),
         'healthy_count': healthy_count,
@@ -997,8 +994,6 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
     total_detections   = detection_qs.count()
     healthy_count      = detection_qs.filter(disease__name__iexact='healthy').count()
     diseased_count     = total_detections - healthy_count
-    high_conf_count    = detection_qs.filter(confidence_pct__gte=80).count()
-    confidence_rate    = round((high_conf_count / total_detections * 100) if total_detections else 0, 1)
 
     total_yields       = yield_qs.count()
     avg_yield_val      = yield_qs.aggregate(v=Avg('predicted_sacks_per_ha'))['v']
@@ -1090,8 +1085,6 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
             w.writerow(['Total Detections', total_detections])
             w.writerow(['Healthy Crops', healthy_count])
             w.writerow(['Diseased Crops', diseased_count])
-            w.writerow([f'High Confidence (>=80%)', high_conf_count])
-            w.writerow(['Confidence Rate (%)', confidence_rate])
             w.writerow(['CNN Model Accuracy (%)', model_accuracy])
             w.writerow([])
 
@@ -1231,8 +1224,6 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
                 ['Total Detections',              str(total_detections)],
                 ['  Healthy Crops',               str(healthy_count)],
                 ['  Diseased Crops',              str(diseased_count)],
-                [f'  High Confidence (>=80%)',    str(high_conf_count)],
-                ['Confidence Rate',               f'{confidence_rate}%'],
                 ['CNN Model Accuracy',            f'{model_accuracy}%'],
                 ['Total Yield Predictions',       str(total_yields)],
                 ['Average Predicted Yield (sacks/ha)', str(avg_yield)],
