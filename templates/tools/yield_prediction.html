@@ -1089,6 +1089,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('yield-prediction-form');
     if (form) {
         form.addEventListener('submit', function() {
+            // Start yield loader
+            if (typeof YieldLoader !== 'undefined') {
+                YieldLoader.start();
+            }
+            
             // Ibalik ang readonly fields para masend sa server
             form.querySelectorAll('input[readonly]').forEach(f => f.readOnly = false);
             // Ibalik ang disabled fields para masend sa server
@@ -1097,5 +1102,108 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 });
+
+/* ============================================================
+   YieldLoader — staged AI progress modal for yield prediction
+   ============================================================ */
+const YieldLoader = (() => {
+  const STEPS = [
+    'Uploading data…',
+    'Preprocessing input…',
+    'Running yield model…',
+    'Calculating estimates…',
+    'Generating report…',
+  ];
+  const TIMINGS = [500, 900, 3200, 1400, 900];
+
+  let _timers = [];
+  let _currentStep = -1;
+
+  function _getEl(id) { return document.getElementById(id); }
+
+  function _setStep(index) {
+    const stepEls = document.querySelectorAll('#yield-steps .yield-step');
+
+    stepEls.forEach((el, i) => {
+      el.classList.remove('is-active', 'is-done');
+      const iconEl  = el.querySelector('.yield-step-icon');
+      const labelEl = el.querySelector('.yield-step-label');
+
+      if (i < index) {
+        el.classList.add('is-done');
+        if (iconEl) {
+          iconEl.style.borderColor  = '#16a34a';
+          iconEl.style.background   = '#16a34a';
+          iconEl.innerHTML = `<svg class="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+          </svg>`;
+        }
+        if (labelEl) { labelEl.style.color = '#16a34a'; labelEl.style.fontWeight = '600'; }
+
+      } else if (i === index) {
+        el.classList.add('is-active');
+        if (iconEl) {
+          iconEl.style.borderColor  = '#22c55e';
+          iconEl.style.background   = '#f0fdf4';
+          iconEl.style.boxShadow    = '0 0 0 3px rgba(34,197,94,.2)';
+          iconEl.innerHTML = `<span style="
+            display:inline-block;width:14px;height:14px;border-radius:50%;
+            border:2px solid #22c55e;border-top-color:transparent;
+            animation:step-spin .75s linear infinite;"></span>`;
+        }
+        if (labelEl) { labelEl.style.color = '#15803d'; labelEl.style.fontWeight = '600'; }
+
+      } else {
+        if (iconEl) {
+          iconEl.style.borderColor = '#d1d5db';
+          iconEl.style.background  = '#f9fafb';
+          iconEl.style.boxShadow   = '';
+          const svg = iconEl.querySelector('svg');
+          if (svg) svg.style.color = '#d1d5db';
+        }
+        if (labelEl) { labelEl.style.color = '#9ca3af'; labelEl.style.fontWeight = '500'; }
+      }
+    });
+
+    const statusEl = _getEl('loader-status-yield');
+    if (statusEl && STEPS[index]) {
+      statusEl.textContent = `Step ${index + 1} of ${STEPS.length}: ${STEPS[index]}`;
+    }
+
+    _currentStep = index;
+  }
+
+  function start() {
+    const modal = _getEl('ai-yield-loader');
+    if (!modal) return;
+
+    modal.style.display = 'flex';
+    _setStep(0);
+
+    _timers.forEach(timer => clearTimeout(timer));
+    _timers = [];
+
+    let elapsed = 0;
+    STEPS.forEach((step, i) => {
+      const timer = setTimeout(() => _setStep(i), elapsed);
+      _timers.push(timer);
+      elapsed += TIMINGS[i];
+    });
+  }
+
+  function stop() {
+    const modal = _getEl('ai-yield-loader');
+    if (modal) modal.style.display = 'none';
+    _timers.forEach(timer => clearTimeout(timer));
+    _timers = [];
+    _currentStep = -1;
+  }
+
+  return { start, stop };
+})();
 </script>
+{% endblock %}
+
+{% block modals %}
+{% include 'partials/_ai_yield_loader.html' %}
 {% endblock %}
