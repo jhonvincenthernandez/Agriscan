@@ -27,10 +27,15 @@
     nav, header, footer,
     button, .no-print,
     input[type="checkbox"], input[type="radio"],
-    [data-loading], form,
+    [data-loading], form:not(.printable),
     #global-export-modal,
     #global-delete-modal,
     #logout-modal { display: none !important; }
+
+    /* Hide action buttons and links globally */
+    a[data-open-delete], a[data-open-bulk-archive],
+    button[data-open-delete], button[data-open-bulk-archive],
+    [class*="action-"] { display: none !important; }
 
     /* Allow marked sidebars to appear in printed reports */
     aside:not(.printable) { display: none !important; }

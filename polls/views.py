@@ -2168,6 +2168,154 @@ def export_yields_pdf(request):
     return response
 
 
+@login_required(login_url=reverse_lazy('polls:login'))
+def export_harvests_csv(request):
+    user_profile = getattr(request.user, 'profile', None)
+    if not user_profile:
+        messages.error(request, "Profile not found.")
+        return redirect('polls:dashboard')
+
+    from datetime import datetime as _dt
+    ALL_COLS = ['id', 'date', 'variety', 'field', 'yield_tons_per_ha', 'area', 'total_tons', 'harvest_date', 'quality', 'notes']
+    selected_cols = set(request.GET.getlist('cols')) or set(ALL_COLS)
+
+    # Optional date range
+    start_str = request.GET.get('start_date', '')
+    end_str   = request.GET.get('end_date', '')
+    try:
+        start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
+        end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
+    except Exception:
+        start_dt = end_dt = None
+
+    records_qs = HarvestRecord.objects.filter(is_active=True).select_related('planting__field', 'planting__variety').order_by('-harvest_date')
+    records_qs = filter_queryset_by_role(request, records_qs, user_field='planting__field__owner')
+    if start_dt and end_dt:
+        records_qs = records_qs.filter(harvest_date__gte=start_dt, harvest_date__lte=end_dt)
+    total = records_qs.count()
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    date_tag = f'{start_str}_to_{end_str}' if start_str and end_str else timezone.now().strftime('%Y%m%d_%H%M%S')
+    response['Content-Disposition'] = f'attachment; filename="harvest_records_{date_tag}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['AgriScan+ Harvest Records'])
+    writer.writerow(['Generated',   timezone.now().strftime('%Y-%m-%d %H:%M:%S')])
+    writer.writerow(['Exported By', request.user.get_full_name() or request.user.username])
+    if start_str and end_str:
+        writer.writerow(['Date Range', f'{start_str} to {end_str}'])
+    writer.writerow(['Total Records', total])
+    writer.writerow([])
+
+    COL_LABELS = {
+        'id': 'ID', 'date': 'Date', 'variety': 'Variety', 'field': 'Field',
+        'yield_tons_per_ha': 'Yield (t/ha)', 'area': 'Area (ha)', 'total_tons': 'Total Tons',
+        'harvest_date': 'Harvest Date', 'quality': 'Grain Quality', 'notes': 'Notes',
+    }
+    writer.writerow([COL_LABELS[c] for c in ALL_COLS if c in selected_cols])
+
+    for rec in records_qs:
+        variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
+        field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
+        row_map = {
+            'id': rec.pk,
+            'date': rec.created_at.strftime('%Y-%m-%d %H:%M') if getattr(rec, 'created_at', None) else '',
+            'variety': variety,
+            'field': field,
+            'yield_tons_per_ha': rec.yield_tons_per_ha or '',
+            'area': rec.area_harvested_ha or '',
+            'total_tons': rec.actual_yield_tons or '',
+            'harvest_date': rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '',
+            'quality': rec.grain_quality or '',
+            'notes': rec.notes or '',
+        }
+        writer.writerow([row_map[c] for c in ALL_COLS if c in selected_cols])
+
+    return response
+
+
+@login_required(login_url=reverse_lazy('polls:login'))
+def export_harvests_pdf(request):
+    user_profile = getattr(request.user, 'profile', None)
+    if not user_profile:
+        messages.error(request, "Profile not found.")
+        return redirect('polls:dashboard')
+
+    from datetime import datetime as _dt
+    start_str = request.GET.get('start_date', '')
+    end_str   = request.GET.get('end_date', '')
+    try:
+        start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
+        end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
+    except Exception:
+        start_dt = end_dt = None
+
+    records_qs = HarvestRecord.objects.filter(is_active=True).select_related('planting__field', 'planting__variety').order_by('-harvest_date')
+    records_qs = filter_queryset_by_role(request, records_qs, user_field='planting__field__owner')
+    if start_dt and end_dt:
+        records_qs = records_qs.filter(harvest_date__gte=start_dt, harvest_date__lte=end_dt)
+    records = list(records_qs)
+    total = len(records)
+
+    BLUE  = colors.HexColor('#1e40af')
+    LGRAY = colors.HexColor('#f3f4f6')
+
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
+    styles = getSampleStyleSheet()
+    elems = []
+
+    elems.append(Paragraph('<b>AgriScan+ Harvest Records</b>', styles['Title']))
+    cover_line = (
+        f'Generated: {timezone.now().strftime("%B %d, %Y %H:%M")} &nbsp;|&nbsp; '
+        f'By: {request.user.get_full_name() or request.user.username} &nbsp;|&nbsp; '
+        f'Total: {total} records'
+    )
+    if start_str and end_str:
+        cover_line += f' &nbsp;|&nbsp; Date Range: {start_str} to {end_str}'
+    elems.append(Paragraph(cover_line, styles['Normal']))
+    elems.append(Spacer(1, 0.3*inch))
+
+    data = [['ID', 'Date', 'Variety', 'Field', 'Yield (t/ha)', 'Area (ha)', 'Total Tons', 'Harvest Date', 'Quality']]
+    for rec in records:
+        variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
+        field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
+        data.append([
+            str(rec.pk),
+            rec.created_at.strftime('%Y-%m-%d') if getattr(rec, 'created_at', None) else '-',
+            variety[:16],
+            field[:20],
+            str(rec.yield_tons_per_ha or '-'),
+            str(rec.area_harvested_ha or '-'),
+            str(rec.actual_yield_tons or '-'),
+            rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '-',
+            (rec.grain_quality or '-')[:18],
+        ])
+
+    table = Table(data, colWidths=[0.55*inch, 1.05*inch, 1.0*inch, 1.55*inch, 1.0*inch, 0.9*inch, 0.9*inch, 1.05*inch, 1.1*inch])
+    table.setStyle(TableStyle([
+        ('BACKGROUND',     (0, 0), (-1, 0), BLUE),
+        ('TEXTCOLOR',      (0, 0), (-1, 0), colors.white),
+        ('FONTNAME',       (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE',       (0, 0), (-1, 0), 9),
+        ('FONTSIZE',       (0, 1), (-1, -1), 8),
+        ('ALIGN',          (0, 0), (-1, -1), 'LEFT'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, LGRAY]),
+        ('GRID',           (0, 0), (-1, -1), 0.4, colors.HexColor('#d1d5db')),
+        ('TOPPADDING',     (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING',  (0, 0), (-1, -1), 4),
+        ('LEFTPADDING',    (0, 0), (-1, -1), 6),
+    ]))
+    elems.append(table)
+
+    doc.build(elems)
+    buffer.seek(0)
+    fname = f'harvest_report_{timezone.now().strftime("%Y%m%d_%H%M%S")}.pdf'
+    response = HttpResponse(buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{fname}"'
+    return response
+
+
 # ============================================================================
 # FIELD MANAGEMENT VIEWS
 # ============================================================================

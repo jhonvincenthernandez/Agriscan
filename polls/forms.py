@@ -2059,7 +2059,7 @@ class SeasonLogForm(forms.ModelForm):
     planting = forms.ModelChoiceField(
         queryset=PlantingRecord.objects.none(),
         required=False,
-        label='Link to Existing Planting (optional)',
+        label='Link to Existing Planting ',
         widget=forms.Select(attrs={
             'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent',
             'id': 'id_planting_picker',
@@ -2167,10 +2167,20 @@ class SeasonLogForm(forms.ModelForm):
                 owner=owner_profile, is_active=True
             ).order_by('name')
             # Only show plantings that: belong to profile's fields, are active,
-            # and do NOT already have a season log linked
-            self.fields['planting'].queryset = PlantingRecord.objects.filter(
-                field__owner=owner_profile, is_active=True, season_log__isnull=True
-            ).select_related('field', 'variety').order_by('-planting_date')
+            # do NOT already have a season log linked, and are not finished/void cycles.
+            qs = PlantingRecord.objects.filter(
+                field__owner=owner_profile,
+                is_active=True,
+                season_log__isnull=True,
+            ).exclude(status__in=['harvested', 'failed', 'cancelled'])
+
+            instance_planting_id = getattr(getattr(self, 'instance', None), 'planting_id', None)
+            if instance_planting_id:
+                qs = PlantingRecord.objects.filter(pk=instance_planting_id) | qs
+
+            self.fields['planting'].queryset = qs.select_related('field', 'variety').order_by('-planting_date')
+        else:
+            self.fields['planting'].queryset = PlantingRecord.objects.none()
         self.fields['variety'].queryset = RiceVariety.objects.filter(
             is_active=True
         ).order_by('name')

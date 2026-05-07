@@ -2,6 +2,17 @@
 {% block title %}Harvest Records · AgriScan+{% endblock %}
 
 {% block content %}
+
+<!-- Print-only header -->
+<div id="print-header" style="display:none" class="mb-4 border-b pb-3">
+  <h1 class="text-xl font-bold text-gray-900">AgriScan+ · Harvest Records</h1>
+  <p class="text-sm text-gray-500 mt-1">
+    Printed on <span id="print-date"></span>
+    {% if request.GET.search or request.GET.season or request.GET.variety or request.GET.year %}
+     · Filtered view{% endif %}
+  </p>
+</div>
+
 <section class="page-container">
   <!-- Page Header -->
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
@@ -21,6 +32,17 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
           <span class="text-sm font-semibold text-yellow-700">{{ total_count }} Record{{ total_count|pluralize }}</span>
+        </div>
+        <button onclick="handlePagePrint()" class="no-print inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium text-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+          Print
+        </button>
+        <div class="relative">
+          <button onclick="openHarvestExportModal()" class="no-print flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium text-sm">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            Export
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+          </button>
         </div>
         <a href="{% url 'polls:harvest_create' %}" class="no-print inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition shadow-sm">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,7 +120,7 @@
   </div>
 
   {% if records %}
-    <form method="post" action="{% url 'polls:harvests_bulk_archive' %}" id="harvest-bulk-form">
+    <form method="post" action="{% url 'polls:harvests_bulk_archive' %}" id="harvest-bulk-form" class="printable">
       {% csrf_token %}
       <input type="hidden" name="_next" value="{{ request.get_full_path }}">
 
@@ -132,14 +154,50 @@
                 <th class="px-4 py-3 w-8 no-print">
                   <input type="checkbox" id="select-all-cb" class="h-4 w-4 rounded border-gray-300 text-amber-600 cursor-pointer" title="Select all on this page">
                 </th>
-                <th class="px-4 py-3">ID</th>
-                <th class="px-4 py-3">Field</th>
-                <th class="px-4 py-3">Variety</th>
-                <th class="px-4 py-3">Season</th>
-                <th class="px-4 py-3">Harvest Date</th>
-                <th class="px-4 py-3">Yield (t/ha)</th>
+                <th class="px-4 py-3 whitespace-nowrap">
+                  <a href="?sort={% if sort_by == 'pk' %}-pk{% else %}pk{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
+                    ID
+                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'pk' or sort_by == '-pk' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                      {% if sort_by == 'pk' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+                  </a>
+                </th>
+                <th class="px-4 py-3 whitespace-nowrap">
+                  <a href="?sort={% if sort_by == 'planting__field__name' %}-planting__field__name{% else %}planting__field__name{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
+                    Field
+                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'planting__field__name' or sort_by == '-planting__field__name' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                      {% if sort_by == 'planting__field__name' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+                  </a>
+                </th>
+                <th class="px-4 py-3 whitespace-nowrap">
+                  <a href="?sort={% if sort_by == 'planting__variety__code' %}-planting__variety__code{% else %}planting__variety__code{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
+                    Variety
+                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'planting__variety__code' or sort_by == '-planting__variety__code' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                      {% if sort_by == 'planting__variety__code' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+                  </a>
+                </th>
+                <th class="px-4 py-3 whitespace-nowrap">
+                  <a href="?sort={% if sort_by == 'planting__season' %}-planting__season{% else %}planting__season{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
+                    Season
+                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'planting__season' or sort_by == '-planting__season' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                      {% if sort_by == 'planting__season' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+                  </a>
+                </th>
+                <th class="px-4 py-3 whitespace-nowrap">
+                  <a href="?sort={% if sort_by == '-harvest_date' %}harvest_date{% else %}-harvest_date{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
+                    Harvest Date
+                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'harvest_date' or sort_by == '-harvest_date' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                      {% if sort_by == '-harvest_date' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+                  </a>
+                </th>
+                <th class="px-4 py-3 whitespace-nowrap">
+                  <a href="?sort={% if sort_by == '-yield_tons_per_ha' %}yield_tons_per_ha{% else %}-yield_tons_per_ha{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
+                    Yield (t/ha)
+                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'yield_tons_per_ha' or sort_by == '-yield_tons_per_ha' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
+                      {% if sort_by == '-yield_tons_per_ha' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+                  </a>
+                </th>
                 <th class="px-4 py-3">Quality</th>
-                <th class="px-4 py-3">Actions</th>
+                <th class="px-4 py-3 no-print">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -167,7 +225,7 @@
                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">{{ r.grain_quality|default:'Not assessed' }}</span>
                   {% endif %}
                 </td>
-                <td class="px-4 py-3 text-sm text-gray-700 space-x-1">
+                <td class="px-4 py-3 text-sm text-gray-700 space-x-1 no-print">
                   <a href="{% url 'polls:harvest_edit' r.pk %}" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-xs font-medium">
                     Edit
                   </a>
@@ -248,4 +306,28 @@
   {% endif %}
 </section>
 {% include 'partials/_ctrlk.html' with input_id='harvest-search' %}
+{% endblock %}
+
+{% block modals %}
+<script>
+function openHarvestExportModal() {
+  openExportModal({
+    title: 'Export Harvest Records',
+    csvUrl: '{% url "polls:export_harvests_csv" %}',
+    pdfUrl: '{% url "polls:export_harvests_pdf" %}',
+    cols: [
+      { value: 'id', label: 'ID' },
+      { value: 'date', label: 'Created' },
+      { value: 'variety', label: 'Variety' },
+      { value: 'field', label: 'Field' },
+      { value: 'yield_tons_per_ha', label: 'Yield (t/ha)' },
+      { value: 'area', label: 'Area (ha)' },
+      { value: 'total_tons', label: 'Total Tons' },
+      { value: 'harvest_date', label: 'Harvest Date' },
+      { value: 'quality', label: 'Grain Quality' },
+      { value: 'notes', label: 'Notes' },
+    ],
+  });
+}
+</script>
 {% endblock %}

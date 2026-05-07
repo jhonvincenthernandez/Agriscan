@@ -45,6 +45,8 @@ urlpatterns = [
     path('detections/export/pdf/', views.export_detections_pdf, name='export_detections_pdf'),
     path('yield-records/export/csv/', views.export_yields_csv, name='export_yields_csv'),
     path('yield-records/export/pdf/', views.export_yields_pdf, name='export_yields_pdf'),
+    path('harvests/export/csv/', views.export_harvests_csv, name='export_harvests_csv'),
+    path('harvests/export/pdf/', views.export_harvests_pdf, name='export_harvests_pdf'),
     
     # ============================================================================
     # FIELD MANAGEMENT
