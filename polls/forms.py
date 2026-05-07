@@ -631,8 +631,37 @@ class RegistrationForm(UserCreationForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["password1"].widget.attrs.update({"class": INPUT_CLASS})
-        self.fields["password2"].widget.attrs.update({"class": INPUT_CLASS})
+        auth_input_class = "auth-input"
+        self.fields["username"].widget.attrs.update(
+            {
+                "class": auth_input_class,
+                "placeholder": "Choose a username",
+                "autocomplete": "username",
+                "autocapitalize": "none",
+            }
+        )
+        self.fields["email"].widget.attrs.update(
+            {
+                "class": auth_input_class,
+                "placeholder": "name@example.com",
+                "autocomplete": "email",
+                "autocapitalize": "none",
+            }
+        )
+        self.fields["password1"].widget.attrs.update(
+            {
+                "class": auth_input_class,
+                "placeholder": "Create a password",
+                "autocomplete": "new-password",
+            }
+        )
+        self.fields["password2"].widget.attrs.update(
+            {
+                "class": auth_input_class,
+                "placeholder": "Re-enter password",
+                "autocomplete": "new-password",
+            }
+        )
     
     def clean_email(self):
         """

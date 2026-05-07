@@ -3,41 +3,34 @@
 {% block title %}Register · AgriScan+{% endblock %}
 {% block content %}
 <section class="relative isolate">
-  <div
-    class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
-  >
+  <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
     <div class="order-2 lg:order-1">
-      <div
-        class="bg-white shadow-sm ring-1 ring-gray-200 rounded-xl max-w-md mx-auto p-6 sm:p-8"
-      >
+      <div class="bg-white border border-slate-200 shadow-sm rounded-2xl max-w-md mx-auto p-6 sm:p-8">
         <div class="flex items-center gap-3 mb-4">
           <img src="{% static 'polls/img/logo.jpg' %}" alt="AgriScan+ logo" class="h-10 w-10 rounded-full object-cover">
           <div>
-            <h1 class="text-2xl font-semibold text-gray-900">Register</h1>
-            <p class="text-sm text-gray-500">Create your AgriScan+ farmers account</p>
+            <h1 class="text-2xl font-semibold text-slate-900">Create your account</h1>
+            <p class="text-sm text-slate-500">Start tracking fields, scans, and yield results.</p>
           </div>
         </div>
-        <form
-          method="post"
-          class="mt-6 space-y-4"
-        >
+        <form method="post" class="mt-6 space-y-4">
           {% csrf_token %}
           {% if messages %}
           <div class="space-y-2">
             {% for message in messages %}
-            <div class="{% if message.tags == 'error' %}bg-red-50 text-red-800 border-red-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %} border rounded-md p-3 text-sm">
+            <div class="auth-alert {% if message.tags == 'error' %}auth-alert--error{% else %}auth-alert--info{% endif %}">
               {{ message }}
             </div>
             {% endfor %}
           </div>
           {% endif %}
           {% if form.non_field_errors %}
-          <div class="bg-red-50 text-red-800 border-red-200 border rounded-md p-3 text-sm">
+          <div class="auth-alert auth-alert--error">
             {{ form.non_field_errors }}
           </div>
           {% endif %}
           <div>
-            <label for="id_username" class="block text-sm font-medium text-gray-700"
+            <label for="id_username" class="block text-sm font-medium text-slate-700"
               >Username</label
             >
             {{ form.username }}
@@ -46,7 +39,7 @@
             {% endif %}
           </div>
           <div>
-            <label for="id_email" class="block text-sm font-medium text-gray-700"
+            <label for="id_email" class="block text-sm font-medium text-slate-700"
               >Email</label
             >
             {{ form.email }}
@@ -57,7 +50,7 @@
           <div>
             <label
               for="id_password1"
-              class="block text-sm font-medium text-gray-700"
+              class="block text-sm font-medium text-slate-700"
               >Password</label
             >
             {{ form.password1 }}
@@ -68,7 +61,7 @@
           <div>
             <label
               for="id_password2"
-              class="block text-sm font-medium text-gray-700"
+              class="block text-sm font-medium text-slate-700"
               >Confirm Password</label
             >
             {{ form.password2 }}
@@ -76,7 +69,7 @@
             <p class="mt-1 text-sm text-red-600">{{ form.password2.errors.0 }}</p>
             {% endif %}
           </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+          <button type="submit" class="auth-button">
             <svg
               class="h-5 w-5"
               viewBox="0 0 24 24"
@@ -93,9 +86,9 @@
             </svg>
             Register
           </button>
-          <p class="text-center text-sm text-gray-600">
+          <p class="text-center text-sm text-slate-600">
             Already have an account?
-            <a href="{% url 'polls:login' %}" class="text-blue-600 hover:text-blue-700 font-medium transition">Login</a>
+            <a href="{% url 'polls:login' %}" class="text-blue-600 hover:text-blue-700 font-medium transition">Sign in</a>
           </p>
         </form>
       </div>
@@ -103,38 +96,49 @@
     <div class="order-1 lg:order-2">
       <div class="relative">
         <div
-          class="absolute -top-8 -left-8 w-24 h-24 bg-green-100 rounded-2xl rotate-6"
+          class="absolute -top-8 -left-8 w-24 h-24 bg-blue-100/70 rounded-2xl rotate-6"
           aria-hidden="true"
         ></div>
         <div
-          class="absolute -bottom-10 -right-10 w-28 h-28 bg-emerald-100 rounded-2xl -rotate-6"
+          class="absolute -bottom-10 -right-10 w-28 h-28 bg-sky-100/70 rounded-2xl -rotate-6"
           aria-hidden="true"
         ></div>
         <div
-          class="relative bg-gradient-to-br from-green-50 to-emerald-50 border border-green-100 rounded-2xl p-8"
+          class="relative bg-gradient-to-br from-slate-50 to-blue-50 border border-slate-200 rounded-2xl p-8"
         >
-          <h2 class="text-3xl font-bold text-green-800 mb-2">AgriScan+</h2>
-          <p class="text-gray-700">
-            Join our platform to access AI-powered rice disease detection and yield prediction tools.
+          <h2 class="text-3xl font-bold text-slate-900 mb-2">AgriScan+</h2>
+          <p class="text-slate-600">
+            Set up your account once and keep every field, scan, and yield report in one place.
           </p>
-          <ul class="mt-6 space-y-2 text-sm">
-            <li class="flex items-center gap-2">
-              <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          <ul class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+            <li class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2">
+              <svg class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 6H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
               </svg>
-              Free disease scanning
+              Centralized field records
             </li>
-            <li class="flex items-center gap-2">
-              <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            <li class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2">
+              <svg class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9a2 2 0 0 1 2-2h.93a2 2 0 0 0 1.664-.89l.812-1.22A2 2 0 0 1 10.07 4h3.86a2 2 0 0 1 1.664.89l.812 1.22A2 2 0 0 0 18.07 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z" />
+                <path d="M15 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
               </svg>
-              Accurate yield predictions
+              Fast disease scanning
             </li>
-            <li class="flex items-center gap-2">
-              <svg class="h-5 w-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            <li class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2">
+              <svg class="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z" />
+                <path d="M9 19V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10" />
+                <path d="M19 5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2" />
               </svg>
-              Save and track results
+              Reliable yield forecasts
+            </li>
+            <li class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2">
+              <svg class="h-4 w-4 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <path d="M7 10l5 5 5-5" />
+              </svg>
+              Exportable reports
             </li>
           </ul>
         </div>

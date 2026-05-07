@@ -3,64 +3,54 @@
 {% block title %}Login · AgriScan+{% endblock %}
 {% block content %}
 <section class="relative isolate">
-  <div
-    class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
-  >
+  <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
     <div class="order-2 lg:order-1">
-      <div
-        class="bg-white shadow-sm ring-1 ring-gray-200 rounded-xl max-w-md mx-auto p-6 sm:p-8"
-      >
+      <div class="bg-white border border-slate-200 shadow-sm rounded-2xl max-w-md mx-auto p-6 sm:p-8">
         <div class="flex items-center gap-3 mb-4">
           <img src="{% static 'polls/img/logo.jpg' %}" alt="AgriScan+ logo" class="h-10 w-10 rounded-full object-cover">
           <div>
-            <h1 class="text-2xl font-semibold text-gray-900">Login</h1>
-            <p class="text-sm text-gray-500">Smart Farming using AI</p>
+            <h1 class="text-2xl font-semibold text-slate-900">Welcome back</h1>
+            <p class="text-sm text-slate-500">Sign in to manage fields, scans, and yield forecasts.</p>
           </div>
         </div>
-        <form
-          method="post"
-          class="mt-6 space-y-4"
-        >
+        <form method="post" class="mt-6 space-y-4">
           {% csrf_token %}
           {% if messages %}
           <div class="space-y-2">
             {% for message in messages %}
-            <div class="{% if message.tags == 'error' %}bg-red-50 text-red-800 border-red-200{% else %}bg-blue-50 text-blue-800 border-blue-200{% endif %} border rounded-md p-3 text-sm">
+            <div class="auth-alert {% if message.tags == 'error' %}auth-alert--error{% else %}auth-alert--info{% endif %}">
               {{ message }}
             </div>
             {% endfor %}
           </div>
           {% endif %}
           <div>
-            <label for="username" class="block text-sm font-medium text-gray-700"
-              >Username</label
-            >
+            <label for="username" class="block text-sm font-medium text-slate-700">Username</label>
             <input
               id="username"
               name="username"
               type="text"
               required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              placeholder="username"
+              autocomplete="username"
+              autocapitalize="none"
+              class="auth-input"
+              placeholder="Enter your username"
               value="{{ request.POST.username|default:'' }}"
             />
           </div>
           <div>
-            <label
-              for="password"
-              class="block text-sm font-medium text-gray-700"
-              >Password</label
-            >
+            <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
             <input
               id="password"
               name="password"
               type="password"
               required
-              class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              placeholder="password"
+              autocomplete="current-password"
+              class="auth-input"
+              placeholder="Enter your password"
             />
           </div>
-          <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2">
+          <button type="submit" class="auth-button">
             <svg
               class="h-5 w-5"
               viewBox="0 0 24 24"
@@ -76,9 +66,9 @@
             </svg>
             Login
           </button>
-          <p class="text-center text-sm text-gray-600">
-            No account?
-            <a href="{% url 'polls:register' %}" class="text-blue-600 hover:text-blue-700 font-medium transition">Register</a>
+          <p class="text-center text-sm text-slate-600">
+            No account yet?
+            <a href="{% url 'polls:register' %}" class="text-blue-600 hover:text-blue-700 font-medium transition">Create one</a>
           </p>
         </form>
       </div>
@@ -86,24 +76,23 @@
     <div class="order-1 lg:order-2">
       <div class="relative">
         <div
-          class="absolute -top-8 -left-8 w-24 h-24 bg-blue-100 rounded-2xl rotate-6"
+          class="absolute -top-8 -left-8 w-24 h-24 bg-blue-100/70 rounded-2xl rotate-6"
           aria-hidden="true"
         ></div>
         <div
-          class="absolute -bottom-10 -right-10 w-28 h-28 bg-emerald-100 rounded-2xl -rotate-6"
+          class="absolute -bottom-10 -right-10 w-28 h-28 bg-sky-100/70 rounded-2xl -rotate-6"
           aria-hidden="true"
         ></div>
         <div
-          class="relative bg-gradient-to-br from-blue-50 to-emerald-50 border border-blue-100 rounded-2xl p-8"
+          class="relative bg-gradient-to-br from-slate-50 to-blue-50 border border-slate-200 rounded-2xl p-8"
         >
-          <h2 class="text-3xl font-bold text-blue-800 mb-2">AgriScan+</h2>
-          <p class="text-gray-700">
-            A CNN-powered web and mobile system for rice leaf disease
-            classification and yield prediction.
+          <h2 class="text-3xl font-bold text-slate-900 mb-2">AgriScan+</h2>
+          <p class="text-slate-600">
+            AI tools for rice leaf disease detection and yield prediction, built for daily farm workflows.
           </p>
           <ul class="mt-6 grid grid-cols-2 gap-3 text-sm">
             <li
-              class="bg-white/70 border rounded-lg p-3 flex items-center gap-2"
+              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
             >
               <svg
                 class="h-4 w-4 text-blue-600"
@@ -120,10 +109,10 @@
               >Scan Leaf Disease
             </li>
             <li
-              class="bg-white/70 border rounded-lg p-3 flex items-center gap-2"
+              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
             >
               <svg
-                class="h-4 w-4 text-green-600"
+                class="h-4 w-4 text-blue-600"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -136,10 +125,10 @@
               >Predict Yield
             </li>
             <li
-              class="bg-white/70 border rounded-lg p-3 flex items-center gap-2"
+              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
             >
               <svg
-                class="h-4 w-4 text-gray-600"
+                class="h-4 w-4 text-slate-600"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -152,10 +141,10 @@
               >Save Results
             </li>
             <li
-              class="bg-white/70 border rounded-lg p-3 flex items-center gap-2"
+              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
             >
               <svg
-                class="h-4 w-4 text-gray-600"
+                class="h-4 w-4 text-slate-600"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"

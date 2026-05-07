@@ -144,7 +144,7 @@
           </svg>
           <div class="flex-1">
             <div class="flex items-center justify-between mb-2">
-              <h3 class="text-lg font-bold">Quick Recommendation</h3>
+              <h3 class="text-lg font-bold">Recommended Action</h3>
               {% if treatment_obj %}
               <div class="flex items-center gap-2">
                 <span class="text-xs px-2 py-0.5 rounded-full font-semibold
@@ -472,7 +472,7 @@
         severityHtml = `
           <div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.2)">
             <div style="font-size:0.75rem;color:#fca5a5;font-weight:600">
-              🔴 Severity ${severityPct}% — Quick Recommendation alone is not sufficient at this level.
+              🔴 Severity ${severityPct}% — Recommended Action alone is not sufficient at this level.
             </div>
             <div style="font-size:0.75rem;color:#fecaca;margin-top:4px">${escHtml(severityHighMsg)}</div>
             ${links ? `<div style="font-size:0.7rem;margin-top:8px;color:rgba(255,255,255,0.6)">See full guidance below: ${links}</div>` : ''}
