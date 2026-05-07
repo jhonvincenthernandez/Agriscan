@@ -16,6 +16,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 from django.http import HttpResponse
 from django.db import models, transaction
+from django.db.models.functions import Lower
 from reportlab.lib.pagesizes import letter, A4, landscape
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -1496,12 +1497,22 @@ def detections_detail(request, pk: int):
             ensure_ascii=False,
         )
 
+    non_actionable_knowledge_labels = {
+        'healthy',
+        'healthy flowers',
+        'unknown/not rice',
+        'unknown',
+    }
+    disease_name_lc = (detection.disease.name or '').strip().lower() if detection.disease else ''
+    show_non_actionable_knowledge_hint = disease_name_lc in non_actionable_knowledge_labels
+
     context = {
         'detection': detection,
         'detailed_treatment': detailed_treatment,
         'treatment_obj': treatment_obj,
         'urgency_levels_json': urgency_levels_json,
         'factors_with_actions_json': factors_with_actions_json,
+        'show_non_actionable_knowledge_hint': show_non_actionable_knowledge_hint,
         'media_url': settings.MEDIA_URL,
     }
     return render(request, "detections/detail.html", context)
@@ -3986,9 +3997,30 @@ def treatments_list(request):
     treatments_page = paginator.get_page(page)
     query_string = _build_query_string(request)
 
-    # Get all diseases for filter dropdown
+    # Use canonical model labels for dropdown to avoid legacy/test disease names.
     from .models import DiseaseType
-    diseases = DiseaseType.objects.all().order_by('name')
+    model_labels = services.list_detection_classes()
+    excluded_labels = {
+        'healthy',
+        'healthy flowers',
+        'unknown/not rice',
+        'unknown',
+        'diseased',
+    }
+    allowed_label_lc = {
+        str(label).strip().lower()
+        for label in model_labels
+        if str(label).strip() and str(label).strip().lower() not in excluded_labels
+    }
+    if allowed_label_lc:
+        diseases = (
+            DiseaseType.objects
+            .annotate(name_lc=Lower('name'))
+            .filter(name_lc__in=allowed_label_lc)
+            .order_by('name')
+        )
+    else:
+        diseases = DiseaseType.objects.all().order_by('name')
     
     context = {
         'treatments': treatments_page,

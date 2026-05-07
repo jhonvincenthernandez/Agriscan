@@ -131,6 +131,29 @@
           {% endif %}
         </div>
       </div>
+
+      <!-- Contact Support -->
+      <div class="relative overflow-hidden rounded-xl border border-sky-300 bg-white shadow-sm p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 to-blue-600"></div>
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-sky-100 text-sky-700">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700">Support</p>
+            <h3 class="mt-1 text-lg font-bold text-slate-900">Need Help?</h3>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600">For severe infections or if you're unsure about treatment, contact your local DA field technician for professional guidance.</p>
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=santeodororice37@gmail.com&su=AgriScan%20Support%20Request&body=Hello%20DA%20Support%2C%0D%0A%0D%0AI%20need%20guidance%20for%20this%20rice%20detection.%0D%0A%0D%0ADetection%20ID%3A%20{{ detection.pk }}%0D%0ADisease%3A%20{{ detection.disease.name|default:'Unknown'|urlencode }}%0D%0ASeverity%3A%20{{ detection.severity_pct|default:0 }}%25%0D%0AField%3A%20{{ detection.planting.field.name|default:'Unknown'|urlencode }}%0D%0A%0D%0AThank%20you." target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-black shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2">
+              Contact DA Support
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
     </div>
     
 
@@ -299,7 +322,11 @@
       <div class="bg-white rounded-lg shadow-sm border border-gray-300 p-6">
         <h3 class="text-lg font-bold text-gray-900 mb-2">Knowledge Reference</h3>
         <p class="text-sm text-gray-500">
+          {% if show_non_actionable_knowledge_hint %}
+          No Knowledge reference is required for this result category.
+          {% else %}
           No published Knowledge entries are linked. Please link a published entry in Treatment management.
+          {% endif %}
         </p>
       </div>
       {% endif %}
@@ -328,24 +355,6 @@
       </div>
       {% endif %}
 
-      <!-- Contact Support -->
-      <div class="bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-lg shadow-md p-6">
-        <div class="flex items-start gap-3">
-          <svg class="h-6 w-6 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
-          </svg>
-          <div>
-            <h3 class="text-lg font-bold mb-2">Need Help?</h3>
-            <p class="text-indigo-100 text-sm mb-3">For severe infections or if you're unsure about treatment, contact your local DA field technician for professional guidance.</p>
-            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=santeodororice37@gmail.com&su=AgriScan%20Support%20Request&body=Hello%20DA%20Support%2C%0D%0A%0D%0AI%20need%20guidance%20for%20this%20rice%20detection.%0D%0A%0D%0ADetection%20ID%3A%20{{ detection.pk }}%0D%0ADisease%3A%20{{ detection.disease.name|default:'Unknown'|urlencode }}%0D%0ASeverity%3A%20{{ detection.severity_pct|default:0 }}%25%0D%0AField%3A%20{{ detection.planting.field.name|default:'Unknown'|urlencode }}%0D%0A%0D%0AThank%20you." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-lg font-semibold hover:bg-indigo-50 transition-colors text-sm">
-              Contact DA Support
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-              </svg>
-            </a>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </section>
