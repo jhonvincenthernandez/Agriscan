@@ -2928,6 +2928,38 @@ def harvest_archive(request, pk: int):
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
+def harvests_bulk_archive(request):
+    """Bulk archive selected harvest records."""
+    if request.method != 'POST':
+        return redirect('polls:harvests_list')
+
+    user_profile = getattr(request.user, 'profile', None)
+    if not user_profile:
+        messages.error(request, "Profile not found.")
+        return redirect('polls:harvests_list')
+
+    raw_ids = request.POST.getlist('selected_ids')
+    try:
+        ids = [int(value) for value in raw_ids if str(value).strip().isdigit()]
+    except (ValueError, TypeError):
+        messages.error(request, "Invalid selection.")
+        return _redirect_back_or_default(request, 'polls:harvests_list')
+
+    if not ids:
+        messages.warning(request, "No harvest records selected.")
+        return _redirect_back_or_default(request, 'polls:harvests_list')
+
+    qs = HarvestRecord.objects.filter(pk__in=ids, is_active=True)
+    if user_profile.role not in ['admin', 'technician']:
+        qs = qs.filter(planting__field__owner=user_profile)
+
+    count = qs.count()
+    qs.delete()
+    messages.success(request, f"📦 {count} harvest record{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
+    return _redirect_back_or_default(request, 'polls:harvests_list')
+
+
+@login_required(login_url=reverse_lazy('polls:login'))
 @admin_only
 def harvest_hard_delete(request, pk: int):
     """Hard delete a harvest record (admin only)."""
@@ -3668,6 +3700,28 @@ def knowledge_archive(request, pk: int):
         entry.save(update_fields=['is_published'])
         entry.delete()
         messages.success(request, '📦 Knowledge entry archived. Manage from Trash & Archive.')
+    return _redirect_back_or_default(request, 'polls:knowledge_admin_list')
+
+@login_required(login_url=reverse_lazy('polls:login'))
+@technician_or_admin
+def knowledge_bulk_archive(request):
+    """Bulk-archive selected knowledge entries."""
+    if request.method != 'POST':
+        return redirect('polls:knowledge_admin_list')
+
+    selected_ids = request.POST.getlist('selected_ids')
+    if not selected_ids:
+        messages.warning(request, 'No knowledge entries were selected.')
+        return _redirect_back_or_default(request, 'polls:knowledge_admin_list')
+
+    qs = KnowledgeBaseEntry.objects.filter(pk__in=selected_ids, is_active=True)
+    updated = qs.delete()
+
+    if updated:
+        messages.success(request, f"📦 {updated} knowledge entr{'y' if updated == 1 else 'ies'} archived. Manage from Trash & Archive.")
+    else:
+        messages.info(request, 'No knowledge entries were archived.')
+
     return _redirect_back_or_default(request, 'polls:knowledge_admin_list')
 
 

@@ -36,7 +36,7 @@
       var f = document.getElementById('delete-post-form');
       m.style.display = 'none';
       m.setAttribute('aria-hidden', 'true');
-      if (f) f.querySelectorAll('.injected-purge').forEach(function(el){ el.remove(); });
+      if (f) f.querySelectorAll('.injected-purge, .injected-next, .injected-bulk').forEach(function(el){ el.remove(); });
     })()"
   ></div>
 
@@ -59,6 +59,7 @@
     >
       This will archive the record. You can restore it anytime from
       <strong>Trash &amp; Archive</strong>.
+      <div class="mt-2 text-[11px] text-amber-800">Note: Only administrators and technicians can archive items. Contact your system administrator if you need this action.</div>
     </div>
 
     <!-- Permanent delete notice (red) -->
@@ -98,6 +99,7 @@
   // Wait for DOM to be fully parsed before wiring up handlers.
   // This partial is included at the bottom of base.html — DOM is ready.
   var deleteButtons    = document.querySelectorAll("[data-open-delete]");
+  var bulkButtons      = document.querySelectorAll("[data-open-bulk-archive]");
   var deleteModal      = document.getElementById("confirm-delete-modal");
   var deleteModalCancel   = document.getElementById("delete-modal-cancel");
   var deleteModalConfirm  = document.getElementById("delete-modal-confirm");
@@ -106,6 +108,86 @@
   var deleteHref       = null;
 
   if (!deleteModal || !deleteModalConfirm) return;
+
+  function clearInjectedFields() {
+    if (deleteForm) deleteForm.querySelectorAll(".injected-purge").forEach(function (el) { el.remove(); });
+    if (deleteForm) deleteForm.querySelectorAll(".injected-next").forEach(function (el) { el.remove(); });
+    if (deleteForm) deleteForm.querySelectorAll(".injected-bulk").forEach(function (el) { el.remove(); });
+  }
+
+  function formatArchiveNoticeHTML(text) {
+    var main = text || "This will archive the record. You can restore it anytime from Trash & Archive.";
+    var hint = "Only administrators and technicians can archive items. Contact your system administrator if you need this action.";
+    return '<div class="archive-main">' + main + '</div>' +
+           '<div class="archive-hint mt-2 text-[11px] text-amber-800">Note: ' + hint + '</div>';
+  }
+
+  function openBulkArchiveModal(btn) {
+    var formId        = btn.dataset.bulkFormId || "";
+    var actionUrl     = btn.dataset.bulkActionUrl || "";
+    var bulkAction     = btn.dataset.bulkAction || "archive";
+    var title         = btn.dataset.bulkTitle || "Archive Selected?";
+    var subtitle      = btn.dataset.bulkSubtitle || "These records will be archived and can be restored from Trash & Archive.";
+    var confirmText   = btn.dataset.bulkConfirm || "Yes, Archive";
+    var noticeText    = btn.dataset.bulkNotice || "This will archive the record. You can restore it anytime from Trash & Archive.";
+    var singularLabel = btn.dataset.bulkLabelSingular || "record";
+    var pluralLabel   = btn.dataset.bulkLabelPlural || "records";
+
+    var form = formId ? document.getElementById(formId) : null;
+    if (!form || !deleteForm) return;
+
+    var checked = form.querySelectorAll(".row-cb:checked");
+    var count = checked.length;
+    if (!count) return;
+
+    document.getElementById("delete-modal-title").textContent = title;
+    deleteModalText.textContent = count + " " + (count === 1 ? singularLabel : pluralLabel) + " selected";
+    var subEl = document.getElementById("confirm-delete-subtitle");
+    if (subEl) subEl.textContent = subtitle;
+
+    var noticeArchive = document.getElementById("delete-modal-notice-archive");
+    var noticePermanent = document.getElementById("delete-modal-notice-permanent");
+    if (noticeArchive) {
+      noticeArchive.innerHTML = formatArchiveNoticeHTML(noticeText);
+      noticeArchive.style.display = "block";
+    }
+    if (noticePermanent) noticePermanent.style.display = "none";
+
+    deleteModalConfirm.textContent = confirmText;
+    clearInjectedFields();
+
+    deleteForm.action = actionUrl || form.action || "";
+
+    if (bulkAction) {
+      var actionInput = document.createElement("input");
+      actionInput.type = "hidden";
+      actionInput.name = "bulk_action";
+      actionInput.value = bulkAction;
+      actionInput.className = "injected-bulk";
+      deleteForm.appendChild(actionInput);
+    }
+
+    checked.forEach(function (cb) {
+      var inp = document.createElement("input");
+      inp.type = "hidden";
+      inp.name = "selected_ids";
+      inp.value = cb.value;
+      inp.className = "injected-bulk";
+      deleteForm.appendChild(inp);
+    });
+
+    var nextInput = document.createElement("input");
+    nextInput.type = "hidden";
+    nextInput.name = "_next";
+    nextInput.value = window.location.href;
+    nextInput.className = "injected-next";
+    deleteForm.appendChild(nextInput);
+
+    try { window._prevFocus = document.activeElement; } catch (_) {}
+    setTimeout(function () { deleteModalConfirm.focus(); }, 50);
+    deleteModal.style.display = "flex";
+    deleteModal.setAttribute("aria-hidden", "false");
+  }
 
   // ── Open modal ────────────────────────────────────────────────────────────
   deleteButtons.forEach(function (btn) {
@@ -135,7 +217,10 @@
       if (noticePermanent) noticePermanent.style.display = (dtype === "permanent" ? "block" : "none");
 
       if (customNotice && noticeArchive) {
-        noticeArchive.textContent = customNotice;
+        noticeArchive.innerHTML = formatArchiveNoticeHTML(customNotice);
+      } else if (noticeArchive && noticeArchive.style.display !== 'none') {
+        // Ensure default notice also uses the consistent HTML format
+        noticeArchive.innerHTML = formatArchiveNoticeHTML(noticeArchive.textContent || null);
       }
 
       // Confirm button text
@@ -143,8 +228,7 @@
         customConfirm || (dtype === "permanent" ? "Yes, Delete" : dtype === "revert" ? "Yes, Revert" : "Yes, Archive");
 
       // Clean up any leftover injected purge fields
-      if (deleteForm) deleteForm.querySelectorAll(".injected-purge").forEach(function (el) { el.remove(); });
-      if (deleteForm) deleteForm.querySelectorAll(".injected-next").forEach(function (el) { el.remove(); });
+      clearInjectedFields();
 
       // --- Purge path (Trash page) vs normal archive path ---
       var purgeUrl   = btn.dataset.purgeUrl;
@@ -187,13 +271,19 @@
     });
   });
 
+  bulkButtons.forEach(function (btn) {
+    btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      openBulkArchiveModal(btn);
+    });
+  });
+
   // ── Cancel ────────────────────────────────────────────────────────────────
   function closeDeleteModal() {
     deleteModal.style.display = "none";
     deleteModal.setAttribute("aria-hidden", "true");
     deleteHref = null;
-    if (deleteForm) deleteForm.querySelectorAll(".injected-purge").forEach(function (el) { el.remove(); });
-    if (deleteForm) deleteForm.querySelectorAll(".injected-next").forEach(function (el) { el.remove(); });
+    clearInjectedFields();
     try { if (window._prevFocus) window._prevFocus.focus(); } catch (_) {}
   }
 

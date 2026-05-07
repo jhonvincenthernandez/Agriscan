@@ -98,24 +98,56 @@
   </div>
 
   {% if records %}
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table role="table" aria-label="Harvest records" class="min-w-full divide-y divide-gray-200 text-sm">
-          <thead class="bg-gray-50">
-            <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              <th class="px-4 py-3">ID</th>
-              <th class="px-4 py-3">Field</th>
-              <th class="px-4 py-3">Variety</th>
-              <th class="px-4 py-3">Season</th>
-              <th class="px-4 py-3">Harvest Date</th>
-              <th class="px-4 py-3">Yield (t/ha)</th>
-              <th class="px-4 py-3">Quality</th>
-              <th class="px-4 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            {% for r in records %}
+    <form method="post" action="{% url 'polls:harvests_bulk_archive' %}" id="harvest-bulk-form">
+      {% csrf_token %}
+      <input type="hidden" name="_next" value="{{ request.get_full_path }}">
+
+      <div id="bulk-toolbar" class="hidden no-print mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium text-amber-800">
+          <span id="selected-count">0</span> selected
+        </span>
+        <button type="button"
+                data-open-bulk-archive="true"
+                data-bulk-form-id="harvest-bulk-form"
+                data-bulk-action-url="{% url 'polls:harvests_bulk_archive' %}"
+                data-bulk-label-singular="harvest record"
+                data-bulk-label-plural="harvest records"
+                data-bulk-title="Archive Harvest Records?"
+                data-bulk-subtitle="They will be archived and can be restored from Trash."
+                data-bulk-confirm="Yes, Archive"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12"></path>
+          </svg>
+          Archive Selected
+        </button>
+        <button type="button" onclick="clearSelection()" class="text-xs text-amber-600 hover:text-amber-800 transition">Clear selection</button>
+      </div>
+
+      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table role="table" aria-label="Harvest records" class="min-w-full divide-y divide-gray-200 text-sm">
+            <thead class="bg-gray-50">
+              <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 w-8 no-print">
+                  <input type="checkbox" id="select-all-cb" class="h-4 w-4 rounded border-gray-300 text-amber-600 cursor-pointer" title="Select all on this page">
+                </th>
+                <th class="px-4 py-3">ID</th>
+                <th class="px-4 py-3">Field</th>
+                <th class="px-4 py-3">Variety</th>
+                <th class="px-4 py-3">Season</th>
+                <th class="px-4 py-3">Harvest Date</th>
+                <th class="px-4 py-3">Yield (t/ha)</th>
+                <th class="px-4 py-3">Quality</th>
+                <th class="px-4 py-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for r in records %}
               <tr>
+                <td class="px-4 py-3 no-print">
+                  <input type="checkbox" name="selected_ids" value="{{ r.pk }}" class="row-cb h-4 w-4 rounded border-gray-300 text-amber-600 cursor-pointer" aria-label="Select harvest {{ r.pk }}">
+                </td>
                 <td class="px-4 py-3 text-sm text-gray-700">{{ r.pk }}</td>
                 <td class="px-4 py-3 text-sm text-gray-700">{{ r.planting.field.name }}</td>
                 <td class="px-4 py-3 text-sm text-gray-700">{% if r.planting.variety %}{{ r.planting.variety.code }}{% else %}—{% endif %}</td>
@@ -157,15 +189,55 @@
                   {# Hard delete removed for harvest records to avoid losing historical data. #}
                 </td>
               </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-      {% if page_obj and is_paginated %}
-        {% include 'partials/_pagination.html' %}
-      {% endif %}
-    </div>
+        {% if page_obj and is_paginated %}
+          {% include 'partials/_pagination.html' %}
+        {% endif %}
+      </div>
+    </form>
+
+    <script>
+      (function(){
+        const selectAll = document.getElementById('select-all-cb');
+        const bulkToolbar = document.getElementById('bulk-toolbar');
+        const selectedCountEl = document.getElementById('selected-count');
+
+        function updateSelectionState() {
+          const checked = document.querySelectorAll('.row-cb:checked').length;
+          selectedCountEl.textContent = checked;
+          bulkToolbar.classList.toggle('hidden', checked === 0);
+          if (selectAll) {
+            const total = document.querySelectorAll('.row-cb').length;
+            selectAll.checked = total > 0 && checked === total;
+          }
+        }
+
+        window.clearSelection = function() {
+          document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
+          if (selectAll) selectAll.checked = false;
+          updateSelectionState();
+        };
+
+        if (selectAll) {
+          selectAll.addEventListener('change', function() {
+            document.querySelectorAll('.row-cb').forEach(cb => cb.checked = selectAll.checked);
+            updateSelectionState();
+          });
+        }
+
+        document.addEventListener('change', function(e) {
+          if (e.target && e.target.classList && e.target.classList.contains('row-cb')) {
+            updateSelectionState();
+          }
+        });
+
+        updateSelectionState();
+      })();
+    </script>
   {% else %}
     <div class="py-16 text-center text-gray-500">
       <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -74,9 +74,39 @@
   </div>
 
   <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-    <table class="min-w-full text-sm">
+    <form id="kb-bulk-form" method="post" action="{% url 'polls:knowledge_bulk_archive' %}">
+      {% csrf_token %}
+      <input type="hidden" name="_next" value="{{ request.get_full_path }}">
+
+      <!-- Bulk toolbar (hidden until selection) -->
+      <div id="bulk-toolbar" class="hidden no-print mb-4 px-4 py-3 bg-fuchsia-50 border border-fuchsia-200 rounded-lg flex flex-wrap items-center gap-3">
+        <span class="text-sm font-medium text-fuchsia-800">
+          <span id="selected-count">0</span> selected
+        </span>
+        <button type="button"
+                data-open-bulk-archive="true"
+                data-bulk-form-id="kb-bulk-form"
+                data-bulk-action-url="{% url 'polls:knowledge_bulk_archive' %}"
+                data-bulk-label-singular="knowledge entry"
+                data-bulk-label-plural="knowledge entries"
+                data-bulk-title="Archive Knowledge Entries?"
+                data-bulk-subtitle="They will be archived and can be restored from Trash."
+                data-bulk-confirm="Yes, Archive"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-semibold rounded-lg transition">
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12"></path>
+          </svg>
+          Archive Selected
+        </button>
+        <button type="button" onclick="clearSelection()" class="text-xs text-fuchsia-600 hover:text-fuchsia-800 transition">Clear selection</button>
+      </div>
+
+      <table class="min-w-full text-sm">
       <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">
         <tr>
+          <th class="px-4 py-3 w-12">
+            <input type="checkbox" id="select-all-cb" class="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer" title="Select all on this page">
+          </th>
           <th class="px-4 py-3">Name</th>
           <th class="px-4 py-3">Category</th>
           <th class="px-4 py-3">Status</th>
@@ -87,6 +117,9 @@
       <tbody>
         {% for entry in entries %}
         <tr class="border-t border-gray-100 hover:bg-gray-50">
+          <td class="px-4 py-3">
+            <input type="checkbox" name="selected_ids" value="{{ entry.pk }}" class="row-cb h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer" aria-label="Select {{ entry.name }}">
+          </td>
           <td class="px-4 py-3 text-gray-800">{{ entry.name }}</td>
           <td class="px-4 py-3">
             {% if entry.category == 'disease' %}
@@ -140,7 +173,56 @@
         {% endfor %}
       </tbody>
     </table>
+    </form>
   </div>
+
+  <script>
+    // Bulk selection handlers for knowledge admin list
+    (function(){
+      const selectAll = document.getElementById('select-all-cb');
+      const selectedCountEl = document.getElementById('selected-count');
+      const bulkToolbar = document.getElementById('bulk-toolbar');
+      const form = document.getElementById('kb-bulk-form');
+
+      function updateSelectedCount(){
+        const checked = document.querySelectorAll('.row-cb:checked').length;
+        selectedCountEl.textContent = checked;
+        if(checked > 0){
+          bulkToolbar.classList.remove('hidden');
+        } else {
+          bulkToolbar.classList.add('hidden');
+        }
+      }
+
+      function clearSelection(){
+        document.querySelectorAll('.row-cb:checked').forEach(cb => cb.checked = false);
+        if(selectAll) selectAll.checked = false;
+        updateSelectedCount();
+      }
+
+      window.clearSelection = clearSelection;
+
+      if(selectAll){
+        selectAll.addEventListener('change', function(){
+          document.querySelectorAll('.row-cb').forEach(cb => cb.checked = selectAll.checked);
+          updateSelectedCount();
+        });
+      }
+
+      document.addEventListener('change', function(e){
+        if(e.target && e.target.classList && e.target.classList.contains('row-cb')){
+          // update select-all checkbox state
+          const total = document.querySelectorAll('.row-cb').length;
+          const checked = document.querySelectorAll('.row-cb:checked').length;
+          if(selectAll) selectAll.checked = (checked === total && total > 0);
+          updateSelectedCount();
+        }
+      });
+
+      // initial state
+      updateSelectedCount();
+    })();
+  </script>
 
   {% if page_obj and is_paginated %}
     {% include 'partials/_pagination.html' %}

@@ -152,7 +152,16 @@
       <span class="text-sm font-medium text-amber-800">
         <span id="selected-count">0</span> selected
       </span>
-      <button type="submit"
+            <button type="button"
+              data-open-bulk-archive="true"
+              data-bulk-form-id="bulk-form"
+              data-bulk-action-url="{% url 'polls:varieties_list' %}"
+              data-bulk-label-singular="variety"
+              data-bulk-label-plural="varieties"
+              data-bulk-title="Archive Rice Varieties?"
+              data-bulk-subtitle="They will be archived and can be restored from Trash."
+              data-bulk-confirm="Yes, Archive"
+              data-bulk-action="archive"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition">
         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"

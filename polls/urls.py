@@ -66,6 +66,7 @@ urlpatterns = [
     # HARVEST RECORD MANAGEMENT
     # ============================================================================
     path('harvests/', views.harvests_list, name='harvests_list'),
+    path('harvests/bulk-archive/', views.harvests_bulk_archive, name='harvests_bulk_archive'),
     path('harvests/create/', views.harvest_create, name='harvest_create'),
     path('harvests/<int:pk>/edit/', views.harvest_edit, name='harvest_edit'),
     path('harvests/<int:pk>/archive/', views.harvest_archive, name='harvest_archive'),
@@ -93,6 +94,7 @@ urlpatterns = [
     path('knowledge/manage/create/', views.knowledge_create, name='knowledge_create'),
     path('knowledge/manage/<int:pk>/edit/', views.knowledge_edit, name='knowledge_edit'),
     path('knowledge/manage/<int:pk>/archive/', views.knowledge_archive, name='knowledge_archive'),
+    path('knowledge/manage/bulk-archive/', views.knowledge_bulk_archive, name='knowledge_bulk_archive'),
     path('knowledge/<int:pk>/export/pdf/', views.knowledge_export_pdf, name='knowledge_export_pdf'),
     path('knowledge/<int:pk>/export/csv/', views.knowledge_export_csv, name='knowledge_export_csv'),
 
