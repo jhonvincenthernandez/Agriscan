@@ -103,6 +103,7 @@ function openKnowledgeExportModal() {
     title: 'Export Knowledge Entry',
     csvUrl: '{% url "polls:knowledge_export_csv" entry.pk %}',
     pdfUrl: '{% url "polls:knowledge_export_pdf" entry.pk %}',
+    showBarangay: false,  // Knowledge is universal reference, no barangay filtering
     cols: [
       { value: 'name', label: 'Name' },
       { value: 'category', label: 'Category' },

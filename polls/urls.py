@@ -143,6 +143,7 @@ urlpatterns = [
     # API ENDPOINTS
     # ============================================================================
     path('api/planting/<int:pk>/', views.api_planting_data, name='api_planting_data'),
+    path('api/barangays/', views.api_get_barangays, name='api_get_barangays'),
 
     # ============================================================================
     # SEASON FARM LOG — Farmer activity journal & history

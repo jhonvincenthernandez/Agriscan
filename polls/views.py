@@ -1,5 +1,6 @@
 from typing import Dict, List
 import csv
+import json
 from io import BytesIO
 import logging
 import threading
@@ -14,7 +15,7 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse, reverse_lazy
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.db import models, transaction
 from django.db.models.functions import Lower
 from reportlab.lib.pagesizes import letter, A4, landscape
@@ -80,6 +81,29 @@ def _build_query_string(request, remove_keys=('page',)):
         params.pop(key, None)
     qs = params.urlencode()
     return f"&{qs}" if qs else ""
+    
+def _get_export_barangay_filter(request):
+    return request.GET.get('barangay', '').strip()
+
+def _apply_barangay_filter(qs, barangay_filter: str, lookup: str):
+    if barangay_filter:
+        return qs.filter(**{f'{lookup}__icontains': barangay_filter})
+    return qs
+
+
+def api_get_barangays(request):
+    """API endpoint to fetch distinct barangays from active fields for autocomplete.
+    
+    Returns: JSON list of barangay names, sorted and deduplicated.
+    """
+    barangays = (
+        Field.objects.filter(is_active=True)
+        .values_list('barangay', flat=True)
+        .distinct()
+        .filter(barangay__gt='')  # Exclude empty strings
+        .order_by('barangay')
+    )
+    return JsonResponse({'barangays': list(barangays)})
 
 
 def _redirect_back_or_default(request, fallback_url_name: str):
@@ -771,6 +795,7 @@ def reports(request):
     
     # Get role for filtering
     role = user_profile.role
+    barangay_filter = request.GET.get('barangay', '').strip()
     
     # BEST PRACTICE: Custom date range filtering
     today = timezone.now().date()
@@ -793,7 +818,7 @@ def reports(request):
     export_format = request.GET.get('export')
     if export_format in ['pdf', 'csv']:
         # Parse which sections the user selected (default: all)
-        all_sections = ['summary', 'monthly', 'diseases', 'varieties', 'detections', 'yields']
+        all_sections = ['summary', 'monthly', 'diseases', 'varieties', 'barangay', 'detections', 'yields']
         requested = request.GET.getlist('sections')
         sections = set(requested) if requested else set(all_sections)
         return _export_report(request, export_format, start_date, end_date, role, user_profile, sections)
@@ -823,6 +848,7 @@ def reports(request):
         # Apply role filtering
         if role == 'farmer':
             detection_qs = detection_qs.filter(user=user_profile)
+        detection_qs = _apply_barangay_filter(detection_qs, barangay_filter, 'planting__field__barangay')
         
         healthy = detection_qs.filter(disease__name__iexact='healthy').count()
         diseased = detection_qs.exclude(disease__name__iexact='healthy').count()
@@ -853,6 +879,7 @@ def reports(request):
     )
     if role == 'farmer':
         yield_qs = yield_qs.filter(planting__field__owner=user_profile)
+    yield_qs = _apply_barangay_filter(yield_qs, barangay_filter, 'planting__field__barangay')
 
     variety_stats = (
         yield_qs
@@ -877,6 +904,40 @@ def reports(request):
 
     # Count unlinked predictions separately so they stay visible in the summary
     unlinked_count = yield_qs.filter(planting__variety__isnull=True).count()
+
+    barangay_qs, barangay_summary_rows = services.get_barangay_production_summary(
+        request=request,
+        user_profile=user_profile,
+        role=role,
+        start_date=start_date,
+        end_date=end_date,
+        barangay=barangay_filter,
+    )
+
+    barangay_summary = []
+    barangay_totals = {
+        'farmer_count': 0,
+        'total_area_ha': 0,
+        'total_production_tons': 0,
+        'record_count': 0,
+    }
+    for row in barangay_summary_rows:
+        barangay_name = row['planting__field__barangay'] or 'Unknown'
+        barangay_summary.append({
+            'barangay': barangay_name,
+            'farmer_count': row['farmer_count'],
+            'total_area_ha': round(float(row['total_area_ha'] or 0), 2),
+            'total_production_tons': round(float(row['total_production_tons'] or 0), 2),
+            'avg_yield_tons_per_ha': round(float(row['avg_yield_tons_per_ha'] or 0), 2),
+            'record_count': row['record_count'],
+        })
+        barangay_totals['farmer_count'] += row['farmer_count'] or 0
+        barangay_totals['total_area_ha'] += float(row['total_area_ha'] or 0)
+        barangay_totals['total_production_tons'] += float(row['total_production_tons'] or 0)
+        barangay_totals['record_count'] += row['record_count'] or 0
+
+    barangay_totals['total_area_ha'] = round(barangay_totals['total_area_ha'], 2)
+    barangay_totals['total_production_tons'] = round(barangay_totals['total_production_tons'], 2)
 
     # Model accuracy metrics - filtered by role and date range
     active_model = services._get_active_model_version()
@@ -927,12 +988,16 @@ def reports(request):
     if role == 'farmer':
         planting_qs = planting_qs.filter(field__owner=user_profile)
         field_qs    = field_qs.filter(owner=user_profile)
+    planting_qs = _apply_barangay_filter(planting_qs, barangay_filter, 'field__barangay')
+    field_qs    = _apply_barangay_filter(field_qs, barangay_filter, 'barangay')
     total_plantings = planting_qs.count()
     total_fields    = field_qs.count()
 
     context = {
         'monthly_data': monthly_data,
         'variety_yields': variety_yields,
+        'barangay_summary': barangay_summary,
+        'barangay_totals': barangay_totals,
         'unlinked_yield_count': unlinked_count,
         'disease_freq': disease_freq,
         'unclassified_count': unclassified_count,
@@ -945,6 +1010,7 @@ def reports(request):
         'total_fields': total_fields,
         'start_date': start_date.strftime('%Y-%m-%d'),
         'end_date': end_date.strftime('%Y-%m-%d'),
+        'barangay_filter': barangay_filter,
         'role': role,
     }
     return render(request, 'account/reports.html', context)
@@ -961,9 +1027,10 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
     from django.db.models import Count, Avg
     import csv
 
-    ALL_SECTIONS = {'summary', 'monthly', 'diseases', 'varieties', 'detections', 'yields'}
+    ALL_SECTIONS = {'summary', 'monthly', 'diseases', 'varieties', 'barangay', 'detections', 'yields'}
     if not sections:
         sections = ALL_SECTIONS
+    barangay_filter = _get_export_barangay_filter(request)
 
     # Timezone-aware date range
     start_date_dt = timezone.make_aware(
@@ -981,6 +1048,7 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
     ).select_related('disease', 'planting__field')
     if role == 'farmer':
         detection_qs = detection_qs.filter(user=user_profile)
+    detection_qs = _apply_barangay_filter(detection_qs, barangay_filter, 'planting__field__barangay')
 
     yield_qs = YieldPrediction.objects.filter(
         is_active=True,
@@ -989,6 +1057,7 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
     ).select_related('planting__variety', 'planting__field')
     if role == 'farmer':
         yield_qs = yield_qs.filter(planting__field__owner=user_profile)
+    yield_qs = _apply_barangay_filter(yield_qs, barangay_filter, 'planting__field__barangay')
 
     # ── Pre-compute shared stats ──────────────────────────────────────────
     total_detections   = detection_qs.count()
@@ -1052,6 +1121,26 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         })
     unlinked_export_count = yield_qs.filter(planting__variety__isnull=True).count()
 
+    _, barangay_rows = services.get_barangay_production_summary(
+        request=request,
+        user_profile=user_profile,
+        role=role,
+        start_date=start_date,
+        end_date=end_date,
+        barangay=barangay_filter,
+    )
+    barangay_rows = [
+        {
+            'barangay': row['planting__field__barangay'] or 'Unknown',
+            'farmer_count': row['farmer_count'],
+            'total_area_ha': round(float(row['total_area_ha'] or 0), 2),
+            'total_production_tons': round(float(row['total_production_tons'] or 0), 2),
+            'avg_yield_tons_per_ha': round(float(row['avg_yield_tons_per_ha'] or 0), 2),
+            'record_count': row['record_count'],
+        }
+        for row in barangay_rows
+    ]
+
     # ── Model accuracy ────────────────────────────────────────────────────
     active_model   = services._get_active_model_version()
     model_accuracy = float(active_model.accuracy) if active_model and active_model.accuracy else None
@@ -1074,6 +1163,8 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         # ── Cover ──
         w.writerow(['AgriScan+ Analytics Report'])
         w.writerow(['Date Range', f'{start_date} to {end_date}'])
+        if barangay_filter:
+            w.writerow(['Barangay', barangay_filter])
         w.writerow(['Generated', generated_at])
         w.writerow(['Generated By', generated_by])
         w.writerow([])
@@ -1124,7 +1215,24 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
                 w.writerow([row['variety'], row['avg_sacks'], row['avg_tons'], row['count']])
             w.writerow([])
 
-        # ── Section 6: Detection Details (all rows, no arbitrary cap) ──
+        # ── Section 6: Barangay Production Summary ──
+        if 'barangay' in sections:
+            w.writerow(['=== BARANGAY PRODUCTION SUMMARY ==='])
+            if barangay_filter:
+                w.writerow([f'Barangay filter: {barangay_filter}'])
+            w.writerow(['Barangay', 'Farmers', 'Area (ha)', 'Production (tons)', 'Avg Yield (t/ha)', 'Harvest Records'])
+            for row in barangay_rows:
+                w.writerow([
+                    row['barangay'],
+                    row['farmer_count'],
+                    row['total_area_ha'],
+                    row['total_production_tons'],
+                    row['avg_yield_tons_per_ha'],
+                    row['record_count'],
+                ])
+            w.writerow([])
+
+        # ── Section 7: Detection Details (all rows, no arbitrary cap) ──
         if 'detections' in sections:
             det_total = detection_qs.count()
             w.writerow([f'=== DETECTION DETAILS ({det_total} records) ==='])
@@ -1141,7 +1249,7 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
                 ])
             w.writerow([])
 
-        # ── Section 7: Yield Details (all rows) ──
+        # ── Section 8: Yield Details (all rows) ──
         if 'yields' in sections:
             yld_total = yield_qs.count()
             w.writerow([f'=== YIELD PREDICTION DETAILS ({yld_total} records) ==='])
@@ -1212,6 +1320,8 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         elems.append(Paragraph('AgriScan+ Analytics Report', H1))
         elems.append(HRFlowable(width='100%', thickness=1, color=GREEN, spaceAfter=8))
         elems.append(Paragraph(f'<b>Date Range:</b> {start_date} to {end_date}', META))
+        if barangay_filter:
+            elems.append(Paragraph(f'<b>Barangay:</b> {barangay_filter}', META))
         elems.append(Paragraph(f'<b>Generated:</b> {generated_at}', META))
         elems.append(Paragraph(f'<b>Prepared by:</b> {generated_by}', META))
         elems.append(Spacer(1, 10))
@@ -1271,11 +1381,29 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
             var_table.setStyle(header_style(YELLOW))
             elems.append(var_table)
 
+        if 'barangay' in sections:
+            elems.append(Paragraph('5. Barangay Production Summary', H2))
+            bar_data = [['Barangay', 'Farmers', 'Area (ha)', 'Production (tons)', 'Avg Yield', 'Records']]
+            for row in barangay_rows:
+                bar_data.append([
+                    row['barangay'],
+                    str(row['farmer_count']),
+                    f"{row['total_area_ha']:.2f}",
+                    f"{row['total_production_tons']:.2f}",
+                    f"{row['avg_yield_tons_per_ha']:.2f}",
+                    str(row['record_count']),
+                ])
+            if len(bar_data) == 1:
+                bar_data.append(['No barangay production data in range', '', '', '', '', ''])
+            bar_table = Table(bar_data, colWidths=[2.4*inch, 0.8*inch, 1.0*inch, 1.2*inch, 0.9*inch, 0.8*inch])
+            bar_table.setStyle(header_style(BLUE))
+            elems.append(bar_table)
+
         # ── Page Break → Detail Tables (only if detail sections selected) ──
         if 'detections' in sections or 'yields' in sections:
             elems.append(PageBreak())
 
-        # ── Section 5: Detection Details ──
+        # ── Section 6: Detection Details ──
         if 'detections' in sections:
             det_total = detection_qs.count()
             elems.append(Paragraph(f'5. Detection Details ({det_total} records)', H2))
@@ -1294,7 +1422,7 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
             elems.append(det_table)
             elems.append(Spacer(1, 10))
 
-        # ── Section 6: Yield Details ──
+        # ── Section 7: Yield Details ──
         if 'yields' in sections:
             yld_total = yield_qs.count()
             elems.append(Paragraph(f'6. Yield Prediction Details ({yld_total} records)', H2))
@@ -1871,6 +1999,7 @@ def export_detections_csv(request):
     # Optional date range
     start_str = request.GET.get('start_date', '')
     end_str   = request.GET.get('end_date', '')
+    barangay_filter = _get_export_barangay_filter(request)
     try:
         start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
         end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
@@ -1881,6 +2010,7 @@ def export_detections_csv(request):
         'disease', 'model_version', 'planting__field'
     ).order_by('-created_at')
     detections_qs = filter_queryset_by_role(request, detections_qs)
+    detections_qs = _apply_barangay_filter(detections_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
         detections_qs = detections_qs.filter(created_at__gte=start_dt, created_at__lte=end_dt)
     total = detections_qs.count()
@@ -1895,6 +2025,8 @@ def export_detections_csv(request):
     writer.writerow(['Exported By', request.user.get_full_name() or request.user.username])
     if start_str and end_str:
         writer.writerow(['Date Range', f'{start_str} to {end_str}'])
+    if barangay_filter:
+        writer.writerow(['Barangay', barangay_filter])
     writer.writerow(['Total Records', total])
     writer.writerow([])
 
@@ -1936,6 +2068,7 @@ def export_yields_csv(request):
     # Optional date range
     start_str = request.GET.get('start_date', '')
     end_str   = request.GET.get('end_date', '')
+    barangay_filter = _get_export_barangay_filter(request)
     try:
         start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
         end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
@@ -1946,6 +2079,7 @@ def export_yields_csv(request):
         'planting__field', 'planting__variety'
     ).order_by('-created_at')
     records_qs = filter_queryset_by_role(request, records_qs, user_field="planting__field__owner")
+    records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
         records_qs = records_qs.filter(created_at__gte=start_dt, created_at__lte=end_dt)
     total = records_qs.count()
@@ -1960,6 +2094,8 @@ def export_yields_csv(request):
     writer.writerow(['Exported By', request.user.get_full_name() or request.user.username])
     if start_str and end_str:
         writer.writerow(['Date Range', f'{start_str} to {end_str}'])
+    if barangay_filter:
+        writer.writerow(['Barangay', barangay_filter])
     writer.writerow(['Total Records', total])
     writer.writerow([])
 
@@ -2003,6 +2139,7 @@ def export_detections_pdf(request):
     from datetime import datetime as _dt
     start_str = request.GET.get('start_date', '')
     end_str   = request.GET.get('end_date', '')
+    barangay_filter = _get_export_barangay_filter(request)
     try:
         start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
         end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
@@ -2013,6 +2150,7 @@ def export_detections_pdf(request):
         'disease', 'planting__field'
     ).order_by('-created_at')
     detections_qs = filter_queryset_by_role(request, detections_qs)
+    detections_qs = _apply_barangay_filter(detections_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
         detections_qs = detections_qs.filter(created_at__gte=start_dt, created_at__lte=end_dt)
     detections = list(detections_qs)
@@ -2039,6 +2177,8 @@ def export_detections_pdf(request):
     )
     if start_str and end_str:
         cover_line += f' &nbsp;|&nbsp; Date Range: {start_str} to {end_str}'
+    if barangay_filter:
+        cover_line += f' &nbsp;|&nbsp; Barangay: {barangay_filter}'
     elems.append(Paragraph(cover_line, styles['Normal']))
     elems.append(Spacer(1, 0.3*inch))
 
@@ -2089,6 +2229,7 @@ def export_yields_pdf(request):
     from datetime import datetime as _dt
     start_str = request.GET.get('start_date', '')
     end_str   = request.GET.get('end_date', '')
+    barangay_filter = _get_export_barangay_filter(request)
     try:
         start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
         end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
@@ -2099,6 +2240,7 @@ def export_yields_pdf(request):
         'planting__field', 'planting__variety'
     ).order_by('-created_at')
     records_qs = filter_queryset_by_role(request, records_qs, user_field="planting__field__owner")
+    records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
         records_qs = records_qs.filter(created_at__gte=start_dt, created_at__lte=end_dt)
     records = list(records_qs)
@@ -2125,6 +2267,8 @@ def export_yields_pdf(request):
     )
     if start_str and end_str:
         cover_line += f' &nbsp;|&nbsp; Date Range: {start_str} to {end_str}'
+    if barangay_filter:
+        cover_line += f' &nbsp;|&nbsp; Barangay: {barangay_filter}'
     elems.append(Paragraph(cover_line, styles['Normal']))
     elems.append(Spacer(1, 0.3*inch))
 
@@ -2182,6 +2326,7 @@ def export_harvests_csv(request):
     # Optional date range
     start_str = request.GET.get('start_date', '')
     end_str   = request.GET.get('end_date', '')
+    barangay_filter = _get_export_barangay_filter(request)
     try:
         start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
         end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
@@ -2190,6 +2335,7 @@ def export_harvests_csv(request):
 
     records_qs = HarvestRecord.objects.filter(is_active=True).select_related('planting__field', 'planting__variety').order_by('-harvest_date')
     records_qs = filter_queryset_by_role(request, records_qs, user_field='planting__field__owner')
+    records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
         records_qs = records_qs.filter(harvest_date__gte=start_dt, harvest_date__lte=end_dt)
     total = records_qs.count()
@@ -2204,6 +2350,8 @@ def export_harvests_csv(request):
     writer.writerow(['Exported By', request.user.get_full_name() or request.user.username])
     if start_str and end_str:
         writer.writerow(['Date Range', f'{start_str} to {end_str}'])
+    if barangay_filter:
+        writer.writerow(['Barangay', barangay_filter])
     writer.writerow(['Total Records', total])
     writer.writerow([])
 
@@ -2244,6 +2392,7 @@ def export_harvests_pdf(request):
     from datetime import datetime as _dt
     start_str = request.GET.get('start_date', '')
     end_str   = request.GET.get('end_date', '')
+    barangay_filter = _get_export_barangay_filter(request)
     try:
         start_dt = timezone.make_aware(_dt.strptime(start_str, '%Y-%m-%d'))
         end_dt   = timezone.make_aware(_dt.strptime(end_str, '%Y-%m-%d').replace(hour=23, minute=59, second=59))
@@ -2252,6 +2401,7 @@ def export_harvests_pdf(request):
 
     records_qs = HarvestRecord.objects.filter(is_active=True).select_related('planting__field', 'planting__variety').order_by('-harvest_date')
     records_qs = filter_queryset_by_role(request, records_qs, user_field='planting__field__owner')
+    records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
         records_qs = records_qs.filter(harvest_date__gte=start_dt, harvest_date__lte=end_dt)
     records = list(records_qs)
@@ -2273,6 +2423,8 @@ def export_harvests_pdf(request):
     )
     if start_str and end_str:
         cover_line += f' &nbsp;|&nbsp; Date Range: {start_str} to {end_str}'
+    if barangay_filter:
+        cover_line += f' &nbsp;|&nbsp; Barangay: {barangay_filter}'
     elems.append(Paragraph(cover_line, styles['Normal']))
     elems.append(Spacer(1, 0.3*inch))
 
@@ -5692,8 +5844,13 @@ def activity_delete(request, pk):
 
 @login_required(login_url=reverse_lazy('polls:login'))
 def season_log_barangay_stats(request):
-    """DA/Admin view: variety adoption + yield stats grouped by barangay."""
+    """DA/Admin view: variety adoption + yield stats grouped by barangay.
+    
+    Supports export as CSV or PDF with optional barangay filtering.
+    """
     from django.db.models import Count, Sum, Avg
+    import csv
+    from datetime import datetime
 
     profile = request.user.profile
     if profile.role == 'farmer':
@@ -5702,12 +5859,16 @@ def season_log_barangay_stats(request):
 
     year_f   = request.GET.get('year', str(timezone.now().year))
     season_f = request.GET.get('season', '')
+    barangay_f = request.GET.get('barangay', '').strip()
+    export_fmt = request.GET.get('export', '')
 
     qs = SeasonLog.objects.filter(is_active=True)
     if year_f:
         qs = qs.filter(season_year=year_f)
     if season_f:
         qs = qs.filter(season_type=season_f)
+    if barangay_f:
+        qs = qs.filter(field__barangay__icontains=barangay_f)
 
     # Barangay × Variety adoption
     barangay_stats = (
@@ -5721,6 +5882,118 @@ def season_log_barangay_stats(request):
         )
         .order_by('field__barangay', '-farmer_count')
     )
+
+    # Handle export
+    if export_fmt == 'csv':
+        response = HttpResponse(content_type='text/csv')
+        filename = 'barangay-variety-stats-{}.csv'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        
+        writer = csv.writer(response)
+        writer.writerow(['Barangay Variety Adoption Report'])
+        writer.writerow(['Exported:', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
+        if year_f:
+            writer.writerow(['Year:', year_f])
+        if season_f:
+            writer.writerow(['Season:', dict(SeasonLog.SEASON_CHOICES).get(season_f, season_f)])
+        if barangay_f:
+            writer.writerow(['Barangay Filter:', barangay_f])
+        writer.writerow([])
+        
+        writer.writerow(['Barangay', 'Variety Code', 'Variety Name', 'Farmer Count', 'Total Area (ha)', 'Avg Yield (sacks)', 'Total Yield (sacks)'])
+        for row in barangay_stats:
+            writer.writerow([
+                row.get('field__barangay', ''),
+                row.get('variety__code', ''),
+                row.get('variety__name', ''),
+                row.get('farmer_count', 0),
+                row.get('total_area_ha', 0) or 0,
+                row.get('avg_yield_sacks', 0) or 0,
+                row.get('total_yield', 0) or 0,
+            ])
+        
+        return response
+    
+    elif export_fmt == 'pdf':
+        from reportlab.lib.pagesizes import letter, A4
+        from reportlab.lib import colors
+        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+        from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+        from reportlab.lib.units import inch
+        
+        pdf_buffer = BytesIO()
+        pdf = SimpleDocTemplate(pdf_buffer, pagesize=letter)
+        elements = []
+        
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            parent=styles['Heading1'],
+            fontSize=16,
+            textColor=colors.HexColor('#1F2937'),
+            spaceAfter=6,
+        )
+        
+        elements.append(Paragraph('Barangay Variety Adoption Report', title_style))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Report metadata
+        metadata = []
+        metadata.append(['Exported:', datetime.now().strftime('%Y-%m-%d %H:%M:%S')])
+        if year_f:
+            metadata.append(['Year:', year_f])
+        if season_f:
+            metadata.append(['Season:', dict(SeasonLog.SEASON_CHOICES).get(season_f, season_f)])
+        if barangay_f:
+            metadata.append(['Barangay Filter:', barangay_f])
+        
+        if metadata:
+            meta_table = Table(metadata)
+            meta_table.setStyle(TableStyle([
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTSIZE', (0, 0), (-1, -1), 9),
+                ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#4B5563')),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('ROWBACKGROUND', (0, 0), (-1, -1), colors.white),
+            ]))
+            elements.append(meta_table)
+            elements.append(Spacer(1, 0.2*inch))
+        
+        # Data table
+        table_data = [['Barangay', 'Variety', 'Farmers', 'Area (ha)', 'Avg Yield', 'Total Yield']]
+        for row in barangay_stats:
+            table_data.append([
+                row.get('field__barangay', '')[:20],
+                row.get('variety__code', ''),
+                str(row.get('farmer_count', 0)),
+                '{:.2f}'.format(row.get('total_area_ha', 0) or 0),
+                '{:.0f}'.format(row.get('avg_yield_sacks', 0) or 0),
+                '{:.0f}'.format(row.get('total_yield', 0) or 0),
+            ])
+        
+        data_table = Table(table_data, colWidths=[1.3*inch, 1*inch, 0.8*inch, 1*inch, 1*inch, 1.2*inch])
+        data_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#10B981')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#E5E7EB')),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('ROWBACKGROUND', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F3F4F6')]),
+        ]))
+        elements.append(data_table)
+        
+        pdf.build(elements)
+        pdf_buffer.seek(0)
+        
+        response = HttpResponse(pdf_buffer.read(), content_type='application/pdf')
+        filename = 'barangay-variety-stats-{}.pdf'.format(datetime.now().strftime('%Y%m%d_%H%M%S'))
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+        return response
 
     # Top varieties overall
     top_varieties = (
@@ -5739,6 +6012,7 @@ def season_log_barangay_stats(request):
         'years':          years,
         'year_f':         year_f,
         'season_f':       season_f,
+        'barangay_f':     barangay_f,
         'season_choices': SeasonLog.SEASON_CHOICES,
         'role':           profile.role,
     })

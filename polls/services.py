@@ -118,6 +118,61 @@ def get_email_enabled() -> bool:
 
     return bool(getattr(settings, "EMAIL_ENABLED", False))
 
+
+def get_barangay_production_summary(
+    request=None,
+    *,
+    user_profile=None,
+    role: Optional[str] = None,
+    start_date=None,
+    end_date=None,
+    barangay: str = "",
+):
+    """Return harvested production and area grouped by barangay.
+
+    This is the single source of truth for barangay-level production reporting.
+    """
+    from django.db.models import Avg, Count, Sum
+
+    from .decorators import filter_queryset_by_role
+    from .models import HarvestRecord
+
+    if request is not None and role is None:
+        role = getattr(getattr(request.user, "profile", None), "role", None)
+
+    queryset = HarvestRecord.objects.filter(is_active=True).select_related(
+        "planting__field",
+        "planting__variety",
+        "planting__field__owner",
+    )
+
+    if request is not None:
+        queryset = filter_queryset_by_role(request, queryset, user_field="planting__field__owner")
+    elif role == "farmer" and user_profile is not None:
+        queryset = queryset.filter(planting__field__owner=user_profile)
+
+    if start_date is not None:
+        queryset = queryset.filter(harvest_date__gte=start_date)
+    if end_date is not None:
+        queryset = queryset.filter(harvest_date__lte=end_date)
+    if barangay:
+        queryset = queryset.filter(planting__field__barangay__icontains=barangay.strip())
+
+    barangay_rows = (
+        queryset
+        .values("planting__field__barangay")
+        .annotate(
+            farmer_count=Count("planting__field__owner", distinct=True),
+            total_area_ha=Sum("area_harvested_ha"),
+            total_production_tons=Sum("actual_yield_tons"),
+            avg_yield_tons_per_ha=Avg("yield_tons_per_ha"),
+            record_count=Count("id"),
+        )
+        .order_by("planting__field__barangay")
+    )
+
+    return queryset, barangay_rows
+
 # Cache objects so we do not reload heavy assets on every request
 _INTERPRETER: Optional[tf.lite.Interpreter] = None  # type: ignore
 _INPUT_DETAILS: Optional[List[Dict[str, Any]]] = None

@@ -315,6 +315,7 @@ function openHarvestExportModal() {
     title: 'Export Harvest Records',
     csvUrl: '{% url "polls:export_harvests_csv" %}',
     pdfUrl: '{% url "polls:export_harvests_pdf" %}',
+    showBarangay: true,
     cols: [
       { value: 'id', label: 'ID' },
       { value: 'date', label: 'Created' },

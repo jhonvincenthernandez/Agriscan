@@ -484,6 +484,7 @@ function openDetExportModal() {
     title:  'Export Detection Records',
     csvUrl: '{% url "polls:export_detections_csv" %}',
     pdfUrl: '{% url "polls:export_detections_pdf" %}',
+    showBarangay: true,
     cols: [
       { value: 'id',         label: 'ID'           },
       { value: 'date',       label: 'Date'         },

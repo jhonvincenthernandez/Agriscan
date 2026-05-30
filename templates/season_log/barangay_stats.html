@@ -40,7 +40,7 @@
             </svg>
             Apply Filter
           </button>
-          {% if year_f or season_f %}
+          {% if year_f or season_f or barangay_f %}
           <a href="{% url 'polls:season_log_barangay_stats' %}"
              class="bg-gray-100 text-gray-700 text-sm font-semibold py-2 px-4 rounded-lg hover:bg-gray-200 transition-all">Clear</a>
           {% endif %}
@@ -61,7 +61,14 @@
             <option value="{{ val }}" {% if season_f == val %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
-          {% if year_f or season_f %}
+          <input type="text" name="barangay" value="{{ barangay_f }}"
+                 list="barangay-list"
+                 placeholder="Search or select..."
+                 class="rounded-lg border border-gray-300 text-sm px-3 py-2 min-w-[180px] focus:outline-none focus:ring-2 focus:ring-green-500">
+          <datalist id="barangay-list">
+            <!-- populated by JavaScript -->
+          </datalist>
+          {% if year_f or season_f or barangay_f %}
           <span class="text-xs text-gray-400 flex items-center gap-1">
             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 010 2H4a1 1 0 01-1-1zm3 4a1 1 0 011-1h10a1 1 0 010 2H7a1 1 0 01-1-1zm3 4a1 1 0 011-1h4a1 1 0 010 2h-4a1 1 0 01-1-1z"/>
@@ -176,4 +183,36 @@
   </div>
 
 </section>
+
+<script>
+// Load barangay options from API for autocomplete
+document.addEventListener('DOMContentLoaded', function() {
+  var datalist = document.getElementById('barangay-list');
+  if (!datalist) return;
+  
+  fetch('/api/barangays/', {
+    method: 'GET',
+    credentials: 'same-origin',
+    headers: {
+      'Accept': 'application/json',
+    }
+  })
+    .then(function (resp) {
+      if (!resp.ok) throw new Error('Failed to fetch barangays: ' + resp.status);
+      return resp.json();
+    })
+    .then(function (data) {
+      datalist.innerHTML = '';
+      (data.barangays || []).forEach(function (barangay) {
+        var opt = document.createElement('option');
+        opt.value = barangay;
+        datalist.appendChild(opt);
+      });
+      console.log('Loaded ' + (data.barangays || []).length + ' barangays');
+    })
+    .catch(function (err) {
+      console.warn('Failed to load barangays:', err);
+    });
+});
+</script>
 {% endblock %}

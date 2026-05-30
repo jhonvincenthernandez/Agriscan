@@ -27,6 +27,8 @@
       ],
       // optional: carry extra query params (e.g. date range) through
       extraParams: { start_date: '2026-01-01', end_date: '2026-03-08' },
+      // optional: barangay filter used by every export path
+      barangay: 'San Jose',
       // optional: pre-select format ('pdf'|'csv'); user can still switch inside the modal
       format: 'pdf',
     });
@@ -97,6 +99,20 @@
       </div>
     </div>
 
+    <!-- ── Barangay Filter with Autocomplete (optional, controlled by config) ── -->
+    <div id="gem-barangay-section" style="display:none;" class="mb-5">
+      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+        Barangay <span class="text-gray-400 normal-case font-normal">(optional)</span>
+      </p>
+      <input type="text" id="gem-barangay"
+             list="gem-barangay-list"
+             placeholder="Search or select..."
+             class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+      <datalist id="gem-barangay-list">
+        <!-- populated by loadBarangayOptions() -->
+      </datalist>
+    </div>
+
     <!-- ── Mode 1: Column checkboxes ── -->
     <div id="gem-cols-section">
       <div class="flex items-center justify-between mb-2">
@@ -152,10 +168,45 @@
   // ── Internal state ────────────────────────────────────────────────────────
   var _cfg = {};  // current config passed to openExportModal()
 
+  // ── Load barangay options from API ────────────────────────────────────────
+  function loadBarangayOptions() {
+    var datalist = document.getElementById('gem-barangay-list');
+    if (!datalist) return;
+    
+    fetch('/api/barangays/', {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+      }
+    })
+      .then(function (resp) {
+        if (!resp.ok) throw new Error('Failed to fetch barangays: ' + resp.status);
+        return resp.json();
+      })
+      .then(function (data) {
+        datalist.innerHTML = '';
+        (data.barangays || []).forEach(function (barangay) {
+          var opt = document.createElement('option');
+          opt.value = barangay;
+          datalist.appendChild(opt);
+        });
+        console.log('Loaded ' + (data.barangays || []).length + ' barangays');
+      })
+      .catch(function (err) {
+        console.warn('Failed to load barangays:', err);
+      });
+  }
+
   // ── Public API ────────────────────────────────────────────────────────────
   window.openExportModal = function (cfg) {
     _cfg = cfg || {};
     var isSections = Array.isArray(_cfg.sections) && _cfg.sections.length > 0;
+    
+    // Load barangay options only if needed for this export
+    if (_cfg.showBarangay !== false) {
+      loadBarangayOptions();
+    }
 
     // Title & subtitle
     var titleEl = document.getElementById('gem-title');
@@ -169,8 +220,13 @@
       document.getElementById('gem-date-block').style.display = 'none';
       document.getElementById('gem-cols-section').style.display    = 'none';
       document.getElementById('gem-sections-section').style.display = '';
+      document.getElementById('gem-barangay-section').style.display = _cfg.showBarangay !== false ? '' : 'none';
 
-      if (subEl) subEl.textContent = 'Choose format and sections to export.';
+      if (subEl) subEl.textContent = _cfg.showBarangay !== false ? 'Choose format, barangay, and sections to export.' : 'Choose format and sections to export.';
+
+      var barangayValue = (_cfg.barangay || (_cfg.extraParams && _cfg.extraParams.barangay) || '').trim();
+      var barangayInput = document.getElementById('gem-barangay');
+      if (barangayInput) barangayInput.value = barangayValue;
 
       // Pre-select the format if provided, else default to PDF
       var initFmt = _cfg.format || 'pdf';
@@ -217,10 +273,15 @@
       // ── Mode 1: column picker ────────────────────────────────────────────
       document.getElementById('gem-fmt-block').style.display   = '';
       document.getElementById('gem-date-block').style.display  = '';
+      document.getElementById('gem-barangay-section').style.display  = _cfg.showBarangay !== false ? '' : 'none';
       document.getElementById('gem-cols-section').style.display     = '';
       document.getElementById('gem-sections-section').style.display = 'none';
 
-      if (subEl) subEl.textContent = 'Choose format, date range, and columns.';
+      if (subEl) subEl.textContent = _cfg.showBarangay !== false ? 'Choose format, date range, barangay, and columns.' : 'Choose format, date range, and columns.';
+
+      var barangayValue1 = (_cfg.barangay || (_cfg.extraParams && _cfg.extraParams.barangay) || '').trim();
+      var barangayInput1 = document.getElementById('gem-barangay');
+      if (barangayInput1 && _cfg.showBarangay !== false) barangayInput1.value = barangayValue1;
 
       // Reset to CSV
       var csvRadio = document.getElementById('gem-fmt-csv');
@@ -276,6 +337,12 @@
 
   window.confirmExportModal = function () {
     var isSections = document.getElementById('gem-sections-section').style.display !== 'none';
+    var barangayEl = document.getElementById('gem-barangay');
+    var barangayValue = barangayEl ? barangayEl.value.trim() : '';
+    var baseParams = new URLSearchParams(window.location.search || '');
+    ['page', 'sort', 'export', 'cols', 'sections'].forEach(function (key) {
+      baseParams.delete(key);
+    });
 
     if (isSections) {
       // ── Mode 2: build ?export=pdf&sections=...&start_date=...&end_date=... ──
@@ -288,9 +355,16 @@
       // Read format from the radio (user may have switched it)
       var fmtRadio = document.querySelector('input[name="gem_fmt"]:checked');
       var chosenFmt = fmtRadio ? fmtRadio.value : (_cfg.format || 'pdf');
-      var params = new URLSearchParams(_cfg.extraParams || {});
+      var params = baseParams;
+      Object.keys(_cfg.extraParams || {}).forEach(function (key) {
+        var value = _cfg.extraParams[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params.set(key, value);
+        }
+      });
       var fmtParam = _cfg.fmtParam || 'export';
       params.set(fmtParam, chosenFmt);
+      if (barangayValue) params.set('barangay', barangayValue);
       checked.forEach(function (s) { params.append('sections', s); });
       closeExportModal();
       window.location.href = (_cfg.baseUrl || '?') + params.toString();
@@ -306,11 +380,18 @@
         return;
       }
       var url    = fmtVal === 'csv' ? (_cfg.csvUrl || '') : (_cfg.pdfUrl || '');
-      var params = new URLSearchParams();
+      var params = baseParams;
+      Object.keys(_cfg.extraParams || {}).forEach(function (key) {
+        var value = _cfg.extraParams[key];
+        if (value !== undefined && value !== null && value !== '') {
+          params.set(key, value);
+        }
+      });
       var start  = document.getElementById('gem-start-date');
       var end    = document.getElementById('gem-end-date');
       if (start && start.value) params.set('start_date', start.value);
       if (end   && end.value)   params.set('end_date',   end.value);
+      if (barangayValue) params.set('barangay', barangayValue);
       if (fmtVal === 'csv') cols.forEach(function (c) { params.append('cols', c); });
       closeExportModal();
       window.location.href = url + (params.toString() ? '?' + params.toString() : '');

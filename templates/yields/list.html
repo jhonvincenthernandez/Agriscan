@@ -503,6 +503,7 @@ function openYieldExportModal() {
     title:  'Export Yield Records',
     csvUrl: '{% url "polls:export_yields_csv" %}',
     pdfUrl: '{% url "polls:export_yields_pdf" %}',
+    showBarangay: true,
     cols: [
       { value: 'id',           label: 'ID'          },
       { value: 'date',         label: 'Date'        },
