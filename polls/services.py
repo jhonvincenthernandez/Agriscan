@@ -980,6 +980,148 @@ def _load_yield_report() -> Dict[str, Any]:
     return _YIELD_REPORT
 
 
+def _compute_ensemble_weights() -> tuple[float, float]:
+    """
+    Compute weights for CNN and Linear Regression ensemble predictions.
+    
+    Weights are computed inversely proportional to validation MAE:
+    - Tagalog: Mas mababang MAE, mas mataas ang weight.
+    - Linear model MAE from yield_report.json.
+    - CNN model MAE from environment (YIELD_CNN_MAE_OVERRIDE) or default 0.25.
+    
+    Returns:
+        (weight_cnn, weight_lr): Normalized weights summing to 1.0
+    """
+    from django.conf import settings
+    
+    # Linear model MAE from report
+    report = _load_yield_report()
+    lr_mae = float(report.get("mae", 0.19))  # fallback to known value
+    
+    # CNN model MAE: check env override first
+    cnn_mae_str = getattr(settings, "YIELD_CNN_MAE_OVERRIDE", "0.25")
+    try:
+        cnn_mae = float(cnn_mae_str)
+    except (ValueError, TypeError):
+        cnn_mae = 0.25  # fallback default
+    
+    # Ensure MAE is positive
+    if cnn_mae <= 0:
+        cnn_mae = 0.25
+    if lr_mae <= 0:
+        lr_mae = 0.19
+    
+    # Weight inversely proportional to MAE: w ∝ 1/MAE
+    w_cnn_raw = 1.0 / cnn_mae
+    w_lr_raw = 1.0 / lr_mae
+    
+    # Normalize to sum to 1.0
+    total = w_cnn_raw + w_lr_raw
+    w_cnn = w_cnn_raw / total
+    w_lr = w_lr_raw / total
+    
+    return (w_cnn, w_lr)
+
+
+def _predict_yield_ensemble(
+    image_file: Any,
+    features: Dict[str, Any],
+    planting_date,
+    growth_days: int,
+    area: float,
+) -> tuple[float, int]:
+    """
+    Ensemble yield prediction combining CNN (canopy image) and Linear Regression (tabular).
+    
+    Args:
+        image_file: Canopy image file for CNN.
+        features: Tabular features dict for Linear Regression (must include variety, ecosystem_type, season, etc.)
+        planting_date: Date or str for planting start.
+        growth_days: Average growth duration in days.
+        area: Field area in hectares.
+    
+    Returns:
+        (predicted_tons_per_ha, confidence_pct): Blended ensemble result.
+    
+    Raises:
+        ValueError/RuntimeError if either model fails or inputs invalid.
+    """
+    # Get CNN prediction from canopy image
+    tons_per_ha_cnn = _predict_yield_cnn_tons_per_ha(image_file)
+    
+    # Get Linear Regression prediction from tabular features
+    model = _ensure_yield_model()
+    report = _load_yield_report()
+    
+    if pd is None:
+        raise RuntimeError(
+            "pandas is required for ensemble yield prediction. "
+            "Install pandas to continue."
+        )
+    
+    # Prepare tabular row (same as linear regression path)
+    planting_month = 1
+    if planting_date:
+        if isinstance(planting_date, str):
+            try:
+                planting_date_obj = datetime.fromisoformat(planting_date).date()
+                planting_month = planting_date_obj.month
+            except Exception:
+                planting_month = 1
+        else:
+            planting_month = int(getattr(planting_date, 'month', 1))
+    
+    seed_rate = features.get("seed_rate_kg_per_ha")
+    try:
+        seed_rate_val = float(seed_rate) if seed_rate is not None else np.nan
+    except Exception:
+        seed_rate_val = np.nan
+    
+    row = {
+        "variety": features.get("variety", ""),
+        "field_area_ha": area,
+        "historical_production_tons": float(features.get("historical_production_tons", 0.0)),
+        "historical_yield_tons_per_ha": float(features.get("historical_yield_tons_per_ha", 0.0)),
+        "planting_month": planting_month,
+        "average_growth_duration_days": growth_days,
+        "ecosystem_type": str(features.get("ecosystem_type", "")),
+        "season": str(features.get("season", "")),
+        "seed_rate_kg_per_ha": seed_rate_val,
+        "health_status": _parse_health_value(features.get("health_status", 0.0)),
+    }
+    
+    df = pd.DataFrame([row])
+    tons_per_ha_lr = float(model.predict(df)[0])
+    
+    # Compute ensemble weights
+    w_cnn, w_lr = _compute_ensemble_weights()
+    
+    # Blend predictions
+    tons_per_ha_ensemble = w_cnn * tons_per_ha_cnn + w_lr * tons_per_ha_lr
+    
+    # Blend confidence: use average of base confidences
+    r2 = report.get("r2", 0.65)
+    if pd is not None and pd.isna(r2):
+        r2 = 0.0
+    else:
+        r2 = float(r2)
+    
+    lr_conf = max(55, min(95, int(round(r2 * 100))))
+    cnn_conf = 70
+    
+    has_historical = (
+        row.get("historical_production_tons", 0.0) > 0
+        or row.get("historical_yield_tons_per_ha", 0.0) > 0
+    )
+    lr_conf = lr_conf if has_historical else min(lr_conf, 70)
+    
+    # Ensemble confidence: weighted blend of both model confidences
+    ensemble_conf = int(round(w_cnn * cnn_conf + w_lr * lr_conf))
+    ensemble_conf = max(55, min(95, ensemble_conf))
+    
+    return (tons_per_ha_ensemble, ensemble_conf)
+
+
 def _build_rice_yield_cnn(torch_mod):
     nn = torch_mod.nn
 
@@ -1329,12 +1471,22 @@ def predict_yield(
 
     harvest_datetime, yield_readiness = _resolve_harvest_and_readiness(planting_date, growth_days)
 
-    if selected_model == "cnn_yield":
+    if selected_model == "ensemble":
+        if not get_yield_cnn_enabled():
+            raise RuntimeError("Ensemble yield model requires CNN to be enabled in system settings.")
+        tons_per_ha, confidence_pct = _predict_yield_ensemble(
+            image_file=canopy_image,
+            features=features,
+            planting_date=planting_date,
+            growth_days=growth_days,
+            area=area,
+        )
+    elif selected_model == "cnn_yield":
         if not get_yield_cnn_enabled():
             raise RuntimeError("CNN yield model is currently disabled by system settings.")
         tons_per_ha = _predict_yield_cnn_tons_per_ha(canopy_image)
         confidence_pct = 70
-    else:
+    else:  # linear_regression (default)
         model = _ensure_yield_model()
         report = _load_yield_report()
 

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from decimal import Decimal
+
 from django import forms
 from django.conf import settings
 
@@ -86,6 +88,7 @@ DEFAULT_VARIETIES = (
 YIELD_MODEL_CHOICES = (
     ("linear_regression", "Linear Regression (Tabular Data)"),
     ("cnn_yield", "CNN Yield (Canopy Image)"),
+    ("ensemble", "Ensemble (Combines CNN + Linear Regression)"),
 )
 
 INPUT_CLASS = "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
@@ -200,20 +203,21 @@ class YieldPredictionForm(forms.Form):
         initial="linear_regression",
         label="Yield Model",
         widget=forms.Select(attrs={"class": INPUT_CLASS, "id": "id_selected_model"}),
-        help_text="Pumili ng model: Linear Regression para tabular data o CNN para canopy image.",
+        help_text="Linear Regression: tabular data only. CNN: canopy image only. Ensemble: both image + tabular data for best accuracy.",
     )
 
     canopy_image = forms.ImageField(
         required=False,
-        label="Canopy Image (Required for CNN mode)",
+        label="Canopy Image (Required for CNN or Ensemble mode) *",
         widget=forms.ClearableFileInput(
             attrs={
                 "accept": "image/*",
                 "capture": "environment",
                 "class": "mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500",
+                "id": "id_canopy_image",
             }
         ),
-        help_text="Top-down canopy photo near harvest (~0.8-0.9m distance).",
+        help_text="Top-down canopy photo near harvest (~0.8-0.9m distance). Required when selecting CNN or Ensemble yield models.",
     )
     
     # Option 1: Select existing planting record (BEST PRACTICE - auto-fills everything)
@@ -226,7 +230,7 @@ class YieldPredictionForm(forms.Form):
             "id": "id_planting",
             "data-searchable": "true",
         }),
-        help_text="Search and select the planting cycle to auto-fill all required data"
+        help_text="Search and select the planting cycle to auto-fill all required data. For Ensemble mode, you still need to upload a canopy image.",
     )
     
     # Option 2: Manual entry (REQUIRED if no planting record selected)
@@ -260,6 +264,18 @@ class YieldPredictionForm(forms.Form):
         widget=forms.NumberInput(attrs={"class": INPUT_CLASS, "step": "0.01"}),
         help_text="Yield per hectare (auto-calculated from production and area).",
     )
+
+    def clean_historical_production_tons(self):
+        value = self.cleaned_data.get("historical_production_tons")
+        if value is None:
+            return value
+        return value.quantize(Decimal("0.01"))
+
+    def clean_historical_yield_tons_per_ha(self):
+        value = self.cleaned_data.get("historical_yield_tons_per_ha")
+        if value is None:
+            return value
+        return value.quantize(Decimal("0.01"))
     
     variety = forms.ChoiceField(
         choices=DEFAULT_VARIETIES, 
@@ -371,22 +387,25 @@ class YieldPredictionForm(forms.Form):
 
         from . import services
 
-        # Tagalog: Huwag payagan ang CNN mode kapag naka-disable sa settings.
-        if selected_model == 'cnn_yield' and not services.get_yield_cnn_enabled():
-            self.add_error('selected_model', 'CNN yield mode is currently disabled by system settings.')
+        # Tagalog: Huwag payagan ang CNN/Ensemble mode kapag naka-disable sa settings.
+        if selected_model in ['cnn_yield', 'ensemble'] and not services.get_yield_cnn_enabled():
+            self.add_error('selected_model', 'CNN-based yield models (CNN, Ensemble) are currently disabled by system settings.')
 
-        # Tagalog: Sa CNN mode, canopy image ang pangunahing required input.
-        if selected_model == 'cnn_yield' and not cleaned_data.get('canopy_image'):
-            self.add_error('canopy_image', 'Canopy image is required when CNN yield model is selected.')
+        # Tagalog: Sa CNN at Ensemble mode, canopy image ang pangunahing required input.
+        if selected_model in ['cnn_yield', 'ensemble'] and not cleaned_data.get('canopy_image'):
+            self.add_error('canopy_image', 'Canopy image is required when CNN or Ensemble yield model is selected.')
         
-        # If planting selected, no need for manual fields
+        # If planting selected, no need for manual fields (works for all models)
         if planting:
             return cleaned_data
         
         # Tagalog: Model-specific required fields para hindi naghahalo ang assumptions.
         if selected_model == 'cnn_yield':
             required_fields = ['area', 'planting_date', 'average_growth_duration_days']
-        else:
+        elif selected_model == 'ensemble':
+            # Ensemble needs both CNN inputs (area, date, days) AND tabular inputs (variety, etc.)
+            required_fields = ['area', 'variety', 'planting_date', 'average_growth_duration_days']
+        else:  # linear_regression
             required_fields = ['area', 'variety', 'planting_date', 'average_growth_duration_days']
 
         missing = [f for f in required_fields if not cleaned_data.get(f)]

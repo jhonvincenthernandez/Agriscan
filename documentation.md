@@ -129,6 +129,7 @@ Responsibilities:
 - Business toggles managed in admin UI
    - enable or disable outgoing email notifications
    - control availability of CNN yield workflow
+   - expose ensemble calibration fallback for yield blending
 - Change logging for auditability
 
 Key model entities:
@@ -186,9 +187,10 @@ Responsibilities:
 - Predicted yield storage in tons per hectare
 - Total production estimation
 - Actual harvest capture and synchronization
-- Dual-model inference routing
+- Three-mode inference routing
    - Linear Regression path for tabular agronomic inputs
    - CNN path for canopy image-based prediction
+   - Ensemble path that blends CNN and Linear outputs with configurable weights
 
 Key model entities:
 
@@ -253,11 +255,12 @@ Key model entities:
 ### Workflow B: Yield Prediction
 
 1. User opens prediction flow from planting or detection context.
-2. User selects model mode (Linear Regression or CNN Yield).
+2. User selects model mode (Linear Regression, CNN Yield, or Ensemble).
 3. System reads field and planting metadata.
 4. Model-specific validation is applied.
    - CNN requires canopy image and quality checks.
    - Linear Regression validates tabular core fields.
+   - Ensemble requires both canopy image and tabular inputs.
 5. Selected model returns predicted tons per hectare.
 6. System computes total production estimate.
 7. Prediction is saved for historical reporting.
@@ -336,6 +339,7 @@ Minimum recommended test coverage:
 - AI output quality depends on model quality and input image quality.
 - Prediction consistency depends on complete and correct field and planting inputs.
 - CNN yield workflow depends on availability of model checkpoint and runtime dependencies.
+- Ensemble weighting currently uses a fallback CNN MAE estimate when no validated CNN MAE is available.
 
 ---
 

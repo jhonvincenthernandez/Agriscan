@@ -1,7 +1,7 @@
 # Hernandez development
 # AgriScan+
 
-AgriScan+ is a Django-based, web-first rice farm management system with AI-assisted disease detection and dual-model yield prediction.
+AgriScan+ is a Django-based, web-first rice farm management system with AI-assisted disease detection and three-mode yield prediction.
 
 ## What This Project Does
 
@@ -132,9 +132,10 @@ Fallback behavior:
 - Two entry modes:
   - from detection (auto-filled context)
   - direct/manual input
-- Two model modes:
+- Three model modes:
   - Linear Regression (tabular agronomic features)
   - CNN Yield (canopy image + area/date/growth context)
+  - Ensemble (weighted blend of CNN + Linear outputs)
 - Historical production-aware prediction flow for Linear Regression
 - Real-time historical yield calculation in form UX
 

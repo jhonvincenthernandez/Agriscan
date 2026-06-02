@@ -350,33 +350,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     const isCnn = modelSelect.value === 'cnn_yield';
+    const isEnsemble = modelSelect.value === 'ensemble';
+    const isLinear = modelSelect.value === 'linear_regression';
 
-    // CNN required field
-    setFieldVisibilityAndState(FIELD_NAMES.canopy, isCnn);
+    // Show canopy for CNN and Ensemble modes
+    const showCanopy = isCnn || isEnsemble;
+    setFieldVisibilityAndState(FIELD_NAMES.canopy, showCanopy);
 
     const canopyInput = document.getElementById('id_canopy_image');
     if (canopyInput) {
-      canopyInput.required = isCnn;
-      canopyInput.disabled = !isCnn;
+      canopyInput.required = showCanopy;
+      canopyInput.disabled = !showCanopy;
     }
 
-    // Tagalog: LR-only fields, itago kapag CNN para mas malinis ang form.
-    setFieldVisibilityAndState(FIELD_NAMES.variety, !isCnn);
-    setFieldVisibilityAndState(FIELD_NAMES.historicalProduction, !isCnn);
-    setFieldVisibilityAndState(FIELD_NAMES.historicalYield, !isCnn);
-    setFieldVisibilityAndState(FIELD_NAMES.health, !isCnn);
-    setFieldVisibilityAndState(FIELD_NAMES.season, !isCnn);
-    setFieldVisibilityAndState(FIELD_NAMES.ecosystem, !isCnn);
+    // Show tabular fields for Linear and Ensemble modes (hide for CNN-only)
+    const showTabular = isLinear || isEnsemble;
+    setFieldVisibilityAndState(FIELD_NAMES.variety, showTabular);
+    setFieldVisibilityAndState(FIELD_NAMES.historicalProduction, showTabular);
+    setFieldVisibilityAndState(FIELD_NAMES.historicalYield, showTabular);
+    setFieldVisibilityAndState(FIELD_NAMES.health, showTabular);
+    setFieldVisibilityAndState(FIELD_NAMES.season, showTabular);
+    setFieldVisibilityAndState(FIELD_NAMES.ecosystem, showTabular);
 
     if (hintText) {
-      hintText.textContent = isCnn
-        ? 'CNN Yield: Canopy Image, Area Planted, Planting Date, and Growth Duration are required. Variety and historical fields are hidden because they are not used by CNN prediction.'
-        : 'Linear Regression: Area Planted, Variety, Planting Date, and Growth Duration are required. Historical and health fields improve accuracy; if missing, we use an estimated baseline from variety averages.';
+      if (isEnsemble) {
+        hintText.textContent = 'Ensemble (CNN + Linear): ALL fields required. Canopy Image, Area Planted, Variety, Planting Date, and Growth Duration are mandatory. Historical data and health status improve accuracy.';
+      } else if (isCnn) {
+        hintText.textContent = 'CNN Yield: Canopy Image, Area Planted, Planting Date, and Growth Duration are required. Variety and historical fields are hidden because they are not used by CNN prediction.';
+      } else {
+        hintText.textContent = 'Linear Regression: Area Planted, Variety, Planting Date, and Growth Duration are required. Historical and health fields improve accuracy; if missing, we use an estimated baseline from variety averages.';
+      }
     }
 
     const badge = document.getElementById('historical-source-badge');
     if (badge) {
-      if (isCnn) {
+      if (showCanopy) {
         badge.classList.add('hidden');
         badge.innerHTML = '';
       } else if (lastHistoricalData) {
@@ -786,15 +794,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const setFieldValue = (fieldId, value, makeReadonly = true) => {
                     const field = document.getElementById(fieldId);
                     if (field && value !== null && value !== undefined) {
-                        field.value = value;
+                    const shouldFormatToTwoDecimals = fieldId === 'id_historical_production_tons' || fieldId === 'id_historical_yield_tons_per_ha';
+                    const displayValue = shouldFormatToTwoDecimals && value !== ''
+                      ? Number(value).toFixed(2)
+                      : value;
+                    field.value = displayValue;
                         if (makeReadonly) {
                             if (field.tagName === 'SELECT') {
                                 field.disabled = true;
                                 // Add hidden input to ensure disabled fields submit
                                 const hiddenInput = document.createElement('input');
-                                hiddenInput.type = 'hidden';
+                        hiddenInput.type = 'hidden';
                                 hiddenInput.name = field.name;
-                                hiddenInput.value = value;
+                        hiddenInput.value = displayValue;
                                 hiddenInput.id = `hidden_${fieldId}`;
                                 // Remove old hidden input if exists
                                 const oldHidden = document.getElementById(`hidden_${fieldId}`);

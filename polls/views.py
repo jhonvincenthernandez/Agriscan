@@ -4203,8 +4203,8 @@ def api_planting_data(request, pk):
             'field_name': planting.field.name,
             'expected_harvest': planting.expected_harvest_date.strftime('%Y-%m-%d') if planting.expected_harvest_date else None,
             # Historical data from HarvestRecord history (2-year average)
-            'historical_production_tons': float(hist.get('historical_production') or 0.0),
-            'historical_yield_tons_per_ha': float(hist.get('historical_yield') or 0.0),
+            'historical_production_tons': f"{float(hist.get('historical_production') or 0.0):.2f}",
+            'historical_yield_tons_per_ha': f"{float(hist.get('historical_yield') or 0.0):.2f}",
             'historical_source': hist.get('source') or 'variety_default',
             'historical_record_count': record_count,
             # Include season/ecosystem for display in the front-end (read-only)
