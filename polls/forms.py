@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from django import forms
+from django.conf import settings
 
 from .models import (
     DetectionRecord,
@@ -80,6 +81,11 @@ DEFAULT_VARIETIES = (
     ("Rc222", "Rc222"),
     ("Rc160", "Rc160"),
     ("Rc216", "Rc216"),
+)
+
+YIELD_MODEL_CHOICES = (
+    ("linear_regression", "Linear Regression (Tabular Data)"),
+    ("cnn_yield", "CNN Yield (Canopy Image)"),
 )
 
 INPUT_CLASS = "mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
@@ -177,6 +183,28 @@ class YieldPredictionForm(forms.Form):
     - Core inputs (REQUIRED): area, historical data, planting date, growth duration, variety
     - Optional inputs (enhance accuracy): season, health status, environmental data
     """
+
+    selected_model = forms.ChoiceField(
+        choices=YIELD_MODEL_CHOICES,
+        required=True,
+        initial="linear_regression",
+        label="Yield Model",
+        widget=forms.Select(attrs={"class": INPUT_CLASS, "id": "id_selected_model"}),
+        help_text="Pumili ng model: Linear Regression para tabular data o CNN para canopy image.",
+    )
+
+    canopy_image = forms.ImageField(
+        required=False,
+        label="Canopy Image (Required for CNN mode)",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "accept": "image/*",
+                "capture": "environment",
+                "class": "mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500",
+            }
+        ),
+        help_text="Top-down canopy photo near harvest (~0.8-0.9m distance).",
+    )
     
     # Option 1: Select existing planting record (BEST PRACTICE - auto-fills everything)
     planting = forms.ModelChoiceField(
@@ -287,6 +315,15 @@ class YieldPredictionForm(forms.Form):
 
     def __init__(self, *args, variety_choices=None, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+
+        from . import services
+
+        # Tagalog: Kapag disabled ang CNN sa system settings, LR lang ang puwedeng piliin.
+        if not services.get_yield_cnn_enabled():
+            self.fields['selected_model'].choices = (
+                ('linear_regression', 'Linear Regression (Tabular Data)'),
+            )
+            self.fields['selected_model'].initial = 'linear_regression'
         
         # Set variety choices
         if variety_choices:
@@ -320,15 +357,28 @@ class YieldPredictionForm(forms.Form):
     def clean(self):
         cleaned_data = super().clean()
         planting = cleaned_data.get('planting')
+        selected_model = cleaned_data.get('selected_model') or 'linear_regression'
+
+        from . import services
+
+        # Tagalog: Huwag payagan ang CNN mode kapag naka-disable sa settings.
+        if selected_model == 'cnn_yield' and not services.get_yield_cnn_enabled():
+            self.add_error('selected_model', 'CNN yield mode is currently disabled by system settings.')
+
+        # Tagalog: Sa CNN mode, canopy image ang pangunahing required input.
+        if selected_model == 'cnn_yield' and not cleaned_data.get('canopy_image'):
+            self.add_error('canopy_image', 'Canopy image is required when CNN yield model is selected.')
         
         # If planting selected, no need for manual fields
         if planting:
             return cleaned_data
         
-        # If no planting, validate core manual fields are provided
-        required_fields = [
-            'area', 'variety', 'planting_date', 'average_growth_duration_days'
-        ]
+        # Tagalog: Model-specific required fields para hindi naghahalo ang assumptions.
+        if selected_model == 'cnn_yield':
+            required_fields = ['area', 'planting_date', 'average_growth_duration_days']
+        else:
+            required_fields = ['area', 'variety', 'planting_date', 'average_growth_duration_days']
+
         missing = [f for f in required_fields if not cleaned_data.get(f)]
         
         if missing:
@@ -2180,10 +2230,14 @@ class SiteSettingForm(forms.ModelForm):
         fields = [
             "allowed_past_days_planting",
             "detection_confidence_threshold",
+            "yield_cnn_enabled",
+            "email_enabled",
         ]
         labels = {
             "allowed_past_days_planting": "Allowed Past Days for Planting Date",
             "detection_confidence_threshold": "AI Detection Confidence Threshold",
+            "yield_cnn_enabled": "Enable CNN Yield Model",
+            "email_enabled": "Enable Outgoing Emails",
         }
         help_texts = {
             "allowed_past_days_planting": (
@@ -2194,6 +2248,14 @@ class SiteSettingForm(forms.ModelForm):
             "detection_confidence_threshold": (
                 "Minimum confidence (%) required for the AI model to accept an image. "
                 "If the model is less confident, it will return 'Unknown/Not Rice'."
+            ),
+            "yield_cnn_enabled": (
+                "When enabled, users can select CNN Yield mode (requires canopy image). "
+                "When disabled, only Linear Regression is available."
+            ),
+            "email_enabled": (
+                "Enable all outgoing email notifications globally. "
+                "SMTP credentials are still required via environment settings."
             ),
         }
         widgets = {
@@ -2210,6 +2272,16 @@ class SiteSettingForm(forms.ModelForm):
                     "min": "0",
                     "max": "100",
                     "step": "1",
+                }
+            ),
+            "yield_cnn_enabled": forms.CheckboxInput(
+                attrs={
+                    "class": "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded",
+                }
+            ),
+            "email_enabled": forms.CheckboxInput(
+                attrs={
+                    "class": "h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded",
                 }
             ),
         }

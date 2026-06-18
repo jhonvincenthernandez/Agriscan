@@ -105,16 +105,34 @@ class SiteSetting(models.Model):
         ),
     )
 
+    yield_cnn_enabled = models.BooleanField(
+        default=False,
+        help_text=(
+            "Enable or disable CNN yield prediction in the user-facing Yield Tool. "
+            "When disabled, only Linear Regression is selectable."
+        ),
+    )
+
+    email_enabled = models.BooleanField(
+        default=False,
+        help_text=(
+            "Enable or disable outgoing email notifications globally. "
+            "SMTP credentials are still read from environment variables."
+        ),
+    )
+
     class Meta:
         verbose_name = "Site Setting"
         verbose_name_plural = "Site Settings"
 
     def __str__(self) -> str:
         return (
-            "Global Settings (allowed past days: {allowed}, confidence threshold: {threshold})"
+            "Global Settings (allowed past days: {allowed}, confidence threshold: {threshold}, cnn: {cnn}, email: {email})"
         ).format(
             allowed=self.allowed_past_days_planting,
             threshold=self.detection_confidence_threshold,
+            cnn="enabled" if self.yield_cnn_enabled else "disabled",
+            email="enabled" if self.email_enabled else "disabled",
         )
 
     def clean(self):

@@ -203,6 +203,7 @@
                   </svg>
                 </a>
               </th>
+              <th class="px-4 py-3 whitespace-nowrap">Model</th>
               <th class="px-4 py-3 whitespace-nowrap">
                 <a href="?sort={% if sb == 'planting__planting_date' %}-planting__planting_date{% else %}planting__planting_date{% endif %}{% if p %}&search={{ p }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
                    class="inline-flex items-center gap-1 hover:text-green-600 transition-colors group">
@@ -282,6 +283,7 @@
                     <span class="text-gray-400">—</span>
                   {% endif %}
                 </td>
+                <td class="px-4 py-3 text-xs text-gray-600">{{ record.model_version|default:'—' }}</td>
                 <td class="px-4 py-3 text-xs text-gray-500">
                   {% if record.planting and record.planting.planting_date %}
                     {{ record.planting.planting_date|date:'Y-m-d' }}
@@ -474,6 +476,7 @@ function openYieldExportModal() {
       { value: 'date',         label: 'Date'        },
       { value: 'variety',      label: 'Variety'     },
       { value: 'field',        label: 'Field'       },
+      { value: 'model',        label: 'Model'       },
       { value: 'sacks_per_ha', label: 'Sacks/ha'    },
       { value: 'confidence',   label: 'Confidence'  },
       { value: 'area',         label: 'Area (ha)'   },

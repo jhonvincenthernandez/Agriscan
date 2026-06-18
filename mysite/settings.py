@@ -10,22 +10,77 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# Basahin ang .env file kung meron, para hindi hardcoded ang sensitibong config.
+def _load_env_file() -> None:
+    env_path = BASE_DIR / '.env'
+    if not env_path.exists():
+        return
+
+    for raw_line in env_path.read_text(encoding='utf-8').splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+
+        key, value = line.split('=', 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        # Huwag i-override ang environment variable na na-set na sa OS/hosting.
+        os.environ.setdefault(key, value)
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def _env_int(name: str, default: int) -> int:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    try:
+        return int(value.strip())
+    except ValueError:
+        # Kapag invalid ang value sa .env, gumamit ng safe default kaysa mag-crash.
+        return default
+
+
+def _env_list(name: str, default: list[str] | None = None) -> list[str]:
+    value = os.environ.get(name, '')
+    items = [part.strip() for part in value.split(',') if part.strip()]
+    if items:
+        return items
+    return default or []
+
+
+_load_env_file()
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*68$rb%vg-qp46xhn+b22mr#_qo$8ga41pl^8+p1=d5fk+gqft'
+# SECURITY WARNING: itago ang secret key sa .env, fallback lang ito para sa local dev.
+SECRET_KEY = os.environ.get(
+    'SECRET_KEY',
+    'django-insecure-change-this-in-env',
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# SECURITY WARNING: dapat False sa production.
+DEBUG = _env_bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = []
+# Tumatanggap ng comma-separated values, hal. 127.0.0.1,localhost
+ALLOWED_HOSTS = _env_list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+
+# Base URL ng app para sa links sa email notifications (dev/prod configurable).
+APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://127.0.0.1:8000').rstrip('/')
 
 
 # Application definition
@@ -79,12 +134,13 @@ WSGI_APPLICATION = 'mysite.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'agriscan_db',
-        'USER': 'root',  # corrected key from USERNAME to USER
-        'PASSWORD': '',
-        'PORT': '3306',
-        'HOST': 'localhost',
+        # Galing sa .env ang DB config para madaling magpalit ng local/prod values.
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.mysql'),
+        'NAME': os.environ.get('DB_NAME', 'agriscan_db'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'PORT': os.environ.get('DB_PORT', '3306'),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
     }
 }
 
@@ -107,9 +163,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = os.environ.get('LANGUAGE_CODE', 'en-us')
 
-TIME_ZONE = 'Asia/Manila'
+TIME_ZONE = os.environ.get('TIME_ZONE', 'Asia/Manila')
 
 USE_I18N = False  # AgriScan is English-only; disabling avoids unnecessary translation overhead
 
@@ -138,27 +194,29 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SYSTEM_SETTING_DEFAULTS = {
     "allowed_past_days_planting": 30,
     "detection_confidence_threshold": 75,
+    # Admin UI default for CNN toggle (env still acts as fallback when DB setting is absent).
+    "yield_cnn_enabled": False,
+    # Admin UI default for email toggle (SMTP credentials remain env-managed).
+    "email_enabled": False,
 }
 
-# ============================================================================
-# EMAIL CONFIGURATION (Gmail SMTP)
-# Sends real-time alerts for: disease detection, yield drop, new advisories
-#
-# SETUP (one-time):
-# 1. Go to https://myaccount.google.com/apppasswords
-# 2. Create an App Password for "Mail" + "Windows Computer"
-# 3. Paste the 16-character app password below (no spaces)
-# 4. Set EMAIL_ENABLED = True when ready to send
-# ============================================================================
+# Email config: lahat configurable via .env para walang hardcoded credentials sa repo.
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = _env_int('EMAIL_PORT', 587)
+EMAIL_USE_TLS = _env_bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'AgriScan+ <noreply@example.com>')
 
-EMAIL_BACKEND      = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST         = 'smtp.gmail.com'
-EMAIL_PORT         = 587
-EMAIL_USE_TLS      = True
-EMAIL_HOST_USER    = 'jhonvincenthernandez9@gmail.com'   # sender Gmail address
-EMAIL_HOST_PASSWORD = 'jnkx scjb uyhu wwlk'   # <-- paste your 16-char Gmail App Password here
-DEFAULT_FROM_EMAIL = 'AgriScan+ <jhonvincenthernandez1@gmail.com>'
+# I-enable lang ang email sending kapag handa na ang SMTP credentials.
+EMAIL_ENABLED = _env_bool('EMAIL_ENABLED', default=False)
 
-# Set to True only after EMAIL_HOST_PASSWORD is filled in
-EMAIL_ENABLED = True
+# Yield model switches/config for dual-model inference.
+YIELD_CNN_ENABLED = _env_bool('YIELD_CNN_ENABLED', default=False)
+YIELD_CNN_CHECKPOINT_PATH = os.environ.get(
+    'YIELD_CNN_CHECKPOINT_PATH',
+    str(BASE_DIR / 'models' / 'rice_yield_CNN.pth'),
+)
+YIELD_CNN_DEVICE = os.environ.get('YIELD_CNN_DEVICE', 'cpu')
 

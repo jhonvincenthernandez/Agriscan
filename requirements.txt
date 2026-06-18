@@ -12,3 +12,5 @@ mysqlclient
 django
 reportlab
 jupyter
+torch
+torchvision
