@@ -242,6 +242,59 @@
               exportMenu.classList.add("hidden");
           });
         }
+
+        // Shared TTS helper for AgriScan+ guides
+        (function () {
+          if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+            window.agriscanTTS = {
+              speak: function () {},
+              stop: function () {},
+              isSupported: false,
+            };
+            return;
+          }
+
+          const synth = window.speechSynthesis;
+          let currentUtterance = null;
+
+          window.agriscanTTS = {
+            isSupported: true,
+            isSpeaking: false,
+            speak: function (text, lang) {
+              if (!text) return;
+              synth.cancel();
+
+              currentUtterance = new SpeechSynthesisUtterance(text);
+              currentUtterance.lang = lang || 'tl-PH';
+              currentUtterance.rate = 0.9;
+              currentUtterance.pitch = 1;
+              currentUtterance.volume = 1;
+
+              currentUtterance.onstart = () => {
+                window.agriscanTTS.isSpeaking = true;
+                window.dispatchEvent(new CustomEvent('agriscan-tts-change', { detail: { speaking: true } }));
+              };
+
+              currentUtterance.onend = () => {
+                window.agriscanTTS.isSpeaking = false;
+                window.dispatchEvent(new CustomEvent('agriscan-tts-change', { detail: { speaking: false } }));
+              };
+
+              currentUtterance.onerror = () => {
+                window.agriscanTTS.isSpeaking = false;
+                window.dispatchEvent(new CustomEvent('agriscan-tts-change', { detail: { speaking: false } }));
+              };
+
+              synth.speak(currentUtterance);
+            },
+            stop: function () {
+              synth.cancel();
+              window.agriscanTTS.isSpeaking = false;
+              window.dispatchEvent(new CustomEvent('agriscan-tts-change', { detail: { speaking: false } }));
+            },
+          };
+        })();
+
         // File preview helper for inputs with data-preview-target attribute
         document.querySelectorAll("input[type=file]").forEach(function (input) {
           let target = null;

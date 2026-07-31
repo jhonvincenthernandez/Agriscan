@@ -9,6 +9,12 @@
       <h3 class="text-sm font-semibold text-gray-900">Mabilis na Gabay sa Yield</h3>
     </div>
 
+    <div class="flex items-center gap-2">
+      <button type="button" class="yield-guide-tts-btn inline-flex items-center gap-2 rounded-lg border border-green-200 bg-white px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60" data-tts-button data-guide-type="yield" data-tts-label="Play Voice Guide">
+        🔊 Play Voice Guide
+      </button>
+    </div>
+
     <div class="relative rounded-lg border border-green-100 bg-white p-4 min-h-[132px]">
       <div class="yield-guide-step block space-y-2 transition-all duration-500">
         <div class="flex items-start gap-3">
@@ -76,9 +82,31 @@
   const dots = Array.from(root.querySelectorAll('.yield-guide-dot'));
   const prevBtn = root.querySelector('.yield-guide-prev-btn');
   const nextBtn = root.querySelector('.yield-guide-next-btn');
+  const ttsBtn = root.querySelector('.yield-guide-tts-btn');
 
   let currentStep = 0;
   let timer = null;
+  let isSpeaking = false;
+
+  function getGuideText() {
+    return [
+      'Step 1. Choose the yield model you want to use.',
+      'Step 2. Check the planting details and field information.',
+      'Step 3. Add past harvest data when available for better accuracy.',
+      'Step 4. Press Calculate Yield Prediction and review the estimated result.'
+    ].join(' ');
+  }
+
+  function syncTtsButton(speaking) {
+    if (!ttsBtn) return;
+    isSpeaking = speaking;
+    ttsBtn.textContent = speaking ? '⏸ Stop Voice Guide' : '🔊 Play Voice Guide';
+    ttsBtn.classList.toggle('bg-green-600', speaking);
+    ttsBtn.classList.toggle('text-green', speaking);
+    ttsBtn.classList.toggle('border-green-700', speaking);
+    ttsBtn.classList.toggle('bg-white', !speaking);
+    ttsBtn.classList.toggle('text-green-700', !speaking);
+  }
 
   function showStep(index) {
     currentStep = (index + steps.length) % steps.length;
@@ -113,6 +141,28 @@
     startAutoPlay();
   });
 
+  ttsBtn && ttsBtn.addEventListener('click', () => {
+    if (!window.agriscanTTS || !window.agriscanTTS.isSupported) {
+      alert('Voice guide is not supported in this browser.');
+      return;
+    }
+
+    if (isSpeaking) {
+      window.agriscanTTS.stop();
+      syncTtsButton(false);
+      return;
+    }
+
+    const guideText = getGuideText();
+    if (!guideText.trim()) {
+      alert('No voice guide text is available.');
+      return;
+    }
+
+    syncTtsButton(true);
+    window.agriscanTTS.speak(guideText, 'en-US');
+  });
+
   dots.forEach((dot) => {
     dot.addEventListener('click', () => {
       showStep(parseInt(dot.dataset.step, 10));
@@ -120,10 +170,15 @@
     });
   });
 
+  window.addEventListener('agriscan-tts-change', function (event) {
+    syncTtsButton(!!(event && event.detail && event.detail.speaking));
+  });
+
   root.addEventListener('mouseenter', () => clearInterval(timer));
   root.addEventListener('mouseleave', () => startAutoPlay());
 
   showStep(0);
   startAutoPlay();
+  syncTtsButton(false);
 })();
 </script>
