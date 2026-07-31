@@ -1,0 +1,133 @@
+<div id="scan-guide" class="mb-6 rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-cyan-50 p-5 shadow-sm">
+  <div class="space-y-4">
+    <div class="flex items-center gap-3">
+      <div class="rounded-lg bg-blue-100 p-2">
+        <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <h3 class="text-sm font-semibold text-gray-900">Mabilis na Gabay sa Scan</h3>
+    </div>
+
+    <div class="relative rounded-lg border border-blue-100 bg-white p-4 min-h-[120px]">
+      <!-- Step 1 -->
+      <div class="scan-guide-step block space-y-2 transition-all duration-500">
+        <div class="flex items-start gap-3">
+          <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">1</div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-gray-900">Piliin ang tanim na gagamitin</p>
+            <p class="text-xs text-gray-600">Piliin kung aling taniman o panahon ng tanim ang susuriin</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="scan-guide-step hidden space-y-2 transition-all duration-500">
+        <div class="flex items-start gap-3">
+          <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">2</div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-gray-900">Mag-upload o kumuha ng malinaw na larawan</p>
+            <p class="text-xs text-gray-600">Iposisyon ang dahon sa maliwanag na lugar at iwasan ang malabo na kuha</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="scan-guide-step hidden space-y-2 transition-all duration-500">
+        <div class="flex items-start gap-3">
+          <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">3</div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-gray-900">Pindutin ang "Analyze Image"</p>
+            <p class="text-xs text-gray-600">Hintayin ang system na suriin ang larawan at magbigay ng resulta</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="scan-guide-step hidden space-y-2 transition-all duration-500">
+        <div class="flex items-start gap-3">
+          <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-600">4</div>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-gray-900">Basahin ang resulta at gabay</p>
+            <p class="text-xs text-gray-600">Makikita mo ang sakit ng dahon, tiwala ng system, at payo sa lunas</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center gap-1.5" id="scan-guide-dots">
+        <button type="button" class="scan-guide-dot h-2 w-2 rounded-full bg-blue-400" data-step="0" aria-label="Step 1"></button>
+        <button type="button" class="scan-guide-dot h-2 w-2 rounded-full bg-blue-200" data-step="1" aria-label="Step 2"></button>
+        <button type="button" class="scan-guide-dot h-2 w-2 rounded-full bg-blue-200" data-step="2" aria-label="Step 3"></button>
+        <button type="button" class="scan-guide-dot h-2 w-2 rounded-full bg-blue-200" data-step="3" aria-label="Step 4"></button>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <button type="button" class="scan-guide-prev-btn rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100" aria-label="Previous">Balik</button>
+        <button type="button" class="scan-guide-next-btn rounded px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-100" aria-label="Next">Sunod</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const root = document.getElementById('scan-guide');
+  if (!root) return;
+
+  const steps = Array.from(root.querySelectorAll('.scan-guide-step'));
+  const dots = Array.from(root.querySelectorAll('.scan-guide-dot'));
+  const prevBtn = root.querySelector('.scan-guide-prev-btn');
+  const nextBtn = root.querySelector('.scan-guide-next-btn');
+
+  let currentStep = 0;
+  let timer = null;
+
+  function showStep(index) {
+    currentStep = (index + steps.length) % steps.length;
+
+    steps.forEach((step, idx) => {
+      const isActive = idx === currentStep;
+      step.classList.toggle('hidden', !isActive);
+      step.classList.toggle('block', isActive);
+    });
+
+    dots.forEach((dot, idx) => {
+      const isActive = idx === currentStep;
+      dot.classList.toggle('bg-blue-400', isActive);
+      dot.classList.toggle('bg-blue-200', !isActive);
+    });
+  }
+
+  function startAutoPlay() {
+    clearInterval(timer);
+    timer = setInterval(() => {
+      showStep(currentStep + 1);
+    }, 5000);
+  }
+
+  prevBtn && prevBtn.addEventListener('click', () => {
+    showStep(currentStep - 1);
+    startAutoPlay();
+  });
+
+  nextBtn && nextBtn.addEventListener('click', () => {
+    showStep(currentStep + 1);
+    startAutoPlay();
+  });
+
+  dots.forEach((dot) => {
+    dot.addEventListener('click', () => {
+      showStep(parseInt(dot.dataset.step, 10));
+      startAutoPlay();
+    });
+  });
+
+  root.addEventListener('mouseenter', () => clearInterval(timer));
+  root.addEventListener('mouseleave', () => startAutoPlay());
+
+  showStep(0);
+  startAutoPlay();
+})();
+</script>
