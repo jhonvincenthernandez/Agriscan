@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% block title %}Help & User Guide · AgriScan+{% endblock %}
+
+{% block content %}
+<section class="page-container">
+  <div class="bg-gradient-to-r from-indigo-50 via-white to-emerald-50 border border-indigo-100 rounded-2xl p-6 sm:p-8 mb-6 shadow-sm">
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-semibold uppercase tracking-wide mb-3">
+          {% if language == 'tl' %}Role-based user guide{% else %}Role-based user guide{% endif %}
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 leading-tight">
+          {% if language == 'tl' %}Help & User Guide ng AgriScan+{% else %}AgriScan+ Help & User Guide{% endif %}
+        </h1>
+        <p class="mt-3 text-sm sm:text-base text-gray-600 leading-7 max-w-3xl">
+          {% if language == 'tl' %}
+            Role-first ang manual na ito. Ipinapakita nito kung ano lang ang dapat makita at gamitin ng Farmer, Technician, at Admin, para mas madaling sundan at mas hindi nakakalito sa actual access ng bawat user.
+          {% else %}
+            This manual is role-first. It shows what each Farmer, Technician, and Admin should actually see and use so the guide stays easy to follow and matches real access.
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-2 lg:justify-end">
+        <a href="?lang=tl" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition {% if language == 'tl' %}bg-indigo-600 border-indigo-600 text-white shadow-sm{% else %}bg-white border-gray-300 text-gray-700 hover:bg-gray-50{% endif %}">
+          Tagalog
+        </a>
+        <a href="?lang=en" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold border transition {% if language == 'en' %}bg-indigo-600 border-indigo-600 text-white shadow-sm{% else %}bg-white border-gray-300 text-gray-700 hover:bg-gray-50{% endif %}">
+          English
+        </a>
+      </div>
+    </div>
+
+    <div class="grid gap-3 sm:grid-cols-3 mt-6">
+      <div class="rounded-xl bg-white/80 border border-white shadow-sm p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{% if language == 'tl' %}Current role{% else %}Current role{% endif %}</p>
+        <p class="mt-1 font-semibold text-gray-900">{{ user_role|title }}</p>
+      </div>
+      <div class="rounded-xl bg-white/80 border border-white shadow-sm p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{% if language == 'tl' %}Guide style{% else %}Guide style{% endif %}</p>
+        <p class="mt-1 font-semibold text-gray-900">{% if language == 'tl' %}Tagalog + English manual{% else %}Tagalog + English manual{% endif %}</p>
+      </div>
+      <div class="rounded-xl bg-white/80 border border-white shadow-sm p-4">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">{% if language == 'tl' %}Best use{% else %}Best use{% endif %}</p>
+        <p class="mt-1 font-semibold text-gray-900">{% if language == 'tl' %}Step-by-step farm support{% else %}Step-by-step farm support{% endif %}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-[280px_minmax(0,1fr)] gap-6">
+    <aside class="lg:sticky lg:top-24 h-fit">
+      <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wide">{% if language == 'tl' %}Nilalaman{% else %}Contents{% endif %}</h2>
+          <span class="text-xs text-gray-500">9</span>
+        </div>
+        <nav class="space-y-1 text-sm">
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#start">{% if language == 'tl' %}Pagsisimula{% else %}Getting Started{% endif %}</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#access">{% if language == 'tl' %}Access ayon sa role{% else %}Access by role{% endif %}</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#farmer">Farmer Guide</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#technician">Technician Guide</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#admin">Admin Guide</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#shared">{% if language == 'tl' %}Shared tools{% else %}Shared tools{% endif %}</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#recovery">{% if language == 'tl' %}Kung may problema{% else %}If something breaks{% endif %}</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#faq">FAQ</a>
+          <a class="block px-3 py-2 rounded-lg hover:bg-indigo-50 hover:text-indigo-700 text-gray-700" href="#troubleshooting">{% if language == 'tl' %}Troubleshooting{% else %}Troubleshooting{% endif %}</a>
+        </nav>
+      </div>
+    </aside>
+
+    <div class="space-y-6">
+      <div id="start" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">{% if language == 'tl' %}Pagsisimula{% else %}Getting Started{% endif %}</h2>
+        <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm leading-7 text-gray-700">
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900 mb-2">{% if language == 'tl' %}1. Mag-login muna{% else %}1. Log in first{% endif %}</p>
+            <p>{% if language == 'tl' %}Gamitin ang iyong account para makapasok sa system. Kapag naka-login ka na, ipapakita ng AgriScan+ ang menu at actions na angkop sa role mo.{% else %}Use your account to enter the system. Once you are logged in, AgriScan+ shows the menus and actions that match your role.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900 mb-2">{% if language == 'tl' %}2. Buksan ang Help page{% else %}2. Open the Help page{% endif %}</p>
+            <p>{% if language == 'tl' %}Makikita mo ang Help icon sa navbar at Help link sa user menu. Gamitin ang page na ito habang ginagawa ang tunay mong tasks sa app.{% else %}You can open Help from the navbar icon or from the user menu link. Use this page while doing your real tasks in the app.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900 mb-2">{% if language == 'tl' %}3. Piliin ang wika{% else %}3. Choose a language{% endif %}</p>
+            <p>{% if language == 'tl' %}Pumili ng Tagalog kung gusto mo ng mas madaling basahin. Piliin ang English kung iyon ang mas sanay kang gamitin.{% else %}Choose Tagalog if you want the easier-to-read version. Choose English if that is the language you prefer.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900 mb-2">{% if language == 'tl' %}4. Sundin ang role mo{% else %}4. Follow your role{% endif %}</p>
+            <p>{% if language == 'tl' %}Hindi lahat ng menu ay para sa lahat ng user. Basahin ang section na para sa role mo para iwas kalituhan at para hindi ka maghanap ng menu na wala sa access mo.{% else %}Not every menu is for every user. Read the section for your role so you do not waste time looking for pages you cannot access.{% endif %}</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="access" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">{% if language == 'tl' %}Access ayon sa role{% else %}Access by role{% endif %}</h2>
+        <div class="mt-4 grid md:grid-cols-3 gap-4 text-sm leading-7 text-gray-700">
+          <div class="rounded-xl border {% if user_role == 'farmer' %}border-emerald-400 bg-emerald-50{% else %}border-emerald-200 bg-emerald-50/70{% endif %} p-4">
+            <p class="font-semibold text-emerald-900">Farmer</p>
+            <p class="mt-2">{% if language == 'tl' %}Para sa araw-araw na farm work: field setup, planting, scan, yield, harvest, reports, season log, notifications, at profile.{% else %}For daily farm work: field setup, planting, scan, yield, harvest, reports, season log, notifications, and profile.{% endif %}</p>
+          </div>
+          <div class="rounded-xl border {% if user_role == 'technician' %}border-blue-400 bg-blue-50{% else %}border-blue-200 bg-blue-50/70{% endif %} p-4">
+            <p class="font-semibold text-blue-900">Technician</p>
+            <p class="mt-2">{% if language == 'tl' %}Para sa support at monitoring: record checks, disease guidance, field updates, log review, at recommendations.{% else %}For support and monitoring: record checks, disease guidance, field updates, log review, and recommendations.{% endif %}</p>
+          </div>
+          <div class="rounded-xl border {% if user_role == 'admin' %}border-purple-400 bg-purple-50{% else %}border-purple-200 bg-purple-50/70{% endif %} p-4">
+            <p class="font-semibold text-purple-900">Admin</p>
+            <p class="mt-2">{% if language == 'tl' %}Para sa system control: users, permissions, announcements, knowledge base, settings, audits, at maintenance tools.{% else %}For system control: users, permissions, announcements, knowledge base, settings, audits, and maintenance tools.{% endif %}</p>
+          </div>
+        </div>
+        <p class="mt-4 text-sm text-gray-600">
+          {% if language == 'tl' %}
+            Ang section na para sa iyong role ang nakabukas sa ibaba. Ang ibang role guides ay naka-collapse muna para hindi magulo ang page.
+          {% else %}
+            The section for your role is expanded below. Other role guides stay collapsed by default to keep the page clear.
+          {% endif %}
+        </p>
+      </div>
+
+      <details id="farmer" class="bg-white border border-gray-200 rounded-2xl shadow-sm" {% if user_role == 'farmer' %}open{% endif %}>
+        <summary class="cursor-pointer list-none p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Farmer Guide</h2>
+              <p class="mt-2 text-sm leading-7 text-gray-600">{% if language == 'tl' %}Para sa araw-araw na farm workflow mula sa field setup hanggang harvest.{% else %}For everyday farm work from field setup to harvest.{% endif %}</p>
+            </div>
+            <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide {% if user_role == 'farmer' %}bg-emerald-100 text-emerald-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+              {% if user_role == 'farmer' %}{% if language == 'tl' %}Role mo{% else %}Your role{% endif %}{% else %}{% if language == 'tl' %}I-click para makita{% else %}Click to view{% endif %}{% endif %}
+            </span>
+          </div>
+        </summary>
+        <div class="px-6 pb-6">
+          <div class="mt-4 space-y-4 text-sm leading-7 text-gray-700">
+              <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                <p class="font-semibold text-emerald-900 mb-1">{% if language == 'tl' %}Quickstart — Unang 5 Gawin{% else %}Quickstart — First 5 Things{% endif %}</p>
+                <ol class="mt-2 list-decimal list-inside text-sm text-gray-700">
+                  <li>{% if language == 'tl' %}Gumawa ng Field record (pangalan, area, barangay){% else %}Create a Field record (name, area, barangay){% endif %}</li>
+                  <li>{% if language == 'tl' %}Mag-add ng Planting record para sa bagong season{% else %}Add a Planting record for the new season{% endif %}</li>
+                  <li>{% if language == 'tl' %}Gumamit ng Scan (leaf) kapag may sintomas{% else %}Use Scan (leaf) when symptoms appear{% endif %}</li>
+                  <li>{% if language == 'tl' %}Tingnan ang Yield prediction para sa planning{% else %}Check Yield prediction for planning{% endif %}</li>
+                  <li>{% if language == 'tl' %}I-record ang Harvest pagkatapos ng ani{% else %}Record Harvest after harvest{% endif %}</li>
+                </ol>
+              </div>
+
+              <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+                <p class="font-semibold text-emerald-900 mb-1">{% if language == 'tl' %}Field → Planting → Scan: Prerequisites{% else %}Field → Planting → Scan: Prerequisites{% endif %}</p>
+                <p class="mt-1">{% if language == 'tl' %}Laging siguraduhin: may Field record bago gumawa ng Planting, at may active Planting bago mag-scan. Kung naka-harvest na ang planting, hindi na puwedeng magdagdag ng bagong scan sa cycle na iyon.{% else %}Always ensure: a Field exists before creating a Planting, and an active Planting exists before scanning. If a planting is harvested it will be excluded from scan selection.{% endif %}</p>
+              </div>
+
+              <div class="rounded-xl bg-lime-50 border border-lime-200 p-4">
+                <p class="font-semibold text-lime-900 mb-1">{% if language == 'tl' %}Planting — Goal, Steps, Expected{% else %}Planting — Goal, Steps, Expected{% endif %}</p>
+                <p class="mt-1"><strong>{% if language == 'tl' %}Goal:{% else %}Goal:{% endif %}</strong> {% if language == 'tl' %}Itala ang cycle ng pagtatanim para ma-track at maprotektahan ang data ng prediction at harvest.{% else %}Record the planting cycle so predictions and harvests link to the correct field.{% endif %}</p>
+                <ol class="mt-2 list-decimal list-inside text-sm text-gray-700">
+                  <li>{% if language == 'tl' %}Piliin ang Field at Rice Variety{% else %}Select Field and Rice Variety{% endif %}</li>
+                  <li>{% if language == 'tl' %}Ilagay ang planting date at season{% else %}Enter planting date and season{% endif %}</li>
+                  <li>{% if language == 'tl' %}I-save at siguraduhin walang validation error (ex: planting_date too far in past){% else %}Save and confirm no validation errors (e.g. planting_date not too far in past){% endif %}</li>
+                </ol>
+                <p class="mt-2 text-sm text-gray-600"><strong>{% if language == 'tl' %}Expected:{% else %}Expected:{% endif %}</strong> {% if language == 'tl' %}Planting record na may tamang field link at variety — gagamitin ito ng Scan at Yield tools.{% else %}A planting record linked to a field and variety — used by Scan and Yield tools.{% endif %}</p>
+              </div>
+
+              <div class="rounded-xl bg-orange-50 border border-orange-200 p-4">
+                <p class="font-semibold text-orange-900 mb-1">{% if language == 'tl' %}Disease Scan — Goal, Steps, Common Errors{% else %}Disease Scan — Goal, Steps, Common Errors{% endif %}</p>
+                <p class="mt-1"><strong>{% if language == 'tl' %}Goal:{% else %}Goal:{% endif %}</strong> {% if language == 'tl' %}Makakuha ng diagnosis at treatment suggestion mula sa AI para sa rice leaf image.{% else %}Obtain diagnosis and treatment suggestion from AI for a rice leaf image.{% endif %}</p>
+                <ol class="mt-2 list-decimal list-inside text-sm text-gray-700">
+                  <li>{% if language == 'tl' %}Kumuha ng malinaw na larawan (well-lit, focused) ng leaf{% else %}Capture a clear photo (well-lit, focused) of the leaf{% endif %}</li>
+                  <li>{% if language == 'tl' %}Piliin ang tamang Planting cycle sa form{% else %}Select the correct Planting cycle in the form{% endif %}</li>
+                  <li>{% if language == 'tl' %}I-submit: hintayin ang AI result at treatment suggestion{% else %}Submit: wait for AI result and treatment suggestion{% endif %}</li>
+                </ol>
+                <p class="mt-2 text-sm text-gray-600"><strong>{% if language == 'tl' %}Common errors:{% else %}Common errors:{% endif %}</strong> {% if language == 'tl' %}malabo/dark image → low confidence; walang planting selected → form error; image hindi rice leaf → Unknown label.{% else %}blurry/dark image → low confidence; no planting selected → form error; image not rice leaf → Unknown label.{% endif %}</p>
+              </div>
+            </div>
+          </div>
+      </details>
+
+      <details id="technician" class="bg-white border border-gray-200 rounded-2xl shadow-sm" {% if user_role == 'technician' %}open{% endif %}>
+        <summary class="cursor-pointer list-none p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Technician Guide</h2>
+              <p class="mt-2 text-sm leading-7 text-gray-600">{% if language == 'tl' %}Para sa support at monitoring ng field records at recommendations.{% else %}For support and monitoring of field records and recommendations.{% endif %}</p>
+            </div>
+            <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide {% if user_role == 'technician' %}bg-blue-100 text-blue-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+              {% if user_role == 'technician' %}{% if language == 'tl' %}Role mo{% else %}Your role{% endif %}{% else %}{% if language == 'tl' %}I-click para makita{% else %}Click to view{% endif %}{% endif %}
+            </span>
+          </div>
+        </summary>
+        <div class="px-6 pb-6">
+          <div class="mt-4 space-y-4 text-sm leading-7 text-gray-700">
+            <div class="rounded-xl bg-blue-50 border border-blue-200 p-4">
+              <p class="font-semibold text-blue-900 mb-1">{% if language == 'tl' %}Quickstart — Technician (Unang 5 Gawin){% else %}Quickstart — Technician (First 5 Things){% endif %}</p>
+              <ol class="mt-2 list-decimal list-inside text-sm text-gray-700">
+                <li>{% if language == 'tl' %}Buksan ang Dashboard — tingnan system-wide alerts{% else %}Open Dashboard — check system-wide alerts{% endif %}</li>
+                <li>{% if language == 'tl' %}I-filter ang Detections ayon sa lugar at petsa{% else %}Filter Detections by location and date{% endif %}</li>
+                <li>{% if language == 'tl' %}I-review ang Planting at Scan history ng farmer{% else %}Review the farmer's Planting and Scan history{% endif %}</li>
+                <li>{% if language == 'tl' %}Magbigay ng recommended action / note sa Detection record{% else %}Add recommended action / note to Detection record{% endif %}</li>
+                <li>{% if language == 'tl' %}Gamitin ang Knowledge Base para reference{% else %}Use the Knowledge Base for reference{% endif %}</li>
+              </ol>
+            </div>
+
+            <div class="rounded-xl bg-blue-50 border border-blue-200 p-4">
+              <p class="font-semibold text-blue-900 mb-1">{% if language == 'tl' %}Review Workflow — Steps{% else %}Review Workflow — Steps{% endif %}</p>
+              <ol class="mt-2 list-decimal list-inside text-sm text-gray-700">
+                <li>{% if language == 'tl' %}I-open ang Detection detail → suriin image at AI output{% else %}Open Detection detail → inspect image and AI output{% endif %}</li>
+                <li>{% if language == 'tl' %}Suriin planting/field context → kumpirmahin severity{% else %}Check planting/field context → confirm severity{% endif %}</li>
+                <li>{% if language == 'tl' %}Mag-add ng Technician note o TreatmentRecommendation{% else %}Add Technician note or TreatmentRecommendation{% endif %}</li>
+                <li>{% if language == 'tl' %}Gumawa ng follow-up task o i-assign sa farmer{% else %}Create follow-up task or assign to farmer{% endif %}</li>
+              </ol>
+            </div>
+
+            <div class="rounded-xl bg-blue-50 border border-blue-200 p-4">
+              <p class="font-semibold text-blue-900 mb-1">{% if language == 'tl' %}Knowledge Base — Best Use{% else %}Knowledge Base — Best Use{% endif %}</p>
+              <p class="mt-1">{% if language == 'tl' %}I-match ang symptoms at mga larawan sa canonical entries. Gumawa ng short explanation para sa farmer at i-link ang relevant KB entry sa detection note.{% else %}Match symptoms and photos to canonical entries. Create a short explanation for the farmer and link the relevant KB entry to the detection note.{% endif %}</p>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details id="admin" class="bg-white border border-gray-200 rounded-2xl shadow-sm" {% if user_role == 'admin' %}open{% endif %}>
+        <summary class="cursor-pointer list-none p-6">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <h2 class="text-xl font-bold text-gray-900">Admin Guide</h2>
+              <p class="mt-2 text-sm leading-7 text-gray-600">{% if language == 'tl' %}Para sa system control at maintenance ng content, users, at settings.{% else %}For system control and maintenance of content, users, and settings.{% endif %}</p>
+            </div>
+            <span class="shrink-0 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-wide {% if user_role == 'admin' %}bg-purple-100 text-purple-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+              {% if user_role == 'admin' %}{% if language == 'tl' %}Role mo{% else %}Your role{% endif %}{% else %}{% if language == 'tl' %}I-click para makita{% else %}Click to view{% endif %}{% endif %}
+            </span>
+          </div>
+        </summary>
+        <div class="px-6 pb-6">
+          <div class="mt-4 space-y-4 text-sm leading-7 text-gray-700">
+            <div class="rounded-xl bg-purple-50 border border-purple-200 p-4">
+              <p class="font-semibold text-purple-900 mb-1">{% if language == 'tl' %}Quickstart — Admin (Unang 5 Gawin){% else %}Quickstart — Admin (First 5 Things){% endif %}</p>
+              <ol class="mt-2 list-decimal list-inside text-sm text-gray-700">
+                <li>{% if language == 'tl' %}Suriin pending registrations at i-approve/decline{% else %}Review pending registrations and approve/decline{% endif %}</li>
+                <li>{% if language == 'tl' %}I-set ang detection confidence threshold at allowed past days{% else %}Set detection confidence threshold and allowed past days{% endif %}</li>
+                <li>{% if language == 'tl' %}Publish important Announcement kung kailangan{% else %}Publish important Announcement if needed{% endif %}</li>
+                <li>{% if language == 'tl' %}I-review ang Audit logs para sa recent changes{% else %}Review Audit logs for recent changes{% endif %}</li>
+                <li>{% if language == 'tl' %}Tingnan ang Knowledge Base at i-manage entries{% else %}Check the Knowledge Base and manage entries{% endif %}</li>
+              </ol>
+            </div>
+
+            <div class="rounded-xl bg-purple-50 border border-purple-200 p-4">
+              <p class="font-semibold text-purple-900 mb-1">{% if language == 'tl' %}Admin — Key Actions{% else %}Admin — Key Actions{% endif %}</p>
+              <ul class="mt-2 list-disc list-inside text-sm text-gray-700">
+                <li>{% if language == 'tl' %}User management: role assign, deactivate accounts{% else %}User management: role assign, deactivate accounts{% endif %}</li>
+                <li>{% if language == 'tl' %}System settings: thresholds, toggles (CNN yield/email){% else %}System settings: thresholds, toggles (CNN yield/email){% endif %}</li>
+                <li>{% if language == 'tl' %}Audit & Archive: restore soft-deleted records kapag kailangan{% else %}Audit & Archive: restore soft-deleted records when needed{% endif %}</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <div id="shared" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">{% if language == 'tl' %}Shared tools at common workflows{% else %}Shared tools and common workflows{% endif %}</h2>
+        <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm leading-7 text-gray-700">
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+            <p class="font-semibold text-slate-900 mb-1">Dashboard</p>
+            <p>{% if language == 'tl' %}Ito ang quick summary ng recent activity, notifications, at key farm data. Mainam itong unang tingnan bago magbukas ng ibang module.{% else %}This is the quick summary of recent activity, notifications, and key farm data. It is the best first stop before opening another module.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+            <p class="font-semibold text-slate-900 mb-1">Reports</p>
+            <p>{% if language == 'tl' %}Ginagamit ang reports para makita ang summaries at trends ng detections, yields, harvests, at farm history para sa planning at decision-making.{% else %}Reports are used to view summaries and trends of detections, yields, harvests, and farm history for planning and decision-making.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+            <p class="font-semibold text-slate-900 mb-1">Notifications</p>
+            <p>{% if language == 'tl' %}Mga alert ito para sa disease, yield, updates, at activity sa account mo. Basahin agad kapag may lumabas na bagong notice.{% else %}These are alerts for disease, yield, updates, and account activity. Read them as soon as a new notice appears.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-4">
+            <p class="font-semibold text-slate-900 mb-1">Profile at password</p>
+            <p>{% if language == 'tl' %}Gamitin ang profile menu para tingnan o i-update ang account details at magpalit ng password kapag kailangan.{% else %}Use the profile menu to review or update account details and change your password when needed.{% endif %}</p>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-xl bg-white border border-gray-200 p-4">
+          <p class="font-semibold text-gray-900 mb-2">AI Models & Important Notes</p>
+          <p class="text-sm text-gray-700">{% if language == 'tl' %}Disease detection ay gumagamit ng TFLite CNN: mag-upload ng malinaw na leaf photo; confidence < stronghold threshold ay ikokonsiderang "Unknown/Not Rice". Yield prediction may tatlong mode: Linear (tabular), CNN (canopy image), at Ensemble (pareho). Admin ang nagta-toggle ng CNN yield.{% else %}Disease detection uses a TFLite CNN: upload a clear leaf photo; confidence below the configured threshold will be treated as "Unknown/Not Rice." Yield prediction has three modes: Linear (tabular), CNN (canopy image), and Ensemble (combined). Admins toggle CNN yield availability.{% endif %}</p>
+          <p class="mt-2 text-sm text-gray-600">{% if language == 'tl' %}Checklist: Field → Planting → (Scan | Yield) → Harvest — siguruhing nakasunod ang pagkakasunod-sunod para gumana ang mga form nang maayos.{% else %}Checklist: Field → Planting → (Scan | Yield) → Harvest — ensure this order so forms and model inputs work correctly.{% endif %}</p>
+        </div>
+      </div>
+
+      <div id="dataflow" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">{% if language == 'tl' %}Data relationships & Mga Halimbawa{% else %}Data relationships & Example outputs{% endif %}</h2>
+        <div class="mt-4 space-y-3 text-sm leading-7 text-gray-700">
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900">{% if language == 'tl' %}Ugnayan ng Data (Simpleng Flow){% else %}Data relationships (Simple flow){% endif %}</p>
+            <p class="mt-1">{% if language == 'tl' %}Field → Planting → (Scan, Yield Prediction) → Harvest. Lahat ng record ay naka-link sa Planting cycle para madaling i-audit at i-report.{% else %}Field → Planting → (Scan, Yield Prediction) → Harvest. All records link to the Planting cycle for auditability and reporting.{% endif %}</p>
+          </div>
+
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900">{% if language == 'tl' %}Halimbawa: Disease Scan Output{% else %}Example: Disease Scan output{% endif %}</p>
+            <p class="mt-1">{% if language == 'tl' %}Input: malinaw na leaf image + Planting ID. Output: <strong>Label: Blast</strong>, <strong>Confidence: 92%</strong>, <strong>Severity: 65% (Moderate)</strong>. Treatment: apply fungicide X, re-check after 7 days.{% else %}Input: clear leaf image + Planting ID. Output: <strong>Label: Blast</strong>, <strong>Confidence: 92%</strong>, <strong>Severity: 65% (Moderate)</strong>. Treatment: apply fungicide X, re-check after 7 days.{% endif %}</p>
+          </div>
+
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900">{% if language == 'tl' %}Halimbawa: Yield Prediction Output{% else %}Example: Yield Prediction output{% endif %}</p>
+            <p class="mt-1">{% if language == 'tl' %}Input: planting (2.5 ha), variety RC222, health 85%, growth_days=110, model=ensemble. Output: <strong>6.2 t/ha</strong> (lower 5.8, upper 6.6) — gamitin para sa planning; record actual harvest pagkatapos para i-compare.{% else %}Input: planting (2.5 ha), variety RC222, health 85%, growth_days=110, model=ensemble. Output: <strong>6.2 t/ha</strong> (lower 5.8, upper 6.6) — use for planning; record actual harvest to compare.{% endif %}</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="recovery" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">{% if language == 'tl' %}Kung may problema: step-by-step recovery guide{% else %}If something breaks: step-by-step recovery guide{% endif %}</h2>
+        <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm leading-7 text-gray-700">
+          <div class="rounded-xl bg-amber-50 border border-amber-200 p-4">
+            <p class="font-semibold text-amber-900 mb-2">{% if language == 'tl' %}1. I-check ang basic access{% else %}1. Check the basics{% endif %}</p>
+            <p>{% if language == 'tl' %}Siguraduhing naka-login ka, active ang account mo, at ang role mo ay tama. Kung hindi mo nakita ang page, puwede ring dahil sa role access o account na hindi pa approved.{% else %}Make sure you are logged in, your account is active, and your role is correct. If you cannot see a page, it may be due to role access or an account that is still pending approval.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-emerald-50 border border-emerald-200 p-4">
+            <p class="font-semibold text-emerald-900 mb-2">{% if language == 'tl' %}2. I-check ang prerequisite workflow{% else %}2. Check the prerequisite workflow{% endif %}</p>
+            <p>{% if language == 'tl' %}Para sa scan at yield, kailangan may Field at active Planting muna bago mag-proceed. Kung walang field o planting, gumawa muna ng record bago mag-scan o mag-predict.{% else %}For scan and yield work, you need a Field and an active Planting first. If either is missing, create the record before scanning or predicting.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-blue-50 border border-blue-200 p-4">
+            <p class="font-semibold text-blue-900 mb-2">{% if language == 'tl' %}3. I-check ang input quality{% else %}3. Check the input quality{% endif %}</p>
+            <p>{% if language == 'tl' %}Para sa disease scan: gumamit ng malinaw at well-lit na photo. Para sa yield: siguraduhing may tamang planting date, area, at variety selected. Malabo o kulang na data ang madalas na dahilan ng error o low confidence.{% else %}For disease scan: use a clear and well-lit photo. For yield: make sure the planting date, area, and variety are correctly selected. Blurry or incomplete data often causes errors or low confidence.{% endif %}</p>
+          </div>
+          <div class="rounded-xl bg-purple-50 border border-purple-200 p-4">
+            <p class="font-semibold text-purple-900 mb-2">{% if language == 'tl' %}4. I-check ang admin settings{% else %}4. Check admin settings{% endif %}</p>
+            <p>{% if language == 'tl' %}Kung ang AI result ay tila hindi normal, tingnan ang admin settings tulad ng confidence threshold, allowed past days, at CNN yield toggle. Ang mismatch sa settings ay puwedeng makaapekto sa workflow.{% else %}If the AI result looks unusual, review admin settings such as confidence threshold, allowed past days, and CNN yield toggle. A mismatch in settings can affect the workflow.{% endif %}</p>
+          </div>
+        </div>
+        <div class="mt-4 grid md:grid-cols-2 gap-4">
+          <div class="rounded-xl border border-sky-300 bg-white p-5 shadow-sm">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700">Support</p>
+            <h3 class="mt-1 text-lg font-bold text-slate-900">Need Help?</h3>
+            <p class="mt-2 text-sm leading-7 text-slate-600">{% if language == 'tl' %}Kung severe ang infection o hindi ka sigurado sa treatment, magtanong sa local DA field technician para sa professional guidance.{% else %}For severe infections or if you're unsure about treatment, ask your local DA field technician for professional guidance.{% endif %}</p>
+            <a href="https://mail.google.com/mail/?view=cm&fs=1&to=santeodororice37@gmail.com&su=AgriScan%20Support%20Request&body={% if language == 'tl' %}Hello%20DA%20Support%2C%0D%0A%0D%0AKailangan%20ko%20ng%20tulong%20sa%20AgriScan.%0D%0A%0D%0APage%3A%20%0D%0ARole%3A%20%0D%0AExact%20error%3A%20%0D%0AWhat%20I%20already%20tried%3A%20%0D%0A%0D%0ASalamat.{% else %}Hello%20DA%20Support%2C%0D%0A%0D%0AI%20need%20help%20with%20AgriScan.%0D%0A%0D%0APage%3A%20%0D%0ARole%3A%20%0D%0AExact%20error%3A%20%0D%0AWhat%20I%20already%20tried%3A%20%0D%0A%0D%0AThank%20you.{% endif %}" target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2">
+              Contact DA Support
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
+          </div>
+          <div class="rounded-xl bg-slate-50 border border-slate-200 p-5">
+            <p class="font-semibold text-slate-900 mb-2">{% if language == 'tl' %}Kung hindi pa rin gumagana{% else %}If it still does not work{% endif %}</p>
+            <p class="text-sm text-gray-700">{% if language == 'tl' %}I-record ang exact error na lumalabas, kung alin ang page na binuksan mo, at kung anong role account ang ginagamit mo. I-send ang impormasyon sa admin o technician para sa faster support.{% else %}Record the exact error shown, which page you were using, and which account role you were logged in with. Send this information to the admin or technician for faster support.{% endif %}</p>
+            <ul class="mt-3 space-y-1 text-sm text-gray-700 list-disc list-inside">
+              <li>{% if language == 'tl' %}Page na binuksan{% else %}Page opened{% endif %}</li>
+              <li>{% if language == 'tl' %}Role account na gamit{% else %}Role account used{% endif %}</li>
+              <li>{% if language == 'tl' %}Exact error message{% else %}Exact error message{% endif %}</li>
+              <li>{% if language == 'tl' %}Ano na ang sinubukan mo{% else %}What you already tried{% endif %}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div id="faq" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">FAQ</h2>
+        <div class="mt-4 space-y-3 text-sm leading-7 text-gray-700">
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900">{% if language == 'tl' %}Paano ko malalaman kung anong section ang para sa akin?{% else %}How do I know which section is for me?{% endif %}</p>
+            <p class="mt-1">{% if language == 'tl' %}Tingnan ang iyong role sa taas ng page at basahin muna ang Farmer, Technician, o Admin guide na tumutugma sa account mo.{% else %}Check your role at the top of the page and read the Farmer, Technician, or Admin guide that matches your account.{% endif %}</p>
+          </div>
+            <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+              <p class="font-semibold text-gray-900">{% if language == 'tl' %}Paano basahin ang AI result at confidence?{% else %}How to read AI results and confidence?{% endif %}</p>
+              <p class="mt-1">{% if language == 'tl' %}Ang result ay may label at confidence percentage. Kung ang confidence ay mas mababa sa admin-configured threshold (karaniwan 75%), ipapakita ito bilang "Unknown/Not Rice" upang maiwasan maling diagnosis. Tingnan din ang severity para sa treatment intensity.{% else %}The AI result includes a label and a confidence percentage. If confidence is below the admin-configured threshold (commonly 75%), it will be shown as "Unknown/Not Rice" to avoid false positives. Also review severity to choose treatment intensity.{% endif %}</p>
+            </div>
+          <div class="rounded-xl bg-gray-50 border border-gray-200 p-4">
+            <p class="font-semibold text-gray-900">{% if language == 'tl' %}Bakit low confidence ang scan?{% else %}Why is the scan confidence low?{% endif %}</p>
+            <p class="mt-1">{% if language == 'tl' %}Karaniwan itong nangyayari kapag malabo, madilim, o hindi rice leaf ang image. Kumuha ulit ng mas malinaw na photo.{% else %}This usually happens when the image is blurry, dark, or not a rice leaf. Take another clearer photo.{% endif %}</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="troubleshooting" class="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 class="text-xl font-bold text-gray-900">{% if language == 'tl' %}Troubleshooting{% else %}Troubleshooting{% endif %}</h2>
+        <div class="mt-4 space-y-3 text-sm leading-7 text-gray-700">
+          <div class="rounded-xl border border-red-200 bg-red-50 p-4">
+            <p class="font-semibold text-red-900">{% if language == 'tl' %}Hindi gumagana ang camera{% else %}Camera is not working{% endif %}</p>
+            <p class="mt-1">{% if language == 'tl' %}I-check ang browser camera permission, i-refresh ang page, o gamitin ang upload option kung meron.{% else %}Check the browser camera permission, refresh the page, or use the upload option if available.{% endif %}</p>
+          </div>
+          <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p class="font-semibold text-amber-900">{% if language == 'tl' %}Hindi lumalabas ang tamang data{% else %}The correct data is not showing{% endif %}</p>
+            <p class="mt-1">{% if language == 'tl' %}Siguraduhing tama ang account mo at may access ang role mo sa page na binubuksan mo. Kung wala pa rin, i-check ang admin settings o permissions.{% else %}Make sure you are using the correct account and your role has access to the page you are opening. If it still fails, check admin settings or permissions.{% endif %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

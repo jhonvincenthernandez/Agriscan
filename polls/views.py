@@ -1016,6 +1016,23 @@ def reports(request):
     return render(request, 'account/reports.html', context)
 
 
+@login_required(login_url=reverse_lazy('polls:login'))
+def help_guide(request):
+    """Help & User Guide with manual Tagalog/English content."""
+    language = request.GET.get('lang', 'tl')
+    if language not in {'tl', 'en'}:
+        language = 'tl'
+
+    user_profile = getattr(request.user, 'profile', None)
+    user_role = getattr(user_profile, 'role', 'farmer') if user_profile else 'farmer'
+
+    context = {
+        'language': language,
+        'user_role': user_role,
+    }
+    return render(request, 'help/guide.html', context)
+
+
 def _export_report(request, format_type, start_date, end_date, role, user_profile, sections=None):
     """
     BEST PRACTICE: Export reports to PDF or CSV format.
