@@ -59,6 +59,15 @@
       Yield
     </a>
 
+    <a href="{% url 'polls:knowledge_list' %}"
+       class="flex items-center gap-1 px-2 py-1.5 text-sm font-medium rounded-lg transition {% if url_name in 'knowledge_list,knowledge_detail' %}bg-fuchsia-50 text-fuchsia-700{% else %}text-gray-600 hover:text-fuchsia-600 hover:bg-fuchsia-50{% endif %}">
+      <svg class="h-[15px] w-[15px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"/>
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 18h16"/>
+      </svg>
+      Knowledge
+    </a>
+
     <a href="{% url 'polls:detections_list' %}"
        class="flex items-center gap-1 px-2 py-1.5 text-sm font-medium rounded-lg transition {% if url_name in 'detections_list,detection_detail' %}bg-orange-50 text-orange-700{% else %}text-gray-600 hover:text-orange-600 hover:bg-orange-50{% endif %}">
       <svg class="h-[15px] w-[15px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,14 +92,7 @@
       Harvest Records
     </a>
 
-    <a href="{% url 'polls:knowledge_list' %}"
-       class="flex items-center gap-1 px-2 py-1.5 text-sm font-medium rounded-lg transition {% if url_name in 'knowledge_list,knowledge_detail' %}bg-fuchsia-50 text-fuchsia-700{% else %}text-gray-600 hover:text-fuchsia-600 hover:bg-fuchsia-50{% endif %}">
-      <svg class="h-[15px] w-[15px] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"/>
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 18h16"/>
-      </svg>
-      Knowledge
-    </a>
+    
 
     {% endwith %}
   </nav>
