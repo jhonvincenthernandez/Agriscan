@@ -1351,7 +1351,9 @@ def _resolve_harvest_and_readiness(planting_date, growth_days: int) -> Tuple[dat
 def _normalize_yield_model_version(selected_model: str) -> str:
     if selected_model == "cnn_yield":
         return "RiceYieldCNN_v1.0"
-    return "LinearRegression_v2.0"
+    elif selected_model == "ensemble":
+        return "Ensemble_CNN_Linear_v1.0"
+    return "LinearRegression_v1.0"
 
 
 def _parse_health_value(value: Any) -> float:

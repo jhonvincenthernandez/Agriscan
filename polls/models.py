@@ -410,8 +410,7 @@ class RiceVariety(SoftDeleteModel, models.Model):
         INBRED           = 'inbred',       'Inbred'
         HYBRID           = 'hybrid',       'Hybrid'
         TRADITIONAL      = 'traditional',  'Traditional / Local'
-        SPECIALTY        = 'specialty',    'Specialty'
-        STRESS_TOLERANT  = 'stress',       'Stress-Tolerant'
+       
 
     class ClimateType(models.TextChoices):
         IRRIGATED    = 'irrigated',    'Irrigated'
