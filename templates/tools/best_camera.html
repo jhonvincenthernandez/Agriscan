@@ -193,6 +193,17 @@
      */
     async function initializeCameraSection() {
         try {
+            // Some browsers only expose deviceIds/labels after camera permission
+            // Prompt briefly for permission (no persistent stream) so enumerateDevices
+            // returns usable deviceIds.
+            try {
+                const probeStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                // stop probe tracks immediately
+                probeStream.getTracks().forEach(t => t.stop());
+            } catch (permErr) {
+                // ignore - user may grant permission later when starting camera
+            }
+
             const devices = await navigator.mediaDevices.enumerateDevices();
             availableCameras = devices.filter(device => device.kind === 'videoinput');
 
@@ -287,9 +298,24 @@
 
         currentCamera = (currentCamera + 1) % availableCameras.length;
 
+        // If stream is active, restart stream using the new deviceId directly
         if (cameraStream) {
-            await toggleCamera();
-            await toggleCamera();
+            try {
+                // stop existing tracks
+                cameraStream.getTracks().forEach(track => track.stop());
+
+                const constraints = getCameraConstraints();
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+                const video = document.getElementById('camera-video');
+                video.srcObject = cameraStream;
+                updateCameraStatus('Camera active', 'active');
+                updateStreamStatus('Active');
+            } catch (err) {
+                console.error('Error switching camera:', err);
+                updateCameraStatus('Error switching camera: ' + err.message, 'error');
+                alert('Could not switch camera: ' + err.message);
+            }
         }
 
         updateCurrentCamera();
