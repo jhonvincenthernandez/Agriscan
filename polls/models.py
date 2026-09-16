@@ -1027,7 +1027,7 @@ class DetectionRecord(SoftDeleteModel, TimeStampedModel):
     disease = models.ForeignKey(DiseaseType, on_delete=models.SET_NULL, null=True, blank=True)
     confidence_pct = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     severity_pct = models.PositiveSmallIntegerField(null=True, blank=True)  # computed/entered
-    treatment_text = models.CharField(max_length=200, blank=True)
+    treatment_text = models.TextField(blank=True)
     model_version = models.ForeignKey(ModelVersion, on_delete=models.SET_NULL, null=True, blank=True)
     source = models.CharField(max_length=20, default="web", help_text="web|mobile|api")
     has_synced = models.BooleanField(default=True, help_text="False if stored offline awaiting sync")
