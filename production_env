@@ -1,0 +1,121 @@
+
+# -----------------------------------------------------------------------------
+# AgriScan+ .env — PRODUCTION / HOSTINGER CLOUDPANEL
+# Production configuration para sa live deployment ng AgriScan+.
+# -----------------------------------------------------------------------------
+
+# =============================================================================
+# DJANGO CORE / APPLICATION SETTINGS
+# =============================================================================
+
+# Django settings module na gagamitin ng application.
+# Ito ang Python module kung saan naka-configure ang main Django settings.
+DJANGO_SETTINGS_MODULE=mysite.settings
+
+# Secret key ng Django application.
+# IMPORTANT: Gumamit ng bagong strong/random secret key para sa production.
+# Huwag i-share o i-commit sa Git repository.
+SECRET_KEY=akd%f(_y@bqo4pb4gy(y3axafaag_m=^_yaio5eribi%3a*33b
+
+# Production mode: False para hindi ma-expose ang detailed Django error pages.
+# Sa local development, karaniwang True ito.
+DEBUG=False
+
+# Mga domain/host na pinapayagang mag-access sa Django application.
+# Kasama ang production domain at local addresses para sa server-side testing.
+ALLOWED_HOSTS=agriscanplus.tech,www.agriscanplus.tech,127.0.0.1,localhost
+
+# Public base URL ng live AgriScan+ application.
+# Ginagamit ito ng system para sa absolute URLs, gaya ng links sa emails.
+APP_BASE_URL=https://agriscanplus.tech
+
+
+# =============================================================================
+# DATABASE / MYSQL SETTINGS
+# =============================================================================
+
+# Django database backend.
+# AgriScan+ uses MySQL for production database storage.
+DB_ENGINE=django.db.backends.mysql
+
+# Database name created in CloudPanel.
+DB_NAME=agriscan
+
+# Dedicated database user created in CloudPanel.
+# Mas secure ito kaysa gamitin ang MySQL root account.
+DB_USER=agriscanuser
+
+# Password ng agriscanuser.
+# IMPORTANT: Ilagay ang actual password dito.
+# Huwag i-share sa chat at huwag i-commit sa Git.
+DB_PASSWORD=Administrator143#
+
+# MySQL server address.
+# Dahil nasa parehong VPS ang Django at MySQL, localhost/127.0.0.1 ang ginagamit.
+DB_HOST=127.0.0.1
+
+# Default MySQL port.
+DB_PORT=3306
+
+
+# =============================================================================
+# EMAIL / SMTP SETTINGS
+# =============================================================================
+
+# Enable/disable email sending.
+# True = maaaring mag-send ng real emails ang application.
+# False = temporarily disabled habang tine-test ang core deployment.
+EMAIL_ENABLED=True
+
+# Django SMTP email backend.
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+
+# Gmail SMTP server.
+EMAIL_HOST=smtp.gmail.com
+
+# Gmail SMTP submission port.
+EMAIL_PORT=587
+
+# Enable TLS encryption para secure ang SMTP connection.
+EMAIL_USE_TLS=True
+
+# Gmail account na gagamitin bilang SMTP account.
+EMAIL_HOST_USER=jhonvincenthernandez9@gmail.com
+
+# Gmail App Password, NOT the normal Gmail account password.
+# IMPORTANT: Huwag ilagay ang regular Gmail password.
+EMAIL_HOST_PASSWORD=jnkx scjb uyhu wwlk
+
+# Default sender display name and email address.
+# Ito ang pangalan/address na makikita ng recipient.
+DEFAULT_FROM_EMAIL=AgriScan+ <jhonvincenthernandez1@gmail.com>
+
+
+# =============================================================================
+# YIELD CNN SETTINGS
+# =============================================================================
+
+# Enable/disable the optional PyTorch CNN for yield prediction.
+# False muna para sa initial production deployment.
+# Ang Linear Regression yield model ay hiwalay at hindi naaapektuhan nito.
+YIELD_CNN_ENABLED=False
+
+# Relative path ng trained PyTorch CNN checkpoint.
+# BASE_DIR ng Django ang magiging base path nito.
+YIELD_CNN_CHECKPOINT_PATH=models/rice_yield_CNN.pth
+
+# Inference device.
+# CPU ang gagamitin dahil walang dedicated NVIDIA GPU ang VPS.
+YIELD_CNN_DEVICE=cpu
+
+
+# =============================================================================
+# LOCALIZATION / LANGUAGE SETTINGS
+# =============================================================================
+
+# Philippine local time zone.
+# Ginagamit para tama ang timestamps ng AgriScan+ records and activities.
+TIME_ZONE=Asia/Manila
+
+# Default language code ng Django application.
+LANGUAGE_CODE=en-us

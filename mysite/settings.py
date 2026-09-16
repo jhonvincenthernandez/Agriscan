@@ -68,16 +68,13 @@ _load_env_file()
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: itago ang secret key sa .env, fallback lang ito para sa local dev.
-SECRET_KEY = os.environ.get(
-    'SECRET_KEY',
-    'django-insecure-change-this-in-env',
-)
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: dapat False sa production.
 DEBUG = _env_bool('DEBUG', default=True)
 
 # Tumatanggap ng comma-separated values, hal. 127.0.0.1,localhost
-ALLOWED_HOSTS = _env_list('ALLOWED_HOSTS', default=['127.0.0.1', 'localhost'])
+ALLOWED_HOSTS = _env_list('ALLOWED_HOSTS')
 
 # Base URL ng app para sa links sa email notifications (dev/prod configurable).
 APP_BASE_URL = os.environ.get('APP_BASE_URL', 'http://127.0.0.1:8000').rstrip('/')
@@ -176,6 +173,10 @@ USE_TZ = True  # Always True — stores datetimes as UTC in DB, converts to Asia
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Production directory where Django collects all static files.
+# collectstatic copies static assets from all installed apps here.
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Media uploads (for images captured in detections)
 MEDIA_URL = '/media/'
