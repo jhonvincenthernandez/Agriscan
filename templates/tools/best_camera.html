@@ -1,54 +1,122 @@
+
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Best Camera | AgriScan+{% endblock %}
+{% block title %}Camera Capture | AgriScan+{% endblock %}
 
 {% block content %}
 <section id="camera-capture-section" class="page-container">
     <div class="space-y-6">
+
+        <!-- Page Header -->
         <div class="flex items-center justify-between gap-4">
             <div class="flex items-center gap-3">
-                <a href="{% url 'polls:scan' %}" class="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100" aria-label="Back to scan">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                <a href="{% url 'polls:scan' %}"
+                   class="inline-flex items-center justify-center h-10 w-10 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                   aria-label="Back to scan">
+
+                    <svg class="w-5 h-5"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24"
+                         aria-hidden="true">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15 19l-7-7 7-7">
+                        </path>
                     </svg>
                 </a>
+
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Camera Capture</h1>
-                    <p class="text-sm text-gray-600">Capture a clear image and send it directly to scan.</p>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        Camera Capture
+                    </h1>
+
+                    <p class="text-sm text-gray-600">
+                        Capture a clear image and send it directly to scan.
+                    </p>
                 </div>
             </div>
         </div>
 
+        <!-- Main Content -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-5">
+
+            <!-- Camera Preview -->
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
+
                 <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
-                    <h2 class="text-lg font-semibold text-gray-900">Camera Preview</h2>
-                    <div class="flex space-x-2">
-                        <button onclick="switchCamera()" id="switch-camera-btn" class="btn btn-secondary" disabled>
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        Camera Preview
+                    </h2>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button"
+                                id="switch-camera-btn"
+                                class="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
                             Switch Camera
                         </button>
-                        <button onclick="toggleCamera()" id="camera-toggle-btn" class="btn btn-primary">
+
+                        <button type="button"
+                                id="camera-toggle-btn"
+                                class="btn btn-primary">
                             Start Camera
                         </button>
                     </div>
                 </div>
 
-                <div class="relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200" style="aspect-ratio: 4/3;">
-                    <video id="camera-video" class="w-full h-full object-cover hidden" autoplay playsinline></video>
-                    <canvas id="camera-canvas" class="w-full h-full object-cover hidden"></canvas>
+                <!-- Video Preview -->
+                <div class="relative bg-gray-100 rounded-lg overflow-hidden border border-gray-200"
+                     style="aspect-ratio: 4 / 3;">
 
-                    <div id="camera-placeholder" class="flex items-center justify-center h-full">
+                    <video id="camera-video"
+                           class="w-full h-full object-cover hidden"
+                           autoplay
+                           playsinline
+                           muted>
+                    </video>
+
+                    <canvas id="camera-canvas"
+                            class="hidden">
+                    </canvas>
+
+                    <!-- Placeholder -->
+                    <div id="camera-placeholder"
+                         class="flex items-center justify-center h-full min-h-64">
+
                         <div class="text-center px-6">
-                            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 viewBox="0 0 24 24"
+                                 aria-hidden="true">
+
+                                <path stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z">
+                                </path>
+
+                                <path stroke-linecap="round"
+                                      stroke-linejoin="round"
+                                      stroke-width="2"
+                                      d="M15 13a3 3 0 11-6 0 3 3 0 000 6 3 3 0 016 0z">
+                                </path>
                             </svg>
-                            <p class="text-gray-500">Click "Start Camera" to begin</p>
+
+                            <p class="text-gray-500">
+                                Click "Start Camera" to begin
+                            </p>
                         </div>
                     </div>
 
-                    <div id="camera-overlay" class="absolute inset-0 pointer-events-none hidden">
+                    <!-- Grid Overlay -->
+                    <div id="camera-overlay"
+                         class="absolute inset-0 pointer-events-none hidden"
+                         aria-hidden="true">
+
                         <div class="w-full h-full border-2 border-white opacity-50">
                             <div class="absolute top-1/3 left-0 right-0 border-t border-white opacity-30"></div>
                             <div class="absolute top-2/3 left-0 right-0 border-t border-white opacity-30"></div>
@@ -58,116 +126,282 @@
                     </div>
                 </div>
 
+                <!-- Camera Controls -->
                 <div class="mt-4 flex justify-center gap-3 flex-wrap">
-                    <button onclick="capturePhoto()" id="capture-btn" class="btn btn-danger rounded-full px-6 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
+
+                    <button type="button"
+                            id="capture-btn"
+                            class="btn btn-danger rounded-full px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+
+                        <svg class="w-5 h-5"
+                             fill="currentColor"
+                             viewBox="0 0 20 20"
+                             aria-hidden="true">
+
+                            <path fill-rule="evenodd"
+                                  d="M4 5a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2h-1.586a1 1 0 01-.707-.293l-1.121-1.121A2 2 0 0011.172 3H8.828a2 2 0 00-1.414.586L6.293 4.707A1 1 0 015.586 5H4zm6 9a3 3 0 100-6 3 3 0 000 6z"
+                                  clip-rule="evenodd">
+                            </path>
                         </svg>
+
                         Capture Photo
                     </button>
-                    <button onclick="toggleFlash()" id="flash-btn" class="btn text-white bg-yellow-600 hover:bg-yellow-700 border border-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
+
+                    <button type="button"
+                            id="flash-btn"
+                            class="btn text-white bg-yellow-600 hover:bg-yellow-700 border border-yellow-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled>
+
+                        <svg class="w-5 h-5"
+                             fill="currentColor"
+                             viewBox="0 0 20 20"
+                             aria-hidden="true">
+
+                            <path fill-rule="evenodd"
+                                  d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                                  clip-rule="evenodd">
+                            </path>
                         </svg>
-                        Flash: <span id="flash-status">Off</span>
+
+                        Flash:
+                        <span id="flash-status">Off</span>
                     </button>
                 </div>
 
+                <!-- Camera Status -->
                 <div class="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-100">
-                    <div class="flex items-center">
-                        <div id="camera-status-icon" class="w-3 h-3 bg-gray-400 rounded-full mr-3"></div>
-                        <span id="camera-status-text" class="text-sm text-blue-700">Camera not started</span>
+                    <div class="flex items-start">
+                        <div id="camera-status-icon"
+                             class="w-3 h-3 bg-gray-400 rounded-full mr-3 mt-1 flex-shrink-0"
+                             aria-hidden="true">
+                        </div>
+
+                        <span id="camera-status-text"
+                              class="text-sm text-blue-700 break-words">
+                            Camera not started
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-5">
+            <!-- Captured Images -->
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
+
                 <div class="flex justify-between items-center mb-4 gap-2 flex-wrap">
-                    <h2 class="text-lg font-semibold text-gray-900">Captured Images</h2>
-                    <div class="flex space-x-2">
-                        <button onclick="clearAllImages()" class="btn btn-danger btn-sm">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        Captured Images
+                    </h2>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button"
+                                id="clear-all-btn"
+                                class="btn btn-danger btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
                             Clear All
                         </button>
-                        <button onclick="downloadAllImages()" class="btn btn-primary btn-sm">
+
+                        <button type="button"
+                                id="download-all-btn"
+                                class="btn btn-primary btn-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled>
                             Download All
                         </button>
                     </div>
                 </div>
 
-                <div id="captured-images" class="grid grid-cols-2 gap-4 max-h-96 overflow-y-auto pr-1">
-                    <div id="no-images-message" class="col-span-2 text-center py-8 text-gray-500">
-                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                <div id="captured-images"
+                     class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[38rem] overflow-y-auto pr-1">
+
+                    <!-- Empty State -->
+                    <div id="no-images-message"
+                         class="col-span-1 sm:col-span-2 text-center py-8 text-gray-500">
+
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-4"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24"
+                             aria-hidden="true">
+
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
                         </svg>
+
                         <p>No images captured yet</p>
-                        <p class="text-sm mt-1">Start the camera and capture some photos</p>
+
+                        <p class="text-sm mt-1">
+                            Start the camera and capture some photos
+                        </p>
                     </div>
                 </div>
 
+                <!-- Image Counter -->
                 <div class="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
                     <div class="flex justify-between items-center">
-                        <span class="text-sm text-green-700">Images Captured</span>
-                        <span id="image-counter" class="text-sm font-semibold text-green-700">0</span>
+                        <span class="text-sm text-green-700">
+                            Images Captured
+                        </span>
+
+                        <span id="image-counter"
+                              class="text-sm font-semibold text-green-700">
+                            0
+                        </span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white border border-gray-200 shadow-sm rounded-lg p-5">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Camera Settings</h3>
+        <!-- Camera Settings -->
+        <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-5">
+
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                Camera Settings
+            </h3>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                <!-- Resolution -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Resolution</label>
-                    <select id="resolution-select" onchange="changeResolution()" class="w-full">
-                        <option value="640x480">640 x 480 (VGA)</option>
-                        <option value="1280x720" selected>1280 x 720 (HD)</option>
-                        <option value="1920x1080">1920 x 1080 (Full HD)</option>
-                        <option value="3840x2160">3840 x 2160 (4K)</option>
+                    <label for="resolution-select"
+                           class="block text-sm font-medium text-gray-700 mb-2">
+                        Resolution
+                    </label>
+
+                    <select id="resolution-select"
+                            class="w-full">
+
+                        <option value="640x480">
+                            640 x 480 (VGA)
+                        </option>
+
+                        <option value="1280x720" selected>
+                            1280 x 720 (HD)
+                        </option>
+
+                        <option value="1920x1080">
+                            1920 x 1080 (Full HD)
+                        </option>
+
+                        <option value="3840x2160">
+                            3840 x 2160 (4K)
+                        </option>
                     </select>
                 </div>
 
+                <!-- Format -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Image Format</label>
-                    <select id="format-select" class="w-full">
-                        <option value="image/jpeg">JPEG</option>
-                        <option value="image/png">PNG</option>
-                        <option value="image/webp">WebP</option>
+                    <label for="format-select"
+                           class="block text-sm font-medium text-gray-700 mb-2">
+                        Image Format
+                    </label>
+
+                    <select id="format-select"
+                            class="w-full">
+
+                        <option value="image/jpeg" selected>
+                            JPEG
+                        </option>
+
+                        <option value="image/png">
+                            PNG
+                        </option>
+
+                        <option value="image/webp">
+                            WebP
+                        </option>
                     </select>
                 </div>
 
+                <!-- Quality -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Quality: <span id="quality-value">90</span>%</label>
-                    <input type="range" id="quality-slider" min="10" max="100" value="90" onchange="updateQuality()" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <label for="quality-slider"
+                           class="block text-sm font-medium text-gray-700 mb-2">
+
+                        Quality:
+                        <span id="quality-value">90</span>%
+                    </label>
+
+                    <input type="range"
+                           id="quality-slider"
+                           min="10"
+                           max="100"
+                           value="90"
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
                 </div>
             </div>
 
+            <!-- Capture Options and Camera Information -->
             <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- Capture Options -->
                 <div class="space-y-4">
-                    <h4 class="font-medium text-gray-900">Capture Options</h4>
-                    <div class="space-y-2">
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" id="auto-save">
-                            <span class="text-sm text-gray-700">Auto-save images</span>
+                    <h4 class="font-medium text-gray-900">
+                        Capture Options
+                    </h4>
+
+                    <div class="space-y-3">
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox"
+                                   id="auto-save"
+                                   class="rounded">
+
+                            <span class="text-sm text-gray-700">
+                                Auto-save images
+                            </span>
                         </label>
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" id="show-grid" onchange="toggleGrid()">
-                            <span class="text-sm text-gray-700">Show grid overlay</span>
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox"
+                                   id="show-grid"
+                                   class="rounded">
+
+                            <span class="text-sm text-gray-700">
+                                Show grid overlay
+                            </span>
                         </label>
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" id="timestamp">
-                            <span class="text-sm text-gray-700">Add timestamp to images</span>
+
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox"
+                                   id="timestamp"
+                                   class="rounded">
+
+                            <span class="text-sm text-gray-700">
+                                Add timestamp to images
+                            </span>
                         </label>
                     </div>
                 </div>
 
+                <!-- Camera Information -->
                 <div class="space-y-4">
-                    <h4 class="font-medium text-gray-900">Camera Info</h4>
+                    <h4 class="font-medium text-gray-900">
+                        Camera Info
+                    </h4>
+
                     <div class="text-sm text-gray-600 space-y-1">
-                        <div>Available Cameras: <span id="camera-count">0</span></div>
-                        <div>Current Camera: <span id="current-camera">None</span></div>
-                        <div>Stream Status: <span id="stream-status">Inactive</span></div>
-                        <div>Last Capture: <span id="last-capture">Never</span></div>
+                        <div>
+                            Available Cameras:
+                            <span id="camera-count">0</span>
+                        </div>
+
+                        <div>
+                            Current Camera:
+                            <span id="current-camera">None</span>
+                        </div>
+
+                        <div>
+                            Stream Status:
+                            <span id="stream-status">Inactive</span>
+                        </div>
+
+                        <div>
+                            Last Capture:
+                            <span id="last-capture">Never</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -178,505 +412,1505 @@
 
 {% block extra_js %}
 <script>
-    // =============================================================================
-    // CAMERA CAPTURE FUNCTIONALITY
-    // =============================================================================
+'use strict';
 
-    let cameraStream = null;
-    let currentCamera = 0;
-    let availableCameras = [];
-    let capturedImages = [];
-    let flashEnabled = false;
+/*
+|--------------------------------------------------------------------------
+| CAMERA STATE
+|--------------------------------------------------------------------------
+*/
 
-    /**
-     * Initialize the camera section
-     */
-    async function initializeCameraSection() {
-        try {
-            // Some browsers only expose deviceIds/labels after camera permission
-            // Prompt briefly for permission (no persistent stream) so enumerateDevices
-            // returns usable deviceIds.
-            try {
-                const probeStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                // stop probe tracks immediately
-                probeStream.getTracks().forEach(t => t.stop());
-            } catch (permErr) {
-                // ignore - user may grant permission later when starting camera
-            }
+let cameraStream = null;
+let currentCamera = 0;
+let availableCameras = [];
+let capturedImages = [];
+let flashEnabled = false;
+let torchSupported = false;
+let isStartingCamera = false;
+let isDownloading = false;
+let activeModal = null;
+let activeModalResolver = null;
 
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            availableCameras = devices.filter(device => device.kind === 'videoinput');
 
-            document.getElementById('camera-count').textContent = availableCameras.length;
+/*
+|--------------------------------------------------------------------------
+| DOM HELPERS
+|--------------------------------------------------------------------------
+*/
 
-            if (availableCameras.length > 1) {
-                document.getElementById('switch-camera-btn').disabled = false;
-            }
+function getElement(id) {
+    return document.getElementById(id);
+}
 
-            updateCameraInfo();
-        } catch (error) {
-            console.error('Error initializing camera:', error);
-            updateCameraStatus('Error accessing camera devices', 'error');
-        }
+function isCameraSupported() {
+    return Boolean(
+        navigator.mediaDevices &&
+        typeof navigator.mediaDevices.getUserMedia === 'function'
+    );
+}
+
+function getSelectedResolution() {
+    const value = getElement('resolution-select').value;
+    const [width, height] = value.split('x').map(Number);
+
+    return {
+        width: Number.isFinite(width) ? width : 1280,
+        height: Number.isFinite(height) ? height : 720
+    };
+}
+
+function getFileExtension(format) {
+    const extensions = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/webp': 'webp'
+    };
+
+    return extensions[format] || 'jpg';
+}
+
+function createButton(text, className, onClick) {
+    const button = document.createElement('button');
+
+    button.type = 'button';
+    button.textContent = text;
+    button.className = className;
+    button.addEventListener('click', onClick);
+
+    return button;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CUSTOM TOAST NOTIFICATIONS
+|--------------------------------------------------------------------------
+*/
+
+function showToast(message, type = 'info', duration = 3500) {
+    const oldToast = getElement('agriscan-toast');
+
+    if (oldToast) {
+        oldToast.remove();
     }
 
-    /**
-     * Toggle camera on/off
-     */
-    async function toggleCamera() {
-        const video = document.getElementById('camera-video');
-        const placeholder = document.getElementById('camera-placeholder');
-        const toggleBtn = document.getElementById('camera-toggle-btn');
-        const captureBtn = document.getElementById('capture-btn');
-        const flashBtn = document.getElementById('flash-btn');
+    const colorMap = {
+        success: 'bg-green-600',
+        error: 'bg-red-600',
+        warning: 'bg-yellow-600',
+        info: 'bg-blue-600'
+    };
 
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
-            cameraStream = null;
+    const iconMap = {
+        success: '✓',
+        error: '!',
+        warning: '⚠',
+        info: 'i'
+    };
 
-            video.classList.add('hidden');
-            placeholder.classList.remove('hidden');
+    const toast = document.createElement('div');
 
-            toggleBtn.textContent = 'Start Camera';
-            toggleBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
-            toggleBtn.classList.add('btn-primary');
+    toast.id = 'agriscan-toast';
+    toast.className = `
+        fixed bottom-5 right-5 z-[200]
+        w-[calc(100%-2rem)] max-w-sm
+        ${colorMap[type] || colorMap.info}
+        text-white rounded-xl shadow-2xl
+        px-4 py-3 flex items-start gap-3
+    `;
 
-            captureBtn.disabled = true;
-            flashBtn.disabled = true;
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
 
-            updateCameraStatus('Camera stopped', 'inactive');
-            updateStreamStatus('Inactive');
-        } else {
-            try {
-                const constraints = getCameraConstraints();
-                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const icon = document.createElement('span');
 
-                video.srcObject = cameraStream;
-                video.classList.remove('hidden');
-                placeholder.classList.add('hidden');
+    icon.className = `
+        w-6 h-6 flex-shrink-0 rounded-full
+        bg-white/20 flex items-center justify-center
+        font-bold
+    `;
 
-                toggleBtn.textContent = 'Stop Camera';
-                toggleBtn.classList.remove('btn-primary');
-                toggleBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+    icon.textContent = iconMap[type] || iconMap.info;
 
-                captureBtn.disabled = false;
-                flashBtn.disabled = false;
+    const text = document.createElement('p');
 
-                updateCameraStatus('Camera active', 'active');
-                updateStreamStatus('Active');
-                updateCurrentCamera();
-            } catch (error) {
-                console.error('Error starting camera:', error);
-                updateCameraStatus('Error starting camera: ' + error.message, 'error');
-                alert('Camera access denied or not available. Please check your browser permissions.');
-            }
+    text.className = 'flex-1 text-sm font-medium leading-5 break-words';
+    text.textContent = message;
+
+    const closeButton = document.createElement('button');
+
+    closeButton.type = 'button';
+    closeButton.className = 'text-white/80 hover:text-white text-xl leading-none';
+    closeButton.setAttribute('aria-label', 'Close notification');
+    closeButton.textContent = '×';
+
+    closeButton.addEventListener('click', () => {
+        toast.remove();
+    });
+
+    toast.append(icon, text, closeButton);
+    document.body.appendChild(toast);
+
+    window.setTimeout(() => {
+        if (toast.isConnected) {
+            toast.remove();
         }
+    }, duration);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CUSTOM CONFIRMATION MODAL
+|--------------------------------------------------------------------------
+*/
+
+function closeConfirmModal(result = false) {
+    if (!activeModal) {
+        return;
     }
 
-    /**
-     * Get camera constraints based on current settings
-     */
-    function getCameraConstraints() {
-        const constraints = {
-            video: true
+    const modal = activeModal;
+    const resolver = activeModalResolver;
+
+    activeModal = null;
+    activeModalResolver = null;
+
+    if (modal.escapeHandler) {
+        document.removeEventListener(
+            'keydown',
+            modal.escapeHandler
+        );
+    }
+
+    modal.remove();
+
+    if (resolver) {
+        resolver(result);
+    }
+}
+
+function showConfirmModal({
+    title = 'Confirm Action',
+    message = 'Are you sure you want to continue?',
+    confirmText = 'Confirm',
+    cancelText = 'Cancel',
+    danger = false
+} = {}) {
+    if (activeModal) {
+        closeConfirmModal(false);
+    }
+
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+
+        overlay.className = `
+            fixed inset-0 z-[150]
+            flex items-center justify-center
+            bg-black/50 backdrop-blur-sm p-4
+        `;
+
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-labelledby', 'agriscan-confirm-title');
+
+        const panel = document.createElement('div');
+
+        panel.className = `
+            w-full max-w-md bg-white rounded-2xl
+            border border-gray-200 shadow-2xl p-6
+        `;
+
+        const titleElement = document.createElement('h2');
+
+        titleElement.id = 'agriscan-confirm-title';
+        titleElement.className = 'text-lg font-bold text-gray-900';
+        titleElement.textContent = title;
+
+        const messageElement = document.createElement('p');
+
+        messageElement.className = 'mt-3 text-sm text-gray-600 leading-6';
+        messageElement.textContent = message;
+
+        const actions = document.createElement('div');
+
+        actions.className = 'mt-6 flex justify-end gap-3';
+
+        const cancelButton = document.createElement('button');
+
+        cancelButton.type = 'button';
+        cancelButton.className = `
+            rounded-lg border border-gray-300
+            bg-white px-4 py-2 text-sm font-semibold
+            text-gray-700 hover:bg-gray-100
+            focus:outline-none focus:ring-2 focus:ring-gray-400
+        `;
+        cancelButton.textContent = cancelText;
+
+        const confirmButton = document.createElement('button');
+
+        confirmButton.type = 'button';
+        confirmButton.className = danger
+            ? `
+                rounded-lg bg-red-600 px-4 py-2
+                text-sm font-semibold text-white
+                hover:bg-red-700
+                focus:outline-none focus:ring-2 focus:ring-red-500
+              `
+            : `
+                rounded-lg bg-blue-600 px-4 py-2
+                text-sm font-semibold text-white
+                hover:bg-blue-700
+                focus:outline-none focus:ring-2 focus:ring-blue-500
+              `;
+
+        confirmButton.textContent = confirmText;
+
+        actions.append(cancelButton, confirmButton);
+        panel.append(titleElement, messageElement, actions);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        const escapeHandler = event => {
+            if (event.key === 'Escape') {
+                closeConfirmModal(false);
+            }
         };
 
-        if (availableCameras.length > 0 && availableCameras[currentCamera] && availableCameras[currentCamera].deviceId) {
-            constraints.video = {
-                deviceId: { exact: availableCameras[currentCamera].deviceId }
-            };
-        }
+        overlay.escapeHandler = escapeHandler;
 
-        return constraints;
-    }
+        activeModal = overlay;
+        activeModalResolver = resolve;
 
-    /**
-     * Switch between available cameras
-     */
-    async function switchCamera() {
-        if (availableCameras.length <= 1) return;
+        document.addEventListener('keydown', escapeHandler);
 
-        currentCamera = (currentCamera + 1) % availableCameras.length;
+        cancelButton.addEventListener('click', () => {
+            closeConfirmModal(false);
+        });
 
-        // If stream is active, restart stream using the new deviceId directly
-        if (cameraStream) {
-            try {
-                // stop existing tracks
-                cameraStream.getTracks().forEach(track => track.stop());
+        confirmButton.addEventListener('click', () => {
+            closeConfirmModal(true);
+        });
 
-                const constraints = getCameraConstraints();
-                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-                const video = document.getElementById('camera-video');
-                video.srcObject = cameraStream;
-                updateCameraStatus('Camera active', 'active');
-                updateStreamStatus('Active');
-            } catch (err) {
-                console.error('Error switching camera:', err);
-                updateCameraStatus('Error switching camera: ' + err.message, 'error');
-                alert('Could not switch camera: ' + err.message);
+        overlay.addEventListener('click', event => {
+            if (event.target === overlay) {
+                closeConfirmModal(false);
             }
-        }
+        });
 
-        updateCurrentCamera();
+        confirmButton.focus();
+    });
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CAMERA INITIALIZATION
+|--------------------------------------------------------------------------
+*/
+
+async function initializeCameraSection() {
+    if (!isCameraSupported()) {
+        updateCameraStatus(
+            'Camera is not supported by this browser.',
+            'error'
+        );
+
+        getElement('camera-toggle-btn').disabled = true;
+        getElement('switch-camera-btn').disabled = true;
+
+        return;
     }
 
-    /**
-     * Capture a photo from the video stream
-     */
-    function capturePhoto() {
-        const video = document.getElementById('camera-video');
-        const canvas = document.getElementById('camera-canvas');
-        const format = document.getElementById('format-select').value;
-        const quality = document.getElementById('quality-slider').value / 100;
+    try {
+        await refreshAvailableCameras();
+        updateCameraInfo();
+    } catch (error) {
+        console.error('Camera initialization error:', error);
+
+        updateCameraStatus(
+            'Unable to detect camera devices.',
+            'error'
+        );
+    }
+}
+
+async function refreshAvailableCameras() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+
+    availableCameras = devices.filter(
+        device => device.kind === 'videoinput'
+    );
+
+    getElement('camera-count').textContent =
+        String(availableCameras.length);
+
+    getElement('switch-camera-btn').disabled =
+        availableCameras.length <= 1;
+
+    if (currentCamera >= availableCameras.length) {
+        currentCamera = 0;
+    }
+
+    updateCurrentCamera();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CAMERA CONSTRAINTS
+|--------------------------------------------------------------------------
+*/
+
+function getCameraConstraints() {
+    const resolution = getSelectedResolution();
+
+    const videoConstraints = {
+        width: {
+            ideal: resolution.width
+        },
+        height: {
+            ideal: resolution.height
+        },
+        facingMode: 'environment'
+    };
+
+    const selectedCamera = availableCameras[currentCamera];
+
+    if (selectedCamera && selectedCamera.deviceId) {
+        videoConstraints.deviceId = {
+            exact: selectedCamera.deviceId
+        };
+
+        delete videoConstraints.facingMode;
+    }
+
+    return {
+        video: videoConstraints,
+        audio: false
+    };
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| CAMERA START / STOP
+|--------------------------------------------------------------------------
+*/
+
+async function toggleCamera() {
+    if (isStartingCamera) {
+        return;
+    }
+
+    if (cameraStream) {
+        stopCamera();
+        return;
+    }
+
+    await startCamera();
+}
+
+async function startCamera() {
+    if (!isCameraSupported() || isStartingCamera) {
+        return;
+    }
+
+    isStartingCamera = true;
+
+    const toggleButton = getElement('camera-toggle-btn');
+    const captureButton = getElement('capture-btn');
+    const flashButton = getElement('flash-btn');
+    const video = getElement('camera-video');
+    const placeholder = getElement('camera-placeholder');
+
+    toggleButton.disabled = true;
+    toggleButton.textContent = 'Starting...';
+
+    updateCameraStatus('Starting camera...', 'inactive');
+
+    try {
+        cameraStream = await navigator.mediaDevices.getUserMedia(
+            getCameraConstraints()
+        );
+
+        video.srcObject = cameraStream;
+
+        await video.play();
+
+        video.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+
+        toggleButton.textContent = 'Stop Camera';
+        toggleButton.classList.remove('btn-primary');
+        toggleButton.classList.add(
+            'bg-red-600',
+            'hover:bg-red-700'
+        );
+
+        captureButton.disabled = false;
+
+        await detectTorchSupport();
+        flashButton.disabled = false;
+
+        updateCameraStatus('Camera active', 'active');
+        updateStreamStatus('Active');
+
+        await refreshAvailableCameras();
+
+    } catch (error) {
+        console.error('Error starting camera:', error);
+
+        stopCamera(false);
+
+        const message = getCameraErrorMessage(error);
+
+        updateCameraStatus(message, 'error');
+        showToast(message, 'error', 5000);
+
+    } finally {
+        isStartingCamera = false;
 
         if (!cameraStream) {
-            alert('Please start the camera first');
+            toggleButton.disabled = false;
+        }
+    }
+}
+
+function stopCamera(updateStatus = true) {
+    const video = getElement('camera-video');
+    const placeholder = getElement('camera-placeholder');
+    const toggleButton = getElement('camera-toggle-btn');
+    const captureButton = getElement('capture-btn');
+    const flashButton = getElement('flash-btn');
+
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+
+    video.pause();
+    video.srcObject = null;
+
+    video.classList.add('hidden');
+    placeholder.classList.remove('hidden');
+
+    toggleButton.disabled = false;
+    toggleButton.textContent = 'Start Camera';
+
+    toggleButton.classList.remove(
+        'bg-red-600',
+        'hover:bg-red-700'
+    );
+
+    toggleButton.classList.add('btn-primary');
+
+    captureButton.disabled = true;
+    flashButton.disabled = true;
+
+    torchSupported = false;
+    flashEnabled = false;
+
+    getElement('flash-status').textContent = 'Off';
+
+    flashButton.classList.remove(
+        'bg-yellow-500',
+        'hover:bg-yellow-600'
+    );
+
+    flashButton.classList.add(
+        'bg-yellow-600',
+        'hover:bg-yellow-700'
+    );
+
+    if (updateStatus) {
+        updateCameraStatus('Camera stopped', 'inactive');
+    }
+
+    updateStreamStatus('Inactive');
+}
+
+function getCameraErrorMessage(error) {
+    if (!error) {
+        return 'Unable to access the camera.';
+    }
+
+    switch (error.name) {
+        case 'NotAllowedError':
+            return 'Camera permission was denied. Please allow camera access in your browser settings.';
+
+        case 'NotFoundError':
+            return 'No camera was found on this device.';
+
+        case 'NotReadableError':
+            return 'The camera is being used by another application.';
+
+        case 'OverconstrainedError':
+            return 'The selected resolution or camera is not supported. Try a lower resolution.';
+
+        case 'SecurityError':
+            return 'Camera access requires HTTPS or localhost.';
+
+        case 'AbortError':
+            return 'Camera startup was interrupted. Please try again.';
+
+        default:
+            return 'Unable to start the camera. Check your browser permissions.';
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| SWITCH CAMERA
+|--------------------------------------------------------------------------
+*/
+
+async function switchCamera() {
+    if (
+        availableCameras.length <= 1 ||
+        isStartingCamera
+    ) {
+        return;
+    }
+
+    const wasActive = Boolean(cameraStream);
+
+    if (wasActive) {
+        stopCamera();
+    }
+
+    currentCamera =
+        (currentCamera + 1) % availableCameras.length;
+
+    updateCurrentCamera();
+
+    if (wasActive) {
+        await startCamera();
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| PHOTO CAPTURE
+|--------------------------------------------------------------------------
+*/
+
+function capturePhoto() {
+    const video = getElement('camera-video');
+    const canvas = getElement('camera-canvas');
+    const format = getElement('format-select').value;
+    const quality =
+        Number(getElement('quality-slider').value) / 100;
+
+    if (!cameraStream || video.readyState < 2) {
+        showToast(
+            'Start the camera and wait for the preview to load.',
+            'warning'
+        );
+
+        return;
+    }
+
+    if (!video.videoWidth || !video.videoHeight) {
+        showToast(
+            'The camera is not ready yet. Please try again.',
+            'warning'
+        );
+
+        return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+        showToast(
+            'Unable to capture the image.',
+            'error'
+        );
+
+        return;
+    }
+
+    context.drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    if (getElement('timestamp').checked) {
+        addTimestampToCanvas(
+            context,
+            canvas.width,
+            canvas.height
+        );
+    }
+
+    let imageDataUrl;
+
+    try {
+        imageDataUrl = canvas.toDataURL(format, quality);
+    } catch (error) {
+        console.error('Image encoding error:', error);
+
+        showToast(
+            'Unable to process the captured image.',
+            'error'
+        );
+
+        return;
+    }
+
+    const imageObj = {
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        dataUrl: imageDataUrl,
+        timestamp: new Date().toISOString(),
+        format,
+        quality,
+        resolution: `${canvas.width}x${canvas.height}`
+    };
+
+    capturedImages.push(imageObj);
+
+    displayCapturedImage(imageObj);
+    updateImageCounter();
+    updateLastCapture();
+    updateActionButtons();
+
+    showToast('Image captured successfully.', 'success');
+
+    if (getElement('auto-save').checked) {
+        downloadImage(imageObj);
+    }
+
+    if (flashEnabled) {
+        flashEffect();
+    }
+}
+
+function addTimestampToCanvas(context, width, height) {
+    const timestamp = new Date().toLocaleString();
+
+    const padding = 10;
+    const boxHeight = 30;
+    const boxWidth = Math.min(300, width - 20);
+
+    context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+
+    context.fillRect(
+        padding,
+        height - boxHeight - padding,
+        boxWidth,
+        boxHeight
+    );
+
+    context.fillStyle = '#ffffff';
+    context.font = '14px Arial';
+
+    context.fillText(
+        timestamp,
+        padding + 5,
+        height - padding - 10
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DISPLAY CAPTURED IMAGES
+|--------------------------------------------------------------------------
+*/
+
+function displayCapturedImage(imageObj) {
+    const container = getElement('captured-images');
+    const emptyMessage = getElement('no-images-message');
+
+    emptyMessage.classList.add('hidden');
+
+    const imageCard = document.createElement('article');
+
+    imageCard.className = `
+        rounded-xl border border-gray-200
+        bg-white overflow-hidden shadow-sm
+    `;
+
+    imageCard.dataset.imageId = String(imageObj.id);
+
+    const imageWrapper = document.createElement('div');
+
+    imageWrapper.className = `
+        relative bg-gray-100 aspect-[4/3] overflow-hidden
+    `;
+
+    const image = document.createElement('img');
+
+    image.src = imageObj.dataUrl;
+    image.alt =
+        `Captured image at ${new Date(imageObj.timestamp).toLocaleString()}`;
+    image.loading = 'lazy';
+    image.decoding = 'async';
+    image.className = 'w-full h-full object-cover';
+
+    imageWrapper.appendChild(image);
+
+    const timestampBadge = document.createElement('div');
+
+    timestampBadge.className = `
+        absolute bottom-1 left-1 right-1
+        bg-black/70 text-white text-xs
+        px-2 py-1 rounded
+    `;
+
+    timestampBadge.textContent =
+        new Date(imageObj.timestamp).toLocaleTimeString();
+
+    imageWrapper.appendChild(timestampBadge);
+    imageCard.appendChild(imageWrapper);
+
+    const details = document.createElement('div');
+
+    details.className = 'px-3 pt-3';
+
+    const resolutionText = document.createElement('p');
+
+    resolutionText.className = 'text-xs text-gray-500';
+
+    resolutionText.textContent =
+        `${imageObj.resolution} • ${getFileExtension(imageObj.format).toUpperCase()}`;
+
+    details.appendChild(resolutionText);
+    imageCard.appendChild(details);
+
+    const actions = document.createElement('div');
+
+    actions.className = 'grid grid-cols-2 gap-2 p-3';
+
+    const baseButtonClass = `
+        w-full px-2 py-2 rounded-lg
+        text-xs font-semibold transition-colors
+        focus:outline-none focus:ring-2
+    `;
+
+    const useButton = createButton(
+        'Use This Image',
+        `${baseButtonClass} bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500`,
+        () => useThisImage(imageObj.id)
+    );
+
+    const viewButton = createButton(
+        'View',
+        `${baseButtonClass} bg-gray-100 hover:bg-gray-200 text-gray-800 focus:ring-gray-400`,
+        () => viewImage(imageObj.id)
+    );
+
+    const downloadButton = createButton(
+        'Download',
+        `${baseButtonClass} bg-green-600 hover:bg-green-700 text-white focus:ring-green-500`,
+        () => downloadSingleImage(imageObj.id)
+    );
+
+    const deleteButton = createButton(
+        'Delete',
+        `${baseButtonClass} bg-red-600 hover:bg-red-700 text-white focus:ring-red-500`,
+        () => deleteImage(imageObj.id)
+    );
+
+    actions.append(
+        useButton,
+        viewButton,
+        downloadButton,
+        deleteButton
+    );
+
+    imageCard.appendChild(actions);
+
+    container.insertBefore(imageCard, emptyMessage);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| TORCH / FLASH
+|--------------------------------------------------------------------------
+*/
+
+async function detectTorchSupport() {
+    torchSupported = false;
+
+    if (!cameraStream) {
+        return;
+    }
+
+    const track = cameraStream.getVideoTracks()[0];
+
+    if (!track || typeof track.getCapabilities !== 'function') {
+        return;
+    }
+
+    const capabilities = track.getCapabilities();
+
+    torchSupported = Boolean(capabilities.torch);
+}
+
+async function toggleFlash() {
+    if (!cameraStream) {
+        return;
+    }
+
+    const track = cameraStream.getVideoTracks()[0];
+
+    if (
+        torchSupported &&
+        track &&
+        typeof track.applyConstraints === 'function'
+    ) {
+        try {
+            flashEnabled = !flashEnabled;
+
+            await track.applyConstraints({
+                advanced: [
+                    {
+                        torch: flashEnabled
+                    }
+                ]
+            });
+
+            updateFlashButton();
+
+            return;
+
+        } catch (error) {
+            console.warn('Torch is unavailable:', error);
+
+            flashEnabled = false;
+            updateFlashButton();
+
+            showToast(
+                'Hardware flash is unavailable. Using visual flash instead.',
+                'warning'
+            );
+
             return;
         }
-
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        if (document.getElementById('timestamp').checked) {
-            addTimestampToCanvas(ctx, canvas.width, canvas.height);
-        }
-
-        const imageDataUrl = canvas.toDataURL(format, quality);
-
-        const imageObj = {
-            id: Date.now(),
-            dataUrl: imageDataUrl,
-            timestamp: new Date().toISOString(),
-            format: format,
-            quality: quality,
-            resolution: `${canvas.width}x${canvas.height}`
-        };
-
-        capturedImages.push(imageObj);
-
-        displayCapturedImage(imageObj);
-        updateImageCounter();
-        updateLastCapture();
-
-        if (document.getElementById('auto-save').checked) {
-            downloadImage(imageObj);
-        }
-
-        if (flashEnabled) {
-            flashEffect();
-        }
     }
 
-    /**
-     * Add timestamp to canvas
-     */
-    function addTimestampToCanvas(ctx, width, height) {
-        const timestamp = new Date().toLocaleString();
+    flashEnabled = !flashEnabled;
+    updateFlashButton();
 
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        ctx.fillRect(10, height - 40, 220, 30);
+    showToast(
+        flashEnabled
+            ? 'Visual flash enabled.'
+            : 'Visual flash disabled.',
+        'info'
+    );
+}
 
-        ctx.fillStyle = 'white';
-        ctx.font = '14px Arial';
-        ctx.fillText(timestamp, 15, height - 20);
+function updateFlashButton() {
+    const flashStatus = getElement('flash-status');
+    const flashButton = getElement('flash-btn');
+
+    flashStatus.textContent =
+        flashEnabled ? 'On' : 'Off';
+
+    flashButton.classList.toggle(
+        'bg-yellow-500',
+        flashEnabled
+    );
+
+    flashButton.classList.toggle(
+        'hover:bg-yellow-600',
+        flashEnabled
+    );
+
+    flashButton.classList.toggle(
+        'bg-yellow-600',
+        !flashEnabled
+    );
+
+    flashButton.classList.toggle(
+        'hover:bg-yellow-700',
+        !flashEnabled
+    );
+}
+
+function flashEffect() {
+    const video = getElement('camera-video');
+
+    if (!video || !video.parentElement) {
+        return;
     }
 
-    /**
-     * Display captured image in the grid
-     */
-    function displayCapturedImage(imageObj) {
-        const container = document.getElementById('captured-images');
-        const noImagesMessage = document.getElementById('no-images-message');
+    const overlay = document.createElement('div');
 
-        noImagesMessage.classList.add('hidden');
+    overlay.className =
+        'absolute inset-0 bg-white pointer-events-none';
 
-        const imageDiv = document.createElement('div');
-        imageDiv.className = 'relative group';
-        imageDiv.innerHTML = `
-            <img src="${imageObj.dataUrl}" alt="Captured ${imageObj.timestamp}" class="w-full h-32 object-cover rounded-lg border border-gray-200">
-            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-60 transition-all duration-200 rounded-lg flex items-center justify-center">
-                <div class="opacity-0 group-hover:opacity-100 flex flex-col space-y-1 px-2">
-                    <button onclick="useThisImage('${imageObj.id}')" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs hover:bg-blue-700 font-semibold">
-                        Use This Image
-                    </button>
-                    <button onclick="viewImage('${imageObj.id}')" class="bg-white text-gray-800 px-3 py-1 rounded text-xs hover:bg-gray-100">
-                        View
-                    </button>
-                    <button onclick="downloadSingleImage('${imageObj.id}')" class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700">
-                        Download
-                    </button>
-                    <button onclick="deleteImage('${imageObj.id}')" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700">
-                        Delete
-                    </button>
-                </div>
-            </div>
-            <div class="absolute bottom-1 left-1 bg-black bg-opacity-70 text-white text-xs px-1 rounded">
-                ${new Date(imageObj.timestamp).toLocaleTimeString()}
-            </div>
-        `;
+    overlay.style.zIndex = '1000';
 
-        container.insertBefore(imageDiv, noImagesMessage);
-    }
+    video.parentElement.appendChild(overlay);
 
-    /**
-     * Toggle flash effect
-     */
-    function toggleFlash() {
-        flashEnabled = !flashEnabled;
-        const flashStatus = document.getElementById('flash-status');
-        const flashBtn = document.getElementById('flash-btn');
-
-        if (flashEnabled) {
-            flashStatus.textContent = 'On';
-            flashBtn.classList.remove('bg-yellow-600', 'hover:bg-yellow-700');
-            flashBtn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-        } else {
-            flashStatus.textContent = 'Off';
-            flashBtn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-            flashBtn.classList.add('bg-yellow-600', 'hover:bg-yellow-700');
-        }
-    }
-
-    /**
-     * Flash effect animation
-     */
-    function flashEffect() {
-        const video = document.getElementById('camera-video');
-        const overlay = document.createElement('div');
-        overlay.className = 'absolute inset-0 bg-white pointer-events-none';
-        overlay.style.zIndex = '1000';
-
-        video.parentElement.appendChild(overlay);
-
-        setTimeout(() => {
+    window.setTimeout(() => {
+        if (overlay.isConnected) {
             overlay.remove();
-        }, 100);
+        }
+    }, 100);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| GRID AND RESOLUTION
+|--------------------------------------------------------------------------
+*/
+
+function toggleGrid() {
+    const overlay = getElement('camera-overlay');
+    const checkbox = getElement('show-grid');
+
+    overlay.classList.toggle(
+        'hidden',
+        !checkbox.checked
+    );
+}
+
+async function changeResolution() {
+    if (!cameraStream || isStartingCamera) {
+        return;
     }
 
-    /**
-     * Toggle grid overlay
-     */
-    function toggleGrid() {
-        const overlay = document.getElementById('camera-overlay');
-        const checkbox = document.getElementById('show-grid');
+    showToast(
+        'Applying camera resolution...',
+        'info'
+    );
 
-        if (checkbox.checked) {
-            overlay.classList.remove('hidden');
-        } else {
-            overlay.classList.add('hidden');
+    stopCamera();
+    await startCamera();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| UI INFORMATION
+|--------------------------------------------------------------------------
+*/
+
+function updateQuality() {
+    const slider = getElement('quality-slider');
+    const display = getElement('quality-value');
+
+    display.textContent = `${slider.value}`;
+}
+
+function updateCameraStatus(message, status = 'inactive') {
+    const statusText = getElement('camera-status-text');
+    const statusIcon = getElement('camera-status-icon');
+
+    statusText.textContent = message;
+
+    statusIcon.className =
+        'w-3 h-3 rounded-full mr-3 mt-1 flex-shrink-0';
+
+    const colorMap = {
+        active: 'bg-green-500',
+        error: 'bg-red-500',
+        inactive: 'bg-gray-400'
+    };
+
+    statusIcon.classList.add(
+        colorMap[status] || colorMap.inactive
+    );
+}
+
+function updateCameraInfo() {
+    updateCurrentCamera();
+
+    updateStreamStatus(
+        cameraStream ? 'Active' : 'Inactive'
+    );
+}
+
+function updateCurrentCamera() {
+    const display = getElement('current-camera');
+
+    if (
+        availableCameras.length > 0 &&
+        availableCameras[currentCamera]
+    ) {
+        display.textContent =
+            availableCameras[currentCamera].label ||
+            `Camera ${currentCamera + 1}`;
+    } else {
+        display.textContent = 'None';
+    }
+}
+
+function updateStreamStatus(status) {
+    getElement('stream-status').textContent = status;
+}
+
+function updateImageCounter() {
+    getElement('image-counter').textContent =
+        String(capturedImages.length);
+}
+
+function updateLastCapture() {
+    getElement('last-capture').textContent =
+        new Date().toLocaleTimeString();
+}
+
+function updateActionButtons() {
+    const hasImages = capturedImages.length > 0;
+
+    getElement('clear-all-btn').disabled = !hasImages;
+    getElement('download-all-btn').disabled =
+        !hasImages || isDownloading;
+}
+
+function updateEmptyState() {
+    getElement('no-images-message').classList.toggle(
+        'hidden',
+        capturedImages.length > 0
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| IMAGE VIEW MODAL
+|--------------------------------------------------------------------------
+*/
+
+function viewImage(imageId) {
+    const image = capturedImages.find(
+        item => String(item.id) === String(imageId)
+    );
+
+    if (!image) {
+        return;
+    }
+
+    const modal = document.createElement('div');
+
+    modal.className = `
+        fixed inset-0 z-[120]
+        bg-black/80 flex items-center justify-center p-4
+    `;
+
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-label', 'Captured image preview');
+
+    const content = document.createElement('div');
+
+    content.className = `
+        relative w-full max-w-4xl max-h-full
+        bg-gray-900 rounded-xl p-4 overflow-y-auto
+    `;
+
+    const previewImage = document.createElement('img');
+
+    previewImage.src = image.dataUrl;
+    previewImage.alt = 'Captured image preview';
+    previewImage.className = `
+        block max-w-full max-h-[70vh]
+        mx-auto object-contain rounded-lg
+    `;
+
+    const information = document.createElement('div');
+
+    information.className =
+        'text-white text-center mt-4 space-y-2';
+
+    const capturedText = document.createElement('p');
+
+    capturedText.className = 'text-sm';
+    capturedText.textContent =
+        `Captured: ${new Date(image.timestamp).toLocaleString()}`;
+
+    const resolutionText = document.createElement('p');
+
+    resolutionText.className = 'text-sm text-gray-300';
+    resolutionText.textContent =
+        `Resolution: ${image.resolution} | Format: ${image.format}`;
+
+    const closeButton = createButton(
+        'Close',
+        `
+            mt-3 bg-red-600 hover:bg-red-700
+            text-white px-4 py-2 rounded-lg
+            font-semibold focus:outline-none
+            focus:ring-2 focus:ring-red-500
+        `,
+        () => closeModal()
+    );
+
+    information.append(
+        capturedText,
+        resolutionText,
+        closeButton
+    );
+
+    content.append(previewImage, information);
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    function closeModal() {
+        document.removeEventListener(
+            'keydown',
+            escapeHandler
+        );
+
+        modal.remove();
+    }
+
+    function escapeHandler(event) {
+        if (event.key === 'Escape') {
+            closeModal();
         }
     }
 
-    /**
-     * Change camera resolution
-     */
-    async function changeResolution() {
-        if (cameraStream) {
-            await toggleCamera();
-            await toggleCamera();
-        }
-    }
-
-    /**
-     * Update quality slider display
-     */
-    function updateQuality() {
-        const slider = document.getElementById('quality-slider');
-        const display = document.getElementById('quality-value');
-        display.textContent = slider.value;
-    }
-
-    /**
-     * Update camera status
-     */
-    function updateCameraStatus(message, status) {
-        const statusText = document.getElementById('camera-status-text');
-        const statusIcon = document.getElementById('camera-status-icon');
-
-        statusText.textContent = message;
-
-        statusIcon.className = 'w-3 h-3 rounded-full mr-3';
-        switch (status) {
-            case 'active':
-                statusIcon.classList.add('bg-green-500');
-                break;
-            case 'error':
-                statusIcon.classList.add('bg-red-500');
-                break;
-            default:
-                statusIcon.classList.add('bg-gray-400');
-        }
-    }
-
-    /**
-     * Update camera info displays
-     */
-    function updateCameraInfo() {
-        updateCurrentCamera();
-        updateStreamStatus(cameraStream ? 'Active' : 'Inactive');
-    }
-
-    function updateCurrentCamera() {
-        const display = document.getElementById('current-camera');
-        if (availableCameras.length > 0 && availableCameras[currentCamera]) {
-            display.textContent = availableCameras[currentCamera].label || `Camera ${currentCamera + 1}`;
-        } else {
-            display.textContent = 'None';
-        }
-    }
-
-    function updateStreamStatus(status) {
-        document.getElementById('stream-status').textContent = status;
-    }
-
-    function updateImageCounter() {
-        document.getElementById('image-counter').textContent = capturedImages.length;
-    }
-
-    function updateLastCapture() {
-        document.getElementById('last-capture').textContent = new Date().toLocaleTimeString();
-    }
-
-    /**
-     * View image in full size
-     */
-    function viewImage(imageId) {
-        const image = capturedImages.find(img => img.id == imageId);
-        if (!image) return;
-
-        const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
-        modal.innerHTML = `
-            <div class="max-w-4xl max-h-full p-4">
-                <img src="${image.dataUrl}" alt="Captured image" class="max-w-full max-h-full object-contain">
-                <div class="text-white text-center mt-4">
-                    <p>Captured: ${new Date(image.timestamp).toLocaleString()}</p>
-                    <p>Resolution: ${image.resolution} | Format: ${image.format}</p>
-                    <button onclick="this.parentElement.parentElement.parentElement.remove()" class="mt-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded">
-                        Close
-                    </button>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(modal);
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.remove();
-            }
-        });
-    }
-
-    /**
-     * Download single image
-     */
-    function downloadSingleImage(imageId) {
-        const image = capturedImages.find(img => img.id == imageId);
-        if (!image) return;
-
-        downloadImage(image);
-    }
-
-    /**
-     * Download image helper
-     */
-    function downloadImage(imageObj) {
-        const link = document.createElement('a');
-        link.download = `capture_${new Date(imageObj.timestamp).toISOString().replace(/[:.]/g, '-')}.${imageObj.format.split('/')[1]}`;
-        link.href = imageObj.dataUrl;
-        link.click();
-    }
-
-    /**
-     * Delete image
-     */
-    function deleteImage(imageId) {
-        if (!confirm('Are you sure you want to delete this image?')) return;
-
-        capturedImages = capturedImages.filter(img => img.id != imageId);
-
-        const container = document.getElementById('captured-images');
-        const imageElements = container.querySelectorAll('.relative.group');
-        imageElements.forEach(element => {
-            const viewBtn = element.querySelector('button[onclick*="viewImage"]');
-            if (viewBtn && viewBtn.getAttribute('onclick').includes(imageId)) {
-                element.remove();
-            }
-        });
-
-        if (capturedImages.length === 0) {
-            document.getElementById('no-images-message').classList.remove('hidden');
-        }
-
-        updateImageCounter();
-    }
-
-    /**
-     * Clear all images
-     */
-    function clearAllImages() {
-        if (capturedImages.length === 0) return;
-
-        if (!confirm(`Are you sure you want to delete all ${capturedImages.length} images?`)) return;
-
-        capturedImages = [];
-
-        const container = document.getElementById('captured-images');
-        const imageElements = container.querySelectorAll('.relative.group');
-        imageElements.forEach(element => element.remove());
-
-        document.getElementById('no-images-message').classList.remove('hidden');
-
-        updateImageCounter();
-    }
-
-    /**
-     * Download all images as ZIP (simplified version)
-     */
-    function downloadAllImages() {
-        if (capturedImages.length === 0) {
-            alert('No images to download');
-            return;
-        }
-
-        capturedImages.forEach((image, index) => {
-            setTimeout(() => {
-                downloadImage(image);
-            }, index * 500);
-        });
-
-        alert(`Downloading ${capturedImages.length} images...`);
-    }
-
-    /**
-     * Use this image - redirect to scan page with image data
-     */
-    function useThisImage(imageId) {
-        const image = capturedImages.find(img => img.id == imageId);
-        if (!image) return;
-
-        sessionStorage.setItem('capturedImage', JSON.stringify({
-            dataUrl: image.dataUrl,
-            timestamp: image.timestamp,
-            format: image.format
-        }));
-
-        window.location.href = "{% url 'polls:scan' %}";
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        initializeCameraSection();
-    });
-
-    window.addEventListener('beforeunload', () => {
-        if (cameraStream) {
-            cameraStream.getTracks().forEach(track => track.stop());
+    modal.addEventListener('click', event => {
+        if (event.target === modal) {
+            closeModal();
         }
     });
+
+    document.addEventListener('keydown', escapeHandler);
+
+    closeButton.focus();
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DOWNLOAD
+|--------------------------------------------------------------------------
+*/
+
+function downloadSingleImage(imageId) {
+    const image = capturedImages.find(
+        item => String(item.id) === String(imageId)
+    );
+
+    if (!image) {
+        return;
+    }
+
+    downloadImage(image);
+
+    showToast(
+        'Image download started.',
+        'success'
+    );
+}
+
+function downloadImage(imageObj) {
+    if (!imageObj || !imageObj.dataUrl) {
+        return false;
+    }
+
+    const extension =
+        getFileExtension(imageObj.format);
+
+    const timestamp =
+        new Date(imageObj.timestamp)
+            .toISOString()
+            .replace(/[:.]/g, '-');
+
+    const link = document.createElement('a');
+
+    link.download =
+        `capture_${timestamp}.${extension}`;
+
+    link.href = imageObj.dataUrl;
+    link.style.display = 'none';
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    return true;
+}
+
+async function downloadAllImages() {
+    if (isDownloading) {
+        return;
+    }
+
+    const images = [...capturedImages];
+
+    if (images.length === 0) {
+        showToast(
+            'There are no images to download.',
+            'info'
+        );
+
+        return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DOWNLOAD ALL CONFIRMATION
+    |--------------------------------------------------------------------------
+    */
+
+    const confirmed = await showConfirmModal({
+        title: 'Download All Images',
+        message: `Are you sure you want to download all ${images.length} captured images?`,
+        confirmText: 'Download All',
+        cancelText: 'Cancel',
+        danger: false
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    isDownloading = true;
+    updateActionButtons();
+
+    showToast(
+        `Preparing ${images.length} image${images.length === 1 ? '' : 's'} for download...`,
+        'info',
+        2500
+    );
+
+    let downloadedCount = 0;
+
+    try {
+        for (const image of images) {
+            if (downloadImage(image)) {
+                downloadedCount++;
+            }
+
+            await new Promise(resolve => {
+                window.setTimeout(resolve, 500);
+            });
+        }
+
+        showToast(
+            `${downloadedCount} image${downloadedCount === 1 ? '' : 's'} sent for download.`,
+            'success',
+            4500
+        );
+
+    } catch (error) {
+        console.error('Download error:', error);
+
+        showToast(
+            'Some images could not be downloaded.',
+            'error'
+        );
+
+    } finally {
+        isDownloading = false;
+        updateActionButtons();
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| DELETE IMAGES
+|--------------------------------------------------------------------------
+*/
+
+async function deleteImage(imageId) {
+    const image = capturedImages.find(
+        item => String(item.id) === String(imageId)
+    );
+
+    if (!image) {
+        return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | INDIVIDUAL DELETE CONFIRMATION
+    |--------------------------------------------------------------------------
+    */
+
+    const confirmed = await showConfirmModal({
+        title: 'Delete Image',
+        message: 'Are you sure you want to delete this captured image? This action cannot be undone.',
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        danger: true
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    capturedImages = capturedImages.filter(
+        item => String(item.id) !== String(imageId)
+    );
+
+    const imageCards = document.querySelectorAll(
+        '[data-image-id]'
+    );
+
+    imageCards.forEach(card => {
+        if (card.dataset.imageId === String(imageId)) {
+            card.remove();
+        }
+    });
+
+    updateEmptyState();
+    updateImageCounter();
+    updateActionButtons();
+
+    showToast(
+        'Image deleted successfully.',
+        'success'
+    );
+}
+
+async function clearAllImages() {
+    const totalImages = capturedImages.length;
+
+    if (totalImages === 0) {
+        showToast(
+            'There are no captured images to clear.',
+            'info'
+        );
+
+        return;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | CLEAR ALL CONFIRMATION
+    |--------------------------------------------------------------------------
+    */
+
+    const confirmed = await showConfirmModal({
+        title: 'Clear All Images',
+        message: `Are you sure you want to clear all ${totalImages} captured images from this page? This action cannot be undone.`,
+        confirmText: 'Clear All',
+        cancelText: 'Cancel',
+        danger: true
+    });
+
+    if (!confirmed) {
+        return;
+    }
+
+    capturedImages = [];
+
+    const container = getElement('captured-images');
+
+    container.querySelectorAll('[data-image-id]').forEach(card => {
+        card.remove();
+    });
+
+    updateEmptyState();
+    updateImageCounter();
+    updateActionButtons();
+
+    showToast(
+        `${totalImages} image${totalImages === 1 ? '' : 's'} cleared successfully.`,
+        'success'
+    );
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| USE IMAGE FOR SCANNING
+|--------------------------------------------------------------------------
+*/
+
+function useThisImage(imageId) {
+    const image = capturedImages.find(
+        item => String(item.id) === String(imageId)
+    );
+
+    if (!image) {
+        return;
+    }
+
+    try {
+        sessionStorage.setItem(
+            'capturedImage',
+            JSON.stringify({
+                dataUrl: image.dataUrl,
+                timestamp: image.timestamp,
+                format: image.format,
+                resolution: image.resolution
+            })
+        );
+
+        window.location.href =
+            "{% url 'polls:scan' %}";
+
+    } catch (error) {
+        console.error(
+            'Unable to save captured image:',
+            error
+        );
+
+        showToast(
+            'Unable to prepare this image for scanning. The image may be too large for browser storage.',
+            'error',
+            5000
+        );
+    }
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EVENT LISTENERS
+|--------------------------------------------------------------------------
+*/
+
+document.addEventListener('DOMContentLoaded', () => {
+    getElement('camera-toggle-btn')
+        .addEventListener('click', toggleCamera);
+
+    getElement('switch-camera-btn')
+        .addEventListener('click', switchCamera);
+
+    getElement('capture-btn')
+        .addEventListener('click', capturePhoto);
+
+    getElement('flash-btn')
+        .addEventListener('click', toggleFlash);
+
+    getElement('clear-all-btn')
+        .addEventListener('click', clearAllImages);
+
+    getElement('download-all-btn')
+        .addEventListener('click', downloadAllImages);
+
+    getElement('resolution-select')
+        .addEventListener('change', changeResolution);
+
+    getElement('quality-slider')
+        .addEventListener('input', updateQuality);
+
+    getElement('show-grid')
+        .addEventListener('change', toggleGrid);
+
+    updateQuality();
+    updateImageCounter();
+    updateActionButtons();
+    initializeCameraSection();
+});
+
+window.addEventListener('beforeunload', () => {
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => {
+            track.stop();
+        });
+    }
+});
 </script>
 {% endblock %}
