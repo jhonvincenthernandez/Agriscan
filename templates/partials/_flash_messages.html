@@ -23,8 +23,8 @@
     </div>
 
     {% elif message.tags and 'warning' in message.tags %}
-    {# Warnings: auto-dismiss after 7s #}
-    <div role="status" aria-live="polite" data-flash data-flash-timeout="7000"
+    {# Warnings: auto-dismiss after 5s #}
+    <div role="status" aria-live="polite" data-flash data-flash-timeout="5000"
       class="relative overflow-hidden border rounded-lg text-sm font-medium bg-amber-50 border-amber-200 text-amber-800">
       <div class="flex items-start justify-between gap-3 px-4 py-3">
         <span class="flex items-center gap-2">
@@ -44,8 +44,8 @@
     </div>
 
     {% elif message.tags and 'success' in message.tags %}
-    {# Success: auto-dismiss after 5s #}
-    <div role="status" aria-live="polite" data-flash data-flash-timeout="5000"
+    {# Success: auto-dismiss after 3s #}
+    <div role="status" aria-live="polite" data-flash data-flash-timeout="3000"
       class="relative overflow-hidden border rounded-lg text-sm font-medium bg-green-50 border-green-200 text-green-800">
       <div class="flex items-start justify-between gap-3 px-4 py-3">
         <span class="flex items-center gap-2">
@@ -65,8 +65,8 @@
     </div>
 
     {% else %}
-    {# Info: auto-dismiss after 5s #}
-    <div role="status" aria-live="polite" data-flash data-flash-timeout="5000"
+    {# Info: auto-dismiss after 4s #}
+    <div role="status" aria-live="polite" data-flash data-flash-timeout="4000"
       class="relative overflow-hidden border rounded-lg text-sm font-medium bg-blue-50 border-blue-200 text-blue-800">
       <div class="flex items-start justify-between gap-3 px-4 py-3">
         <span class="flex items-center gap-2">
