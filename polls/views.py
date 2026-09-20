@@ -271,7 +271,7 @@ def login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             auth_login(request, user)
-            messages.success(request, f"Welcome back, {user.username}!")
+            messages.success(request, f"Welcome, {user.username}!")
             return redirect("polls:dashboard")
         else:
             messages.error(request, "Invalid username or password.")

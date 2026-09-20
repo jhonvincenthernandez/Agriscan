@@ -1,164 +1,425 @@
 {% extends 'auth/log.html' %}
 {% load static %}
+
 {% block title %}Login · AgriScan+{% endblock %}
+
 {% block content %}
-<section class="relative isolate">
-  <div class="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8 xl:px-12 py-16 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-    <div class="order-2 lg:order-1">
-      <div class="bg-white border border-slate-200 shadow-sm rounded-2xl max-w-md mx-auto p-6 sm:p-8">
-        <div class="flex items-center gap-3 mb-4">
-          <img src="{% static 'polls/img/logo.jpg' %}" alt="AgriScan+ logo" class="h-10 w-10 rounded-full object-cover">
-          <div>
-            <h1 class="text-2xl font-semibold text-slate-900">Welcome back</h1>
-            <p class="text-sm text-slate-500">Sign in to manage fields, scans, and yield forecasts.</p>
-          </div>
+<section class="relative isolate min-h-[calc(100vh-5rem)] overflow-hidden bg-slate-50">
+  <!-- Background Decoration -->
+  <div
+    class="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-100/50 blur-3xl"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="pointer-events-none absolute -bottom-40 -right-32 h-96 w-96 rounded-full bg-sky-100/60 blur-3xl"
+    aria-hidden="true"
+  ></div>
+
+  <div
+    class="relative mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl grid-cols-1 items-center gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-2 lg:gap-16 lg:px-8 lg:py-16"
+  >
+    <!-- Login Panel -->
+    <div class="order-2 w-full lg:order-1">
+      <div class="mx-auto w-full max-w-md">
+        <!-- Brand -->
+        <div class="mb-7 text-center lg:text-left">
+          <a
+            href="/"
+            class="inline-flex items-center gap-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            aria-label="AgriScan+ home"
+          >
+            <img
+              src="{% static 'polls/img/logo.jpg' %}"
+              alt="AgriScan+ logo"
+              class="h-11 w-11 rounded-xl object-cover shadow-sm ring-1 ring-slate-200"
+            />
+
+            <span class="text-xl font-bold tracking-tight text-slate-900">
+              AgriScan<span class="text-blue-600">+</span>
+            </span>
+          </a>
         </div>
-        <form method="post" class="mt-6 space-y-4">
-          {% csrf_token %}
+
+        <!-- Card -->
+        <div
+          class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8"
+        >
+          <div class="mb-7">
+            <h1
+              class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
+            >
+              Welcome
+            </h1>
+
+            <p class="mt-2 text-sm leading-6 text-slate-500">
+              Sign in to manage your fields, scans, and yield forecasts.
+            </p>
+          </div>
+
+          <!-- Django Messages -->
           {% if messages %}
-          <div class="space-y-2">
+          <div class="mb-5 space-y-3" aria-live="polite">
             {% for message in messages %}
-            <div class="auth-alert {% if message.tags == 'error' %}auth-alert--error{% else %}auth-alert--info{% endif %}">
+            <div
+              class="auth-alert {% if message.tags == 'error' %}auth-alert--error{% else %}auth-alert--info{% endif %}"
+              role="alert"
+            >
               {{ message }}
             </div>
             {% endfor %}
           </div>
           {% endif %}
-          <div>
-            <label for="username" class="block text-sm font-medium text-slate-700">Username</label>
-            <input
-              id="username"
-              name="username"
-              type="text"
-              required
-              autocomplete="username"
-              autocapitalize="none"
-              class="auth-input"
-              placeholder="Enter your username"
-              value="{{ request.POST.username|default:'' }}"
-            />
-          </div>
-          <div>
-            <label for="password" class="block text-sm font-medium text-slate-700">Password</label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              autocomplete="current-password"
-              class="auth-input"
-              placeholder="Enter your password"
-            />
-          </div>
-          <button type="submit" class="auth-button">
-            <svg
-              class="h-5 w-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
+
+          <!-- Login Form -->
+          <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div>
+              <label
+                for="username"
+                class="mb-2 block text-sm font-semibold text-slate-700"
+              >
+                Username
+              </label>
+
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                autofocus
+                placeholder="Enter your username"
+                value="{{ request.POST.username|default:'' }}"
+                class="auth-input w-full"
+              />
+            </div>
+
+            <!-- Password -->
+            <div>
+              <div class="mb-2 flex items-center justify-between gap-3">
+                <label
+                  for="password"
+                  class="block text-sm font-semibold text-slate-700"
+                >
+                  Password
+                </label>
+              </div>
+
+              <div class="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  autocomplete="current-password"
+                  placeholder="Enter your password"
+                  class="auth-input w-full pr-12"
+                />
+
+                <button
+                  type="button"
+                  id="togglePassword"
+                  class="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+                  aria-label="Show password"
+                  aria-controls="password"
+                  aria-pressed="false"
+                >
+                  <svg
+                    id="passwordEyeIcon"
+                    class="h-5 w-5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Submit -->
+            <button
+              type="submit"
+              class="auth-button inline-flex w-full items-center justify-center gap-2"
             >
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-              <path d="M10 17l5-5-5-5v10z" />
-            </svg>
-            Login
-          </button>
-          <p class="text-center text-sm text-slate-600">
-            No account yet?
-            <a href="{% url 'polls:register' %}" class="text-blue-600 hover:text-blue-700 font-medium transition">Create one</a>
-          </p>
-        </form>
+              <svg
+                class="h-5 w-5 shrink-0"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <path d="m10 17 5-5-5-5" />
+                <path d="M15 12H3" />
+              </svg>
+
+              <span>Sign in</span>
+            </button>
+
+            <!-- Registration Link -->
+            <p class="pt-1 text-center text-sm text-slate-500">
+              Don't have an account?
+              <a
+                href="{% url 'polls:register' %}"
+                class="font-semibold text-blue-600 transition hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Create an account
+              </a>
+            </p>
+          </form>
+        </div>
+
+        <p class="mt-6 text-center text-xs leading-5 text-slate-400">
+          Secure access to your AgriScan+ workspace.
+        </p>
       </div>
     </div>
-    <div class="order-1 lg:order-2">
-      <div class="relative">
+
+    <!-- Product Showcase -->
+    <div class="order-1 w-full lg:order-2">
+      <div class="mx-auto max-w-xl lg:max-w-none">
+        <!-- Badge -->
         <div
-          class="absolute -top-8 -left-8 w-24 h-24 bg-blue-100/70 rounded-2xl rotate-6"
-          aria-hidden="true"
-        ></div>
-        <div
-          class="absolute -bottom-10 -right-10 w-28 h-28 bg-sky-100/70 rounded-2xl -rotate-6"
-          aria-hidden="true"
-        ></div>
-        <div
-          class="relative bg-gradient-to-br from-slate-50 to-blue-50 border border-slate-200 rounded-2xl p-8"
+          class="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
         >
-          <h2 class="text-3xl font-bold text-slate-900 mb-2">AgriScan+</h2>
-          <p class="text-slate-600">
-            AI tools for rice leaf disease detection and yield prediction, built for daily farm workflows.
+          <span
+            class="h-1.5 w-1.5 rounded-full bg-blue-600"
+            aria-hidden="true"
+          ></span>
+
+          Smart agriculture platform
+        </div>
+
+        <!-- Heading -->
+        <h2
+          class="max-w-xl text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl"
+        >
+          Smarter insights for
+          <span class="text-blue-600">better farming.</span>
+        </h2>
+
+        <p
+          class="mt-5 max-w-lg text-base leading-7 text-slate-600 sm:text-lg"
+        >
+          AgriScan+ supports rice farmers through disease detection, yield
+          prediction, and organized farm activity records.
+        </p>
+
+        <!-- Feature Cards -->
+        <div class="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <!-- Feature 1 -->
+          <div
+            class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 9a2 2 0 0 1 2-2h.9a2 2 0 0 0 1.66-.89l.82-1.22A2 2 0 0 1 10.04 4h3.92a2 2 0 0 1 1.66.89l.82 1.22A2 2 0 0 0 18.1 7H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">
+                Disease Detection
+              </h3>
+
+              <p class="mt-1 text-xs leading-5 text-slate-500">
+                Analyze rice leaf images.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 2 -->
+          <div
+            class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M3 3v18h18" />
+                <path d="m7 15 4-4 3 2 5-7" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">
+                Yield Prediction
+              </h3>
+
+              <p class="mt-1 text-xs leading-5 text-slate-500">
+                Review estimated harvest output.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 3 -->
+          <div
+            class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M4 4h16v16H4z" />
+                <path d="M8 8h8M8 12h8M8 16h5" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">
+                Farm Records
+              </h3>
+
+              <p class="mt-1 text-xs leading-5 text-slate-500">
+                Organize activities and results.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 4 -->
+          <div
+            class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 2h12v20H6z" />
+                <path d="M9 6h6M9 10h6M9 14h6M9 18h3" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">
+                Reports
+              </h3>
+
+              <p class="mt-1 text-xs leading-5 text-slate-500">
+                Access organized farm reports.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Supporting Note -->
+        <div
+          class="mt-7 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4"
+        >
+          <svg
+            class="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 11v5" />
+            <path d="M12 8h.01" />
+          </svg>
+
+          <p class="text-xs leading-5 text-blue-800 sm:text-sm">
+            Keep your farm information organized in one accessible workspace.
           </p>
-          <ul class="mt-6 grid grid-cols-2 gap-3 text-sm">
-            <li
-              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
-            >
-              <svg
-                class="h-4 w-4 text-blue-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-              </svg
-              >Scan Leaf Disease
-            </li>
-            <li
-              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
-            >
-              <svg
-                class="h-4 w-4 text-blue-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-              </svg
-              >Predict Yield
-            </li>
-            <li
-              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
-            >
-              <svg
-                class="h-4 w-4 text-slate-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M12 5v14" />
-                <path d="M7 10l5 5 5-5" /></svg
-              >Save Results
-            </li>
-            <li
-              class="bg-white/80 border border-slate-200 rounded-lg p-3 flex items-center gap-2"
-            >
-              <svg
-                class="h-4 w-4 text-slate-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /></svg
-              >Download Reports
-            </li>
-          </ul>
         </div>
       </div>
     </div>
   </div>
 </section>
+
+<!-- Password Visibility Script -->
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.getElementById("togglePassword");
+    const eyeIcon = document.getElementById("passwordEyeIcon");
+
+    if (!passwordInput || !togglePassword || !eyeIcon) {
+      return;
+    }
+
+    togglePassword.addEventListener("click", function () {
+      const isPasswordVisible = passwordInput.type === "text";
+
+      passwordInput.type = isPasswordVisible ? "password" : "text";
+
+      togglePassword.setAttribute(
+        "aria-label",
+        isPasswordVisible ? "Show password" : "Hide password"
+      );
+
+      togglePassword.setAttribute(
+        "aria-pressed",
+        String(!isPasswordVisible)
+      );
+
+      eyeIcon.innerHTML = isPasswordVisible
+        ? `
+          <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+          <circle cx="12" cy="12" r="3" />
+        `
+        : `
+          <path d="M3 3l18 18" />
+          <path d="M10.6 5.2A10.7 10.7 0 0 1 12 5c6 0 9.5 7 9.5 7a17.5 17.5 0 0 1-3.1 4.1" />
+          <path d="M6.6 6.6C4.1 8.3 2.5 12 2.5 12s3.5 7 9.5 7a9.8 9.8 0 0 0 4.1-.9" />
+          <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+        `;
+    });
+  });
+</script>
 {% endblock %}

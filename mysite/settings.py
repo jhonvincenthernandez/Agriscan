@@ -169,14 +169,34 @@ USE_I18N = False  # AgriScan is English-only; disabling avoids unnecessary trans
 USE_TZ = True  # Always True — stores datetimes as UTC in DB, converts to Asia/Manila for display
 
 
+# ---------------------------------------------------------------------------
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# ---------------------------------------------------------------------------
+# Local development uses normal static file storage.
+# Production uses ManifestStaticFilesStorage for cache busting:
+# e.g. tailwind.css -> tailwind.abc123.css
+#
+# CloudPanel/Nginx should serve the collected files from STATIC_ROOT.
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
-# Production directory where Django collects all static files.
-# collectstatic copies static assets from all installed apps here.
+# Directory where collectstatic gathers all static assets.
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Cache-busting storage configuration.
+# Manifest storage generates hashed filenames in production.
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': (
+            'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
+            if not DEBUG
+            else 'django.contrib.staticfiles.storage.StaticFilesStorage'
+        ),
+    },
+}
 
 # Media uploads (for images captured in detections)
 MEDIA_URL = '/media/'
