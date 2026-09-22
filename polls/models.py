@@ -1522,6 +1522,23 @@ class Announcement(TimeStampedModel):
         default='general',
         help_text="Type of announcement"
     )
+
+    # Publishing Mode
+    PUBLISHING_MODE_CHOICES = [
+        ('immediate', 'Immediate Publish'),
+        ('scheduled', 'Scheduled Publish'),
+    ]
+
+    publishing_mode = models.CharField(
+        max_length=20,
+        choices=PUBLISHING_MODE_CHOICES,
+        default='immediate',
+        db_index=True,
+        help_text=(
+            "Records whether the announcement was published immediately "
+            "or scheduled for a future date."
+        ),
+    )
     
     # Status & Scheduling
     is_active = models.BooleanField(

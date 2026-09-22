@@ -3,7 +3,7 @@ import csv
 import json
 from io import BytesIO
 import logging
-import threading
+
 
 from django.conf import settings
 from django.contrib import messages
@@ -121,30 +121,29 @@ def _redirect_back_or_default(request, fallback_url_name: str):
         return redirect(next_url)
     return redirect(fallback_url_name)
 
-
-def _send_announcement_emails_background(announcement_pk: int) -> None:
-    """Send announcement emails out-of-band so the request can return quickly."""
-    try:
-        from .models import Announcement
-        announcement = Announcement.objects.get(pk=announcement_pk)
-        if announcement.is_deleted or not announcement.is_active:
-            return
-        services.send_announcement_emails_to_targets(announcement)
-    except Exception:
-        logger.exception("Background announcement email send failed for pk=%s", announcement_pk)
-
+# ============================================================================
+# ANNOUNCEMENT EMAIL QUEUE HELPERS
+# ============================================================================
+# Email delivery is centralized in services.py.
+# This view helper only schedules the service after a successful DB commit.
+# ============================================================================
 
 def _queue_announcement_email_send(announcement_pk: int) -> None:
-    """Start background email work after transaction commit."""
-    def _start_worker():
-        worker = threading.Thread(
-            target=_send_announcement_emails_background,
-            args=(announcement_pk,),
-            daemon=True,
-        )
-        worker.start()
+    """
+    Queue announcement email delivery through services.py.
 
-    transaction.on_commit(_start_worker)
+    The service is responsible for:
+    - Preventing duplicate queueing within the process
+    - Loading the announcement safely
+    - Resolving recipients
+    - Sending emails in the background
+    - Logging delivery errors
+    """
+    transaction.on_commit(
+        lambda: services.queue_announcement_email_send(
+            announcement_pk
+        )
+    )
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -4529,102 +4528,222 @@ def announcements_list(request):
     
     return render(request, 'announcements/list.html', context)
 
-
 @login_required
 def announcement_detail(request, pk):
     """
-    Display full announcement and mark as read
+    Display an announcement and mark it as read.
+
+    Access rules:
+    - Admin/Technician: Can view active announcements and drafts.
+    - Farmer/Regular user: Can view active announcements only if targeted.
+    - Deleted announcements are never accessible.
     """
-    from .models import Announcement
-    
+
+    from .models import Announcement, UserNotification
+
     profile = request.user.profile
-    announcement = get_object_or_404(Announcement, pk=pk, is_active=True)
-    
-    # Check if user has access
-    user_announcements = services.get_user_announcements(profile)
-    if not user_announcements.filter(pk=pk).exists():
-        messages.error(request, "You don't have permission to view this announcement.")
-        return redirect('polls:announcements_list')
-    
-    # Mark as read
-    services.mark_announcement_as_read(announcement, profile)
-    
-    # Get read status for this user
-    from .models import UserNotification
-    try:
-        user_notif = UserNotification.objects.get(
-            user=profile,
-            announcement=announcement
+    is_staff_user = profile.role in {'admin', 'technician'}
+
+    # Base query: never show archived/deleted announcements.
+    announcement_qs = Announcement.objects.filter(
+        pk=pk,
+        is_deleted=False,
+    )
+
+    # Staff can inspect drafts; regular users can only view active items.
+    if not is_staff_user:
+        announcement_qs = announcement_qs.filter(is_active=True)
+
+    announcement = get_object_or_404(
+        announcement_qs
+    )
+
+    # Regular users must belong to the announcement's target audience.
+    if not is_staff_user:
+        user_announcements = services.get_user_announcements(profile)
+
+        if not user_announcements.filter(pk=announcement.pk).exists():
+            messages.error(
+                request,
+                "You don't have permission to view this announcement."
+            )
+            return redirect('polls:announcements_list')
+
+    # Only active announcements should generate read records.
+    # Drafts remain visible to staff but are not treated as published.
+    is_read = False
+    read_at = None
+
+    if announcement.is_active:
+        services.mark_announcement_as_read(
+            announcement,
+            profile
         )
-        is_read = user_notif.is_read
-        read_at = user_notif.read_at
-    except UserNotification.DoesNotExist:
-        is_read = False
-        read_at = None
-    
+
+        try:
+            user_notif = UserNotification.objects.get(
+                user=profile,
+                announcement=announcement,
+            )
+
+            is_read = user_notif.is_read
+            read_at = user_notif.read_at
+
+        except UserNotification.DoesNotExist:
+            is_read = False
+            read_at = None
+
     context = {
         'announcement': announcement,
         'is_read': is_read,
         'read_at': read_at,
+        'is_staff_user': is_staff_user,
     }
-    
-    return render(request, 'announcements/detail.html', context)
 
+    return render(
+        request,
+        'announcements/detail.html',
+        context
+    )
 
 @login_required
 def announcement_mark_read(request, pk):
     """
-    AJAX endpoint to mark announcement as read
+    AJAX endpoint to mark an announcement as read.
+
+    Only POST requests are accepted.
+    Deleted announcements cannot be accessed.
+    Inactive announcements are ignored safely because
+    drafts should not be marked as read.
     """
     from django.http import JsonResponse
     from .models import Announcement
-    
+
     if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'POST required'}, status=405)
-    
+        return JsonResponse(
+            {
+                'success': False,
+                'error': 'POST required',
+            },
+            status=405
+        )
+
     profile = request.user.profile
-    announcement = get_object_or_404(Announcement, pk=pk, is_active=True)
-    
-    # Mark as read
-    services.mark_announcement_as_read(announcement, profile)
-    
-    # Get new unread count
+
+    # Do not require is_active=True here.
+    # This prevents an unnecessary 404 when the announcement
+    # exists but is inactive or scheduled.
+    announcement = get_object_or_404(
+        Announcement,
+        pk=pk,
+        is_deleted=False
+    )
+
+    # Draft/inactive announcements do not need read tracking.
+    # Return a successful response instead of a 404.
+    if not announcement.is_active:
+        unread_count = services.get_unread_announcements_count(profile)
+
+        return JsonResponse(
+            {
+                'success': True,
+                'unread_count': unread_count,
+                'skipped': True,
+            }
+        )
+
+    # Mark the active announcement as read.
+    services.mark_announcement_as_read(
+        announcement,
+        profile
+    )
+
     unread_count = services.get_unread_announcements_count(profile)
-    
-    return JsonResponse({
-        'success': True,
-        'unread_count': unread_count,
-    })
+
+    return JsonResponse(
+        {
+            'success': True,
+            'unread_count': unread_count,
+        }
+    )
 
 
 @login_required
 @role_required(['admin', 'technician'])
 def announcement_create(request):
     """
-    Create new announcement (Admin/Technician only).
-    If is_active=True: fires bell notifications + emails all targeted users.
-    If is_active=False (draft): no notifications sent yet — fires on first activation.
+    Create a new announcement.
+
+    Publishing behavior:
+    - Immediate + Active:
+        Publish immediately using timezone.now().
+    - Immediate + Draft:
+        Keep unpublished with published_at=None.
+    - Scheduled + Active:
+        Preserve the future published_at value validated by the form.
+    - Scheduled + Draft:
+        Keep the announcement as a draft.
+
+    Bell notifications are handled by the existing announcement signal.
+    Immediate email delivery is queued in the background.
     """
     from .forms import AnnouncementForm
     from .models import Announcement
 
     if request.method == 'POST':
         form = AnnouncementForm(request.POST)
+
         if form.is_valid():
             announcement = form.save(commit=False)
             announcement.created_by = request.user.profile
+
+            publish_timing = form.cleaned_data.get(
+                'publish_timing',
+                'immediate'
+            )
+
+            # The form clears published_at for immediate mode.
+            # Set the actual publication timestamp only when
+            # the announcement is immediately active.
+            if publish_timing == 'immediate':
+                if announcement.is_active:
+                    announcement.published_at = timezone.now()
+                else:
+                    announcement.published_at = None
+
+            # Scheduled mode preserves the future published_at
+            # value validated by AnnouncementForm.
             announcement.save()
-            # signal notify_new_announcement fires automatically if is_active=True
 
             if announcement.is_active:
-                if announcement.published_at is None:
-                    _queue_announcement_email_send(announcement.pk)
-                    messages.success(request, f'Announcement "{announcement.title}" published. Email and notifications are being sent in the background.')
+                if publish_timing == 'immediate':
+                    _queue_announcement_email_send(
+                        announcement.pk
+                    )
+
+                    messages.success(
+                        request,
+                        f'Announcement "{announcement.title}" '
+                        'published. Email and notifications are '
+                        'being sent in the background.'
+                    )
                 else:
-                    messages.success(request, f'Announcement "{announcement.title}" scheduled. Recipients will get notifications at publish time.')
+                    messages.success(
+                        request,
+                        f'Announcement "{announcement.title}" '
+                        'scheduled. Recipients will get '
+                        'notifications at publish time.'
+                    )
             else:
-                messages.success(request, f'Announcement "{announcement.title}" saved as draft. Activate it later to notify users.')
+                messages.success(
+                    request,
+                    f'Announcement "{announcement.title}" '
+                    'saved as draft. Activate it later to '
+                    'notify users.'
+                )
+
             return redirect('polls:announcements_list')
+
     else:
         form = AnnouncementForm()
 
@@ -4636,52 +4755,115 @@ def announcement_create(request):
         'is_admin': request.user.profile.role == 'admin',
     }
 
-    return render(request, 'announcements/form.html', context)
+    return render(
+        request,
+        'announcements/form.html',
+        context
+    )
 
 
 @login_required
 @role_required(['admin', 'technician'])
 def announcement_edit(request, pk):
     """
-    Edit existing announcement (Admin/Technician only).
+    Edit an existing announcement.
 
-    Draft → Active transition:
-    - Fires bell notifications to all targeted users (same as create flow)
-    - Re-sends bulk emails to targeted users
+    Publishing behavior:
+    - Existing active announcements retain their original
+      published_at timestamp.
+    - Draft → Immediate + Active:
+        Publish immediately using timezone.now().
+    - Draft → Scheduled + Active:
+        Preserve the future published_at value.
+    - Draft → Draft:
+        Keep published_at=None for immediate mode.
+    - Existing active announcements cannot change their
+      original publication timestamp.
 
-    published_at is locked (read-only) once the announcement has been activated.
+    Bell notifications are handled by the existing signal.
+    Immediate draft-to-active email delivery is queued
+    in the background.
     """
     from .forms import AnnouncementForm
     from .models import Announcement
 
-    announcement = get_object_or_404(Announcement, pk=pk)
-    was_active = announcement.is_active  # snapshot before POST
+    announcement = get_object_or_404(
+        Announcement,
+        pk=pk
+    )
 
-    # Lock publish controls once announcement has gone live.
+    # Capture the original state before processing the form.
+    was_active = announcement.is_active
+    original_published_at = announcement.published_at
+
+    # Publication controls are locked after activation.
     publish_locked = was_active
 
     if request.method == 'POST':
-        form = AnnouncementForm(request.POST, instance=announcement)
+        form = AnnouncementForm(
+            request.POST,
+            instance=announcement
+        )
+
         if form.is_valid():
             updated = form.save(commit=False)
-            # Backend protection: restore original published_at if locked
+
+            publish_timing = form.cleaned_data.get(
+                'publish_timing',
+                'immediate'
+            )
+
             if publish_locked:
-                updated.published_at = announcement.published_at
+                # Preserve the original publication timestamp
+                # for already-active announcements.
+                updated.published_at = original_published_at
+
+            elif not was_active:
+                # Handle draft-to-draft and draft-to-active updates.
+                if publish_timing == 'immediate':
+                    if updated.is_active:
+                        updated.published_at = timezone.now()
+                    else:
+                        updated.published_at = None
+
+                # Scheduled mode preserves the future
+                # published_at value validated by the form.
+
             updated.save()
 
-            # Draft -> Active: signal handles bell notifications.
-            # Queue email sending in background to keep request responsive.
+            # Handle draft-to-active transitions.
             if not was_active and updated.is_active:
-                if updated.published_at is None:
-                    _queue_announcement_email_send(updated.pk)
-                    messages.success(request, f'Announcement "{updated.title}" published. Email and notifications are being sent in the background.')
+                if publish_timing == 'immediate':
+                    _queue_announcement_email_send(
+                        updated.pk
+                    )
+
+                    messages.success(
+                        request,
+                        f'Announcement "{updated.title}" '
+                        'published. Email and notifications are '
+                        'being sent in the background.'
+                    )
                 else:
-                    messages.success(request, f'Announcement "{updated.title}" scheduled. Recipients will get notifications at publish time.')
+                    messages.success(
+                        request,
+                        f'Announcement "{updated.title}" '
+                        'scheduled. Recipients will get '
+                        'notifications at publish time.'
+                    )
             else:
-                messages.success(request, f'Announcement "{updated.title}" updated successfully!')
+                messages.success(
+                    request,
+                    f'Announcement "{updated.title}" '
+                    'updated successfully!'
+                )
+
             return redirect('polls:announcements_list')
+
     else:
-        form = AnnouncementForm(instance=announcement)
+        form = AnnouncementForm(
+            instance=announcement
+        )
 
     context = {
         'form': form,
@@ -4693,7 +4875,11 @@ def announcement_edit(request, pk):
         'publish_locked': publish_locked,
     }
 
-    return render(request, 'announcements/form.html', context)
+    return render(
+        request,
+        'announcements/form.html',
+        context
+    )
 
 
 @login_required

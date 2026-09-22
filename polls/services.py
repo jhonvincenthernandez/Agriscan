@@ -1896,513 +1896,952 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
 # ANNOUNCEMENT SYSTEM (Local - No Internet Required)
 # ============================================================================
 
+import logging
+from typing import Set
+
+
+# ----------------------------------------------------------------------------
+# Announcement email background queue
+# ----------------------------------------------------------------------------
+# IMPORTANT:
+# This is an in-process background queue.
+# It does not require Redis, Celery, or additional VPS services.
+#
+# Limitation:
+# - Duplicate protection is per Python process only.
+# - Daemon threads may stop if the server process restarts.
+# - Scheduled dispatch still requires a trigger/caller.
+# ----------------------------------------------------------------------------
+
+_ANNOUNCEMENT_EMAIL_QUEUE_LOCK = threading.Lock()
+_QUEUED_ANNOUNCEMENT_EMAIL_IDS: Set[int] = set()
+
+
 def get_user_announcements(user_profile, limit=None, unread_only=False):
-    """Get announcements visible to a specific user (NO INTERNET REQUIRED).
-    
-    Args:
-        user_profile: Profile instance
-        limit: Max number of announcements to return (None = all)
-        unread_only: If True, only return unread announcements
-    
-    Returns:
-        QuerySet of Announcement objects with is_read annotation
-    """
+    """Get announcements visible to a specific user."""
+
     from django.db.models import Q, Exists, OuterRef
     from django.utils import timezone
     from .models import Announcement, UserNotification
-    
+
     now = timezone.now()
-    
-    # Base query: active, not deleted, visible announcements
-    announcements = Announcement.objects.filter(
-        is_active=True,
-        is_deleted=False,
-    ).filter(
-        Q(published_at__isnull=True) | Q(published_at__lte=now)
-    ).filter(
-        Q(expires_at__isnull=True) | Q(expires_at__gte=now)
+
+    announcements = (
+        Announcement.objects
+        .filter(
+            is_active=True,
+            is_deleted=False,
+        )
+        .filter(
+            Q(published_at__isnull=True) |
+            Q(published_at__lte=now)
+        )
+        .filter(
+            Q(expires_at__isnull=True) |
+            Q(expires_at__gte=now)
+        )
     )
-    
-    # Filter by target audience
-    if user_profile.role == 'farmer':
+
+    if user_profile.role == "farmer":
         announcements = announcements.filter(
-            Q(target_audience='all') |
-            Q(target_audience='farmers') |
-            (Q(target_audience='barangay') & 
-             Q(target_barangay__in=user_profile.fields.values_list('barangay', flat=True))) |
+            Q(target_audience="all") |
+            Q(target_audience="farmers") |
+            (
+                Q(target_audience="barangay") &
+                Q(
+                    target_barangay__in=(
+                        user_profile.fields.values_list(
+                            "barangay",
+                            flat=True,
+                        )
+                    )
+                )
+            ) |
             Q(target_user=user_profile)
         )
-    elif user_profile.role == 'technician':
+
+    elif user_profile.role == "technician":
         announcements = announcements.filter(
-            Q(target_audience='all') |
-            Q(target_audience='technicians') |
+            Q(target_audience="all") |
+            Q(target_audience="technicians") |
             Q(target_user=user_profile)
         )
-    # Admin sees everything (no filter needed)
-    
-    # Annotate with read status
+
+    # Admin users can see all active announcements.
+
     announcements = announcements.annotate(
         is_read=Exists(
             UserNotification.objects.filter(
-                announcement=OuterRef('pk'),
+                announcement=OuterRef("pk"),
                 user=user_profile,
-                is_read=True
+                is_read=True,
             )
         )
     )
-    
-    # Filter unread only if requested
+
     if unread_only:
         announcements = announcements.filter(is_read=False)
-    
-    # Order by priority then date
-    announcements = announcements.order_by('-priority', '-created_at')
-    
-    if limit:
+
+    announcements = announcements.order_by(
+        "-priority",
+        "-created_at",
+    )
+
+    if limit is not None:
         announcements = announcements[:limit]
-    
+
     return announcements
 
 
 def get_unread_announcements_count(user_profile):
-    """Get count of unread announcements for badge (NO INTERNET REQUIRED).
-    
-    Args:
-        user_profile: Profile instance
-    
+    """Return the unread announcement count for a profile."""
+
+    return get_user_announcements(
+        user_profile,
+        unread_only=True,
+    ).count()
+
+
+# ----------------------------------------------------------------------------
+# Announcement target helpers
+# ----------------------------------------------------------------------------
+
+def _get_announcement_target_profiles(announcement):
+    """
+    Return active user profiles targeted by an announcement.
+
     Returns:
-        Integer count of unread announcements
+        QuerySet[Profile]
     """
-    return get_user_announcements(user_profile, unread_only=True).count()
+
+    from .models import Profile
+
+    audience = announcement.target_audience
+
+    base_queryset = (
+        Profile.objects
+        .select_related("user")
+        .filter(user__is_active=True)
+    )
+
+    if audience == "all":
+        return base_queryset
+
+    if audience == "farmers":
+        return base_queryset.filter(role="farmer")
+
+    if audience == "technicians":
+        return base_queryset.filter(role="technician")
+
+    if (
+        audience == "barangay"
+        and announcement.target_barangay
+    ):
+        return (
+            base_queryset
+            .filter(
+                role="farmer",
+                fields__barangay__iexact=(
+                    announcement.target_barangay
+                ),
+            )
+            .distinct()
+        )
+
+    if (
+        audience == "user"
+        and announcement.target_user_id
+    ):
+        return base_queryset.filter(
+            pk=announcement.target_user_id,
+        )
+
+    return base_queryset.none()
 
 
-def dispatch_due_announcement_notifications(force: bool = False) -> int:
-    """Create missing bell notifications for scheduled announcements that are already due.
+# ----------------------------------------------------------------------------
+# Announcement background email queue
+# ----------------------------------------------------------------------------
 
-    This is idempotent and safe to call often:
-    - Processes only active, non-deleted announcements with published_at <= now
-    - Skips recipients that already have a related advisory notification
-    - Uses a small in-process throttle to avoid frequent re-scans on every request
+def _send_announcement_emails_background(
+    announcement_pk: int,
+) -> None:
     """
-    import logging
-    from .models import Announcement, Notification, Profile
+    Background worker for announcement email sending.
+
+    The database object is retrieved inside the worker thread
+    instead of passing a potentially stale model instance.
+    """
+
+    from django.db import close_old_connections
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        close_old_connections()
+
+        from .models import Announcement
+
+        announcement = (
+            Announcement.objects
+            .filter(pk=announcement_pk)
+            .first()
+        )
+
+        if announcement is None:
+            logger.warning(
+                "Announcement #%s no longer exists.",
+                announcement_pk,
+            )
+            return
+
+        if announcement.is_deleted or not announcement.is_active:
+            return
+
+        send_announcement_emails_to_targets(announcement)
+
+    except Exception:
+        logger.exception(
+            "Background announcement email send failed "
+            "for Announcement pk=%s",
+            announcement_pk,
+        )
+
+    finally:
+        close_old_connections()
+
+        with _ANNOUNCEMENT_EMAIL_QUEUE_LOCK:
+            _QUEUED_ANNOUNCEMENT_EMAIL_IDS.discard(
+                announcement_pk
+            )
+
+
+def queue_announcement_email_send(
+    announcement_pk: int,
+) -> bool:
+    """
+    Queue announcement email sending in a daemon thread.
+
+    Returns:
+        True  = a new worker was started
+        False = already queued or invalid ID
+    """
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        announcement_pk = int(announcement_pk)
+    except (TypeError, ValueError):
+        logger.warning(
+            "Invalid announcement primary key: %r",
+            announcement_pk,
+        )
+        return False
+
+    with _ANNOUNCEMENT_EMAIL_QUEUE_LOCK:
+        if announcement_pk in _QUEUED_ANNOUNCEMENT_EMAIL_IDS:
+            logger.info(
+                "Announcement #%s is already queued.",
+                announcement_pk,
+            )
+            return False
+
+        _QUEUED_ANNOUNCEMENT_EMAIL_IDS.add(announcement_pk)
+
+    try:
+        worker = threading.Thread(
+            target=_send_announcement_emails_background,
+            args=(announcement_pk,),
+            name=f"announcement-email-{announcement_pk}",
+            daemon=True,
+        )
+        worker.start()
+
+        logger.info(
+            "Queued background email worker for Announcement #%s.",
+            announcement_pk,
+        )
+
+        return True
+
+    except Exception:
+        with _ANNOUNCEMENT_EMAIL_QUEUE_LOCK:
+            _QUEUED_ANNOUNCEMENT_EMAIL_IDS.discard(
+                announcement_pk
+            )
+
+        logger.exception(
+            "Failed to start background email worker "
+            "for Announcement pk=%s",
+            announcement_pk,
+        )
+
+        return False
+
+
+# ----------------------------------------------------------------------------
+# Scheduled announcement dispatcher
+# ----------------------------------------------------------------------------
+
+_DUE_ANNOUNCEMENT_DISPATCH_LOCK = threading.Lock()
+_LAST_DUE_ANNOUNCEMENT_DISPATCH_AT: Optional[datetime] = None
+_DUE_ANNOUNCEMENT_DISPATCH_INTERVAL_SECONDS = 30
+
+
+def dispatch_due_announcement_notifications(
+    force: bool = False,
+) -> int:
+    """
+    Create missing bell notifications and queue email sending.
+
+    Behavior:
+    - Processes active, non-deleted, due announcements.
+    - Does not process future announcements.
+    - Creates missing bell notifications.
+    - Queues email sending in a background thread.
+    - Uses a process-local dispatch throttle.
+    - Does not block the current request for SMTP sending.
+
+    Returns:
+        Number of newly created bell notifications.
+    """
+
+    from .models import Announcement, Notification
 
     logger = logging.getLogger(__name__)
     now = timezone.now()
 
     global _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT
+
+    # ------------------------------------------------------------------
+    # In-process dispatch throttle
+    # ------------------------------------------------------------------
     with _DUE_ANNOUNCEMENT_DISPATCH_LOCK:
-        if not force and _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT is not None:
-            elapsed = (now - _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT).total_seconds()
+        if (
+            not force
+            and _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT is not None
+        ):
+            elapsed = (
+                now - _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT
+            ).total_seconds()
+
             if elapsed < _DUE_ANNOUNCEMENT_DISPATCH_INTERVAL_SECONDS:
                 return 0
+
         _LAST_DUE_ANNOUNCEMENT_DISPATCH_AT = now
 
     created_count = 0
 
     try:
-        due_announcements = Announcement.objects.filter(
-            is_deleted=False,
-            is_active=True,
-            published_at__isnull=False,
-            published_at__lte=now,
+        due_announcements = (
+            Announcement.objects
+            .filter(
+                is_deleted=False,
+                is_active=True,
+                published_at__isnull=False,
+                published_at__lte=now,
+                email_sent=False,
+            )
+            .order_by("published_at", "pk")
         )
 
         for announcement in due_announcements.iterator():
-            audience = announcement.target_audience
-            if audience == 'all':
-                target_profiles = Profile.objects.filter(user__is_active=True).only('id')
-            elif audience == 'farmers':
-                target_profiles = Profile.objects.filter(role='farmer', user__is_active=True).only('id')
-            elif audience == 'technicians':
-                target_profiles = Profile.objects.filter(role='technician', user__is_active=True).only('id')
-            elif audience == 'barangay' and announcement.target_barangay:
-                target_profiles = Profile.objects.filter(
-                    role='farmer',
-                    user__is_active=True,
-                    fields__barangay__iexact=announcement.target_barangay,
-                ).distinct().only('id')
-            elif audience == 'user' and announcement.target_user_id:
-                target_profiles = Profile.objects.filter(pk=announcement.target_user_id, user__is_active=True).only('id')
-            else:
-                continue
 
-            existing_recipient_ids = set(
-                Notification.objects.filter(
-                    related_announcement=announcement,
-                    type='advisory',
-                ).values_list('recipient_id', flat=True)
+            # ----------------------------------------------------------
+            # Create bell notifications
+            # ----------------------------------------------------------
+            target_profiles = _get_announcement_target_profiles(
+                announcement
             )
 
-            new_notifs = []
-            preview = f'{announcement.content[:200]}{"..." if len(announcement.content) > 200 else ""}'
-            for profile in target_profiles:
+            existing_recipient_ids = set(
+                Notification.objects
+                .filter(
+                    related_announcement=announcement,
+                    type="advisory",
+                )
+                .values_list(
+                    "recipient_id",
+                    flat=True,
+                )
+            )
+
+            content = announcement.content or ""
+
+            preview = (
+                f"{content[:200]}"
+                f"{'...' if len(content) > 200 else ''}"
+            )
+
+            new_notifications = []
+
+            for profile in target_profiles.iterator():
                 if profile.pk in existing_recipient_ids:
                     continue
-                new_notifs.append(
+
+                new_notifications.append(
                     Notification(
                         recipient_id=profile.pk,
-                        type='advisory',
-                        title=f'New Announcement: {announcement.title}',
+                        type="advisory",
+                        title=(
+                            f"New Announcement: "
+                            f"{announcement.title}"
+                        ),
                         message=preview,
                         related_announcement=announcement,
                     )
                 )
 
-            if new_notifs:
-                Notification.objects.bulk_create(new_notifs)
-                created_count += len(new_notifs)
+            if new_notifications:
+                Notification.objects.bulk_create(
+                    new_notifications,
+                    ignore_conflicts=True,
+                )
+
+                created_count += len(new_notifications)
+
+            # ----------------------------------------------------------
+            # Queue email sending in the background
+            # ----------------------------------------------------------
+            queued = queue_announcement_email_send(
+                announcement.pk
+            )
+
+            logger.info(
+                (
+                    "Processed due Announcement #%s: "
+                    "bell_notifications=%d, email_queued=%s"
+                ),
+                announcement.pk,
+                len(new_notifications),
+                queued,
+            )
 
     except Exception:
-        logger.exception('Failed to dispatch due scheduled announcement notifications')
+        logger.exception(
+            "Failed to dispatch due announcement notifications"
+        )
         return 0
 
     return created_count
 
 
-def mark_announcement_as_read(announcement, user_profile):
-    """Mark an announcement as read by a user (NO INTERNET REQUIRED).
-    
-    Args:
-        announcement: Announcement instance or ID
-        user_profile: Profile instance
-    
-    Returns:
-        Tuple (UserNotification, created: bool)
+# ----------------------------------------------------------------------------
+# Read status
+# ----------------------------------------------------------------------------
+
+def mark_announcement_as_read(
+    announcement,
+    user_profile,
+):
     """
-    from django.utils import timezone
-    from .models import UserNotification, Announcement
-    
+    Mark an announcement as read by a user.
+
+    Returns:
+        Tuple[UserNotification, bool]
+    """
+
+    from .models import Announcement, UserNotification
+
     try:
-        # Handle both Announcement instance and ID
         if isinstance(announcement, Announcement):
             announcement_obj = announcement
         else:
-            announcement_obj = Announcement.objects.get(pk=announcement)
-            
-        notification, created = UserNotification.objects.get_or_create(
-            user=user_profile,
-            announcement=announcement_obj
+            announcement_obj = Announcement.objects.get(
+                pk=announcement
+            )
+
+        notification, created = (
+            UserNotification.objects.get_or_create(
+                user=user_profile,
+                announcement=announcement_obj,
+            )
         )
-        
+
         if not notification.is_read:
             notification.is_read = True
             notification.read_at = timezone.now()
-            notification.save()
-        
+            notification.save(
+                update_fields=[
+                    "is_read",
+                    "read_at",
+                ]
+            )
+
         return notification, created
+
     except Announcement.DoesNotExist:
         return None, False
 
 
+# ----------------------------------------------------------------------------
+# Announcement statistics
+# ----------------------------------------------------------------------------
+
 def get_announcement_stats(announcement):
-    """Get statistics for an announcement (for admin analytics).
-    
-    Args:
-        announcement: Announcement instance
-    
-    Returns:
-        Dict with statistics
-    """
+    """Return announcement delivery and read statistics."""
+
     from .models import UserNotification
-    
-    target_users_count = announcement.get_target_users().count()
-    notifications = UserNotification.objects.filter(announcement=announcement)
-    read_count = notifications.filter(is_read=True).count()
-    
+
+    target_users_count = (
+        announcement.get_target_users().count()
+    )
+
+    notifications = UserNotification.objects.filter(
+        announcement=announcement
+    )
+
+    read_count = notifications.filter(
+        is_read=True
+    ).count()
+
     return {
-        'target_users': target_users_count,
-        'delivered': notifications.count(),
-        'read': read_count,
-        'read_percentage': round((read_count / target_users_count * 100) if target_users_count > 0 else 0, 1),
+        "target_users": target_users_count,
+        "delivered": notifications.count(),
+        "read": read_count,
+        "read_percentage": round(
+            (
+                read_count / target_users_count * 100
+                if target_users_count > 0
+                else 0
+            ),
+            1,
+        ),
     }
 
 
-def _emails_are_enabled() -> bool:
-    """I-check kung handa ang SMTP config bago mag-send ng email.
+# ----------------------------------------------------------------------------
+# Email configuration and shared helpers
+# ----------------------------------------------------------------------------
 
-    Flow:
-    1) Kailangan naka-on ang EMAIL_ENABLED.
-    2) Kailangan kumpleto ang critical SMTP fields.
+def _emails_are_enabled() -> bool:
     """
+    Check whether outgoing email is enabled and SMTP is configured.
+    """
+
     if not get_email_enabled():
         return False
 
     required = (
-        'EMAIL_HOST',
-        'EMAIL_PORT',
-        'EMAIL_HOST_USER',
-        'EMAIL_HOST_PASSWORD',
-        'DEFAULT_FROM_EMAIL',
+        "EMAIL_HOST",
+        "EMAIL_PORT",
+        "EMAIL_HOST_USER",
+        "EMAIL_HOST_PASSWORD",
+        "DEFAULT_FROM_EMAIL",
     )
-    return all(bool(getattr(settings, key, '')) for key in required)
+
+    return all(
+        bool(getattr(settings, key, ""))
+        for key in required
+    )
 
 
 def _app_url(path: str) -> str:
-    """Bumuo ng absolute URL gamit APP_BASE_URL para env-driven ang links."""
-    base = getattr(settings, 'APP_BASE_URL', 'http://127.0.0.1:8000').rstrip('/')
+    """Build an absolute application URL from APP_BASE_URL."""
+
+    base = getattr(
+        settings,
+        "APP_BASE_URL",
+        "http://127.0.0.1:8000",
+    ).rstrip("/")
+
     return f"{base}/{path.lstrip('/')}"
 
 
-def send_notification_email(notification):
-    """
-    Send an email alert for a system Notification (disease / yield_drop / announcement).
+# ----------------------------------------------------------------------------
+# System notification email
+# ----------------------------------------------------------------------------
 
-    Only sends if:
-    - EMAIL is enabled and SMTP settings are complete
-    - The recipient has an email address on their User account
-
-    Called from signals.py after each Notification is created.
-    Fails silently — email errors never break the web request.
+def send_notification_email(notification) -> bool:
     """
-    import logging
+    Send an email alert for a system Notification.
+
+    Returns:
+        True  = email was accepted by the email backend
+        False = email was not sent or failed
+    """
+
     logger = logging.getLogger(__name__)
 
     try:
-        # Tagalog: iwas failed sends kung kulang pa ang env SMTP config.
         if not _emails_are_enabled():
-            return
+            return False
 
         from django.core.mail import send_mail
 
-        recipient_email = notification.recipient.user.email
-        if not recipient_email:
-            return
+        recipient_email = (
+            notification.recipient.user.email
+        )
 
-        # Build subject and body based on notification type
+        if not recipient_email:
+            return False
+
         type_icons = {
-            'disease': '[DISEASE ALERT]',
-            'yield_drop': '[YIELD DROP ALERT]',
-            'advisory': '[ANNOUNCEMENT]',
-            'knowledge': '[KNOWLEDGE]',
-            'treatment': '[TREATMENT]',
-            'system': '[SYSTEM]',
+            "disease": "[DISEASE ALERT]",
+            "yield_drop": "[YIELD DROP ALERT]",
+            "advisory": "[ANNOUNCEMENT]",
+            "knowledge": "[KNOWLEDGE]",
+            "treatment": "[TREATMENT]",
+            "system": "[SYSTEM]",
         }
-        prefix = type_icons.get(notification.type, '[AgriScan+]')
-        subject = f"{prefix} {notification.title}"
+
+        prefix = type_icons.get(
+            notification.type,
+            "[AgriScan+]",
+        )
+
+        subject = (
+            f"{prefix} {notification.title}"
+        )
+
+        user_name = (
+            notification.recipient.user.get_full_name()
+            or notification.recipient.user.username
+        )
 
         body = (
-            f"Hello {notification.recipient.user.get_full_name() or notification.recipient.user.username},\n\n"
+            f"Hello {user_name},\n\n"
             f"{notification.message}\n\n"
         )
 
-        # Add a link to the relevant page
-        if notification.type == 'disease' and notification.related_detection:
-            body += f"View your detection records: {_app_url('/detections/')}\n\n"
-        elif notification.type == 'yield_drop':
-            body += f"View your yield records: {_app_url('/yield-records/')}\n\n"
-        elif notification.type == 'advisory':
-            body += f"View announcements: {_app_url('/announcements/')}\n\n"
-        elif notification.type == 'knowledge':
-            body += f"View the knowledge base: {_app_url('/knowledge/')}\n\n"
-        elif notification.type == 'treatment':
-            body += f"View treatment recommendations: {_app_url('/treatments/')}\n\n"
-        elif notification.type == 'system':
-            body += f"View system settings: {_app_url('/system-settings/')}\n\n"
+        if (
+            notification.type == "disease"
+            and notification.related_detection
+        ):
+            body += (
+                f"View your detection records: "
+                f"{_app_url('/detections/')}\n\n"
+            )
+
+        elif notification.type == "yield_drop":
+            body += (
+                f"View your yield records: "
+                f"{_app_url('/yield-records/')}\n\n"
+            )
+
+        elif notification.type == "advisory":
+            body += (
+                f"View announcements: "
+                f"{_app_url('/announcements/')}\n\n"
+            )
+
+        elif notification.type == "knowledge":
+            body += (
+                f"View the knowledge base: "
+                f"{_app_url('/knowledge/')}\n\n"
+            )
+
+        elif notification.type == "treatment":
+            body += (
+                f"View treatment recommendations: "
+                f"{_app_url('/treatments/')}\n\n"
+            )
+
+        elif notification.type == "system":
+            body += (
+                f"View system settings: "
+                f"{_app_url('/system-settings/')}\n\n"
+            )
 
         body += (
-            f"---\n"
-            f"This is an automated alert from AgriScan+.\n"
-            f"Log in to view and manage your notifications: {_app_url('/notifications/')}\n"
+            "---\n"
+            "This is an automated alert from AgriScan+.\n"
+            f"Log in to view and manage your notifications: "
+            f"{_app_url('/notifications/')}\n"
         )
 
-        send_mail(
+        sent_count = send_mail(
             subject=subject,
             message=body,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[recipient_email],
-            fail_silently=True,
+            fail_silently=False,
         )
-        logger.info("Email sent to %s for notification type=%s", recipient_email, notification.type)
 
-    except Exception:
-        logger.exception("Failed to send email for Notification pk=%s", notification.pk)
-
-
-def send_plain_email(recipient_email, subject, body):
-    """
-    Low-level helper — send a plain-text email to any address.
-
-    Respects EMAIL_ENABLED + complete SMTP env config guard.
-    Fails silently — never breaks the calling request.
-    """
-    import logging
-    _logger = logging.getLogger(__name__)
-    try:
-        # Tagalog: isang guard lang para consistent ang behavior ng lahat ng email senders.
-        if not _emails_are_enabled():
-            return
-        if not recipient_email:
-            return
-        from django.core.mail import send_mail
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[recipient_email],
-            fail_silently=True,
-        )
-        _logger.info("Plain email sent to %s | subject: %s", recipient_email, subject)
-    except Exception:
-        _logger.exception("Failed to send plain email to %s", recipient_email)
-
-
-def send_announcement_emails_to_targets(announcement):
-    """
-    Send bulk email to all users targeted by an Announcement.
-
-    Resolves the target_audience field and emails every matching Profile
-    that has a valid email address.  Respects EMAIL_ENABLED guard.
-    Fails silently per recipient.
-
-    Call this once right after announcement.save() in announcement_create().
-    """
-    import logging
-    _logger = logging.getLogger(__name__)
-    try:
-        if not _emails_are_enabled():
-            return
-
-        # Immediate-only policy: scheduled announcements should send notifications only.
-        if announcement.published_at is not None:
-            return
-
-        # Legacy send_email flag is ignored for announcement flow.
-        # Current product rule: immediate publish should send email.
-        if announcement.email_sent:
-            return
-
-        from .models import Profile
-
-        audience = announcement.target_audience
-
-        if audience == 'all':
-            profiles = Profile.objects.select_related('user').filter(user__is_active=True)
-        elif audience == 'farmers':
-            profiles = Profile.objects.select_related('user').filter(role='farmer', user__is_active=True)
-        elif audience == 'technicians':
-            profiles = Profile.objects.select_related('user').filter(role='technician', user__is_active=True)
-        elif audience == 'barangay' and announcement.target_barangay:
-            # Match farmers whose fields are in the target barangay
-            profiles = Profile.objects.select_related('user').filter(
-                role='farmer',
-                user__is_active=True,
-                fields__barangay__iexact=announcement.target_barangay,
-            ).distinct()
-        elif audience == 'user' and announcement.target_user:
-            profiles = Profile.objects.select_related('user').filter(
-                pk=announcement.target_user_id,
-                user__is_active=True,
+        if sent_count == 1:
+            logger.info(
+                "Email sent to %s for notification type=%s",
+                recipient_email,
+                notification.type,
             )
-        else:
-            return  # Unknown audience — skip
+            return True
+
+        logger.warning(
+            "Email backend returned sent_count=%s "
+            "for notification pk=%s",
+            sent_count,
+            notification.pk,
+        )
+        return False
+
+    except Exception:
+        logger.exception(
+            "Failed to send email for Notification pk=%s",
+            getattr(notification, "pk", None),
+        )
+        return False
+
+
+# ----------------------------------------------------------------------------
+# Low-level plain email helper
+# ----------------------------------------------------------------------------
+
+def send_plain_email(
+    recipient_email: str,
+    subject: str,
+    body: str,
+) -> bool:
+    """
+    Send one plain-text email.
+
+    Returns:
+        True  = email backend accepted the message
+        False = disabled, invalid, or failed
+    """
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        if not _emails_are_enabled():
+            return False
+
+        if not recipient_email:
+            return False
+
+        from django.core.mail import send_mail
+
+        sent_count = send_mail(
+            subject=subject,
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[recipient_email],
+            fail_silently=False,
+        )
+
+        if sent_count == 1:
+            logger.info(
+                "Plain email sent to %s | subject: %s",
+                recipient_email,
+                subject,
+            )
+            return True
+
+        logger.warning(
+            "Plain email backend returned sent_count=%s "
+            "for %s",
+            sent_count,
+            recipient_email,
+        )
+        return False
+
+    except Exception:
+        logger.exception(
+            "Failed to send plain email to %s",
+            recipient_email,
+        )
+        return False
+
+
+# ----------------------------------------------------------------------------
+# Announcement bulk email sender
+# ----------------------------------------------------------------------------
+
+def send_announcement_emails_to_targets(announcement) -> int:
+    """
+    Send announcement emails to targeted users.
+
+    Rules:
+    - Email must be enabled and SMTP settings complete.
+    - Announcement must be active and not deleted.
+    - Announcement must already be published.
+    - Future announcements are never sent early.
+    - email_sent prevents repeated bulk sends.
+    - email_sent is updated only after processing completes.
+    - sent count includes only successful email sends.
+
+    Returns:
+        Number of successfully accepted emails.
+    """
+
+    from django.db import close_old_connections
+    from django.utils import timezone as django_timezone
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        close_old_connections()
+
+        if not _emails_are_enabled():
+            logger.info(
+                "Announcement email skipped because email is disabled "
+                "or SMTP settings are incomplete."
+            )
+            return 0
+
+        now = django_timezone.now()
+
+        if not announcement.is_active:
+            return 0
+
+        if announcement.is_deleted:
+            return 0
+
+        if (
+            announcement.published_at is None
+            or announcement.published_at > now
+        ):
+            return 0
+
+        # Refresh the latest value from the database.
+        announcement.refresh_from_db(
+            fields=[
+                "is_active",
+                "is_deleted",
+                "published_at",
+                "email_sent",
+                "email_sent_at",
+                "title",
+                "content",
+                "priority",
+                "target_audience",
+                "target_barangay",
+                "target_user",
+            ]
+        )
+
+        if announcement.is_deleted:
+            return 0
+
+        if not announcement.is_active:
+            return 0
+
+        if announcement.email_sent:
+            return 0
+
+        profiles = _get_announcement_target_profiles(
+            announcement
+        )
 
         priority_labels = {
-            'info':    '[INFO]',
-            'advisory':'[ANNOUNCEMENT]',
-            'warning': '[WARNING]',
-            'urgent':  '[URGENT]',
+            "info": "[INFO]",
+            "advisory": "[ANNOUNCEMENT]",
+            "warning": "[WARNING]",
+            "urgent": "[URGENT]",
         }
-        prefix = priority_labels.get(announcement.priority, '[AgriScan+]')
-        subject = f"{prefix} {announcement.title}"
+
+        prefix = priority_labels.get(
+            announcement.priority,
+            "[AgriScan+]",
+        )
+
+        subject = (
+            f"{prefix} {announcement.title}"
+        )
 
         sent = 0
-        for profile in profiles:
-            email = profile.user.email
+        attempted = 0
+        skipped_without_email = 0
+        failed = 0
+
+        for profile in profiles.iterator():
+
+            email = (
+                profile.user.email
+                if profile.user
+                else ""
+            )
+
             if not email:
+                skipped_without_email += 1
                 continue
-            name = profile.user.get_full_name() or profile.user.username
+
+            name = (
+                profile.user.get_full_name()
+                or profile.user.username
+            )
+
             body = (
                 f"Hello {name},\n\n"
                 f"{announcement.content}\n\n"
-                f"---\n"
-                f"This is an automated announcement from AgriScan+.\n"
-                f"Log in to read it: {_app_url('/announcements/')}\n"
+                "---\n"
+                "This is an automated announcement from "
+                "AgriScan+.\n"
+                f"Log in to read it: "
+                f"{_app_url('/announcements/')}\n"
             )
-            send_plain_email(email, subject, body)
-            sent += 1
 
-        _logger.info("Announcement #%s emailed to %d recipients", announcement.pk, sent)
+            attempted += 1
 
-        # Mark as sent so repeated publish/edit actions do not resend.
-        from django.utils import timezone as django_timezone
+            success = send_plain_email(
+                recipient_email=email,
+                subject=subject,
+                body=body,
+            )
+
+            if success:
+                sent += 1
+            else:
+                failed += 1
+
+        # --------------------------------------------------------------
+        # Mark as handled only after all recipients are processed.
+        #
+        # This preserves the existing email_sent field behavior.
+        # Failed individual sends are logged and are not counted as sent.
+        # --------------------------------------------------------------
         announcement.email_sent = True
-        announcement.email_sent_at = django_timezone.now()
-        announcement.save(update_fields=['email_sent', 'email_sent_at'])
+        announcement.email_sent_at = now
+
+        announcement.save(
+            update_fields=[
+                "email_sent",
+                "email_sent_at",
+            ]
+        )
+
+        logger.info(
+            (
+                "Announcement #%s email processing complete: "
+                "successful=%d, attempted=%d, failed=%d, "
+                "without_email=%d"
+            ),
+            announcement.pk,
+            sent,
+            attempted,
+            failed,
+            skipped_without_email,
+        )
 
         return sent
+
     except Exception:
-        _logger.exception("Failed to send announcement emails for Announcement pk=%s", announcement.pk)
+        logger.exception(
+            "Failed to send announcement emails "
+            "for Announcement pk=%s",
+            getattr(announcement, "pk", None),
+        )
+        return 0
+
+    finally:
+        close_old_connections()
 
 
-# FUTURE: Announcement bulk-email service (ready to use when needed)
+# ----------------------------------------------------------------------------
+# Backward-compatible disabled legacy function
+# ----------------------------------------------------------------------------
+
 def send_announcement_emails(announcement_id):
-    """[FUTURE] Send email notifications for an announcement (REQUIRES INTERNET).
-    
-    Configure SMTP values in .env when ready (see .env.example):
-    - EMAIL_BACKEND / EMAIL_HOST / EMAIL_PORT / EMAIL_USE_TLS
-    - EMAIL_HOST_USER / EMAIL_HOST_PASSWORD
-    - DEFAULT_FROM_EMAIL / EMAIL_ENABLED
-    
-    Args:
-        announcement_id: Announcement ID
-    
-    Returns:
-        Dict with send statistics
     """
-    # Uncomment when ready to enable email
-    """
-    from django.core.mail import send_mass_mail
-    from django.template.loader import render_to_string
-    from .models import Announcement
-    
-    try:
-        announcement = Announcement.objects.get(pk=announcement_id)
-        
-        if not announcement.send_email or announcement.email_sent:
-            return {'status': 'skipped', 'reason': 'Email not requested or already sent'}
-        
-        target_users = announcement.get_target_users()
-        emails = []
-        
-        for user in target_users:
-            if user.user.email:
-                subject = f"[AgriScan+] {announcement.title}"
-                message = render_to_string('emails/announcement.html', {
-                    'announcement': announcement,
-                    'user': user,
-                })
-                emails.append((
-                    subject, 
-                    message, 
-                    'noreply@agriscan.ph',  # Change to your email
-                    [user.user.email]
-                ))
-        
-        if emails:
-            sent_count = send_mass_mail(emails, fail_silently=False)
-            
-            from django.utils import timezone
-            announcement.email_sent = True
-            announcement.email_sent_at = timezone.now()
-            announcement.save()
-            
-            return {
-                'status': 'success',
-                'sent_count': sent_count,
-                'total_targets': len(emails)
-            }
-        
-        return {'status': 'no_emails', 'reason': 'No users have email addresses'}
-        
-    except Announcement.DoesNotExist:
-        return {'status': 'error', 'reason': 'Announcement not found'}
-    except Exception as e:
-        return {'status': 'error', 'reason': str(e)}
-    """
-    
-    return {
-        'status': 'disabled',
-        'reason': 'Email integration not yet enabled. See services.py for setup instructions.'
-    }
+    Legacy compatibility function.
 
+    Use queue_announcement_email_send(announcement_id)
+    for the current background email workflow.
+    """
+
+    return {
+        "status": "disabled",
+        "reason": (
+            "Use queue_announcement_email_send() "
+            "for announcement email sending."
+        ),
+    }

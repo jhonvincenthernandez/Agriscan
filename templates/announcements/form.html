@@ -3,391 +3,1007 @@
 {% block title %}{{ title }} · AgriScan+{% endblock %}
 
 {% block content %}
-<section class="page-container">
+<section class="page-container w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
 
-  <!-- Page Header -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <svg class="h-7 w-7 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+  <!-- =========================================================
+       PAGE HEADER
+  ========================================================== -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-5 sm:mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+
+      <div class="flex items-start gap-3 min-w-0">
+        <div class="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+          <svg class="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+            />
           </svg>
-          {{ title }}
-        </h1>
-        <p class="mt-1 text-sm text-gray-500">
-          {% if is_create %}Create a new announcement for your target audience.{% else %}Update the content of this announcement.{% endif %}
-        </p>
+        </div>
+
+        <div class="min-w-0">
+          <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 break-words">
+            {{ title }}
+          </h1>
+
+          <p class="mt-1 text-sm leading-6 text-gray-500">
+            {% if is_create %}
+              Create a new announcement for your target audience.
+            {% else %}
+              Update the content and visibility of this announcement.
+            {% endif %}
+          </p>
+        </div>
       </div>
-      <a href="{% url 'polls:announcements_list' %}"
-         onclick="history.back(); return false;"
-         class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium self-start sm:self-auto">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+
+      <a
+        href="{% url 'polls:announcements_list' %}"
+        onclick="history.back(); return false;"
+        class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+      >
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+          />
         </svg>
         Back to Announcements
       </a>
     </div>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
 
-    <!-- Email notification notice -->
-    <div class="flex items-start gap-3 bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
-      <svg class="h-5 w-5 mt-0.5 flex-shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-      </svg>
-      <p class="text-sm text-amber-800">
-        {% if is_create %}
-          <strong>Note:</strong> If set to <strong>Immediate Publish</strong> and <em>Active</em>, this sends
-          <strong>email + notification</strong> to targeted users. If set to <strong>Scheduled Publish</strong>,
-          users receive <strong>notification only</strong> at publish time.
-        {% else %}
-          <strong>Note:</strong> Updating this announcement will <strong>not</strong> re-send emails.
-          Toggle <em>"Active"</em> to show or hide it from users.
-        {% endif %}
-      </p>
+  <!-- =========================================================
+       MAIN FORM CARD
+  ========================================================== -->
+  <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+
+    <!-- Form Header -->
+    <div class="border-b border-gray-100 bg-gradient-to-r from-indigo-50 via-white to-white px-4 py-4 sm:px-6 sm:py-5">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+        </div>
+
+        <div>
+          <h2 class="text-base sm:text-lg font-semibold text-gray-900">
+            Announcement Details
+          </h2>
+          <p class="text-xs sm:text-sm text-gray-500">
+            Complete the information below before saving.
+          </p>
+        </div>
+      </div>
     </div>
 
-    <!-- Form -->
-    <form method="post" class="space-y-6" novalidate>
+
+    <!-- =======================================================
+         EMAIL NOTIFICATION NOTICE
+    ======================================================== -->
+    <div class="px-4 pt-4 sm:px-6 sm:pt-6">
+      <div class="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3.5 sm:p-4">
+        <svg
+          class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+          />
+        </svg>
+
+        <p class="text-xs sm:text-sm leading-6 text-amber-900">
+          {% if is_create %}
+            <strong>Notification behavior:</strong>
+            <strong>Immediate Publish</strong> with
+            <strong>Active</strong> sends email and in-app notifications
+            to targeted users. <strong>Scheduled Publish</strong> sends
+            notifications at the scheduled publication time.
+          {% else %}
+            <strong>Editing notice:</strong>
+            Updating this announcement will not resend emails.
+            Toggle <strong>Active</strong> to show or hide the announcement
+            from users.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+
+    <!-- =======================================================
+         FORM
+    ======================================================== -->
+    <form
+      method="post"
+      class="space-y-0"
+      novalidate
+    >
       {% csrf_token %}
 
       {% if form.non_field_errors %}
-      <div class="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">
-        {{ form.non_field_errors }}
-      </div>
+        <div class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:mx-6">
+          {{ form.non_field_errors }}
+        </div>
       {% endif %}
 
-      <!-- ── Basic Information ── -->
-      <div class="border-b border-gray-100 pb-6 space-y-4">
-        <h2 class="text-base font-semibold text-gray-700 flex items-center gap-2">
-          <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          Basic Information
-        </h2>
 
-        <div>
-          <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.title.label }} <span class="text-red-500">*</span>
-          </label>
-          {{ form.title }}
-          {% if form.title.errors %}<p class="text-sm text-red-600 mt-1">{{ form.title.errors|join:", " }}</p>{% endif %}
-        </div>
-
-        <div>
-          <label for="{{ form.content.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.content.label }} <span class="text-red-500">*</span>
-          </label>
-          {{ form.content }}
-          {% if form.content.errors %}<p class="text-sm text-red-600 mt-1">{{ form.content.errors|join:", " }}</p>{% endif %}
-          <p class="text-xs text-gray-400 mt-1">Provide clear information: pest alert, recommended action, contact info, etc.</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-              {{ form.category.label }} <span class="text-red-500">*</span>
-            </label>
-            {{ form.category }}
-            {% if form.category.errors %}<p class="text-sm text-red-600 mt-1">{{ form.category.errors|join:", " }}</p>{% endif %}
+      <!-- =====================================================
+           1. BASIC INFORMATION
+      ====================================================== -->
+      <div class="border-b border-gray-100 px-4 py-5 sm:px-6 sm:py-6">
+        <div class="mb-5 flex items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
           </div>
+
           <div>
-            <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-              {{ form.priority.label }} <span class="text-red-500">*</span>
-            </label>
-            {{ form.priority }}
-            {% if form.priority.errors %}<p class="text-sm text-red-600 mt-1">{{ form.priority.errors|join:", " }}</p>{% endif %}
+            <h2 class="text-base font-semibold text-gray-800">
+              Basic Information
+            </h2>
+            <p class="text-xs text-gray-500">
+              Provide the main details of your announcement.
+            </p>
           </div>
         </div>
-      </div>
 
-      <!-- ── Targeting ── -->
-      <div class="border-b border-gray-100 pb-6 space-y-4">
-        <h2 class="text-base font-semibold text-gray-700 flex items-center gap-2">
-          <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          Who Should See This?
-        </h2>
+        <div class="space-y-5">
 
-        <div>
-          <label for="{{ form.target_audience.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.target_audience.label }} <span class="text-red-500">*</span>
-          </label>
-          {{ form.target_audience }}
-          {% if form.target_audience.errors %}<p class="text-sm text-red-600 mt-1">{{ form.target_audience.errors|join:", " }}</p>{% endif %}
-        </div>
-
-        <div id="barangay-field" class="hidden">
-          <label for="{{ form.target_barangay.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.target_barangay.label }} <span class="text-red-500">*</span>
-          </label>
-          {{ form.target_barangay }}
-          {% if form.target_barangay.errors %}<p class="text-sm text-red-600 mt-1">{{ form.target_barangay.errors|join:", " }}</p>{% endif %}
-        </div>
-
-        <div id="user-field" class="hidden">
-          <label for="{{ form.target_user.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ form.target_user.label }} <span class="text-red-500">*</span>
-          </label>
-          {{ form.target_user }}
-          {% if form.target_user.errors %}<p class="text-sm text-red-600 mt-1">{{ form.target_user.errors|join:", " }}</p>{% endif %}
-        </div>
-      </div>
-
-      <!-- ── Schedule & Expiration ── -->
-      <div class="border-b border-gray-100 pb-6 space-y-4">
-        <h2 class="text-base font-semibold text-gray-700 flex items-center gap-2">
-          <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-          </svg>
-          Schedule & Expiration
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Title -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
-              {{ form.publish_timing.label }}
+            <label
+              for="{{ form.title.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
+              {{ form.title.label }}
+              <span class="text-red-500" aria-hidden="true">*</span>
             </label>
-            {% if publish_locked %}
-              <div class="flex items-center gap-2 w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed select-none">
-                <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                </svg>
-                <span>{% if announcement.published_at %}Scheduled Publish{% else %}Immediate Publish{% endif %}</span>
-              </div>
-              <p class="text-xs text-gray-400 mt-1">Publishing mode is locked once this announcement is live.</p>
-              <input type="hidden" name="publish_timing" value="{% if announcement.published_at %}scheduled{% else %}immediate{% endif %}">
-            {% else %}
-              {{ form.publish_timing }}
-              {% if form.publish_timing.help_text %}<p class="text-xs text-gray-400 mt-1">{{ form.publish_timing.help_text }}</p>{% endif %}
-              {% if form.publish_timing.errors %}<p class="text-sm text-red-600 mt-1">{{ form.publish_timing.errors|join:", " }}</p>{% endif %}
+
+            {{ form.title }}
+
+            {% if form.title.errors %}
+              <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                {{ form.title.errors|join:", " }}
+              </p>
             {% endif %}
           </div>
+
+
+          <!-- Content -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">
+            <label
+              for="{{ form.content.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
+              {{ form.content.label }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+
+            {{ form.content }}
+
+            {% if form.content.errors %}
+              <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                {{ form.content.errors|join:", " }}
+              </p>
+            {% endif %}
+
+            <p class="mt-1.5 text-xs leading-5 text-gray-400">
+              Provide clear information such as pest alerts, recommended
+              actions, contact details, and relevant instructions.
+            </p>
+          </div>
+
+
+          <!-- Category and Priority -->
+          <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+            <div>
+              <label
+                for="{{ form.category.id_for_label }}"
+                class="mb-1.5 block text-sm font-semibold text-gray-700"
+              >
+                {{ form.category.label }}
+                <span class="text-red-500" aria-hidden="true">*</span>
+              </label>
+
+              {{ form.category }}
+
+              {% if form.category.errors %}
+                <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                  {{ form.category.errors|join:", " }}
+                </p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label
+                for="{{ form.priority.id_for_label }}"
+                class="mb-1.5 block text-sm font-semibold text-gray-700"
+              >
+                {{ form.priority.label }}
+                <span class="text-red-500" aria-hidden="true">*</span>
+              </label>
+
+              {{ form.priority }}
+
+              {% if form.priority.errors %}
+                <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                  {{ form.priority.errors|join:", " }}
+                </p>
+              {% endif %}
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+
+      <!-- =====================================================
+           2. TARGETING
+      ====================================================== -->
+      <div class="border-b border-gray-100 px-4 py-5 sm:px-6 sm:py-6">
+        <div class="mb-5 flex items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"
+              />
+            </svg>
+          </div>
+
+          <div>
+            <h2 class="text-base font-semibold text-gray-800">
+              Who Should See This?
+            </h2>
+            <p class="text-xs text-gray-500">
+              Select the intended announcement audience.
+            </p>
+          </div>
+        </div>
+
+        <div class="space-y-5">
+
+          <!-- Audience -->
+          <div>
+            <label
+              for="{{ form.target_audience.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
+              {{ form.target_audience.label }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+
+            {{ form.target_audience }}
+
+            {% if form.target_audience.errors %}
+              <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                {{ form.target_audience.errors|join:", " }}
+              </p>
+            {% endif %}
+          </div>
+
+
+          <!-- Barangay -->
+          <div id="barangay-field" class="hidden">
+            <label
+              for="{{ form.target_barangay.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
+              {{ form.target_barangay.label }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+
+            {{ form.target_barangay }}
+
+            {% if form.target_barangay.errors %}
+              <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                {{ form.target_barangay.errors|join:", " }}
+              </p>
+            {% endif %}
+          </div>
+
+
+          <!-- User -->
+          <div id="user-field" class="hidden">
+            <label
+              for="{{ form.target_user.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
+              {{ form.target_user.label }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+
+            {{ form.target_user }}
+
+            {% if form.target_user.errors %}
+              <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                {{ form.target_user.errors|join:", " }}
+              </p>
+            {% endif %}
+          </div>
+
+        </div>
+      </div>
+
+
+      <!-- =====================================================
+           3. SCHEDULE AND EXPIRATION
+      ====================================================== -->
+      <div class="border-b border-gray-100 px-4 py-5 sm:px-6 sm:py-6">
+        <div class="mb-5 flex items-center gap-3">
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+          </div>
+
+          <div>
+            <h2 class="text-base font-semibold text-gray-800">
+              Schedule &amp; Expiration
+            </h2>
+            <p class="text-xs text-gray-500">
+              Configure how and when the announcement becomes visible.
+            </p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+          <!-- Publishing Mode -->
+          <div>
+            <label
+              for="{{ form.publish_timing.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
+              {{ form.publish_timing.label }}
+            </label>
+
+            {% if publish_locked %}
+
+              <!-- Locked publishing mode -->
+              <div
+                class="flex min-h-[42px] items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-600"
+                aria-disabled="true"
+              >
+                {% if announcement.publishing_mode == "scheduled" %}
+                  <svg class="h-4 w-4 shrink-0 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                {% else %}
+                  <svg class="h-4 w-4 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                {% endif %}
+
+                <span class="font-medium">
+                  {{ announcement.get_publishing_mode_display }}
+                </span>
+
+                <svg class="ml-auto h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
+                </svg>
+              </div>
+
+              <p class="mt-1.5 text-xs leading-5 text-gray-400">
+                Publishing mode is locked once this announcement is live.
+              </p>
+
+              <input
+                type="hidden"
+                name="publish_timing"
+                value="{{ announcement.publishing_mode }}"
+              >
+
+            {% else %}
+
+              <!-- Editable publishing mode -->
+              {{ form.publish_timing }}
+
+              {% if form.publish_timing.help_text %}
+                <p class="mt-1.5 text-xs leading-5 text-gray-400">
+                  {{ form.publish_timing.help_text }}
+                </p>
+              {% endif %}
+
+              {% if form.publish_timing.errors %}
+                <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                  {{ form.publish_timing.errors|join:", " }}
+                </p>
+              {% endif %}
+
+            {% endif %}
+          </div>
+
+
+          <!-- Publish Date and Time -->
+          <div>
+            <label
+              for="{{ form.published_at.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
               {{ form.published_at.label }}
             </label>
+
             {% if publish_locked %}
-              {# Read-only locked display — published_at cannot be changed once live #}
-              <div class="flex items-center gap-2 w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500 cursor-not-allowed select-none">
-                <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+
+              <!-- Locked publication date -->
+              <div
+                class="flex min-h-[42px] items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-600"
+                aria-disabled="true"
+              >
+                <svg class="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
-                <span>
+
+                <span class="break-words">
                   {% if announcement.published_at %}
-                    {{ announcement.published_at|date:"N j, Y, g:i A" }}
+                    {{ announcement.published_at|date:"M j, Y, g:i A" }}
                   {% else %}
                     Published immediately at creation time
                   {% endif %}
                 </span>
               </div>
-              <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                <svg class="h-3 w-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+
+              <p class="mt-1.5 flex items-start gap-1 text-xs leading-5 text-gray-400">
+                <svg class="mt-0.5 h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                  />
                 </svg>
-                Already published — publish date is locked and cannot be changed.
+                Publication date is locked after going live.
               </p>
-              {# Hidden input to preserve the value in POST (view backend will restore it anyway) #}
-              <input type="hidden" name="published_at" value="{% if announcement.published_at %}{{ announcement.published_at|date:'Y-m-d\TH:i:s' }}{% endif %}">
+
+              <input
+                type="hidden"
+                name="published_at"
+                value="{% if announcement.published_at %}{{ announcement.published_at|date:'Y-m-d\TH:i:s' }}{% endif %}"
+              >
+
             {% else %}
+
               <div id="publish-at-wrapper">
                 {{ form.published_at }}
               </div>
-              {% if form.published_at.help_text %}<p class="text-xs text-gray-400 mt-1">{{ form.published_at.help_text }}</p>{% endif %}
-              {% if form.published_at.errors %}<p class="text-sm text-red-600 mt-1">{{ form.published_at.errors|join:", " }}</p>{% endif %}
+
+              {% if form.published_at.help_text %}
+                <p class="mt-1.5 text-xs leading-5 text-gray-400">
+                  {{ form.published_at.help_text }}
+                </p>
+              {% endif %}
+
+              {% if form.published_at.errors %}
+                <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                  {{ form.published_at.errors|join:", " }}
+                </p>
+              {% endif %}
+
             {% endif %}
           </div>
-          <div>
-            <label for="{{ form.expires_at.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+
+
+          <!-- Expiration Date -->
+          <div class="md:col-span-2">
+            <label
+              for="{{ form.expires_at.id_for_label }}"
+              class="mb-1.5 block text-sm font-semibold text-gray-700"
+            >
               {{ form.expires_at.label }}
             </label>
+
             {{ form.expires_at }}
-            {% if form.expires_at.help_text %}<p class="text-xs text-gray-400 mt-1">{{ form.expires_at.help_text }}</p>{% endif %}
-            {% if form.expires_at.errors %}<p class="text-sm text-red-600 mt-1">{{ form.expires_at.errors|join:", " }}</p>{% endif %}
-          </div>
-        </div>
-      </div>
 
-      <!-- ── Active / Draft toggle ── -->
-      <div class="flex items-start gap-3 p-4 rounded-lg border
-        {% if not is_create and announcement.is_active %}bg-green-50 border-green-200{% else %}bg-yellow-50 border-yellow-200{% endif %}">
-        <div class="flex items-center h-5 mt-0.5">
-          {{ form.is_active }}
-        </div>
-        <div>
-          <label for="{{ form.is_active.id_for_label }}" class="text-sm font-medium text-gray-800 cursor-pointer">
-            {{ form.is_active.label }}
-          </label>
-          <p class="text-xs text-gray-500 mt-0.5">
-            {% if is_create %}
-              Leave unchecked to save as a draft — users won't see it yet.
-            {% else %}
-              {% if announcement.is_active %}
-                Currently <strong class="text-green-700">active</strong> — uncheck to hide from users (draft).
-              {% else %}
-                Currently a <strong class="text-yellow-700">draft</strong> — check to make it visible to users.
-              {% endif %}
+            {% if form.expires_at.help_text %}
+              <p class="mt-1.5 text-xs leading-5 text-gray-400">
+                {{ form.expires_at.help_text }}
+              </p>
             {% endif %}
-          </p>
+
+            {% if form.expires_at.errors %}
+              <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+                {{ form.expires_at.errors|join:", " }}
+              </p>
+            {% endif %}
+          </div>
+
         </div>
       </div>
 
-      <!-- ── Action buttons ── -->
-      <div class="flex items-center justify-between pt-4 border-t border-gray-100">
-        <div class="flex gap-3">
-          <button type="submit"
-            class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:from-indigo-600 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center gap-2">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+
+      <!-- =====================================================
+           4. ACTIVE / DRAFT STATUS
+      ====================================================== -->
+      <div class="px-4 py-5 sm:px-6 sm:py-6">
+        <div
+          class="flex items-start gap-3 rounded-xl border p-4
+          {% if not is_create and announcement.is_active %}
+            border-green-200 bg-green-50
+          {% else %}
+            border-yellow-200 bg-yellow-50
+          {% endif %}"
+        >
+
+          <div class="flex h-5 shrink-0 items-center pt-0.5">
+            {{ form.is_active }}
+          </div>
+
+          <div class="min-w-0">
+            <label
+              for="{{ form.is_active.id_for_label }}"
+              class="cursor-pointer text-sm font-semibold text-gray-800"
+            >
+              {{ form.is_active.label }}
+            </label>
+
+            <p class="mt-1 text-xs leading-5 text-gray-600">
+              {% if is_create %}
+                Leave unchecked to save this announcement as a draft.
+                Users will not see it until it is activated.
+              {% else %}
+                {% if announcement.is_active %}
+                  Currently
+                  <strong class="text-green-700">active</strong>.
+                  Uncheck to hide it from users and save it as a draft.
+                {% else %}
+                  Currently a
+                  <strong class="text-yellow-700">draft</strong>.
+                  Check this option to make it visible to users.
+                {% endif %}
+              {% endif %}
+            </p>
+          </div>
+
+        </div>
+
+        {% if form.is_active.errors %}
+          <p class="mt-1.5 text-xs sm:text-sm text-red-600">
+            {{ form.is_active.errors|join:", " }}
+          </p>
+        {% endif %}
+      </div>
+
+
+      <!-- =====================================================
+           5. ACTION BUTTONS
+      ====================================================== -->
+      <div class="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+
+        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+
+          <!-- Cancel -->
+          <a
+            href="{% url 'polls:announcements_list' %}"
+            onclick="history.back(); return false;"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+            Cancel
+          </a>
+
+          <!-- Submit -->
+          <button
+            type="submit"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:from-indigo-600 hover:to-indigo-700 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
             </svg>
             {{ submit_text }}
           </button>
-          <a href="{% url 'polls:announcements_list' %}"
-            onclick="history.back(); return false;"
-            class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition shadow-sm">
-            Cancel
-          </a>
+
         </div>
 
+
+        <!-- Delete -->
         {% if not is_create and is_admin %}
-        <a href="{% url 'polls:announcement_delete' announcement.pk %}"
-           data-open-delete="true"
-           data-delete-label="{{ announcement.title }}"
-           class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-700 bg-white border border-red-200 rounded-lg hover:bg-red-50 transition shadow-sm">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-          Delete Announcement
-        </a>
+          <a
+            href="{% url 'polls:announcement_delete' announcement.pk %}"
+            data-open-delete="true"
+            data-delete-label="{{ announcement.title }}"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 sm:w-auto"
+          >
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Delete Announcement
+          </a>
         {% endif %}
+
       </div>
 
     </form>
   </div>
 
-  <!-- Quick Tips -->
-  <div class="mt-6 bg-blue-50 border-l-4 border-blue-400 p-5 rounded-r-lg flex items-start gap-3">
-    <svg class="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-    </svg>
-    <div>
-      <h3 class="text-sm font-semibold text-blue-800 mb-1">💡 Quick Tips</h3>
-      <ul class="text-blue-700 space-y-1 text-xs">
-        <li>• Use emojis in titles to grab attention (⚠️ 🌾 💧 🦠)</li>
-        <li>• Choose <strong>📕 Urgent</strong> priority for emergencies only</li>
-        <li>• Target a specific <strong>Barangay</strong> for localized pest/disease alerts</li>
-        <li>• Set an <strong>Expiration</strong> date for time-sensitive announcements</li>
-        <li>• Uncheck <strong>Active</strong> to save as draft — publish it later when ready</li>
-      </ul>
+
+  <!-- =========================================================
+       QUICK TIPS
+  ========================================================== -->
+  <div class="mt-5 sm:mt-6 rounded-2xl border border-blue-200 bg-blue-50 p-4 sm:p-5">
+    <div class="flex items-start gap-3">
+      <svg
+        class="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold text-blue-900">
+          Quick Tips
+        </h3>
+
+        <ul class="mt-2 space-y-1.5 text-xs leading-5 text-blue-800 sm:text-sm">
+          <li>• Use emojis in titles to make alerts easier to notice.</li>
+          <li>• Use <strong>Urgent</strong> priority only for critical announcements.</li>
+          <li>• Target a specific barangay for localized rice disease alerts.</li>
+          <li>• Set an expiration date for time-sensitive announcements.</li>
+          <li>• Uncheck <strong>Active</strong> to save the announcement as a draft.</li>
+        </ul>
+      </div>
     </div>
   </div>
 
 </section>
 
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================== -->
 <script>
-function toggleTargetFields(audience) {
-  document.getElementById('barangay-field').classList.toggle('hidden', audience !== 'barangay');
-  document.getElementById('user-field').classList.toggle('hidden', audience !== 'user');
-}
+(function () {
+  "use strict";
 
-function togglePublishTiming(mode) {
-  const publishAtWrapper = document.getElementById('publish-at-wrapper');
-  if (!publishAtWrapper) return;
-  publishAtWrapper.classList.toggle('hidden', mode !== 'scheduled');
-}
+  function getElement(id) {
+    return document.getElementById(id);
+  }
 
-function initSearchableSelects() {
-  const selects = Array.from(document.querySelectorAll('select[data-searchable="true"]'));
-  if (!selects.length) return;
 
-  selects.forEach(function (select) {
-    if (select.dataset._searchableInit === '1') return;
-    select.dataset._searchableInit = '1';
+  /* =========================================================
+     TARGET AUDIENCE TOGGLE
+  ========================================================== */
+  function toggleTargetFields(audience) {
+    const barangayField = getElement("barangay-field");
+    const userField = getElement("user-field");
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'relative';
-    select.parentNode.insertBefore(wrapper, select);
-
-    const input = document.createElement('input');
-    input.type = 'search';
-    input.placeholder = 'Type to search...';
-    input.className = select.className;
-    input.style.paddingRight = '2.5rem';
-
-    const icon = document.createElement('div');
-    icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
-    icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
-
-    const options = Array.from(select.options);
-    const originalValue = select.value;
-    if (originalValue) {
-      const selected = options.find(function (opt) { return opt.value === originalValue; });
-      if (selected) input.value = selected.text;
+    if (barangayField) {
+      barangayField.classList.toggle("hidden", audience !== "barangay");
     }
 
-    select.style.display = 'none';
+    if (userField) {
+      userField.classList.toggle("hidden", audience !== "user");
+    }
+  }
 
-    const dropdown = document.createElement('div');
-    dropdown.className = 'absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
 
-    wrapper.appendChild(input);
-    wrapper.appendChild(icon);
-    wrapper.appendChild(select);
-    wrapper.appendChild(dropdown);
+  /* =========================================================
+     PUBLISHING MODE TOGGLE
+  ========================================================== */
+  function togglePublishTiming(mode) {
+    const publishAtWrapper = getElement("publish-at-wrapper");
 
-    function filterOptions(term) {
-      dropdown.innerHTML = '';
-      const lowered = (term || '').toLowerCase();
-      const filtered = options.filter(function (opt) {
-        return opt.value && opt.text.toLowerCase().includes(lowered);
+    if (!publishAtWrapper) {
+      return;
+    }
+
+    const isScheduled = mode === "scheduled";
+
+    publishAtWrapper.classList.toggle("hidden", !isScheduled);
+
+    const publishAtInput = publishAtWrapper.querySelector(
+      "input, select, textarea"
+    );
+
+    if (publishAtInput) {
+      publishAtInput.disabled = !isScheduled;
+
+      if (isScheduled) {
+        publishAtInput.setAttribute("aria-required", "true");
+      } else {
+        publishAtInput.removeAttribute("aria-required");
+      }
+    }
+  }
+
+
+  /* =========================================================
+     SEARCHABLE SELECTS
+  ========================================================== */
+  function initSearchableSelects() {
+    const selects = Array.from(
+      document.querySelectorAll('select[data-searchable="true"]')
+    );
+
+    if (!selects.length) {
+      return;
+    }
+
+    selects.forEach(function (select) {
+      if (select.dataset.searchableInit === "1") {
+        return;
+      }
+
+      select.dataset.searchableInit = "1";
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "relative w-full";
+
+      const parent = select.parentNode;
+
+      if (!parent) {
+        return;
+      }
+
+      parent.insertBefore(wrapper, select);
+
+      const input = document.createElement("input");
+      input.type = "search";
+      input.autocomplete = "off";
+      input.setAttribute("aria-label", "Search options");
+      input.placeholder = "Type to search...";
+      input.className = [
+        "w-full rounded-xl border border-gray-300 bg-white",
+        "px-4 py-2.5 pr-10 text-sm text-gray-700",
+        "outline-none transition",
+        "focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+      ].join(" ");
+
+      const icon = document.createElement("div");
+      icon.className = [
+        "pointer-events-none absolute right-3 top-1/2",
+        "-translate-y-1/2 text-gray-400"
+      ].join(" ");
+
+      icon.innerHTML = `
+        <svg
+          class="h-5 w-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          />
+        </svg>
+      `;
+
+      const dropdown = document.createElement("div");
+      dropdown.className = [
+        "absolute left-0 right-0 z-50 mt-1 hidden",
+        "max-h-60 overflow-y-auto rounded-xl",
+        "border border-gray-200 bg-white shadow-xl"
+      ].join(" ");
+
+      const options = Array.from(select.options);
+      const initialValue = select.value;
+
+      if (initialValue) {
+        const selectedOption = options.find(function (option) {
+          return option.value === initialValue;
+        });
+
+        if (selectedOption) {
+          input.value = selectedOption.text;
+        }
+      }
+
+      select.style.display = "none";
+
+      wrapper.appendChild(input);
+      wrapper.appendChild(icon);
+      wrapper.appendChild(select);
+      wrapper.appendChild(dropdown);
+
+
+      function closeDropdown() {
+        dropdown.classList.add("hidden");
+      }
+
+
+      function createEmptyMessage() {
+        const emptyMessage = document.createElement("div");
+
+        emptyMessage.className = "px-4 py-3 text-sm text-gray-500";
+        emptyMessage.textContent = "No matches found.";
+
+        return emptyMessage;
+      }
+
+
+      function filterOptions(term) {
+        dropdown.innerHTML = "";
+
+        const searchTerm = (term || "").trim().toLowerCase();
+
+        const filteredOptions = options.filter(function (option) {
+          return (
+            option.value &&
+            option.text.toLowerCase().includes(searchTerm)
+          );
+        });
+
+        if (!filteredOptions.length) {
+          dropdown.appendChild(createEmptyMessage());
+        } else {
+          filteredOptions.forEach(function (option) {
+            const item = document.createElement("button");
+
+            item.type = "button";
+            item.className = [
+              "block w-full px-4 py-2.5 text-left text-sm",
+              "text-gray-700 transition hover:bg-indigo-50",
+              "focus:bg-indigo-50 focus:outline-none"
+            ].join(" ");
+
+            item.textContent = option.text;
+
+            item.addEventListener("click", function () {
+              select.value = option.value;
+              input.value = option.text;
+
+              closeDropdown();
+
+              select.dispatchEvent(
+                new Event("change", { bubbles: true })
+              );
+            });
+
+            dropdown.appendChild(item);
+          });
+        }
+
+        dropdown.classList.remove("hidden");
+      }
+
+
+      input.addEventListener("focus", function () {
+        filterOptions(input.value);
       });
 
-      if (!filtered.length) {
-        dropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No matches found</div>';
-      } else {
-        filtered.forEach(function (opt) {
-          const item = document.createElement('div');
-          item.className = 'px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm';
-          item.textContent = opt.text;
-          item.dataset.value = opt.value;
-          item.addEventListener('click', function () {
-            select.value = item.dataset.value;
-            input.value = item.textContent;
-            dropdown.classList.add('hidden');
-            select.dispatchEvent(new Event('change'));
-          });
-          dropdown.appendChild(item);
-        });
-      }
-      dropdown.classList.remove('hidden');
+      input.addEventListener("input", function () {
+        filterOptions(input.value);
+      });
+
+      input.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeDropdown();
+          input.blur();
+        }
+      });
+
+      document.addEventListener("click", function (event) {
+        if (!wrapper.contains(event.target)) {
+          closeDropdown();
+        }
+      });
+    });
+  }
+
+
+  /* =========================================================
+     INITIALIZATION
+  ========================================================== */
+  function initializeAnnouncementForm() {
+    const audienceSelect = getElement(
+      "{{ form.target_audience.id_for_label }}"
+    );
+
+    if (audienceSelect) {
+      toggleTargetFields(audienceSelect.value);
+
+      audienceSelect.addEventListener("change", function () {
+        toggleTargetFields(this.value);
+      });
     }
 
-    input.addEventListener('focus', function () { filterOptions(input.value); });
-    input.addEventListener('input', function () { filterOptions(input.value); });
-    document.addEventListener('click', function (event) {
-      if (!wrapper.contains(event.target)) dropdown.classList.add('hidden');
-    });
-  });
-}
 
-document.addEventListener('DOMContentLoaded', function () {
-  const audienceSelect = document.getElementById('{{ form.target_audience.id_for_label }}');
-  if (audienceSelect) {
-    toggleTargetFields(audienceSelect.value);
-    audienceSelect.addEventListener('change', function () { toggleTargetFields(this.value); });
+    const publishTimingSelect = getElement(
+      "{{ form.publish_timing.id_for_label }}"
+    );
+
+    if (publishTimingSelect) {
+      togglePublishTiming(publishTimingSelect.value);
+
+      publishTimingSelect.addEventListener("change", function () {
+        togglePublishTiming(this.value);
+      });
+    }
+
+
+    initSearchableSelects();
   }
 
-  const publishTimingSelect = document.getElementById('{{ form.publish_timing.id_for_label }}');
-  if (publishTimingSelect) {
-    togglePublishTiming(publishTimingSelect.value);
-    publishTimingSelect.addEventListener('change', function () { togglePublishTiming(this.value); });
+
+  if (document.readyState === "loading") {
+    document.addEventListener(
+      "DOMContentLoaded",
+      initializeAnnouncementForm
+    );
+  } else {
+    initializeAnnouncementForm();
   }
 
-  initSearchableSelects();
-});
+})();
 </script>
+
 {% endblock %}

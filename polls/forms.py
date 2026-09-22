@@ -1625,229 +1625,413 @@ class TreatmentRecommendationForm(forms.ModelForm):
             'severity_high_msg': 'Write an IPM-based message explaining what to do when cultural control is no longer sufficient. Leave blank to hide the severity escalation line.',
         }
 
-
 class AnnouncementForm(forms.ModelForm):
-    """Form for creating and editing announcements"""
+    """Create and edit announcements with immediate or scheduled publishing."""
 
     publish_timing = forms.ChoiceField(
         choices=[
-            ('immediate', 'Immediate Publish'),
-            ('scheduled', 'Scheduled Publish'),
+            ("immediate", "Immediate Publish"),
+            ("scheduled", "Scheduled Publish"),
         ],
         required=False,
-        initial='immediate',
-        widget=forms.Select(attrs={
-            'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-        }),
-        label='Publishing Mode',
-        help_text='Choose Immediate to publish now, or Scheduled to publish at a specific date/time.',
+        initial="immediate",
+        widget=forms.Select(
+            attrs={
+                "class": (
+                    "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                    "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                ),
+            }
+        ),
+        label="Publishing Mode",
+        help_text=(
+            "Choose Immediate to publish now, or Scheduled to publish "
+            "at a specific future date and time."
+        ),
     )
-    
+
     class Meta:
         from .models import Announcement
+
         model = Announcement
+
         fields = [
-            'title',
-            'content',
-            'category',
-            'target_audience',
-            'target_barangay',
-            'target_user',
-            'priority',
-            'published_at',
-            'expires_at',
-            'is_active',
+            "title",
+            "content",
+            "category",
+            "target_audience",
+            "target_barangay",
+            "target_user",
+            "priority",
+            "published_at",
+            "expires_at",
+            "is_active",
         ]
+
         widgets = {
-            'title': forms.TextInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'placeholder': 'e.g., ⚠️ Brown Spot Alert in San Nicolas',
-            }),
-            'content': forms.Textarea(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'rows': 8,
-                'placeholder': 'Enter full announcement details...\n\nYou can use:\n- Bullet points\n- Multiple paragraphs\n- Clear formatting',
-            }),
-            'category': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-            }),
-            'target_audience': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'onchange': 'toggleTargetFields(this.value)',
-            }),
-            'target_barangay': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'data-searchable': 'true',
-            }),
-            'target_user': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'data-searchable': 'true',
-            }),
-            'priority': forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-            }),
-            'published_at': forms.DateTimeInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'type': 'datetime-local',
-                'step': '1',  # BEST PRACTICE: Include seconds in datetime picker
-            }),
-            'expires_at': forms.DateTimeInput(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'type': 'datetime-local',
-                'step': '1',  # BEST PRACTICE: Include seconds in datetime picker
-            }),
-            'is_active': forms.CheckboxInput(attrs={
-                'class': 'h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded',
-            }),
+            "title": forms.TextInput(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                    "placeholder": "e.g., ⚠️ Brown Spot Alert in San Nicolas",
+                }
+            ),
+            "content": forms.Textarea(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                    "rows": 8,
+                    "placeholder": (
+                        "Enter full announcement details...\n\n"
+                        "You can use:\n"
+                        "- Bullet points\n"
+                        "- Multiple paragraphs\n"
+                        "- Clear formatting"
+                    ),
+                }
+            ),
+            "category": forms.Select(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                }
+            ),
+            "target_audience": forms.Select(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                    "onchange": "toggleTargetFields(this.value)",
+                }
+            ),
+            "target_barangay": forms.Select(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                    "data-searchable": "true",
+                }
+            ),
+            "target_user": forms.Select(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                    "data-searchable": "true",
+                }
+            ),
+            "priority": forms.Select(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                }
+            ),
+            "published_at": forms.DateTimeInput(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                    "type": "datetime-local",
+                    "step": "1",
+                }
+            ),
+            "expires_at": forms.DateTimeInput(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    ),
+                    "type": "datetime-local",
+                    "step": "1",
+                }
+            ),
+            "is_active": forms.CheckboxInput(
+                attrs={
+                    "class": (
+                        "h-4 w-4 text-green-600 focus:ring-2 "
+                        "focus:ring-green-500 border-gray-300 rounded"
+                    ),
+                }
+            ),
         }
+
         labels = {
-            'title': 'Announcement Title',
-            'content': 'Full Message',
-            'category': 'Category',
-            'target_audience': 'Who should see this?',
-            'target_barangay': 'Select Barangay',
-            'target_user': 'Select User',
-            'priority': 'Priority Level',
-            'published_at': 'Publish Date & Time',
-            'expires_at': 'Expiration Date (Optional)',
-            'is_active': 'Active (Published)',
+            "title": "Announcement Title",
+            "content": "Full Message",
+            "category": "Category",
+            "target_audience": "Who should see this?",
+            "target_barangay": "Select Barangay",
+            "target_user": "Select User",
+            "priority": "Priority Level",
+            "published_at": "Publish Date & Time",
+            "expires_at": "Expiration Date (Optional)",
+            "is_active": "Active (Published)",
         }
+
         help_texts = {
-            'title': 'Short, descriptive title (e.g., "⚠️ Brown Spot Alert"). You can use emojis!',
-            'content': 'Full announcement message. Use line breaks for better readability.',
-            'category': 'Select the type of announcement to help users filter',
-            'target_audience': 'Choose who will receive this announcement',
-            'target_barangay': 'Only shown if "Specific Barangay" is selected above',
-            'target_user': 'Only shown if "Specific User" is selected above',
-            'priority': '📘 Info = General | 📗 Announcement = Tips | 📙 Warning = Important | 📕 Urgent = Critical',
-            'published_at': 'Leave empty to publish immediately, or schedule for future',
-            'expires_at': 'Announcement will auto-hide after this date (optional)',
-            'is_active': 'Uncheck to save as draft without publishing',
+            "title": (
+                'Short, descriptive title (e.g., "⚠️ Brown Spot Alert"). '
+                "You can use emojis!"
+            ),
+            "content": (
+                "Full announcement message. Use line breaks "
+                "for better readability."
+            ),
+            "category": (
+                "Select the type of announcement to help users filter."
+            ),
+            "target_audience": (
+                "Choose who will receive this announcement."
+            ),
+            "target_barangay": (
+                'Only shown if "Specific Barangay" is selected above.'
+            ),
+            "target_user": (
+                'Only shown if "Specific User" is selected above.'
+            ),
+            "published_at": (
+                "For Scheduled mode, select a future date and time. "
+                "Immediate mode publishes when activated."
+            ),
+            "expires_at": (
+                "Announcement will auto-hide after this date (optional)."
+            ),
+            "is_active": (
+                "Uncheck to save as draft without publishing."
+            ),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+
         from django.utils import timezone
-        
-        # Get current time in local timezone (Asia/Manila)
-        current_time = timezone.localtime(timezone.now())
-        
-        # For new forms, default to immediate mode (empty published_at).
-        if not self.instance.pk:
-            self.initial.setdefault('publish_timing', 'immediate')
-            self.initial.setdefault('published_at', '')
-        elif self.instance.published_at:
-            self.initial['publish_timing'] = 'scheduled'
-        else:
-            self.initial['publish_timing'] = 'immediate'
-        
-        # BEST PRACTICE: Set min attribute to current datetime (with seconds) to prevent past dates
-        self.fields['published_at'].widget.attrs['min'] = current_time.strftime('%Y-%m-%dT%H:%M:%S')
-        
-        # Make target fields not required (we'll validate conditionally)
-        self.fields['target_barangay'].required = False
-        self.fields['target_user'].required = False
-        
-        # BEST PRACTICE: Get barangays from actual Field records (not separate Barangay model)
-        # This ensures we only show barangays that have active fields
-        from .models import Field
         from django.db.models import Q
-        
-        # Get distinct barangay names from Field model (exclude null/empty)
-        barangay_names = Field.objects.filter(
-            Q(barangay__isnull=False) & ~Q(barangay='')
-        ).values_list('barangay', flat=True).distinct().order_by('barangay')
-        
-        # Convert to choices format: (value, display_label)
-        barangay_choices = [('', '-- Select Barangay --')] + [(name, name) for name in barangay_names]
-        
-        # Update the field to use ChoiceField instead of ModelChoiceField
-        self.fields['target_barangay'] = forms.ChoiceField(
+        from .models import Field, Profile
+
+        now = timezone.now()
+        local_now = timezone.localtime(now)
+
+        # Use the persisted publishing_mode field as the source of truth.
+        if not self.instance.pk:
+            self.initial.setdefault("publish_timing", "immediate")
+            self.initial.setdefault("published_at", "")
+        else:
+            self.initial["publish_timing"] = (
+                self.instance.publishing_mode or "immediate"
+            )
+
+        # Prevent selecting a past datetime for new schedules.
+        self.fields["published_at"].widget.attrs["min"] = (
+            local_now.strftime("%Y-%m-%dT%H:%M:%S")
+        )
+
+        # Target fields are conditionally validated in clean().
+        self.fields["target_barangay"].required = False
+        self.fields["target_user"].required = False
+
+        # Populate barangay choices from active field records.
+        barangay_names = (
+            Field.objects.filter(
+                Q(barangay__isnull=False) & ~Q(barangay="")
+            )
+            .values_list("barangay", flat=True)
+            .distinct()
+            .order_by("barangay")
+        )
+
+        barangay_choices = [
+            ("", "-- Select Barangay --"),
+            *[(name, name) for name in barangay_names],
+        ]
+
+        self.fields["target_barangay"] = forms.ChoiceField(
             choices=barangay_choices,
             required=False,
-            widget=forms.Select(attrs={
-                'class': 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent',
-                'data-searchable': 'true',
-            }),
-            label='Select Barangay',
-            help_text='Only shown if "Specific Barangay" is selected above'
+            widget=forms.Select(
+                attrs={
+                    "class": (
+                        "w-full px-4 py-2 border border-gray-300 rounded-lg "
+                        "focus:ring-2 focus:ring-green-500 "
+                        "focus:border-transparent"
+                    ),
+                    "data-searchable": "true",
+                }
+            ),
+            label="Select Barangay",
+            help_text=(
+                'Only shown if "Specific Barangay" is selected above.'
+            ),
         )
-        
-        # Keep user selection with Profile queryset
-        self.fields['target_user'].queryset = Profile.objects.select_related('user').order_by('user__username')
-        
-        # Show username, role, and email in target user dropdown labels.
-        self.fields['target_user'].label_from_instance = lambda obj: (
-            f"{obj.user.username} ({obj.get_role_display()}) - {obj.user.email}"
-            if obj.user.email else f"{obj.user.username} ({obj.get_role_display()})"
-        )
-    
-    def clean(self):
-        """Validate announcement form data with timezone-aware datetime checks."""
-        cleaned_data = super().clean()
-        target_audience = cleaned_data.get('target_audience')
-        target_barangay = cleaned_data.get('target_barangay')
-        target_user = cleaned_data.get('target_user')
-        published_at = cleaned_data.get('published_at')
-        expires_at = cleaned_data.get('expires_at')
-        publish_timing = cleaned_data.get('publish_timing')
 
-        if publish_timing == 'immediate':
-            cleaned_data['published_at'] = None
+        # Populate user targets using Profile records.
+        self.fields["target_user"].queryset = (
+            Profile.objects.select_related("user")
+            .filter(user__is_active=True)
+            .order_by("user__username")
+        )
+
+        self.fields["target_user"].label_from_instance = (
+            lambda profile: (
+                f"{profile.user.username} "
+                f"({profile.get_role_display()}) - "
+                f"{profile.user.email}"
+                if profile.user.email
+                else (
+                    f"{profile.user.username} "
+                    f"({profile.get_role_display()})"
+                )
+            )
+        )
+
+    def clean(self):
+        """
+        Validate announcement targets, publishing mode, and expiration.
+
+        Immediate mode:
+            published_at becomes None in the form.
+            The view assigns timezone.now() when activated.
+
+        Scheduled mode:
+            published_at must be a valid future datetime.
+        """
+        from django.utils import timezone
+
+        cleaned_data = super().clean()
+
+        target_audience = cleaned_data.get("target_audience")
+        target_barangay = cleaned_data.get("target_barangay")
+        target_user = cleaned_data.get("target_user")
+
+        publish_timing = (
+            cleaned_data.get("publish_timing") or "immediate"
+        )
+
+        published_at = cleaned_data.get("published_at")
+        expires_at = cleaned_data.get("expires_at")
+
+        now = timezone.now()
+
+        # Validate and persist the selected publishing mode.
+        if publish_timing in {"immediate", "scheduled"}:
+            cleaned_data["publishing_mode"] = publish_timing
+
+        # Immediate publishing.
+        if publish_timing == "immediate":
+            cleaned_data["published_at"] = None
             published_at = None
-        elif publish_timing == 'scheduled' and not published_at:
-            self.add_error('published_at', 'Please set a publish date/time for scheduled announcements.')
-        
-        # Validate target fields based on audience selection
-        if target_audience == 'barangay' and not target_barangay:
-            self.add_error('target_barangay', 'Please select a barangay for this announcement.')
-        
-        if target_audience == 'user' and not target_user:
-            self.add_error('target_user', 'Please select a specific user for this announcement.')
-        
-        # BEST PRACTICE: Timezone-aware validation to prevent scheduling in the past
-        if published_at:
-            from django.utils import timezone
-            
-            # Get current time in the configured timezone (Asia/Manila)
-            now = timezone.now()
-            
-            # Ensure published_at is timezone-aware
-            if timezone.is_naive(published_at):
-                published_at = timezone.make_aware(published_at)
-                cleaned_data['published_at'] = published_at
-            
-            # Only validate for new announcements or if changing the publish date
-            if not self.instance.pk or (self.instance.pk and self.instance.published_at != published_at):
-                if published_at < now:
-                    time_diff = (now - published_at).total_seconds()
-                    if time_diff < 60:
-                        self.add_error('published_at', 'Cannot schedule announcement in the past. Please select current or future date/time.')
-                    elif time_diff < 3600:
-                        minutes = int(time_diff / 60)
-                        self.add_error('published_at', f'This time is {minutes} minute(s) in the past. Please select a future date/time.')
-                    else:
-                        hours = int(time_diff / 3600)
-                        self.add_error('published_at', f'This date is {hours} hour(s) in the past. Please select a future date/time.')
-        
-        # BEST PRACTICE: Expiration must be after publish date
+
+        # Scheduled publishing.
+        elif publish_timing == "scheduled":
+            if not published_at:
+                self.add_error(
+                    "published_at",
+                    (
+                        "Please set a publish date and time "
+                        "for scheduled announcements."
+                    ),
+                )
+            else:
+                if timezone.is_naive(published_at):
+                    published_at = timezone.make_aware(published_at)
+                    cleaned_data["published_at"] = published_at
+
+                original_published_at = (
+                    self.instance.published_at
+                    if self.instance.pk
+                    else None
+                )
+
+                is_unchanged_existing_datetime = (
+                    original_published_at is not None
+                    and original_published_at == published_at
+                )
+
+                if (
+                    not is_unchanged_existing_datetime
+                    and published_at <= now
+                ):
+                    self.add_error(
+                        "published_at",
+                        (
+                            "Scheduled publication must be in the future. "
+                            "Please select a later date and time."
+                        ),
+                    )
+
+        else:
+            self.add_error(
+                "publish_timing",
+                "Invalid publishing mode selected.",
+            )
+
+        # Validate target fields based on the selected audience.
+        if target_audience == "barangay" and not target_barangay:
+            self.add_error(
+                "target_barangay",
+                "Please select a barangay for this announcement.",
+            )
+
+        if target_audience == "user" and not target_user:
+            self.add_error(
+                "target_user",
+                "Please select a specific user for this announcement.",
+            )
+
+        # Make expiration timezone-aware if needed.
+        if expires_at and timezone.is_naive(expires_at):
+            expires_at = timezone.make_aware(expires_at)
+            cleaned_data["expires_at"] = expires_at
+
+        # Validate expiration against scheduled publication.
         if published_at and expires_at:
-            # Ensure expires_at is timezone-aware
-            if timezone.is_naive(expires_at):
-                expires_at = timezone.make_aware(expires_at)
-                cleaned_data['expires_at'] = expires_at
-            
             if expires_at <= published_at:
-                time_diff = (published_at - expires_at).total_seconds()
-                if time_diff < 3600:
-                    minutes = int(time_diff / 60)
-                    self.add_error('expires_at', f'Expiration must be after publish date (currently {minutes} minute(s) before publish).')
-                else:
-                    hours = int(time_diff / 3600)
-                    self.add_error('expires_at', f'Expiration must be after publish date (currently {hours} hour(s) before publish).')
-        
+                self.add_error(
+                    "expires_at",
+                    "Expiration must be after the publication date.",
+                )
+
+        # Immediate announcements must not already be expired.
+        if publish_timing == "immediate" and expires_at:
+            if expires_at <= now:
+                self.add_error(
+                    "expires_at",
+                    "Expiration must be in the future.",
+                )
+
         return cleaned_data
+
+    def save(self, commit=True):
+        """
+        Save the announcement and persist the selected publishing mode.
+
+        The view remains responsible for assigning the actual publication
+        timestamp for active immediate announcements.
+        """
+        instance = super().save(commit=False)
+
+        publish_timing = (
+            self.cleaned_data.get("publish_timing") or "immediate"
+        )
+
+        instance.publishing_mode = publish_timing
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+
+        return instance
 
 
 # ── Shared Tailwind CSS widget classes (used by RiceVarietyForm, SeasonLogForm, FarmActivityForm) ──
