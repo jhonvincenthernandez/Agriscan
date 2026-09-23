@@ -985,7 +985,7 @@ def _compute_ensemble_weights() -> tuple[float, float]:
     Compute weights for CNN and Linear Regression ensemble predictions.
     
     Weights are computed inversely proportional to validation MAE:
-    - Tagalog: Mas mababang MAE, mas mataas ang weight.
+    - Mas mababang MAE, mas mataas ang weight.
     - Linear model MAE from yield_report.json.
     - CNN model MAE from environment (YIELD_CNN_MAE_OVERRIDE) or default 0.25.
     
