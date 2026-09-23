@@ -212,7 +212,6 @@ class YieldPredictionForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={
                 "accept": "image/*",
-                "capture": "environment",
                 "class": "mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500",
                 "id": "id_canopy_image",
             }

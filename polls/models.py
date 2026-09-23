@@ -331,7 +331,6 @@ class Field(SoftDeleteModel, TimeStampedModel):
         ('irrigated', 'Irrigated'),
         ('rainfed_lowland', 'Rainfed Lowland'),
         ('upland', 'Upland'),
-        ('flood_prone', 'Flood Prone'),
         ('saline', 'Saline / Coastal'),
         ('other', 'Other'),
     ]
