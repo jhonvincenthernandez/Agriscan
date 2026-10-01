@@ -11,20 +11,7 @@
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
             <div class="min-w-0">
-                <div class="mb-2 flex items-center gap-2 text-sm font-medium text-indigo-600">
-                    <svg class="h-5 w-5 shrink-0"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
-                    </svg>
-
-                    <span>AgriScan+ Announcements</span>
-                </div>
+                
 
                 <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
                     Announcement Detail
@@ -32,7 +19,7 @@
             </div>
 
             <a href="{% url 'polls:announcements_list' %}"
-               class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
+               class="btn btn-secondary w-full sm:w-auto">
 
                 <svg class="h-4 w-4"
                      fill="none"
@@ -234,27 +221,7 @@
         <!-- Footer Actions -->
         <footer class="border-t border-gray-200 bg-gray-50 px-5 py-4 sm:px-8">
 
-            <div class="flex justify-start">
-
-                <!-- Back Button -->
-                <a href="{% url 'polls:announcements_list' %}"
-                   class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
-
-                    <svg class="h-5 w-5"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15 19l-7-7 7-7"/>
-                    </svg>
-
-                    Back to List
-                </a>
-
-            </div>
+            
         </footer>
 
     </article>

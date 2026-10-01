@@ -4,64 +4,25 @@
 {% block title %}Announcements - AgriScan+{% endblock %}
 
 {% block content %}
-<section class="page-container mx-auto w-full max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+<section class="page-container">
 
     <!-- ================================================================
          PAGE HEADER
     ================================================================= -->
-    <div class="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-        <div class="p-5 sm:p-6">
+    <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
 
-            <!-- Header Content -->
-            <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 
-                <!-- ====================================================
-                     TITLE + DESCRIPTION
-                ===================================================== -->
-                <div class="min-w-0 flex-1">
+            <!-- ========================================================
+                 TITLE + DESCRIPTION
+            ========================================================= -->
+            <div class="min-w-0 flex-1">
 
-                    <div class="flex min-w-0 items-center gap-3">
+                <div class="flex min-w-0 items-start gap-3">
 
-                        <!-- Icon -->
-                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
-                            <svg class="h-6 w-6"
-                                 fill="none"
-                                 stroke="currentColor"
-                                 viewBox="0 0 24 24"
-                                 aria-hidden="true">
-                                <path stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      stroke-width="2"
-                                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                            </svg>
-                        </div>
-
-                        <!-- Heading -->
-                        <div class="min-w-0">
-                            <h1 class="truncate text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
-                                Announcements & Advisories
-                            </h1>
-
-                            <!-- One-line description -->
-                            <p class="mt-1 truncate whitespace-nowrap text-sm leading-6 text-gray-500">
-                                Stay updated with important information and crop advisories.
-                            </p>
-                        </div>
-
-                    </div>
-                </div>
-
-
-                <!-- ====================================================
-                     HEADER ACTIONS — RIGHT SIDE
-                ===================================================== -->
-                <div class="flex shrink-0 flex-wrap items-center justify-start gap-2 lg:max-w-2xl lg:justify-end sm:gap-3">
-
-                    <!-- Read Status -->
-                    {% if unread_count > 0 %}
-
-                    <div class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
-                        <svg class="h-5 w-5 shrink-0 text-red-500"
+                    <!-- Page Icon -->
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 sm:h-11 sm:w-11">
+                        <svg class="h-5 w-5 sm:h-6 sm:w-6"
                              fill="none"
                              stroke="currentColor"
                              viewBox="0 0 24 24"
@@ -71,86 +32,127 @@
                                   stroke-width="2"
                                   d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                         </svg>
-
-                        <span class="whitespace-nowrap text-sm font-semibold text-red-700">
-                            {{ unread_count }} Unread
-                        </span>
                     </div>
 
-                    {% else %}
+                    <div class="min-w-0">
+                        <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+                            Announcements &amp; Advisories
+                        </h1>
 
-                    <div class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2">
-                        <svg class="h-5 w-5 shrink-0 text-indigo-600"
+                        <p class="mt-1 text-sm leading-6 text-gray-500">
+                            Stay updated with important information and crop advisories.
+                        </p>
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ========================================================
+                 HEADER ACTIONS
+            ========================================================= -->
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+
+                <!-- Read Status -->
+                {% if unread_count > 0 %}
+
+                <div class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
+
+                    <svg class="h-4 w-4 shrink-0 text-amber-600"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24"
+                         aria-hidden="true">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                    </svg>
+
+                    <span class="whitespace-nowrap text-sm font-semibold text-red-700">
+                        {{ unread_count }} Unread
+                    </span>
+
+                </div>
+
+                {% else %}
+
+                <div class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2">
+
+                    <svg class="h-4 w-4 shrink-0 text-green-700"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24"
+                         aria-hidden="true">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2.5"
+                              d="M5 13l4 4L19 7"/>
+                    </svg>
+
+                    <span class="whitespace-nowrap text-sm font-semibold text-green-700">
+                        All Read
+                    </span>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- Mark All as Read -->
+                {% if unread_count > 0 %}
+
+                <form method="post"
+                      action="{% url 'polls:announcements_list' %}"
+                      class="w-full sm:w-auto">
+
+                    {% csrf_token %}
+
+                    <input type="hidden"
+                           name="action"
+                           value="mark_all_read">
+
+                    <button type="submit"
+                            data-loading
+                            class="btn btn-secondary btn-sm w-full sm:w-auto">
+
+                        <svg class="h-4 w-4 shrink-0 text-green-700"
                              fill="none"
                              stroke="currentColor"
                              viewBox="0 0 24 24"
                              aria-hidden="true">
                             <path stroke-linecap="round"
                                   stroke-linejoin="round"
-                                  stroke-width="2"
+                                  stroke-width="2.5"
                                   d="M5 13l4 4L19 7"/>
                         </svg>
 
-                        <span class="whitespace-nowrap text-sm font-semibold text-indigo-700">
-                            All Read
+                        <span class="hidden sm:inline">
+                            Mark All as Read
                         </span>
-                    </div>
 
-                    {% endif %}
+                        <span class="sm:hidden">
+                            Mark All
+                        </span>
 
+                        <span class="inline-flex min-w-6 items-center justify-center rounded-md bg-red-50 px-1.5 py-0.5 text-xs font-bold text-green-700">
+                            {{ unread_count }}
+                        </span>
 
-                    <!-- Mark All as Read -->
-                    {% if unread_count > 0 %}
+                    </button>
 
-                    <form method="post"
-                          action="{% url 'polls:announcements_list' %}"
-                          class="shrink-0">
+                </form>
 
-                        {% csrf_token %}
-
-                        <input type="hidden"
-                               name="action"
-                               value="mark_all_read">
-
-                        <button type="submit"
-                                data-loading
-                                class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-
-                            <svg class="h-4 w-4 shrink-0 text-green-600"
-                                 fill="none"
-                                 stroke="currentColor"
-                                 viewBox="0 0 24 24"
-                                 aria-hidden="true">
-                                <path stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      stroke-width="2.5"
-                                      d="M5 13l4 4L19 7"/>
-                            </svg>
-
-                            <span class="hidden sm:inline whitespace-nowrap">
-                                Mark All as Read
-                            </span>
-
-                            <span class="sm:hidden">
-                                Mark All
-                            </span>
-
-                            <span class="inline-flex min-w-6 items-center justify-center rounded-full bg-red-100 px-1.5 py-0.5 text-xs font-bold text-red-700">
-                                {{ unread_count }}
-                            </span>
-
-                        </button>
-                    </form>
-
-                    {% endif %}
+                {% endif %}
 
 
-                    <!-- Create / Draft Actions -->
-                    {% if is_admin or is_technician %}
+                <!-- Administrative Actions -->
+                {% if is_admin or is_technician %}
 
                     <!-- Create Announcement -->
                     <a href="{% url 'polls:announcement_create' %}"
-                       class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                       class="btn btn-primary btn-sm w-full sm:w-auto">
 
                         <svg class="h-4 w-4 shrink-0"
                              fill="none"
@@ -163,7 +165,7 @@
                                   d="M12 4v16m8-8H4"/>
                         </svg>
 
-                        <span class="hidden sm:inline whitespace-nowrap">
+                        <span class="hidden sm:inline">
                             Create Announcement
                         </span>
 
@@ -178,9 +180,9 @@
                     {% if draft_count %}
 
                     <a href="?status=draft"
-                       class="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-2 text-sm font-semibold text-yellow-700 transition hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2">
+                       class="btn btn-secondary btn-sm w-full sm:w-auto">
 
-                        <svg class="h-4 w-4 shrink-0 text-yellow-600"
+                        <svg class="h-4 w-4 shrink-0 text-amber-600"
                              fill="none"
                              stroke="currentColor"
                              viewBox="0 0 24 24"
@@ -198,63 +200,216 @@
                     </a>
 
                     {% endif %}
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- ============================================================
+             SEARCH + FILTERS
+        ============================================================= -->
+        <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
+
+            <form method="get"
+                  id="ann-filter-form"
+                  class="space-y-4">
+
+                <!-- Search -->
+                <div class="flex flex-col gap-2 sm:flex-row">
+
+                    <div class="min-w-0 flex-1">
+
+                        <label for="ann-search-input"
+                               class="sr-only">
+                            Search announcements
+                        </label>
+
+                        <input type="search"
+                               name="search"
+                               id="ann-search-input"
+                               value="{{ current_search }}"
+                               placeholder="Search title, content, or author..."
+                               autocomplete="off"
+                               class="form-input w-full">
+
+                    </div>
+
+
+                    <!-- Preserve Current Sort -->
+                    <input type="hidden"
+                           name="sort"
+                           value="{{ request.GET.sort }}">
+
+
+                    <!-- Search -->
+                    <button type="submit"
+                            data-loading
+                            class="btn btn-primary w-full sm:w-auto">
+
+                        <svg class="h-4 w-4 shrink-0"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24"
+                             aria-hidden="true">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+
+                        Search
+
+                    </button>
+
+
+                    <!-- Clear -->
+                    {% if current_search or current_category or current_status %}
+
+                    <a href="{% url 'polls:announcements_list' %}"
+                       class="btn btn-secondary w-full sm:w-auto">
+
+                        <svg class="h-4 w-4 shrink-0"
+                             fill="none"
+                             stroke="currentColor"
+                             viewBox="0 0 24 24"
+                             aria-hidden="true">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+
+                        Clear
+
+                    </a>
+
                     {% endif %}
 
                 </div>
-            </div>
 
 
-            <!-- ========================================================
-                 SEARCH AND FILTERS
-            ========================================================= -->
-            <div class="mt-6 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                <!-- Filter Controls -->
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
-                <form method="get"
-                      id="ann-filter-form"
-                      class="space-y-4">
+                    <!-- Category -->
+                    <div>
 
-                    <!-- Search Input -->
-                    <div class="flex flex-col gap-2 sm:flex-row">
+                        <label for="ann-category"
+                               class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Category
+                        </label>
 
-                        <div class="relative min-w-0 flex-1">
+                        <select name="category"
+                                id="ann-category"
+                                onchange="this.form.submit()"
+                                class="form-select form-select-sm w-full">
 
-                            <label for="ann-search-input"
-                                   class="sr-only">
-                                Search announcements
-                            </label>
+                            <option value="">
+                                All Categories
+                            </option>
 
-                            <input type="search"
-                                   name="search"
-                                   id="ann-search-input"
-                                   value="{{ current_search }}"
-                                   placeholder="Search title, content, or author..."
-                                   autocomplete="off"
-                                   class="block min-h-11 w-full rounded-xl border border-gray-300 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 placeholder-gray-400 transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+                            {% for value, label in categories %}
 
-                        </div>
+                            <option value="{{ value }}"
+                                    {% if current_category == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
 
-                        <!-- Preserve Current Sort -->
-                        <input type="hidden"
-                               name="sort"
-                               value="{{ request.GET.sort }}">
+                            {% endfor %}
 
-                        <!-- Search -->
-                        <button type="submit"
-                                data-loading
-                                class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        </select>
 
-                           
-                            Search
+                    </div>
 
-                        </button>
 
-                        <!-- Clear -->
-                        {% if current_search or current_category or current_status %}
+                    <!-- Status -->
+                    <div>
 
-                        <a href="{% url 'polls:announcements_list' %}"
-                           class="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                        <label for="ann-status"
+                               class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Status
+                        </label>
 
-                            <svg class="h-4 w-4"
+                        <select name="status"
+                                id="ann-status"
+                                onchange="this.form.submit()"
+                                class="form-select form-select-sm w-full">
+
+                            <option value="">
+                                All
+                            </option>
+
+                            <option value="unread"
+                                    {% if current_status == 'unread' %}selected{% endif %}>
+                                Unread Only
+                            </option>
+
+                            <option value="read"
+                                    {% if current_status == 'read' %}selected{% endif %}>
+                                Read Only
+                            </option>
+
+                            {% if is_admin or is_technician %}
+
+                            <option value="active"
+                                    {% if current_status == 'active' %}selected{% endif %}>
+                                Active
+                            </option>
+
+                            <option value="draft"
+                                    {% if current_status == 'draft' %}selected{% endif %}>
+                                Draft
+                            </option>
+
+                            {% endif %}
+
+                        </select>
+
+                    </div>
+
+
+                    <!-- Page Size -->
+                    <div>
+
+                        <label for="ann-page-size"
+                               class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            Results per page
+                        </label>
+
+                        <select name="page_size"
+                                id="ann-page-size"
+                                onchange="this.form.submit()"
+                                class="form-select form-select-sm w-full">
+
+                            {% for size in allowed_page_sizes %}
+
+                            <option value="{{ size }}"
+                                    {% if page_size == size %}selected{% endif %}>
+                                {{ size }} per page
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Active Filters + Result Count -->
+                <div class="flex flex-col gap-3 border-t border-gray-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
+
+                    <div class="flex flex-wrap items-center gap-2">
+
+                        {% if current_search %}
+
+                        <span class="inline-flex max-w-full items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700">
+
+                            <svg class="h-3.5 w-3.5 shrink-0 text-gray-500"
                                  fill="none"
                                  stroke="currentColor"
                                  viewBox="0 0 24 24"
@@ -262,209 +417,83 @@
                                 <path stroke-linecap="round"
                                       stroke-linejoin="round"
                                       stroke-width="2"
-                                      d="M6 18L18 6M6 6l12 12"/>
+                                      d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
                             </svg>
 
-                            Clear
+                            <span class="break-all">
+                                "{{ current_search }}"
+                            </span>
 
-                        </a>
+                        </span>
+
+                        {% endif %}
+
+
+                        {% if current_category %}
+
+                        <span class="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600">
+                            Category: {{ current_category }}
+                        </span>
+
+                        {% endif %}
+
+
+                        {% if current_status %}
+
+                        <span class="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600">
+                            Status: {{ current_status|title }}
+                        </span>
 
                         {% endif %}
 
                     </div>
 
 
-                    <!-- Filter Controls -->
-                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <p class="shrink-0 text-xs font-medium text-gray-500">
+                        {{ announcements.paginator.count }}
+                        result{{ announcements.paginator.count|pluralize }}
+                        found
+                    </p>
 
-                        <!-- Category -->
-                        <div>
+                </div>
 
-                            <label for="ann-category"
-                                   class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Category
-                            </label>
-
-                            <select name="category"
-                                    id="ann-category"
-                                    onchange="this.form.submit()"
-                                    class="min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-
-                                <option value="">
-                                    All Categories
-                                </option>
-
-                                {% for value, label in categories %}
-
-                                <option value="{{ value }}"
-                                        {% if current_category == value %}selected{% endif %}>
-                                    {{ label }}
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- Status -->
-                        <div>
-
-                            <label for="ann-status"
-                                   class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Status
-                            </label>
-
-                            <select name="status"
-                                    id="ann-status"
-                                    onchange="this.form.submit()"
-                                    class="min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-
-                                <option value="">
-                                    All
-                                </option>
-
-                                <option value="unread"
-                                        {% if current_status == 'unread' %}selected{% endif %}>
-                                    Unread Only
-                                </option>
-
-                                <option value="read"
-                                        {% if current_status == 'read' %}selected{% endif %}>
-                                    Read Only
-                                </option>
-
-                                {% if is_admin or is_technician %}
-
-                                <option value="active"
-                                        {% if current_status == 'active' %}selected{% endif %}>
-                                    Active
-                                </option>
-
-                                <option value="draft"
-                                        {% if current_status == 'draft' %}selected{% endif %}>
-                                    Draft
-                                </option>
-
-                                {% endif %}
-
-                            </select>
-
-                        </div>
-
-
-                        <!-- Page Size -->
-                        <div>
-
-                            <label for="ann-page-size"
-                                   class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Results per page
-                            </label>
-
-                            <select name="page_size"
-                                    id="ann-page-size"
-                                    onchange="this.form.submit()"
-                                    class="min-h-11 w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 transition focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-
-                                {% for size in allowed_page_sizes %}
-
-                                <option value="{{ size }}"
-                                        {% if page_size == size %}selected{% endif %}>
-                                    {{ size }} per page
-                                </option>
-
-                                {% endfor %}
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- Active Filters -->
-                    <div class="flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 pt-3">
-
-                        <div class="flex flex-wrap items-center gap-2">
-
-                            {% if current_search %}
-
-                            <span class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700">
-
-                                <svg class="h-3.5 w-3.5 shrink-0"
-                                     fill="none"
-                                     stroke="currentColor"
-                                     viewBox="0 0 24 24"
-                                     aria-hidden="true">
-                                    <path stroke-linecap="round"
-                                          stroke-linejoin="round"
-                                          stroke-width="2"
-                                          d="M21 21l-6-6m2-5a7 7 0 11-14 0v0"/>
-                                </svg>
-
-                                <span class="break-all">
-                                    "{{ current_search }}"
-                                </span>
-
-                            </span>
-
-                            {% endif %}
-
-
-                            {% if current_category %}
-
-                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600">
-                                Category: {{ current_category }}
-                            </span>
-
-                            {% endif %}
-
-
-                            {% if current_status %}
-
-                            <span class="inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600">
-                                Status: {{ current_status|title }}
-                            </span>
-
-                            {% endif %}
-
-                        </div>
-
-
-                        <p class="text-xs font-medium text-gray-500">
-                            {{ announcements.paginator.count }}
-                            result{{ announcements.paginator.count|pluralize }}
-                            found
-                        </p>
-
-                    </div>
-
-                </form>
-
-            </div>
+            </form>
 
         </div>
+
     </div>
 
 
     <!-- ================================================================
-         STATISTICS
+         SUMMARY
     ================================================================= -->
-    <div class="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
 
         <!-- Unread -->
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+        <div class="agri-card p-4 sm:p-5">
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center justify-between gap-4">
 
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+                <div class="min-w-0">
 
-                    <svg class="h-6 w-6"
+                    <p class="text-sm font-medium text-gray-500">
+                        Unread
+                    </p>
+
+                    <p class="mt-1 text-2xl font-semibold tracking-tight text-gray-900"
+                       data-stat="unread">
+                        {{ unread_count }}
+                    </p>
+
+                </div>
+
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-50 text-green-700"
+                     aria-hidden="true">
+
+                    <svg class="h-5 w-5"
                          fill="none"
                          stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
+                         viewBox="0 0 24 24">
                         <path stroke-linecap="round"
                               stroke-linejoin="round"
                               stroke-width="2"
@@ -473,43 +502,15 @@
 
                 </div>
 
-                <div class="min-w-0">
-
-                    <p class="text-sm font-medium text-gray-500">
-                        Unread
-                    </p>
-
-                    <p class="mt-1 text-2xl font-bold text-gray-900"
-                       data-stat="unread">
-                        {{ unread_count }}
-                    </p>
-
-                </div>
-
             </div>
 
         </div>
 
 
-        <!-- Total -->
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+        <!-- Total Results -->
+        <div class="agri-card p-4 sm:p-5">
 
-            <div class="flex items-center gap-4">
-
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-600">
-
-                    <svg class="h-6 w-6"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-
-                </div>
+            <div class="flex items-center justify-between gap-4">
 
                 <div class="min-w-0">
 
@@ -517,9 +518,24 @@
                         Total Results
                     </p>
 
-                    <p class="mt-1 text-2xl font-bold text-gray-900">
+                    <p class="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
                         {{ announcements.paginator.count }}
                     </p>
+
+                </div>
+
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-50 text-green-700"
+                     aria-hidden="true">
+
+                    <svg class="h-5 w-5"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
 
                 </div>
 
@@ -529,24 +545,9 @@
 
 
         <!-- Current Page -->
-        <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+        <div class="agri-card p-4 sm:p-5">
 
-            <div class="flex items-center gap-4">
-
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-600">
-
-                    <svg class="h-6 w-6"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-
-                </div>
+            <div class="flex items-center justify-between gap-4">
 
                 <div class="min-w-0">
 
@@ -554,9 +555,24 @@
                         This Page
                     </p>
 
-                    <p class="mt-1 text-2xl font-bold text-gray-900">
+                    <p class="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
                         {{ announcements|length }}
                     </p>
+
+                </div>
+
+                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-600"
+                     aria-hidden="true">
+
+                    <svg class="h-5 w-5"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
 
                 </div>
 
@@ -579,50 +595,96 @@
                 {% with is_read=announcement.is_read %}
 
                 <article id="announcement-{{ announcement.pk }}"
-                         class="overflow-hidden rounded-2xl border shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md
+                         class="overflow-hidden rounded-lg border shadow-sm transition-shadow duration-200
                          {% if not is_read %}
-                             border-blue-200 bg-blue-50/60 ring-1 ring-blue-100
+                             border-green-200 bg-green-50/60 ring-1 ring-green-100
                          {% else %}
                              border-gray-200 bg-white
                          {% endif %}">
 
-                    <div class="p-4 sm:p-6">
+                    <div class="p-4 sm:p-5 lg:p-6">
 
                         <div class="flex items-start gap-3 sm:gap-4">
 
-                            <!-- Priority Indicator -->
+                            <!-- ====================================================
+                                 PRIORITY INDICATOR
+                            ===================================================== -->
                             <div class="shrink-0">
 
                                 {% if announcement.priority == 'urgent' %}
 
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-red-100 text-2xl"
+                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 sm:h-11 sm:w-11"
                                      title="Urgent priority"
                                      aria-label="Urgent priority">
-                                    📕
+
+                                    <svg class="h-5 w-5"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         viewBox="0 0 24 24"
+                                         aria-hidden="true">
+                                        <path stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M12 9v4m0 4h.01M10.29 3.86L2.82 17a2 2 0 001.74 3h14.88a2 2 0 001.74-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                    </svg>
+
                                 </div>
 
                                 {% elif announcement.priority == 'warning' %}
 
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-yellow-100 text-2xl"
+                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 sm:h-11 sm:w-11"
                                      title="Warning priority"
                                      aria-label="Warning priority">
-                                    📙
+
+                                    <svg class="h-5 w-5"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         viewBox="0 0 24 24"
+                                         aria-hidden="true">
+                                        <path stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M12 9v4m0 4h.01M10.29 3.86L2.82 17a2 2 0 001.74 3h14.88a2 2 0 001.74-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                    </svg>
+
                                 </div>
 
                                 {% elif announcement.priority == 'advisory' %}
 
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-green-100 text-2xl"
+                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700 sm:h-11 sm:w-11"
                                      title="Advisory priority"
                                      aria-label="Advisory priority">
-                                    📗
+
+                                    <svg class="h-5 w-5"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         viewBox="0 0 24 24"
+                                         aria-hidden="true">
+                                        <path stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+
                                 </div>
 
                                 {% else %}
 
-                                <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-2xl"
+                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 sm:h-11 sm:w-11"
                                      title="Information priority"
                                      aria-label="Information priority">
-                                    📘
+
+                                    <svg class="h-5 w-5"
+                                         fill="none"
+                                         stroke="currentColor"
+                                         viewBox="0 0 24 24"
+                                         aria-hidden="true">
+                                        <path stroke-linecap="round"
+                                              stroke-linejoin="round"
+                                              stroke-width="2"
+                                              d="M13 16h-1v-4h-1m1-4h.01M12 21a9 9 0 100-18 9 9 0 000 18z"/>
+                                    </svg>
+
                                 </div>
 
                                 {% endif %}
@@ -630,7 +692,9 @@
                             </div>
 
 
-                            <!-- Announcement Content -->
+                            <!-- ====================================================
+                                 ANNOUNCEMENT CONTENT
+                            ===================================================== -->
                             <div class="min-w-0 flex-1">
 
                                 <!-- Title + Date -->
@@ -649,9 +713,7 @@
 
                                     <time datetime="{{ announcement.published_at|date:'c' }}"
                                           class="shrink-0 text-xs font-medium text-gray-500 sm:ml-4 sm:text-sm">
-
                                         {{ announcement.published_at|date:"M d, Y · g:i A" }}
-
                                     </time>
 
                                     {% endif %}
@@ -659,68 +721,78 @@
                                 </div>
 
 
-                                <!-- Badges -->
+                                <!-- ==================================================
+                                     STATUS / CATEGORY
+                                =================================================== -->
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
 
-                                    <span class="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                                    <!-- Category -->
+                                    <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700">
                                         {{ announcement.get_category_display }}
                                     </span>
 
-                                    <span class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
+
+                                    <!-- Priority -->
+                                    <span class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold
                                         {% if announcement.priority == 'urgent' %}
-                                            bg-red-100 text-red-800
+                                            border-red-200 bg-red-50 text-red-700
                                         {% elif announcement.priority == 'warning' %}
-                                            bg-yellow-100 text-yellow-800
+                                            border-amber-200 bg-amber-50 text-amber-700
                                         {% elif announcement.priority == 'advisory' %}
-                                            bg-green-100 text-green-800
+                                            border-green-200 bg-green-50 text-green-700
                                         {% else %}
-                                            bg-blue-100 text-blue-800
+                                            border-blue-200 bg-blue-50 text-blue-700
                                         {% endif %}">
                                         {{ announcement.get_priority_display }}
                                     </span>
 
+
+                                    <!-- Administrative Status -->
                                     {% if is_admin or is_technician %}
 
                                         {% if announcement.is_active %}
 
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                                            <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                        <span class="inline-flex items-center gap-1.5 rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+
+                                            <span class="h-1.5 w-1.5 rounded-full bg-green-600"
+                                                  aria-hidden="true"></span>
+
                                             Active
+
                                         </span>
 
                                         {% else %}
 
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                                            <span class="h-1.5 w-1.5 rounded-full bg-yellow-500"></span>
+                                        <span class="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+
+                                            <span class="h-1.5 w-1.5 rounded-full bg-amber-600"
+                                                  aria-hidden="true"></span>
+
                                             Draft
+
                                         </span>
 
                                         {% endif %}
 
                                     {% endif %}
 
-
-                                    {% if not is_read %}
-
-                                    <span class="inline-flex items-center rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-700">
-                                        New
-                                    </span>
-
-                                    {% endif %}
-
                                 </div>
 
 
-                                <!-- Preview -->
+                                <!-- ==================================================
+                                     PREVIEW
+                                =================================================== -->
                                 <div class="mt-3 text-sm leading-6 text-gray-600 sm:text-base">
                                     {{ announcement.content|truncatewords:30|safe }}
                                 </div>
 
 
-                                <!-- Actions -->
-                                <div class="mt-5 flex flex-col gap-3 border-t border-gray-200/80 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                                <!-- ==================================================
+                                     ACTIONS
+                                =================================================== -->
+                                <div class="mt-5 flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
 
-                                    <!-- Read Link -->
+                                    <!-- Read -->
                                     <div>
 
                                         <a href="{% url 'polls:announcement_detail' announcement.pk %}"
@@ -729,7 +801,7 @@
                                            data-mark-read-url="{% url 'polls:announcement_mark_read' announcement.pk %}"
                                            onclick="handleReadClick(event, this)"
                                            {% endif %}
-                                           class="inline-flex items-center gap-1 text-sm font-semibold text-green-600 transition hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                                           class="inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-green-700 transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
 
                                             Read Full Announcement
 
@@ -752,23 +824,13 @@
                                     <!-- Management Actions -->
                                     {% if is_admin or is_technician %}
 
-                                    <div class="flex flex-wrap items-center gap-2">
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
 
                                         <!-- Edit -->
                                         <a href="{% url 'polls:announcement_edit' announcement.pk %}"
-                                           class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-blue-200 bg-white px-3 py-1.5 text-sm font-medium text-blue-600 transition hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                                           class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100">
 
-                                            <svg class="h-4 w-4"
-                                                 fill="none"
-                                                 stroke="currentColor"
-                                                 viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path stroke-linecap="round"
-                                                      stroke-linejoin="round"
-                                                      stroke-width="2"
-                                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                            </svg>
-
+                                            
                                             Edit
 
                                         </a>
@@ -781,20 +843,11 @@
                                            data-open-delete="true"
                                            data-delete-label="{{ announcement.title }}"
                                            data-delete-subtitle="{{ announcement.get_priority_display }} · {{ announcement.get_category_display }}"
-                                           class="inline-flex min-h-9 items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                                           class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100">
 
-                                            <svg class="h-4 w-4"
-                                                 fill="none"
-                                                 stroke="currentColor"
-                                                 viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path stroke-linecap="round"
-                                                      stroke-linejoin="round"
-                                                      stroke-width="2"
-                                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
+                                            
 
-                                            Delete
+                                            Archive
 
                                         </a>
 
@@ -819,7 +872,9 @@
             {% endfor %}
 
 
-            <!-- Pagination -->
+            <!-- ============================================================
+                 PAGINATION
+            ============================================================= -->
             {% if page_obj and is_paginated %}
                 {% include 'partials/_pagination.html' %}
             {% endif %}
@@ -827,14 +882,14 @@
 
         {% else %}
 
-            <!-- ========================================================
+            <!-- ============================================================
                  EMPTY STATE
-            ========================================================= -->
-            <div class="rounded-2xl border border-gray-200 bg-white px-5 py-14 text-center shadow-sm sm:px-8">
+            ============================================================= -->
+            <div class="agri-card px-5 py-12 text-center sm:px-8 sm:py-14">
 
-                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
 
-                    <svg class="h-8 w-8"
+                    <svg class="h-7 w-7"
                          fill="none"
                          stroke="currentColor"
                          viewBox="0 0 24 24"
@@ -847,7 +902,7 @@
 
                 </div>
 
-                <h2 class="mt-5 text-xl font-bold text-gray-900">
+                <h2 class="mt-4 text-xl font-semibold tracking-tight text-gray-900">
                     No announcements found
                 </h2>
 
@@ -870,7 +925,7 @@
                 {% if current_search or current_category or current_status %}
 
                 <a href="{% url 'polls:announcements_list' %}"
-                   class="mt-5 inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                   class="btn btn-secondary btn-sm mt-5">
 
                     Clear Filters
 
@@ -1045,11 +1100,15 @@
 
             if (card) {
 
+                /*
+                 * Remove ONLY the persistent unread
+                 * AgriScan+ green indicator.
+                 */
                 card.classList.remove(
-                    'bg-blue-50/60',
-                    'border-blue-200',
+                    'bg-green-50/60',
+                    'border-green-200',
                     'ring-1',
-                    'ring-blue-100'
+                    'ring-green-100'
                 );
 
                 card.classList.add(
@@ -1057,6 +1116,10 @@
                     'border-gray-200'
                 );
 
+
+                /*
+                 * Update title emphasis.
+                 */
                 const title = card.querySelector('h2');
 
                 if (title) {
@@ -1070,15 +1133,7 @@
                         'font-semibold',
                         'text-gray-800'
                     );
-                }
 
-                const newBadge = card.querySelector('.bg-indigo-100');
-
-                if (
-                    newBadge &&
-                    newBadge.textContent.trim() === 'New'
-                ) {
-                    newBadge.remove();
                 }
 
             }

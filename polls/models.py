@@ -336,7 +336,7 @@ class Field(SoftDeleteModel, TimeStampedModel):
     ]
 
     # Field ownership and identification
-    owner = models.ForeignKey(Profile, on_delete=models.PROTECT, related_name="fields")
+    owner = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name="fields")
     name = models.CharField(max_length=100)
 
     # Location details
@@ -1080,7 +1080,7 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
         ('cancelled', 'Cancelled'),
     ]
 
-    field = models.ForeignKey(Field, on_delete=models.PROTECT, related_name="plantings")
+    field = models.ForeignKey(Field, on_delete=models.CASCADE, related_name="plantings")
     variety = models.ForeignKey(RiceVariety, on_delete=models.PROTECT, null=True, blank=True, related_name="plantings")
 
     # Core planting fields
@@ -1344,7 +1344,7 @@ class HarvestRecord(SoftDeleteModel):
 
     planting = models.OneToOneField(
         'PlantingRecord',
-        on_delete=models.PROTECT,
+        on_delete=models.CASCADE,
         related_name='harvest_record'
     )
     harvest_date = models.DateField()

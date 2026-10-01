@@ -2,13 +2,20 @@
 <html lang="en" class="h-full bg-gray-50">
   <head>
     <meta charset="UTF-8" />
+
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
+
     <meta
       name="theme-color"
       content="#ffffff"
+    />
+
+    <meta
+      name="color-scheme"
+      content="light"
     />
 
     <title>{% block title %}AgriScan+{% endblock %}</title>
@@ -16,6 +23,10 @@
     {% block head_meta %}{% endblock %}
 
     {% load static %}
+
+    <!-- ==========================================================
+         GLOBAL STYLES
+         ========================================================== -->
 
     <link
       rel="stylesheet"
@@ -39,7 +50,207 @@
     {% block extra_styles %}
     <style>
       /* ============================================================
-         GLOBAL BUTTONS
+         AGRISCAN+ GLOBAL DESIGN TOKENS
+         ============================================================ */
+
+      :root {
+        --agri-primary: #15803d;
+        --agri-primary-hover: #166534;
+        --agri-primary-active: #14532d;
+        --agri-primary-soft: #f0fdf4;
+        --agri-primary-soft-border: #bbf7d0;
+
+        --agri-text: #1f2937;
+        --agri-text-strong: #111827;
+        --agri-text-muted: #6b7280;
+        --agri-text-subtle: #9ca3af;
+
+        --agri-surface: #ffffff;
+        --agri-surface-soft: #f8fafc;
+        --agri-surface-muted: #f1f5f9;
+
+        --agri-border: #e5e7eb;
+        --agri-border-strong: #d1d5db;
+
+        --agri-success: #15803d;
+        --agri-success-soft: #f0fdf4;
+        --agri-success-border: #bbf7d0;
+
+        --agri-warning: #b45309;
+        --agri-warning-soft: #fffbeb;
+        --agri-warning-border: #fde68a;
+
+        --agri-danger: #dc2626;
+        --agri-danger-soft: #fef2f2;
+        --agri-danger-border: #fecaca;
+
+        --agri-info: #0369a1;
+        --agri-info-soft: #f0f9ff;
+        --agri-info-border: #bae6fd;
+
+        --agri-focus: rgba(22, 101, 52, 0.22);
+
+        --agri-radius-sm: 0.375rem;
+        --agri-radius-md: 0.5rem;
+        --agri-radius-lg: 0.75rem;
+        --agri-radius-xl: 1rem;
+
+        --agri-shadow-sm:
+          0 1px 2px rgba(15, 23, 42, 0.05);
+
+        --agri-shadow-md:
+          0 4px 12px rgba(15, 23, 42, 0.07);
+
+        --agri-shadow-lg:
+          0 10px 24px rgba(15, 23, 42, 0.08);
+
+        --agri-transition-fast:
+          150ms ease;
+
+        --agri-transition:
+          200ms ease;
+      }
+
+      /* ============================================================
+         DOCUMENT FOUNDATION
+         ============================================================ */
+
+      html {
+        min-height: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+        text-size-adjust: 100%;
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        min-height: 100%;
+        max-width: 100%;
+        margin: 0;
+        overflow-x: hidden;
+        background: #f8fafc;
+        color: var(--agri-text);
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      img,
+      svg,
+      video,
+      canvas,
+      iframe {
+        max-width: 100%;
+      }
+
+      img {
+        height: auto;
+      }
+
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      button {
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* ============================================================
+         TYPOGRAPHY
+         ============================================================ */
+
+      :where(h1, h2, h3, h4, h5, h6) {
+        margin-top: 0;
+        color: var(--agri-text-strong);
+        font-weight: 650;
+        letter-spacing: -0.015em;
+      }
+
+      :where(h1) {
+        font-size: 1.5rem;
+        line-height: 2rem;
+      }
+
+      :where(h2) {
+        font-size: 1.25rem;
+        line-height: 1.75rem;
+      }
+
+      :where(h3) {
+        font-size: 1.125rem;
+        line-height: 1.625rem;
+      }
+
+      :where(h4) {
+        font-size: 1rem;
+        line-height: 1.5rem;
+      }
+
+      :where(p) {
+        margin-top: 0;
+      }
+
+      :where(small) {
+        font-size: 0.8125rem;
+      }
+
+      :where(a) {
+        color: inherit;
+        text-decoration-thickness: 1px;
+        text-underline-offset: 2px;
+      }
+
+      :where(a:not([class])) {
+        color: var(--agri-primary);
+      }
+
+      :where(a:not([class])):hover {
+        color: var(--agri-primary-hover);
+      }
+
+      /* ============================================================
+         GLOBAL FOCUS / ACCESSIBILITY
+         ============================================================ */
+
+      :where(
+        input,
+        textarea,
+        select,
+        button,
+        a,
+        [tabindex]
+      ):focus-visible {
+        outline: 2px solid var(--agri-focus);
+        outline-offset: 2px;
+      }
+
+      :where(button, a, input, select, textarea) {
+        touch-action: manipulation;
+      }
+
+      :where(button:disabled, input:disabled, select:disabled, textarea:disabled) {
+        cursor: not-allowed;
+      }
+
+      /* ============================================================
+         GLOBAL BUTTON SYSTEM
          ============================================================ */
 
       .btn {
@@ -47,80 +258,580 @@
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        border-radius: 0.375rem;
-        padding: 0.45rem 0.85rem;
-        font-weight: 500;
+
+        min-height: 2.5rem;
+        padding: 0.5625rem 0.875rem;
+
+        border: 1px solid transparent;
+        border-radius: var(--agri-radius-md);
+
         font-size: 0.875rem;
+        font-weight: 600;
         line-height: 1.25rem;
+
+        text-align: center;
+        text-decoration: none;
+        white-space: nowrap;
+
+        cursor: pointer;
+
         transition:
-          background-color 150ms ease,
-          border-color 150ms ease,
-          color 150ms ease,
-          box-shadow 150ms ease,
-          transform 150ms ease;
+          background-color var(--agri-transition-fast),
+          border-color var(--agri-transition-fast),
+          color var(--agri-transition-fast),
+          box-shadow var(--agri-transition-fast),
+          transform var(--agri-transition-fast);
+      }
+
+      .btn:hover {
+        text-decoration: none;
+      }
+
+      .btn:active {
+        transform: translateY(1px);
       }
 
       .btn-primary {
-        background: linear-gradient(to right, #3b82f6, #2563eb);
-        color: #fff;
-        border: none;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        color: #ffffff;
+        background: var(--agri-primary);
+        border-color: var(--agri-primary);
+        box-shadow: var(--agri-shadow-sm);
       }
 
       .btn-primary:hover {
-        background: linear-gradient(to right, #2563eb, #1d4ed8);
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        color: #ffffff;
+        background: var(--agri-primary-hover);
+        border-color: var(--agri-primary-hover);
+        box-shadow: var(--agri-shadow-md);
+      }
+
+      .btn-primary:active {
+        background: var(--agri-primary-active);
+        border-color: var(--agri-primary-active);
       }
 
       .btn-secondary {
-        background: #fff;
         color: #374151;
-        border: 1px solid #d1d5db;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+        border-color: var(--agri-border-strong);
+        box-shadow: var(--agri-shadow-sm);
       }
 
       .btn-secondary:hover {
+        color: #111827;
         background: #f9fafb;
         border-color: #9ca3af;
       }
 
       .btn-danger {
-        background: linear-gradient(to right, #ef4444, #dc2626);
-        color: #fff;
-        border: none;
-        box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.2);
+        color: #ffffff;
+        background: var(--agri-danger);
+        border-color: var(--agri-danger);
+        box-shadow: var(--agri-shadow-sm);
       }
 
       .btn-danger:hover {
-        background: linear-gradient(to right, #dc2626, #b91c1c);
-        box-shadow: 0 20px 25px -5px rgba(239, 68, 68, 0.3);
+        color: #ffffff;
+        background: #b91c1c;
+        border-color: #b91c1c;
+        box-shadow: var(--agri-shadow-md);
+      }
+
+      .btn-success {
+        color: #ffffff;
+        background: var(--agri-success);
+        border-color: var(--agri-success);
+      }
+
+      .btn-success:hover {
+        color: #ffffff;
+        background: var(--agri-primary-hover);
+        border-color: var(--agri-primary-hover);
       }
 
       .btn-sm {
-        padding: 0.3rem 0.5rem;
-        font-size: 0.8rem;
+        min-height: 2.25rem;
+        padding: 0.4375rem 0.6875rem;
+        font-size: 0.8125rem;
       }
 
-      .btn:focus {
-        outline: none;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      .btn-lg {
+        min-height: 2.75rem;
+        padding: 0.6875rem 1rem;
+        font-size: 0.9375rem;
+      }
+
+      .btn-block {
+        width: 100%;
+      }
+
+      .btn:disabled,
+      .btn[aria-disabled="true"] {
+        opacity: 0.6;
+        cursor: not-allowed;
+        box-shadow: none;
+        transform: none;
       }
 
       /* ============================================================
-         ACCESSIBILITY / FOCUS
+         GLOBAL FORM FOUNDATION
+
+         :where() intentionally keeps specificity very low so
+         Tailwind utility classes in existing templates can still
+         override these defaults.
          ============================================================ */
 
-      input:focus-visible,
-      textarea:focus-visible,
-      select:focus-visible {
-        outline: 2px solid rgba(59, 130, 246, 0.15);
-        outline-offset: 2px;
+      :where(
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        input[type="datetime-local"],
+        input[type="month"],
+        input[type="time"],
+        input[type="week"],
+        input[type="url"],
+        input[type="tel"],
+        input[type="search"],
+        input[type="file"],
+        input:not([type]),
+        textarea,
+        select
+      ) {
+        width: 100%;
+        max-width: 100%;
+        min-height: 2.75rem;
+
+        color: var(--agri-text);
+        background-color: #ffffff;
+
+        border: 1px solid var(--agri-border-strong);
+        border-radius: var(--agri-radius-md);
+
+        padding: 0.625rem 0.75rem;
+
+        font-size: 1rem;
+        line-height: 1.5;
+
+        transition:
+          border-color var(--agri-transition-fast),
+          box-shadow var(--agri-transition-fast),
+          background-color var(--agri-transition-fast);
       }
 
-      button:focus-visible,
-      a:focus-visible {
-        outline: 2px solid rgba(59, 130, 246, 0.35);
-        outline-offset: 2px;
+      :where(
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        input[type="datetime-local"],
+        input[type="month"],
+        input[type="time"],
+        input[type="week"],
+        input[type="url"],
+        input[type="tel"],
+        input[type="search"],
+        input:not([type]),
+        textarea,
+        select
+      ):hover:not(:disabled):not([readonly]) {
+        border-color: #9ca3af;
+      }
+
+      :where(
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        input[type="datetime-local"],
+        input[type="month"],
+        input[type="time"],
+        input[type="week"],
+        input[type="url"],
+        input[type="tel"],
+        input[type="search"],
+        input:not([type]),
+        textarea,
+        select
+      ):focus {
+        outline: none;
+        border-color: var(--agri-primary);
+        box-shadow: 0 0 0 3px var(--agri-focus);
+      }
+
+      :where(
+        input,
+        textarea,
+        select
+      )::placeholder {
+        color: #9ca3af;
+        opacity: 1;
+      }
+
+      :where(
+        input:disabled,
+        textarea:disabled,
+        select:disabled
+      ) {
+        color: #9ca3af;
+        background-color: #f3f4f6;
+        cursor: not-allowed;
+      }
+
+      :where(
+        input[readonly],
+        textarea[readonly]
+      ) {
+        background-color: #f8fafc;
+      }
+
+      /* ============================================================
+         SHARED FORM CLASSES
+
+         These are the preferred classes for templates going forward.
+         ============================================================ */
+
+      .form-input,
+      .form-textarea,
+      .form-select {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .form-textarea {
+        min-height: 7rem;
+        resize: vertical;
+      }
+
+      /* ============================================================
+         SELECT SYSTEM
+         ============================================================ */
+
+      :where(select),
+      .form-select {
+        appearance: none;
+        -webkit-appearance: none;
+
+        padding-top: 0.625rem;
+        padding-right: 2.5rem;
+        padding-bottom: 0.625rem;
+        padding-left: 0.75rem;
+
+        background-color: #ffffff;
+
+        background-image:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+
+        background-repeat: no-repeat;
+        background-position: right 0.65rem center;
+        background-size: 1.15rem 1.15rem;
+
+        cursor: pointer;
+      }
+
+      :where(select):disabled,
+      .form-select:disabled {
+        cursor: not-allowed;
+        background-image:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+      }
+
+      .form-select-sm {
+        min-height: 2.5rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        font-size: 0.875rem;
+        background-size: 1rem 1rem;
+      }
+
+      .form-select-lg {
+        min-height: 2.875rem;
+        padding-top: 0.6875rem;
+        padding-bottom: 0.6875rem;
+        font-size: 0.9375rem;
+      }
+
+      /* ============================================================
+         CHECKBOX / RADIO
+         ============================================================ */
+
+      :where(
+        input[type="checkbox"],
+        input[type="radio"]
+      ) {
+        appearance: none;
+        -webkit-appearance: none;
+
+        width: 1.125rem;
+        height: 1.125rem;
+
+        flex: 0 0 auto;
+
+        padding: 0;
+        margin: 0;
+
+        background-color: #ffffff;
+        border: 1px solid var(--agri-border-strong);
+
+        cursor: pointer;
+
+        transition:
+          background-color var(--agri-transition-fast),
+          border-color var(--agri-transition-fast),
+          box-shadow var(--agri-transition-fast);
+      }
+
+      :where(input[type="checkbox"]) {
+        border-radius: 0.3rem;
+      }
+
+      :where(input[type="radio"]) {
+        border-radius: 9999px;
+      }
+
+      :where(
+        input[type="checkbox"],
+        input[type="radio"]
+      ):hover:not(:disabled) {
+        border-color: #9ca3af;
+      }
+
+      :where(
+        input[type="checkbox"],
+        input[type="radio"]
+      ):focus {
+        outline: none;
+        border-color: var(--agri-primary);
+        box-shadow: 0 0 0 3px var(--agri-focus);
+      }
+
+      :where(input[type="checkbox"]):checked {
+        background-color: var(--agri-primary);
+        border-color: var(--agri-primary);
+
+        background-image:
+          url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 0.8rem 0.8rem;
+      }
+
+      :where(input[type="radio"]):checked {
+        border-color: var(--agri-primary);
+
+        background-image:
+          radial-gradient(
+            circle,
+            var(--agri-primary) 0 40%,
+            transparent 43%
+          );
+      }
+
+      /* ============================================================
+         FILE INPUT
+         ============================================================ */
+
+      :where(input[type="file"]) {
+        min-height: 2.75rem;
+        padding: 0.35rem;
+        cursor: pointer;
+      }
+
+      :where(input[type="file"])::file-selector-button {
+        margin-right: 0.75rem;
+        padding: 0.45rem 0.75rem;
+
+        color: #374151;
+        background: #f8fafc;
+
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+
+        font-size: 0.8125rem;
+        font-weight: 600;
+
+        cursor: pointer;
+
+        transition:
+          background-color var(--agri-transition-fast),
+          border-color var(--agri-transition-fast);
+      }
+
+      :where(input[type="file"])::file-selector-button:hover {
+        background: #f1f5f9;
+        border-color: #9ca3af;
+      }
+
+      /* ============================================================
+         VALIDATION STATES
+         ============================================================ */
+
+      :where(
+        input[aria-invalid="true"],
+        textarea[aria-invalid="true"],
+        select[aria-invalid="true"]
+      ) {
+        border-color: var(--agri-danger);
+      }
+
+      :where(
+        input[aria-invalid="true"],
+        textarea[aria-invalid="true"],
+        select[aria-invalid="true"]
+      ):focus {
+        border-color: var(--agri-danger);
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+      }
+
+      .form-error,
+      [id^="error-"] {
+        color: var(--agri-danger);
+        font-size: 0.8125rem;
+        line-height: 1.35;
+      }
+
+      .form-help,
+      [id^="help-"] {
+        color: var(--agri-text-muted);
+        font-size: 0.8125rem;
+        line-height: 1.4;
+      }
+
+      /* ============================================================
+         LABELS
+         ============================================================ */
+
+      :where(label) {
+        color: var(--agri-text-strong);
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      /* ============================================================
+         PAGE CONTAINER
+         ============================================================ */
+
+      .page-container {
+        width: 100%;
+        max-width: 1600px;
+
+        margin-left: auto;
+        margin-right: auto;
+
+        padding-top: 1.5rem;
+        padding-right: 1rem;
+        padding-bottom: 2rem;
+        padding-left: 1rem;
+      }
+
+      /* ============================================================
+         SHARED SURFACE / CARD HELPERS
+         ============================================================ */
+
+      .agri-card {
+        background: var(--agri-surface);
+        border: 1px solid var(--agri-border);
+        border-radius: var(--agri-radius-lg);
+        box-shadow: var(--agri-shadow-sm);
+      }
+
+      .agri-card-interactive {
+        transition:
+          border-color var(--agri-transition),
+          box-shadow var(--agri-transition),
+          transform var(--agri-transition);
+      }
+
+      .agri-card-interactive:hover {
+        border-color: #d1d5db;
+        box-shadow: var(--agri-shadow-md);
+      }
+
+      .agri-divider {
+        width: 100%;
+        height: 1px;
+        background: var(--agri-border);
+      }
+
+      /* ============================================================
+         STATUS / ALERT HELPERS
+         ============================================================ */
+
+      .agri-alert {
+        width: 100%;
+        border: 1px solid;
+        border-radius: var(--agri-radius-md);
+        padding: 0.75rem 0.875rem;
+      }
+
+      .agri-alert-success {
+        color: #166534;
+        background: var(--agri-success-soft);
+        border-color: var(--agri-success-border);
+      }
+
+      .agri-alert-warning {
+        color: #92400e;
+        background: var(--agri-warning-soft);
+        border-color: var(--agri-warning-border);
+      }
+
+      .agri-alert-danger {
+        color: #991b1b;
+        background: var(--agri-danger-soft);
+        border-color: var(--agri-danger-border);
+      }
+
+      .agri-alert-info {
+        color: #075985;
+        background: var(--agri-info-soft);
+        border-color: var(--agri-info-border);
+      }
+
+      /* ============================================================
+         TABLE SAFETY
+         ============================================================ */
+
+      :where(table) {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      :where(th) {
+        color: var(--agri-text-strong);
+        font-weight: 600;
+      }
+
+      :where(td, th) {
+        vertical-align: middle;
+      }
+
+      .table-responsive,
+      .overflow-x-auto {
+        max-width: 100%;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* ============================================================
+         MEDIA SAFETY
+         ============================================================ */
+
+      :where(img) {
+        max-width: 100%;
+      }
+
+      :where(video) {
+        max-width: 100%;
+        height: auto;
+      }
+
+      :where(iframe) {
+        max-width: 100%;
+        border: 0;
       }
 
       /* ============================================================
@@ -136,12 +847,13 @@
         pointer-events: none;
       }
 
-      /* Mobile backdrop created by base.html JS */
       #mobile-menu-backdrop {
         position: fixed;
         inset: 0;
         z-index: 40;
+
         background: rgba(15, 23, 42, 0.35);
+
         backdrop-filter: blur(2px);
         -webkit-backdrop-filter: blur(2px);
       }
@@ -150,103 +862,37 @@
         display: none;
       }
 
-      /* Prevent accidental horizontal overflow from mobile components */
-      html,
-      body {
-        max-width: 100%;
-        overflow-x: hidden;
+      /* ============================================================
+         HEADER
+         ============================================================ */
+
+      .agri-header {
+        background: rgba(255, 255, 255, 0.97);
+        border-bottom: 1px solid var(--agri-border);
+        box-shadow: var(--agri-shadow-sm);
+      }
+
+      .agri-brand {
+        color: var(--agri-primary);
+        text-decoration: none;
+      }
+
+      .agri-brand:hover {
+        color: var(--agri-primary-hover);
       }
 
       /* ============================================================
-         FORM RESET
+         MODAL SAFETY
          ============================================================ */
 
-      input[type="text"],
-      input[type="number"],
-      input[type="email"],
-      input[type="password"],
-      input[type="date"],
-      input[type="file"],
-      input[type="search"],
-      input[type="url"],
-      input[type="tel"],
-      textarea,
-      select {
-        appearance: none;
-        background-color: #fff;
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-        padding-top: 0.375rem;
-        padding-right: 0.75rem;
-        padding-bottom: 0.375rem;
-        padding-left: 0.75rem;
-        font-size: 0.875rem;
-        line-height: 1.5rem;
+      #modal-root {
+        position: relative;
+        z-index: 100;
       }
 
-      input[type="text"]:focus,
-      input[type="number"]:focus,
-      input[type="email"]:focus,
-      input[type="password"]:focus,
-      input[type="date"]:focus,
-      input[type="search"]:focus,
-      textarea:focus,
-      select:focus {
-        outline: none;
-        border-color: #3b82f6;
-        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-      }
-
-      input[type="checkbox"],
-      input[type="radio"] {
-        appearance: none;
-        width: 1rem;
-        height: 1rem;
-        border: 1px solid #d1d5db;
-        border-radius: 0.25rem;
-        background-color: #fff;
-        cursor: pointer;
-      }
-
-      input[type="checkbox"]:checked {
-        background-color: #3b82f6;
-        border-color: #3b82f6;
-        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-      }
-
-      /* ============================================================
-         SHARED PAGE CONTAINER
-         ============================================================ */
-
-      .page-container {
-        max-width: 1600px;
-        margin-left: auto;
-        margin-right: auto;
-        padding-left: 1rem;
-        padding-right: 1rem;
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-      }
-
-      @media (min-width: 640px) {
-        .page-container {
-          padding-left: 1.5rem;
-          padding-right: 1.5rem;
-        }
-      }
-
-      @media (min-width: 1024px) {
-        .page-container {
-          padding-left: 2rem;
-          padding-right: 2rem;
-        }
-      }
-
-      @media (min-width: 1280px) {
-        .page-container {
-          padding-left: 3rem;
-          padding-right: 3rem;
-        }
+      :where(dialog) {
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 2rem);
       }
 
       /* ============================================================
@@ -254,18 +900,145 @@
          ============================================================ */
 
       @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto !important;
+        }
+
         *,
         *::before,
         *::after {
-          scroll-behavior: auto !important;
-          transition-duration: 0.01ms !important;
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+          scroll-behavior: auto !important;
         }
       }
 
       /* ============================================================
-         MOBILE MENU SAFETY
+         MOBILE
+         0px - 639px
+         ============================================================ */
+
+      @media (max-width: 639px) {
+        :where(
+          input[type="text"],
+          input[type="number"],
+          input[type="email"],
+          input[type="password"],
+          input[type="date"],
+          input[type="datetime-local"],
+          input[type="month"],
+          input[type="time"],
+          input[type="week"],
+          input[type="url"],
+          input[type="tel"],
+          input[type="search"],
+          input:not([type]),
+          textarea,
+          select
+        ) {
+          min-height: 2.75rem;
+          font-size: 1rem;
+        }
+
+        .btn {
+          min-height: 2.75rem;
+        }
+
+        .btn-sm {
+          min-height: 2.5rem;
+        }
+
+        .page-container {
+          padding-top: 1.25rem;
+          padding-right: 1rem;
+          padding-bottom: 1.75rem;
+          padding-left: 1rem;
+        }
+
+        .agri-card {
+          border-radius: var(--agri-radius-md);
+        }
+
+        .agri-card-interactive:hover {
+          transform: none;
+        }
+
+        :where(
+          input[type="file"]
+        )::file-selector-button {
+          min-height: 2.25rem;
+        }
+      }
+
+      /* ============================================================
+         SMALL TABLET
+         640px+
+         ============================================================ */
+
+      @media (min-width: 640px) {
+        :where(
+          input[type="text"],
+          input[type="number"],
+          input[type="email"],
+          input[type="password"],
+          input[type="date"],
+          input[type="datetime-local"],
+          input[type="month"],
+          input[type="time"],
+          input[type="week"],
+          input[type="url"],
+          input[type="tel"],
+          input[type="search"],
+          input:not([type]),
+          textarea,
+          select
+        ) {
+          min-height: 2.625rem;
+          font-size: 0.9375rem;
+        }
+
+        .page-container {
+          padding-right: 1.5rem;
+          padding-left: 1.5rem;
+        }
+      }
+
+      /* ============================================================
+         TABLET
+         768px+
+         ============================================================ */
+
+      @media (min-width: 768px) {
+        :where(
+          input[type="text"],
+          input[type="number"],
+          input[type="email"],
+          input[type="password"],
+          input[type="date"],
+          input[type="datetime-local"],
+          input[type="month"],
+          input[type="time"],
+          input[type="week"],
+          input[type="url"],
+          input[type="tel"],
+          input[type="search"],
+          input:not([type]),
+          textarea,
+          select
+        ) {
+          min-height: 2.625rem;
+        }
+
+        .page-container {
+          padding-top: 1.75rem;
+          padding-bottom: 2rem;
+        }
+      }
+
+      /* ============================================================
+         DESKTOP
+         1024px+
          ============================================================ */
 
       @media (min-width: 1024px) {
@@ -276,27 +1049,145 @@
         body.mobile-menu-open {
           overflow: auto;
         }
+
+        .page-container {
+          padding-right: 2rem;
+          padding-left: 2rem;
+          padding-top: 2rem;
+          padding-bottom: 2.5rem;
+        }
+
+        :where(
+          input[type="text"],
+          input[type="number"],
+          input[type="email"],
+          input[type="password"],
+          input[type="date"],
+          input[type="datetime-local"],
+          input[type="month"],
+          input[type="time"],
+          input[type="week"],
+          input[type="url"],
+          input[type="tel"],
+          input[type="search"],
+          input:not([type]),
+          textarea,
+          select
+        ) {
+          min-height: 2.5rem;
+          font-size: 0.875rem;
+        }
+
+        .btn {
+          min-height: 2.5rem;
+        }
+
+        .btn-sm {
+          min-height: 2.25rem;
+        }
+      }
+
+      /* ============================================================
+         LARGE DESKTOP
+         1280px+
+         ============================================================ */
+
+      @media (min-width: 1280px) {
+        .page-container {
+          padding-right: 3rem;
+          padding-left: 3rem;
+        }
+      }
+
+      /* ============================================================
+         WIDE DESKTOP
+         1536px+
+         ============================================================ */
+
+      @media (min-width: 1536px) {
+        .page-container {
+          padding-right: 4rem;
+          padding-left: 4rem;
+        }
+      }
+
+      /* ============================================================
+         TOUCH DEVICES
+         ============================================================ */
+
+      @media (hover: none) and (pointer: coarse) {
+        .btn {
+          min-height: 2.75rem;
+        }
+
+        :where(
+          input,
+          select,
+          textarea
+        ) {
+          min-height: 2.75rem;
+        }
+      }
+
+      /* ============================================================
+         PRINT
+         ============================================================ */
+
+      @media print {
+        html,
+        body {
+          background: #ffffff !important;
+          color: #000000 !important;
+          overflow: visible !important;
+        }
+
+        header,
+        footer,
+        #mobile-menu-backdrop,
+        #modal-root,
+        .no-print {
+          display: none !important;
+        }
+
+        main {
+          padding-top: 0 !important;
+          overflow: visible !important;
+        }
+
+        .page-container {
+          max-width: none !important;
+          padding: 0 !important;
+        }
+
+        .agri-card {
+          box-shadow: none !important;
+        }
+
+        a {
+          color: inherit !important;
+          text-decoration: none !important;
+        }
       }
     </style>
     {% endblock %}
   </head>
 
   <body
-    class="h-full min-h-screen flex flex-col text-gray-800 overflow-x-hidden"
+    class="h-full min-h-screen flex flex-col bg-gray-50 text-gray-800 overflow-x-hidden"
   >
     <!-- ==========================================================
          GLOBAL HEADER / NAVIGATION
          ========================================================== -->
 
     <header
-      class="fixed inset-x-0 top-0 isolate z-50 border-b border-gray-200/80 bg-white/95 shadow-sm backdrop-blur"
+      class="agri-header fixed inset-x-0 top-0 isolate z-50"
       role="banner"
     >
       <div
-        class="max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12"
+        class="w-full max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12"
       >
         <div
-          class="flex items-center justify-between h-16 gap-2 sm:gap-4"
+          class="flex items-center justify-between h-16 sm:h-[4.25rem] gap-2 sm:gap-4"
         >
           <!-- ======================================================
                LOGO
@@ -304,7 +1195,7 @@
 
           <a
             href="{% url 'polls:dashboard' %}"
-            class="flex items-center gap-2 font-bold text-blue-700 hover:text-blue-800 transition-colors duration-150 flex-shrink-0 min-w-0 rounded-lg px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            class="agri-brand flex items-center gap-2 font-bold transition-colors duration-150 flex-shrink-0 min-w-0 rounded-lg px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             aria-label="AgriScan+ Dashboard"
           >
             <img
@@ -316,7 +1207,7 @@
             >
 
             <span
-              class="hidden sm:inline text-lg xl:text-xl whitespace-nowrap"
+              class="hidden sm:inline text-lg xl:text-xl whitespace-nowrap tracking-tight"
             >
               AgriScan+
             </span>
@@ -348,7 +1239,7 @@
          ========================================================== -->
 
     <main
-      class="flex-1 min-w-0 pt-16 overflow-x-hidden"
+      class="flex-1 min-w-0 pt-16 sm:pt-[4.25rem] overflow-x-hidden"
       id="main-content"
     >
       {% include 'partials/_flash_messages.html' %}
@@ -461,10 +1352,6 @@
               "mobile-menu-open"
             );
 
-            /*
-             * Keep the focused element usable after opening.
-             * Focus the first navigation link when available.
-             */
             window.requestAnimationFrame(function () {
               const firstFocusable =
                 mobilePanel.querySelector(
@@ -533,9 +1420,6 @@
           mobileMenuButton &&
           mobilePanel
         ) {
-          /*
-           * Ensure initial accessibility state.
-           */
           mobileMenuButton.setAttribute(
             "aria-expanded",
             "false"
@@ -568,10 +1452,6 @@
             }
           );
 
-          /*
-           * Clicking the darkened background closes
-           * the mobile menu.
-           */
           if (mobileBackdrop) {
             mobileBackdrop.addEventListener(
               "click",
@@ -581,10 +1461,6 @@
             );
           }
 
-          /*
-           * Clicking any mobile navigation link closes
-           * the menu before navigation.
-           */
           mobilePanel
             .querySelectorAll("a[href]")
             .forEach(function (link) {
@@ -601,10 +1477,6 @@
               );
             });
 
-          /*
-           * Prevent clicks inside the panel from
-           * propagating to unrelated document handlers.
-           */
           mobilePanel.addEventListener(
             "click",
             function (event) {
@@ -980,11 +1852,6 @@
             resizeTimer =
               window.setTimeout(
                 function () {
-                  /*
-                   * lg breakpoint = 1024px.
-                   * Once desktop navigation is available,
-                   * force-close the mobile menu.
-                   */
                   if (
                     window.innerWidth >= 1024 &&
                     isMobileMenuOpen()
@@ -1214,9 +2081,6 @@
                   );
               }
 
-              /*
-               * Fallback: common ID patterns.
-               */
               if (!target) {
                 const idsToTry = [
                   input.id +
@@ -1245,10 +2109,6 @@
                 }
               }
 
-              /*
-               * Fallback: common image
-               * field names.
-               */
               if (!target) {
                 const patterns = [
                   "leaf_image",
@@ -1336,9 +2196,6 @@
                     file
                   );
 
-                  /*
-                   * Show preview container.
-                   */
                   const container =
                     target
                       ? target.closest(
@@ -1352,10 +2209,6 @@
                     );
                   }
 
-                  /*
-                   * Accessibility
-                   * relationships.
-                   */
                   try {
                     const helpElement =
                       document.getElementById(
@@ -1412,9 +2265,7 @@
                       }
                     }
                   } catch (error) {
-                    /*
-                     * No-op.
-                     */
+                    /* No-op. */
                   }
                 }
               );
@@ -1431,10 +2282,6 @@
           )
           .forEach(
             function (container) {
-              /*
-               * Link help/error elements
-               * to form fields.
-               */
               document
                 .querySelectorAll(
                   ".form-field"

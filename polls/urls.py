@@ -89,6 +89,7 @@ urlpatterns = [
     path('system-settings/audit/<int:pk>/revert/', views.system_settings_audit_revert, name='system_settings_audit_revert'),
     path('system-settings/audit/<int:pk>/archive/', views.system_settings_audit_archive, name='system_settings_audit_archive'),
     path('system-settings/audit/bulk-archive/', views.system_settings_audit_bulk_archive, name='system_settings_audit_bulk_archive'),
+    path('users/<int:user_id>/delete-permanent/', views.user_delete_perm, name='user_delete_perm'),
 
     # Knowledge Base (Pests/Diseases/Nutrient Deficiencies)
     path('knowledge/', views.knowledge_list, name='knowledge_list'),

@@ -3,70 +3,242 @@
 
 {% block content %}
 <section class="page-container">
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">{% if is_edit %}Edit{% else %}New{% endif %} Knowledge Entry</h1>
-        <p class="mt-1 text-sm text-gray-500">Use the form below to add or update a farming guides entry.</p>
+
+  <!-- Page Header -->
+  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+      <div class="min-w-0">
+        <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+          {% if is_edit %}Edit{% else %}New{% endif %} Knowledge Entry
+        </h1>
+
+        <p class="mt-1.5 max-w-2xl text-sm leading-6 text-gray-600">
+          Add or update farming knowledge, symptoms, causes, and prevention guidance.
+        </p>
       </div>
-      <button type="button" onclick="history.back(); return false;" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition">
-        Back
-      </button>
+
+      <div class="w-full shrink-0 sm:w-auto">
+        <button
+          type="button"
+          onclick="history.back(); return false;"
+          class="btn btn-secondary btn-block sm:w-auto"
+        >
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <form
+    method="post"
+    enctype="multipart/form-data"
+    class="space-y-6"
+  >
+    {% csrf_token %}
+
+    {% include 'partials/forms/_errors.html' %}
+
+    <!-- Basic Information -->
+    <div class="agri-card overflow-hidden">
+      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+        <h2 class="text-base font-semibold text-gray-900">
+          Basic Information
+        </h2>
+
+        <p class="mt-1 text-sm leading-5 text-gray-600">
+          Provide the main identity and classification for this knowledge entry.
+        </p>
+      </div>
+
+      <div class="p-4 sm:p-5 lg:p-6">
+        {% for field in form %}
+          {% if field.name == 'name' %}
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {% include 'partials/forms/_field.html' with field=field %}
+              {% include 'partials/forms/_field.html' with field=form.category %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
     </div>
 
-    <form method="post" enctype="multipart/form-data" class="mt-6 space-y-6">
-      {% csrf_token %}
-      {% include 'partials/forms/_errors.html' %}
 
-      {% for field in form %}
-        {% if field.name == 'name' %}
-          <div class="grid md:grid-cols-2 gap-4">
-            {% include 'partials/forms/_field.html' with field=field %}
-            {% include 'partials/forms/_field.html' with field=form.category %}
-          </div>
-        {% elif field.name == 'category' %}
-          {# Rendered with name #}
-        {% elif field.name == 'description' %}
-          <div class="grid md:grid-cols-2 gap-4">
-            {% include 'partials/forms/_field.html' with field=field %}
-            {% include 'partials/forms/_field.html' with field=form.symptoms %}
-          </div>
-        {% elif field.name == 'symptoms' %}
-          {# Rendered with description #}
-        {% elif field.name == 'causes' %}
-          <div class="grid md:grid-cols-2 gap-4">
-            {% include 'partials/forms/_field.html' with field=field %}
-            {% include 'partials/forms/_field.html' with field=form.prevention %}
-          </div>
-        {% elif field.name == 'prevention' %}
-          {# Rendered with causes #}
-        {% elif field.name == 'is_published' %}
-          <div>
-            <div class="flex items-center gap-2">
-              {{ field }}
-              <label for="{{ field.id_for_label }}" class="text-sm font-medium text-gray-700">{{ field.label }}</label>
-            </div>
-            {% if field.help_text %}
-              <p class="mt-1 text-xs text-gray-500 ml-6">{{ field.help_text }}</p>
-            {% endif %}
-            {% for error in field.errors %}
-              <p class="text-xs text-red-600 mt-1 ml-6">{{ error }}</p>
-            {% endfor %}
-          </div>
-        {% else %}
-          {% include 'partials/forms/_field.html' with field=field %}
-        {% endif %}
-      {% endfor %}
+    <!-- Knowledge Content -->
+    <div class="agri-card overflow-hidden">
+      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+        <h2 class="text-base font-semibold text-gray-900">
+          Knowledge Content
+        </h2>
 
-      <div class="flex gap-2 pt-4">
-        <button type="submit" class="inline-flex items-center justify-center px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-semibold">
-          Save
-        </button>
-        <button type="button" onclick="history.back(); return false;" class="inline-flex items-center justify-center px-5 py-2 border border-gray-200 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50">
-          Cancel
-        </button>
+        <p class="mt-1 text-sm leading-5 text-gray-600">
+          Describe the condition and the symptoms that farmers should recognize.
+        </p>
       </div>
-    </form>
-  </div>
+
+      <div class="p-4 sm:p-5 lg:p-6">
+        {% for field in form %}
+          {% if field.name == 'description' %}
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {% include 'partials/forms/_field.html' with field=field %}
+              {% include 'partials/forms/_field.html' with field=form.symptoms %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+
+    <!-- Agricultural Guidance -->
+    <div class="agri-card overflow-hidden">
+      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+        <h2 class="text-base font-semibold text-gray-900">
+          Agricultural Guidance
+        </h2>
+
+        <p class="mt-1 text-sm leading-5 text-gray-600">
+          Document known causes and prevention guidance for this knowledge entry.
+        </p>
+      </div>
+
+      <div class="p-4 sm:p-5 lg:p-6">
+        {% for field in form %}
+          {% if field.name == 'causes' %}
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+              {% include 'partials/forms/_field.html' with field=field %}
+              {% include 'partials/forms/_field.html' with field=form.prevention %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+
+    <!-- Media / Upload -->
+    <div class="agri-card overflow-hidden">
+      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+        <h2 class="text-base font-semibold text-gray-900">
+          Media &amp; Upload
+        </h2>
+
+        <p class="mt-1 text-sm leading-5 text-gray-600">
+          Add or update the supporting image or media for this knowledge entry.
+        </p>
+      </div>
+
+      <div class="p-4 sm:p-5 lg:p-6">
+        {% for field in form %}
+          {% if field.name != 'name' and field.name != 'category' and field.name != 'description' and field.name != 'symptoms' and field.name != 'causes' and field.name != 'prevention' and field.name != 'is_published' %}
+            {% include 'partials/forms/_field.html' with field=field %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+
+    <!-- Publishing -->
+    <div class="agri-card overflow-hidden">
+      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+        <h2 class="text-base font-semibold text-gray-900">
+          Publishing
+        </h2>
+
+        <p class="mt-1 text-sm leading-5 text-gray-600">
+          Control whether this knowledge entry is available as published content.
+        </p>
+      </div>
+
+      <div class="p-4 sm:p-5 lg:p-6">
+        {% for field in form %}
+          {% if field.name == 'is_published' %}
+            <div class="flex items-start gap-3">
+              <div class="pt-0.5">
+                {{ field }}
+              </div>
+
+              <div class="min-w-0">
+                <label
+                  for="{{ field.id_for_label }}"
+                  class="block text-sm font-medium text-gray-700"
+                >
+                  {{ field.label }}
+                </label>
+
+                {% if field.help_text %}
+                  <p class="mt-1 text-xs leading-5 text-gray-500">
+                    {{ field.help_text }}
+                  </p>
+                {% endif %}
+
+                {% for error in field.errors %}
+                  <p
+                    class="mt-1 text-sm text-red-600"
+                    role="alert"
+                  >
+                    {{ error }}
+                  </p>
+                {% endfor %}
+              </div>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+
+    <!-- Actions -->
+    <div class="agri-card p-4 sm:p-5 lg:p-6">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p class="text-sm leading-5 text-gray-500">
+          Review the information before saving this knowledge entry.
+        </p>
+
+        <div class="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+          <button
+            type="button"
+            onclick="history.back(); return false;"
+            class="btn btn-secondary btn-block sm:w-auto"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            class="btn btn-primary btn-block sm:w-auto"
+          >
+            <svg
+              class="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+            {% if is_edit %}Save Changes{% else %}Create Knowledge Entry{% endif %}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </form>
 </section>
 {% endblock %}

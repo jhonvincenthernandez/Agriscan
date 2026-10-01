@@ -3,229 +3,667 @@
 
 {% block content %}
 <section class="page-container">
-{% include 'partials/_ctrlk.html' with input_id='knowledge-admin-search' %}
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Knowledge Base Management</h1>
-        <p class="mt-1 text-sm text-gray-500">Create, edit, and publish farming guides and knowledge entries.</p>
+
+  {% include 'partials/_ctrlk.html' with input_id='knowledge-admin-search' %}
+
+  <!-- Page Header -->
+  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+
+      <div class="min-w-0">
+        <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900">
+          Knowledge Base Management
+        </h1>
+
+        <p class="mt-1.5 max-w-2xl text-sm text-gray-500">
+          Create, edit, and publish farming guides and knowledge entries.
+        </p>
       </div>
-      <div class="flex items-center gap-2">
-        <div class="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg">
-          <svg class="h-5 w-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+
+      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+
+        <!-- Entry Count -->
+        <div
+          class="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700"
+          aria-label="Total knowledge entries"
+        >
+          <svg
+            class="h-4 w-4 text-green-700"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
-          <span class="text-sm font-semibold text-green-700">{{ total_count }} entr{{ total_count|pluralize:"y,ies" }}</span>
+
+          <span>
+            {{ total_count }} entr{{ total_count|pluralize:"y,ies" }}
+          </span>
         </div>
 
-        <a href="{% url 'polls:knowledge_create' %}" class="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm font-medium">
+        <!-- Create -->
+        <a
+          href="{% url 'polls:knowledge_create' %}"
+          class="btn btn-primary w-full sm:w-auto"
+        >
           New entry
         </a>
+
       </div>
-    </div>
-
-    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg">
-      <form method="get" class="space-y-3 p-4">
-        <div class="flex flex-col md:flex-row md:items-center gap-2">
-          <input id="knowledge-admin-search" type="text" name="search" value="{{ search_query }}" placeholder="🔍Search entries... (Ctrl+K)"
-                 class="flex-1 min-w-0 rounded-md border-gray-200 text-sm px-3 py-2" />
-
-          <!-- preserve dropdown values across text search -->
-          <input type="hidden" name="category" value="{{ category_filter }}">
-          <input type="hidden" name="status" value="{{ status_filter }}">
-
-          <button type="submit" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-sm hover:shadow text-sm font-medium flex items-center gap-1" data-loading>
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            Search
-          </button>
-          {% if search_query or category_filter or status_filter %}
-          <a href="{% url 'polls:knowledge_admin_list' %}" class="px-4 py-2 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-100 transition">Clear</a>
-          {% endif %}
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <select name="category" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[160px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
-            <option value="">All categories</option>
-            <option value="disease" {% if category_filter == 'disease' %}selected{% endif %}>🦠 Disease</option>
-            <option value="pest" {% if category_filter == 'pest' %}selected{% endif %}>🐛 Pest</option>
-            <option value="crop_nutrition" {% if category_filter == 'crop_nutrition' %}selected{% endif %}>🌱 Crop Nutrition & Fertilizer</option>
-            <option value="irrigation" {% if category_filter == 'irrigation' %}selected{% endif %}>💧 Irrigation & Water Management</option>
-            <option value="soil" {% if category_filter == 'soil' %}selected{% endif %}>🌿 Soil Management</option>
-            <option value="post_harvest" {% if category_filter == 'post_harvest' %}selected{% endif %}>🌾 Post-Harvest & Storage</option>
-          </select>
-
-          </select>
-
-          <select name="status" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[160px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
-            <option value="">All statuses</option>
-            <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
-            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
-          </select>
-
-          <select name="page_size" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[120px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
-            {% for sz in allowed_page_sizes %}
-            <option value="{{ sz }}" {% if page_size == sz %}selected{% endif %}>{{ sz }} / page</option>
-            {% endfor %}
-          </select>
-
-        </div>
-      </form>
     </div>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
-    <form id="kb-bulk-form" method="post" action="{% url 'polls:knowledge_bulk_archive' %}">
-      {% csrf_token %}
-      <input type="hidden" name="_next" value="{{ request.get_full_path }}">
 
-      <!-- Bulk toolbar (hidden until selection) -->
-      <div id="bulk-toolbar" class="hidden no-print mb-4 px-4 py-3 bg-fuchsia-50 border border-fuchsia-200 rounded-lg flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-fuchsia-800">
-          <span id="selected-count">0</span> selected
-        </span>
-        <button type="button"
-                data-open-bulk-archive="true"
-                data-bulk-form-id="kb-bulk-form"
-                data-bulk-action-url="{% url 'polls:knowledge_bulk_archive' %}"
-                data-bulk-label-singular="knowledge entry"
-                data-bulk-label-plural="knowledge entries"
-                data-bulk-title="Archive Knowledge Entries?"
-                data-bulk-subtitle="They will be archived and can be restored from Trash."
-                data-bulk-confirm="Yes, Archive"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-xs font-semibold rounded-lg transition">
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12"></path>
+  <!-- Search & Filters -->
+  <div class="agri-card p-4 sm:p-5 mb-6">
+
+    <div class="mb-4">
+      <h2 class="text-sm font-semibold text-gray-900">
+        Search and filter
+      </h2>
+
+      <p class="mt-1 text-xs text-gray-500">
+        Narrow the knowledge base by keyword, category, publication status, or page size.
+      </p>
+    </div>
+
+    <form method="get" class="space-y-4">
+
+      <!-- Search -->
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+
+        <div class="relative min-w-0 flex-1">
+          <label
+            for="knowledge-admin-search"
+            class="sr-only"
+          >
+            Search knowledge entries
+          </label>
+
+          <input
+            id="knowledge-admin-search"
+            type="text"
+            name="search"
+            value="{{ search_query }}"
+            placeholder="Search entries... (Ctrl+K)"
+            class="form-input w-full"
+          />
+        </div>
+
+        <!-- Preserve active filters during search -->
+        <input
+          type="hidden"
+          name="category"
+          value="{{ category_filter }}"
+        >
+
+        <input
+          type="hidden"
+          name="status"
+          value="{{ status_filter }}"
+        >
+
+        <button
+          type="submit"
+          class="btn btn-primary w-full sm:w-auto"
+          data-loading
+        >
+          <svg
+            class="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
-          Archive Selected
+
+          Search
         </button>
-        <button type="button" onclick="clearSelection()" class="text-xs text-fuchsia-600 hover:text-fuchsia-800 transition">Clear selection</button>
+
+        {% if search_query or category_filter or status_filter %}
+          <a
+            href="{% url 'polls:knowledge_admin_list' %}"
+            class="btn btn-secondary w-full sm:w-auto"
+          >
+            Clear
+          </a>
+        {% endif %}
+
       </div>
 
-      <table class="min-w-full text-sm">
-      <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">
-        <tr>
-          <th class="px-4 py-3 w-12">
-            <input type="checkbox" id="select-all-cb" class="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer" title="Select all on this page">
-          </th>
-          <th class="px-4 py-3">Name</th>
-          <th class="px-4 py-3">Category</th>
-          <th class="px-4 py-3">Status</th>
-          <th class="px-4 py-3">Updated</th>
-          <th class="px-4 py-3">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for entry in entries %}
-        <tr class="border-t border-gray-100 hover:bg-gray-50">
-          <td class="px-4 py-3">
-            <input type="checkbox" name="selected_ids" value="{{ entry.pk }}" class="row-cb h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer" aria-label="Select {{ entry.name }}">
-          </td>
-          <td class="px-4 py-3 text-gray-800">{{ entry.name }}</td>
-          <td class="px-4 py-3">
-            {% if entry.category == 'disease' %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-50 text-red-700">🦠 Disease</span>
-            {% elif entry.category == 'pest' %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-700">🐛 Pest</span>
-            {% elif entry.category == 'crop_nutrition' %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">🌱 Crop Nutrition</span>
-            {% elif entry.category == 'irrigation' %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-cyan-50 text-cyan-700">💧 Irrigation</span>
-            {% elif entry.category == 'soil' %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-lime-50 text-lime-700">🌿 Soil</span>
-            {% elif entry.category == 'post_harvest' %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">🌾 Post-Harvest</span>
-            {% else %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">{{ entry.get_category_display }}</span>
-            {% endif %}
-          </td>
-          <td class="px-4 py-3">
-            {% if entry.is_published %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Published</span>
-            {% else %}
-              <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">Draft</span>
-            {% endif %}
-          </td>
-          <td class="px-4 py-3 text-gray-600">{{ entry.updated_at|date:'M d, Y' }}</td>
-          <td class="px-4 py-3">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-              <a href="{% url 'polls:knowledge_edit' entry.pk %}"
-                 class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                Edit
-              </a>
-              <a href="{% url 'polls:knowledge_detail' entry.pk %}"
-                 class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200">
-                View
-              </a>
-              <a href="{% url 'polls:knowledge_archive' entry.pk %}"
-                 data-open-delete="true"
-                 data-delete-label="Knowledge entry: {{ entry.name }}"
-                 data-delete-subtitle="This will archive the entry and move it to Trash & Archive."
-                 class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 rounded-lg hover:bg-red-100">
-                Archive
-              </a>
-            </div>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="5" class="px-4 py-6 text-center text-gray-500">No entries found.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+
+      <!-- Filters -->
+      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+
+        <!-- Category -->
+        <div>
+          <label
+            for="knowledge-category-filter"
+            class="mb-1.5 block text-xs font-medium text-gray-700"
+          >
+            Category
+          </label>
+
+          <select
+            id="knowledge-category-filter"
+            name="category"
+            onchange="this.form.submit()"
+            class="form-select w-full"
+          >
+            <option value="">All categories</option>
+
+            <option
+              value="disease"
+              {% if category_filter == 'disease' %}selected{% endif %}
+            >
+              Disease
+            </option>
+
+            <option
+              value="pest"
+              {% if category_filter == 'pest' %}selected{% endif %}
+            >
+              Pest
+            </option>
+
+            <option
+              value="crop_nutrition"
+              {% if category_filter == 'crop_nutrition' %}selected{% endif %}
+            >
+              Crop Nutrition & Fertilizer
+            </option>
+
+            <option
+              value="irrigation"
+              {% if category_filter == 'irrigation' %}selected{% endif %}
+            >
+              Irrigation & Water Management
+            </option>
+
+            <option
+              value="soil"
+              {% if category_filter == 'soil' %}selected{% endif %}
+            >
+              Soil Management
+            </option>
+
+            <option
+              value="post_harvest"
+              {% if category_filter == 'post_harvest' %}selected{% endif %}
+            >
+              Post-Harvest & Storage
+            </option>
+          </select>
+        </div>
+
+
+        <!-- Status -->
+        <div>
+          <label
+            for="knowledge-status-filter"
+            class="mb-1.5 block text-xs font-medium text-gray-700"
+          >
+            Publication status
+          </label>
+
+          <select
+            id="knowledge-status-filter"
+            name="status"
+            onchange="this.form.submit()"
+            class="form-select w-full"
+          >
+            <option value="">All statuses</option>
+
+            <option
+              value="published"
+              {% if status_filter == 'published' %}selected{% endif %}
+            >
+              Published
+            </option>
+
+            <option
+              value="draft"
+              {% if status_filter == 'draft' %}selected{% endif %}
+            >
+              Draft
+            </option>
+          </select>
+        </div>
+
+
+        <!-- Page Size -->
+        <div>
+          <label
+            for="knowledge-page-size"
+            class="mb-1.5 block text-xs font-medium text-gray-700"
+          >
+            Entries per page
+          </label>
+
+          <select
+            id="knowledge-page-size"
+            name="page_size"
+            onchange="this.form.submit()"
+            class="form-select w-full"
+          >
+            {% for sz in allowed_page_sizes %}
+              <option
+                value="{{ sz }}"
+                {% if page_size == sz %}selected{% endif %}
+              >
+                {{ sz }} / page
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
+
     </form>
   </div>
 
+
+  <!-- Knowledge Entries -->
+  <div class="agri-card overflow-hidden">
+
+    <form
+      id="kb-bulk-form"
+      method="post"
+      action="{% url 'polls:knowledge_bulk_archive' %}"
+    >
+      {% csrf_token %}
+
+      <input
+        type="hidden"
+        name="_next"
+        value="{{ request.get_full_path }}"
+      >
+
+
+      <!-- Bulk Toolbar -->
+      <div
+        id="bulk-toolbar"
+        class="no-print items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5 flex"
+      >
+        
+        <span class="text-sm font-semibold text-amber-900">
+          <span id="selected-count">0</span> selected
+        </span>
+
+        <button
+          type="button"
+          data-open-bulk-archive="true"
+          data-bulk-form-id="kb-bulk-form"
+          data-bulk-action-url="{% url 'polls:knowledge_bulk_archive' %}"
+          data-bulk-label-singular="knowledge entry"
+          data-bulk-label-plural="knowledge entries"
+          data-bulk-title="Archive Knowledge Entries?"
+          data-bulk-subtitle="They will be archived and can be restored from Trash."
+          data-bulk-confirm="Yes, Archive"
+          class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
+        >
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+          />
+          </svg>
+
+          Archive selected
+        </button>
+
+        <button
+          type="button"
+          onclick="clearSelection()"
+          class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+        >
+          Clear selection
+        </button>
+      </div>
+
+
+      <!-- Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+
+          <thead class="border-b border-gray-200 bg-gray-50 text-left">
+            <tr>
+
+              <th
+                scope="col"
+                class="w-12 px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
+              >
+                <input
+                  type="checkbox"
+                  id="select-all-cb"
+                  class="h-4 w-4 cursor-pointer rounded border-gray-300 text-green-700 focus:ring-green-600"
+                  title="Select all on this page"
+                  aria-label="Select all knowledge entries on this page"
+                >
+              </th>
+
+              <th
+                scope="col"
+                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
+              >
+                Name
+              </th>
+
+              <th
+                scope="col"
+                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
+              >
+                Category
+              </th>
+
+              <th
+                scope="col"
+                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
+              >
+                Status
+              </th>
+
+              <th
+                scope="col"
+                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
+              >
+                Updated
+              </th>
+
+              <th
+                scope="col"
+                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
+              >
+                Actions
+              </th>
+
+            </tr>
+          </thead>
+
+
+          <tbody class="divide-y divide-gray-100">
+
+            {% for entry in entries %}
+
+              <tr class="transition hover:bg-gray-50">
+
+                <!-- Selection -->
+                <td class="px-4 py-3 sm:px-5">
+                  <input
+                    type="checkbox"
+                    name="selected_ids"
+                    value="{{ entry.pk }}"
+                    class="row-cb h-4 w-4 cursor-pointer rounded border-gray-300 text-green-700 focus:ring-green-600"
+                    aria-label="Select {{ entry.name }}"
+                  >
+                </td>
+
+
+                <!-- Name -->
+                <td class="max-w-xs px-4 py-3 sm:px-5">
+                  <div class="font-medium text-gray-900">
+                    {{ entry.name }}
+                  </div>
+                </td>
+
+
+                <!-- Category -->
+                <td class="px-4 py-3 sm:px-5">
+
+                  {% if entry.category == 'disease' %}
+
+                    <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+                      Disease
+                    </span>
+
+                  {% elif entry.category == 'pest' %}
+
+                    <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                      Pest
+                    </span>
+
+                  {% elif entry.category == 'crop_nutrition' %}
+
+                    <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+                      Crop Nutrition
+                    </span>
+
+                  {% elif entry.category == 'irrigation' %}
+
+                    <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                      Irrigation
+                    </span>
+
+                  {% elif entry.category == 'soil' %}
+
+                    <span class="inline-flex items-center rounded-md bg-lime-50 px-2 py-1 text-xs font-medium text-lime-700">
+                      Soil
+                    </span>
+
+                  {% elif entry.category == 'post_harvest' %}
+
+                    <span class="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
+                      Post-Harvest
+                    </span>
+
+                  {% else %}
+
+                    <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                      {{ entry.get_category_display }}
+                    </span>
+
+                  {% endif %}
+
+                </td>
+
+
+                <!-- Status -->
+                <td class="px-4 py-3 sm:px-5">
+
+                  {% if entry.is_published %}
+
+                    <span
+                      class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700"
+                      aria-label="Published"
+                    >
+                      Published
+                    </span>
+
+                  {% else %}
+
+                    <span
+                      class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
+                      aria-label="Draft"
+                    >
+                      Draft
+                    </span>
+
+                  {% endif %}
+
+                </td>
+
+
+                <!-- Updated -->
+                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 sm:px-5">
+                  {{ entry.updated_at|date:'M d, Y' }}
+                </td>
+
+
+                <!-- Actions -->
+                <td class="px-4 py-3 sm:px-5">
+
+                  <div class="flex flex-wrap items-center gap-2">
+
+                    <a
+                      href="{% url 'polls:knowledge_edit' entry.pk %}"
+                      class="btn btn-primary btn-sm"
+                    >
+                      Edit
+                    </a>
+
+                    <a
+                      href="{% url 'polls:knowledge_detail' entry.pk %}"
+                      class="btn btn-secondary btn-sm"
+                    >
+                      View
+                    </a>
+
+                    <a
+                      href="{% url 'polls:knowledge_archive' entry.pk %}"
+                      data-open-delete="true"
+                      data-delete-label="Knowledge entry: {{ entry.name }}"
+                      data-delete-subtitle="This will archive the entry and move it to Trash & Archive."
+                      class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
+                    >
+                      Archive
+                    </a>
+
+                  </div>
+
+                </td>
+
+              </tr>
+
+            {% empty %}
+
+              <tr>
+                <td
+                  colspan="6"
+                  class="px-4 py-10 text-center sm:px-5"
+                >
+                  <div class="mx-auto max-w-md">
+
+                    <p class="text-sm font-medium text-gray-900">
+                      No knowledge entries found.
+                    </p>
+
+                    <p class="mt-1 text-sm text-gray-500">
+                      Try adjusting your search or filters.
+                    </p>
+
+                    {% if search_query or category_filter or status_filter %}
+                      <a
+                        href="{% url 'polls:knowledge_admin_list' %}"
+                        class="btn btn-secondary btn-sm mt-4"
+                      >
+                        Clear filters
+                      </a>
+                    {% endif %}
+
+                  </div>
+                </td>
+              </tr>
+
+            {% endfor %}
+
+          </tbody>
+
+        </table>
+      </div>
+
+    </form>
+
+  </div>
+
+
+  <!-- Pagination -->
+  {% if page_obj and is_paginated %}
+    <div class="mt-6">
+      {% include 'partials/_pagination.html' %}
+    </div>
+  {% endif %}
+
+
   <script>
     // Bulk selection handlers for knowledge admin list
-    (function(){
+    (function () {
       const selectAll = document.getElementById('select-all-cb');
       const selectedCountEl = document.getElementById('selected-count');
       const bulkToolbar = document.getElementById('bulk-toolbar');
       const form = document.getElementById('kb-bulk-form');
 
-      function updateSelectedCount(){
+      function updateSelectedCount() {
         const checked = document.querySelectorAll('.row-cb:checked').length;
-        selectedCountEl.textContent = checked;
-        if(checked > 0){
-          bulkToolbar.classList.remove('hidden');
-        } else {
-          bulkToolbar.classList.add('hidden');
+
+        if (selectedCountEl) {
+          selectedCountEl.textContent = checked;
+        }
+
+        if (bulkToolbar) {
+          if (checked > 0) {
+            bulkToolbar.classList.remove('hidden');
+          } else {
+            bulkToolbar.classList.add('hidden');
+          }
         }
       }
 
-      function clearSelection(){
-        document.querySelectorAll('.row-cb:checked').forEach(cb => cb.checked = false);
-        if(selectAll) selectAll.checked = false;
+      function clearSelection() {
+        document
+          .querySelectorAll('.row-cb:checked')
+          .forEach(cb => {
+            cb.checked = false;
+          });
+
+        if (selectAll) {
+          selectAll.checked = false;
+          selectAll.indeterminate = false;
+        }
+
         updateSelectedCount();
       }
 
       window.clearSelection = clearSelection;
 
-      if(selectAll){
-        selectAll.addEventListener('change', function(){
-          document.querySelectorAll('.row-cb').forEach(cb => cb.checked = selectAll.checked);
+      if (selectAll) {
+        selectAll.addEventListener('change', function () {
+          document
+            .querySelectorAll('.row-cb')
+            .forEach(cb => {
+              cb.checked = selectAll.checked;
+            });
+
+          selectAll.indeterminate = false;
           updateSelectedCount();
         });
       }
 
-      document.addEventListener('change', function(e){
-        if(e.target && e.target.classList && e.target.classList.contains('row-cb')){
-          // update select-all checkbox state
+      document.addEventListener('change', function (e) {
+        if (
+          e.target &&
+          e.target.classList &&
+          e.target.classList.contains('row-cb')
+        ) {
           const total = document.querySelectorAll('.row-cb').length;
           const checked = document.querySelectorAll('.row-cb:checked').length;
-          if(selectAll) selectAll.checked = (checked === total && total > 0);
+
+          if (selectAll) {
+            selectAll.checked = checked === total && total > 0;
+            selectAll.indeterminate = checked > 0 && checked < total;
+          }
+
           updateSelectedCount();
         }
       });
 
-      // initial state
+      // Initial state
       updateSelectedCount();
     })();
   </script>
 
-  {% if page_obj and is_paginated %}
-    {% include 'partials/_pagination.html' %}
-  {% endif %}
 </section>
 {% endblock %}

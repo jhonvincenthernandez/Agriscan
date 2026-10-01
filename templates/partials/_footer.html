@@ -1,11 +1,26 @@
-<footer class="mt-2 border-t border-gray-200 bg-white">
+<footer class="border-t border-gray-200 bg-white">
   <div
-    class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-12 py-6 text-sm text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2"
+    class="mx-auto flex max-w-[1600px] flex-col items-center justify-between gap-2 px-4 py-5 text-sm text-gray-500 sm:flex-row sm:px-6 lg:px-8 xl:px-12"
   >
-    <p>&copy; <span id="year"></span> AgriScan+. All rights reserved.</p>
-    <p class="italic">Smart Farming using AI</p>
+    <p>
+      &copy;
+      <span id="year"></span>
+      <span class="font-medium text-gray-700">AgriScan+</span>.
+      All rights reserved.
+    </p>
+
+    <p class="text-gray-500">
+      Smart Farming using AI
+    </p>
   </div>
 </footer>
+
 <script>
-  document.getElementById("year").textContent = new Date().getFullYear();
+  (() => {
+    const yearElement = document.getElementById("year");
+
+    if (yearElement) {
+      yearElement.textContent = new Date().getFullYear();
+    }
+  })();
 </script>

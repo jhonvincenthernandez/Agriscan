@@ -212,7 +212,7 @@ class YieldPredictionForm(forms.Form):
         widget=forms.ClearableFileInput(
             attrs={
                 "accept": "image/*",
-                "class": "mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500",
+                "class": "block min-h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:min-h-11 file:border-0 file:border-r file:border-gray-300 file:bg-gray-50 file:px-4 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-100 focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-600/20",
                 "id": "id_canopy_image",
             }
         ),
@@ -800,7 +800,7 @@ class KnowledgeEntryForm(forms.ModelForm):
             "symptoms": forms.Textarea(attrs={"class": INPUT_CLASS + " resize-y", "rows": 3}),
             "causes": forms.Textarea(attrs={"class": INPUT_CLASS + " resize-y", "rows": 3}),
             "prevention": forms.Textarea(attrs={"class": INPUT_CLASS + " resize-y", "rows": 3}),
-            "image": forms.ClearableFileInput(attrs={"class": INPUT_CLASS}),
+            "image": forms.ClearableFileInput(attrs={"class": INPUT_CLASS + "block min-h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:min-h-11 file:border-0 file:border-r file:border-gray-300 file:bg-gray-50 file:px-4 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-100 focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-600/20"}),
             "is_published": forms.CheckboxInput(attrs={"class": "h-4 w-4 text-blue-600 border-gray-300 rounded"}),
         }
 
@@ -1187,6 +1187,41 @@ class PlantingRecordForm(forms.ModelForm):
         
         return cleaned_data
 
+# Isama ito sa dulo ng forms.py o sa tabi ng Admin Forms
+from django import forms
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class AdminDeleteUserForm(forms.Form):
+    """
+    Form para sa permanent/total deletion ng user.
+    Nangangailangan ng password verification ng kasalukuyang naka-log in na Admin.
+    """
+    user_id = forms.IntegerField(
+        widget=forms.HiddenInput()
+    )
+    admin_password = forms.CharField(
+        label="Admin Password",
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-input w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 text-sm',
+            'placeholder': 'Enter your admin password',
+            'autocomplete': 'current-password',
+            'required': 'required',
+        }),
+        help_text="Your password is required to confirm permanent deletion."
+    )
+
+    def __init__(self, *args, admin_user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.admin_user = admin_user
+
+    def clean_admin_password(self):
+        password = self.cleaned_data.get('admin_password')
+        if self.admin_user and not self.admin_user.check_password(password):
+            raise forms.ValidationError("Incorrect password. Deletion cancelled.")
+        return password
+
 
 class AdminUserCreationForm(forms.Form):
     """Form for admin-only creation of farmer and technician users"""
@@ -1194,6 +1229,7 @@ class AdminUserCreationForm(forms.Form):
     _INPUT = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white'
     _SELECT = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white'
 
+    # Tinanggal ang 'admin' para sa strict terminal-only assignment
     ROLE_CHOICES = [
         ('farmer', 'Farmer'),
         ('technician', 'Technician'),
@@ -1265,16 +1301,17 @@ class AdminUserCreationForm(forms.Form):
                 raise forms.ValidationError('Password must be at least 8 characters.')
         
         return password2
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        if role == 'admin':
+            raise forms.ValidationError('System integrity error: Admin roles can only be created via system terminal.')
+        return role
     
     def save(self):
-        """
-        Create new User and Profile with specified role.
-        
-        Note: Profile is auto-created by signal, but we update it with form data.
-        """
+        """Create new User and Profile with specified role."""
         from .models import Profile
         
-        # Create user (signal will auto-create profile with 'farmer' role)
         user = User.objects.create_user(
             username=self.cleaned_data['username'],
             email=self.cleaned_data['email'],
@@ -1283,7 +1320,6 @@ class AdminUserCreationForm(forms.Form):
             last_name=self.cleaned_data.get('last_name', '')
         )
         
-        # Update the auto-created profile with form data
         profile = user.profile
         profile.role = self.cleaned_data['role']
         profile.phone = self.cleaned_data.get('phone', '')
@@ -1294,7 +1330,7 @@ class AdminUserCreationForm(forms.Form):
 
 
 class AdminUserEditForm(forms.Form):
-    """Form for admin to edit existing user accounts - BEST PRACTICE"""
+    """Form for admin to edit existing user accounts securely"""
 
     _INPUT = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white'
     _SELECT = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white'
@@ -1304,7 +1340,6 @@ class AdminUserEditForm(forms.Form):
     ROLE_CHOICES = [
         ('farmer', 'Farmer'),
         ('technician', 'Technician'),
-        ('admin', 'Administrator'),
     ]
 
     username = forms.CharField(
@@ -1329,7 +1364,7 @@ class AdminUserEditForm(forms.Form):
     role = forms.ChoiceField(
         choices=ROLE_CHOICES,
         widget=forms.Select(attrs={'class': _SELECT}),
-        help_text='Change user role (farmer, technician, or admin).'
+        help_text='Assign user role.'
     )
     phone = forms.CharField(
         max_length=15,
@@ -1351,7 +1386,7 @@ class AdminUserEditForm(forms.Form):
     is_approved = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={'class': _CHECKBOX}),
-        help_text='Check to approve pending farmer registration.'
+        help_text='Check to approve pending user accounts.'
     )
     reset_password = forms.CharField(
         required=False,
@@ -1368,7 +1403,6 @@ class AdminUserEditForm(forms.Form):
         self.user = user
         
         if user:
-            # Pre-fill form with existing data
             self.fields['username'].initial = user.username
             self.fields['email'].initial = user.email
             self.fields['first_name'].initial = user.first_name
@@ -1376,14 +1410,24 @@ class AdminUserEditForm(forms.Form):
             self.fields['is_active'].initial = user.is_active
             
             if hasattr(user, 'profile'):
-                self.fields['role'].initial = user.profile.role
                 self.fields['phone'].initial = user.profile.phone
                 self.fields['location'].initial = user.profile.location
                 self.fields['is_approved'].initial = user.profile.is_approved
+                
+                # Security Integrity Check para sa mga Existing Admins
+                if user.profile.role == 'admin':
+                    self.fields['role'].choices = [('admin', 'Administrator (Terminal Only)')]
+                    self.fields['role'].initial = 'admin'
+                    self.fields['role'].widget.attrs.update({
+                        'class': self._INPUT_DISABLED,
+                        'style': 'pointer-events: none;'  # Pinipigilan ang pag-click o pagbago sa dropdown
+                    })
+                    self.fields['role'].help_text = 'Admin role is locked and managed via terminal only.'
+                else:
+                    self.fields['role'].initial = user.profile.role
     
     def clean_email(self):
         email = self.cleaned_data.get('email')
-        # Check if email is taken by another user
         if User.objects.filter(email=email).exclude(pk=self.user.pk).exists():
             raise forms.ValidationError('This email is already registered by another user.')
         return email
@@ -1393,25 +1437,30 @@ class AdminUserEditForm(forms.Form):
         if password and len(password) < 8:
             raise forms.ValidationError('Password must be at least 8 characters.')
         return password
+
+    def clean_role(self):
+        role = self.cleaned_data.get('role')
+        # Tinitiyak na walang pwedeng mag-inject ng 'admin' value via HTTP POST request 
+        # maliban na lang kung ang user ay talagang admin na bago pa man i-edit.
+        if role == 'admin' and self.user.profile.role != 'admin':
+            raise forms.ValidationError('Security Violation: Cannot elevate user to Admin via web form.')
+        return role
     
     def save(self):
         """Update user and profile with form data."""
         from .models import Profile
         
-        # Update user fields
         self.user.email = self.cleaned_data['email']
         self.user.first_name = self.cleaned_data.get('first_name', '')
         self.user.last_name = self.cleaned_data.get('last_name', '')
         self.user.is_active = self.cleaned_data.get('is_active', False)
         
-        # Reset password if provided
         reset_password = self.cleaned_data.get('reset_password')
         if reset_password:
             self.user.set_password(reset_password)
         
         self.user.save()
         
-        # Update profile
         profile, _ = Profile.objects.get_or_create(user=self.user)
         profile.role = self.cleaned_data['role']
         profile.phone = self.cleaned_data.get('phone', '')

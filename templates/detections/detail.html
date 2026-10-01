@@ -3,26 +3,31 @@
 {% block title %}Detection Details · AgriScan+{% endblock %}
 
 {% block content %}
-<section class="page-container" aria-labelledby="detection-page-title">
+<section
+  class="page-container min-w-0"
+  aria-labelledby="detection-page-title"
+>
 
   <!-- =========================================================
        PAGE HEADER
        ========================================================= -->
   <header
-    class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6"
+    class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
   >
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
       <div class="min-w-0">
         <div class="flex items-start gap-3">
 
-          <div class="flex-shrink-0 p-2.5 bg-blue-50 rounded-xl">
+          <div
+            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 sm:h-11 sm:w-11"
+            aria-hidden="true"
+          >
             <svg
-              class="h-6 w-6 sm:h-7 sm:w-7 text-blue-600"
+              class="h-5 w-5 sm:h-6 sm:w-6"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -40,14 +45,18 @@
           </div>
 
           <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-wide text-green-700">
+              Disease Detection
+            </p>
+
             <h1
               id="detection-page-title"
-              class="text-xl sm:text-2xl font-bold text-gray-900"
+              class="mt-1 text-xl font-bold text-gray-900 sm:text-2xl"
             >
               Detection Details &amp; Treatment
             </h1>
 
-            <p class="mt-1 text-sm text-gray-500 leading-relaxed">
+            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-gray-500">
               Review the detection result, severity, and recommended management strategies.
             </p>
           </div>
@@ -57,23 +66,13 @@
 
 
       <!-- Header Actions -->
-      <div class="no-print flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+      <div class="no-print flex w-full flex-col gap-2 sm:flex-row lg:w-auto">
 
         <button
           id="print-btn"
           type="button"
           onclick="handlePagePrint('print-header')"
-          class="inline-flex w-full sm:w-auto items-center justify-center gap-2
-                 px-4 py-2.5
-                 text-sm font-medium
-                 text-gray-700
-                 bg-white
-                 border border-gray-300
-                 rounded-lg
-                 hover:bg-gray-50 hover:border-gray-400
-                 transition-colors duration-200
-                 shadow-sm
-                 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors duration-200 hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto"
         >
           <svg
             class="h-4 w-4 text-gray-500"
@@ -86,9 +85,10 @@
               stroke-linecap="round"
               stroke-linejoin="round"
               stroke-width="2"
-              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+              d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H9v4a2 2 0 002 2zm4-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
             />
           </svg>
+
           <span>Print</span>
         </button>
 
@@ -96,14 +96,7 @@
         <a
           href="{% url 'polls:detections_list' %}"
           onclick="history.back(); return false;"
-          class="inline-flex w-full sm:w-auto items-center justify-center gap-2
-                 px-4 py-2.5
-                 bg-gray-100 hover:bg-gray-200
-                 text-gray-700
-                 rounded-lg
-                 transition-colors duration-200
-                 text-sm font-medium
-                 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
+          class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-200 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:w-auto"
         >
           <svg
             class="h-5 w-5"
@@ -119,6 +112,7 @@
               d="M10 19l-7-7m0 0l7-7m-7 7h18"
             />
           </svg>
+
           <span>Back to Detections</span>
         </a>
 
@@ -132,19 +126,19 @@
        ========================================================= -->
   <div
     id="print-header"
-    class="hidden print:block mb-6 p-4 bg-white border border-gray-300"
+    class="mb-6 hidden border border-gray-300 bg-white p-4 print:block"
   >
     <h2 class="text-xl font-bold text-gray-900">
       Detection Detail Report
     </h2>
 
-    <p class="text-sm text-gray-600">
+    <p class="mt-1 text-sm text-gray-600">
       Detection ID: {{ detection.pk }}
       <span aria-hidden="true">•</span>
       {{ detection.disease.name|default:"Unknown" }}
     </p>
 
-    <p class="text-sm text-gray-600">
+    <p class="mt-1 text-sm text-gray-600">
       Generated:
       <span id="print-date"></span>
     </p>
@@ -154,44 +148,44 @@
   <!-- =========================================================
        MAIN CONTENT
        ========================================================= -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
 
 
     <!-- =======================================================
          LEFT COLUMN
          ======================================================= -->
-    <aside class="lg:col-span-1 space-y-6">
+    <aside class="min-w-0 space-y-6 lg:col-span-1">
 
 
-      <!-- Detection Image + Basic Information -->
+      <!-- =====================================================
+           DETECTION SUMMARY
+           ===================================================== -->
       <section
-        class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         aria-labelledby="detection-summary-title"
       >
 
         <!-- Image -->
-        <div class="relative bg-gray-100">
+        <div class="relative bg-gray-50">
 
           {% if detection.image_path %}
 
             <img
               src="{{ media_url }}{{ detection.image_path }}"
               alt="Rice leaf image analyzed for detection {{ detection.pk }}"
-              class="w-full h-56 sm:h-64 lg:h-72 object-cover"
+              class="h-56 w-full object-contain sm:h-64 lg:h-72"
               loading="lazy"
             />
 
           {% else %}
 
             <div
-              class="w-full h-56 sm:h-64 lg:h-72 bg-gray-100
-                     flex flex-col items-center justify-center
-                     text-gray-400"
+              class="flex h-56 w-full flex-col items-center justify-center bg-gray-50 text-gray-400 sm:h-64 lg:h-72"
               role="img"
               aria-label="No detection image available"
             >
               <svg
-                class="h-14 w-14 sm:h-16 sm:w-16"
+                class="h-12 w-12 sm:h-14 sm:w-14"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -216,7 +210,7 @@
 
 
         <!-- Summary -->
-        <div class="p-4 sm:p-5 space-y-3">
+        <div class="space-y-3 p-4 sm:p-5">
 
           <h2 id="detection-summary-title" class="sr-only">
             Detection Summary
@@ -225,33 +219,29 @@
 
           <!-- Disease -->
           <div
-            class="
-              rounded-xl p-4 border
+            class="rounded-lg border p-4
               {% if detection.disease.name == 'Healthy' %}
-                bg-green-50 border-green-200
+                border-green-200 bg-green-50
               {% elif detection.disease.name == UNKNOWN_LABEL %}
-                bg-gray-50 border-gray-200
+                border-gray-200 bg-gray-50
               {% else %}
-                bg-red-50 border-red-200
-              {% endif %}
-            "
+                border-red-200 bg-red-50
+              {% endif %}"
           >
             <p
-              class="
-                text-xs font-semibold uppercase tracking-wide mb-1
+              class="mb-1 text-xs font-semibold uppercase tracking-wide
                 {% if detection.disease.name == 'Healthy' %}
                   text-green-700
                 {% elif detection.disease.name == UNKNOWN_LABEL %}
                   text-gray-600
                 {% else %}
                   text-red-700
-                {% endif %}
-              "
+                {% endif %}"
             >
               Disease
             </p>
 
-            <p class="text-lg font-bold text-gray-900 break-words">
+            <p class="break-words text-lg font-bold text-gray-900">
               {{ detection.disease.name|default:"Unknown" }}
             </p>
           </div>
@@ -260,19 +250,19 @@
           <!-- Metrics -->
           <div class="grid grid-cols-2 gap-3">
 
-            <div class="bg-blue-50 border border-blue-100 rounded-xl p-4">
-              <p class="text-xs text-blue-700 font-semibold uppercase tracking-wide mb-1">
+            <div class="rounded-lg border border-green-200 bg-green-50 p-4">
+              <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-green-500">
                 Confidence
               </p>
 
-              <p class="text-lg font-bold text-blue-900">
+              <p class="text-lg font-bold text-green-900">
                 {{ detection.confidence_pct|default:"0" }}%
               </p>
             </div>
 
 
-            <div class="bg-amber-50 border border-amber-100 rounded-xl p-4">
-              <p class="text-xs text-amber-700 font-semibold uppercase tracking-wide mb-1">
+            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
                 Severity
               </p>
 
@@ -286,18 +276,18 @@
 
           <!-- Field -->
           {% if detection.planting %}
-          <div class="bg-green-50 border border-green-100 rounded-xl p-4">
+          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
 
-            <p class="text-xs text-green-700 font-semibold uppercase tracking-wide mb-1">
+            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
               Field
             </p>
 
-            <p class="text-sm font-semibold text-green-900 break-words">
+            <p class="break-words text-sm font-semibold text-gray-900">
               {{ detection.planting.field.name }}
             </p>
 
             {% if detection.planting.field.area_hectares %}
-              <p class="text-xs text-green-700 mt-1.5 font-medium">
+              <p class="mt-1.5 text-xs font-medium text-gray-700">
                 {{ detection.planting.field.area_hectares }} hectares
               </p>
             {% endif %}
@@ -307,9 +297,9 @@
 
 
           <!-- Date -->
-          <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
 
-            <p class="text-xs text-gray-600 font-semibold uppercase tracking-wide mb-1">
+            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Detected On
             </p>
 
@@ -327,15 +317,15 @@
            QUICK ACTIONS
            ===================================================== -->
       <section
-        class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-5"
+        class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5"
         aria-labelledby="quick-actions-title"
       >
 
-        <div class="flex items-center justify-between gap-3 mb-4">
+        <div class="mb-4 flex items-center justify-between gap-3">
 
           <h2
             id="quick-actions-title"
-            class="text-sm font-semibold text-gray-900 uppercase tracking-wide"
+            class="text-sm font-semibold uppercase tracking-wide text-gray-900"
           >
             Quick Actions
           </h2>
@@ -352,18 +342,10 @@
           {% if not is_farmer %}
           <a
             href="{% url 'polls:detections_edit' detection.pk %}"
-            class="w-full inline-flex items-center justify-center gap-2
-                   px-4 py-2.5
-                   bg-blue-50 hover:bg-blue-100
-                   text-blue-700
-                   rounded-lg
-                   border border-blue-200
-                   transition-colors duration-200
-                   font-medium text-sm
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors duration-200 hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
           >
             <svg
-              class="h-4 w-4"
+              class="h-4 w-4 text-gray-500"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -385,41 +367,29 @@
           {% if detection.disease.name != UNKNOWN_LABEL %}
           <a
             href="{% url 'polls:yield_prediction' %}?detection_id={{ detection.pk }}"
-            class="w-full inline-flex flex-col items-center justify-center gap-2
-                   px-4 py-3
-                   bg-gradient-to-r from-green-500 to-emerald-600
-                   text-white
-                   rounded-lg
-                   hover:from-green-600 hover:to-emerald-700
-                   transition-all duration-200
-                   shadow-sm hover:shadow-md
-                   focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+            class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
           >
+            <svg
+              class="h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m0 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"
+              />
+            </svg>
 
-            <span class="inline-flex items-center gap-2 font-semibold">
-              <svg
-                class="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-
-              Yield Prediction Tool
-            </span>
-
-            <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full font-medium">
-              Auto-filled from Detection
-            </span>
-
+            <span>Yield Prediction Tool</span>
           </a>
+
+          <p class="px-1 text-xs leading-relaxed text-gray-500">
+            Uses this detection record as the starting point for yield prediction.
+          </p>
           {% endif %}
 
         </div>
@@ -430,31 +400,21 @@
            SUPPORT
            ===================================================== -->
       <section
-        class="relative overflow-hidden rounded-xl
-               border border-sky-200
-               bg-white
-               shadow-sm
-               p-5 sm:p-6"
+        class="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm sm:p-6"
         aria-labelledby="support-title"
       >
-
-        <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-sky-500 to-blue-600"></div>
 
         <div class="flex items-start gap-3">
 
           <div
-            class="mt-0.5 flex-shrink-0
-                   inline-flex h-10 w-10
-                   items-center justify-center
-                   rounded-lg
-                   bg-sky-100 text-sky-700"
+            class="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-green-700"
+            aria-hidden="true"
           >
             <svg
               class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -468,18 +428,18 @@
 
           <div class="min-w-0 flex-1">
 
-            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-700">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-green-700">
               Support
             </p>
 
             <h2
               id="support-title"
-              class="mt-1 text-lg font-bold text-slate-900"
+              class="mt-1 text-lg font-bold text-gray-900"
             >
               Need Help?
             </h2>
 
-            <p class="mt-2 text-sm leading-relaxed text-slate-600">
+            <p class="mt-2 text-sm leading-relaxed text-gray-600">
               For severe infections or when treatment is uncertain, contact your local DA field technician for professional guidance.
             </p>
 
@@ -488,17 +448,9 @@
               href="https://mail.google.com/mail/?view=cm&fs=1&to=santeodororice37@gmail.com&su=AgriScan%20Support%20Request&body=Hello%20DA%20Support%2C%0D%0A%0D%0AI%20need%20guidance%20for%20this%20rice%20detection.%0D%0A%0D%0ADetection%20ID%3A%20{{ detection.pk }}%0D%0ADisease%3A%20{{ detection.disease.name|default:'Unknown'|urlencode }}%0D%0ASeverity%3A%20{{ detection.severity_pct|default:0 }}%25%0D%0AField%3A%20{{ detection.planting.field.name|default:'Unknown'|urlencode }}%0D%0A%0D%0AThank%20you."
               target="_blank"
               rel="noopener noreferrer"
-              class="mt-4 inline-flex w-full sm:w-auto items-center justify-center gap-2
-                     rounded-lg
-                     bg-sky-600
-                     px-4 py-2.5
-                     text-sm font-semibold text-white
-                     shadow-sm
-                     transition-colors duration-200
-                     hover:bg-sky-700
-                     focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+              class="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto"
             >
-              Contact DA Support
+              <span>Contact DA Support</span>
 
               <svg
                 class="h-4 w-4"
@@ -526,7 +478,7 @@
     <!-- =======================================================
          RIGHT COLUMN
          ======================================================= -->
-    <main class="lg:col-span-2 space-y-6">
+    <main class="min-w-0 space-y-6 lg:col-span-2">
 
       {% if detailed_treatment %}
 
@@ -536,20 +488,21 @@
            ===================================================== -->
       <section
         id="quick-rec-card"
-        class="bg-gradient-to-br from-blue-500 to-indigo-600
-               text-white rounded-xl shadow-md p-5 sm:p-6"
+        class="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm sm:p-6"
         aria-labelledby="recommended-action-title"
       >
 
         <div class="flex items-start gap-3">
 
-          <div class="flex-shrink-0">
+          <div
+            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-green-700"
+            aria-hidden="true"
+          >
             <svg
-              class="h-6 w-6 mt-0.5"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -561,13 +514,13 @@
           </div>
 
 
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
 
-            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-2">
+            <div class="mb-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 
               <h2
                 id="recommended-action-title"
-                class="text-lg font-bold"
+                class="text-lg font-bold text-gray-900"
               >
                 Recommended Action
               </h2>
@@ -577,13 +530,13 @@
               <div class="flex flex-wrap items-center gap-2">
 
                 <span
-                  class="text-xs px-2.5 py-1 rounded-full font-semibold
+                  class="rounded-full px-2.5 py-1 text-xs font-semibold
                     {% if treatment_obj.priority >= 8 %}
-                      bg-red-200 text-red-900
+                      bg-red-100 text-red-800
                     {% elif treatment_obj.priority >= 4 %}
-                      bg-amber-200 text-amber-900
+                      bg-amber-100 text-amber-800
                     {% else %}
-                      bg-blue-200 text-blue-900
+                      bg-green-100 text-green-800
                     {% endif %}"
                 >
                   Priority {{ treatment_obj.priority }}/10
@@ -593,10 +546,10 @@
                 {% if not is_farmer %}
                 <a
                   href="{% url 'polls:treatments_edit' treatment_obj.pk %}"
-                  class="text-xs text-blue-200 hover:text-white underline underline-offset-2 transition-colors"
+                  class="text-xs font-medium text-green-700 underline underline-offset-2 transition-colors hover:text-green-900"
                   title="Edit this treatment record"
                 >
-                  Edit treatment ↗
+                  Edit treatment
                 </a>
                 {% endif %}
 
@@ -608,7 +561,7 @@
 
             <p
               id="quick-rec-base"
-              class="text-blue-50 leading-relaxed"
+              class="leading-relaxed text-gray-700"
             >
               {{ detailed_treatment.short_text }}
             </p>
@@ -617,10 +570,10 @@
             {% if detailed_treatment.factors_favoring %}
             <p
               id="quick-rec-prompt"
-              class="mt-2 text-xs text-blue-200 flex items-start gap-1.5"
+              class="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-gray-500"
             >
               <svg
-                class="h-3.5 w-3.5 flex-shrink-0 mt-0.5"
+                class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-green-700"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -644,7 +597,7 @@
             <!-- Dynamic Factor Notice -->
             <div
               id="quick-rec-notice"
-              class="hidden mt-4 pt-4 border-t border-white/20"
+              class="hidden mt-4 border-t border-green-200 pt-4"
               role="status"
               aria-live="polite"
             >
@@ -653,7 +606,7 @@
 
                 <svg
                   id="qrn-icon"
-                  class="h-5 w-5 flex-shrink-0 mt-0.5"
+                  class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-700"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -663,7 +616,7 @@
                     stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="2"
-                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77-1.333.192-3 1.732-3z"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                   />
                 </svg>
 
@@ -672,12 +625,12 @@
 
                   <p
                     id="qrn-label"
-                    class="font-semibold text-sm"
+                    class="text-sm font-semibold text-gray-900"
                   ></p>
 
                   <div
                     id="qrn-detail"
-                    class="text-blue-100 text-sm mt-1 leading-relaxed"
+                    class="mt-1 text-sm leading-relaxed text-gray-700"
                   ></div>
 
                 </div>
@@ -695,20 +648,21 @@
            ===================================================== -->
       {% if detailed_treatment.factors_favoring %}
       <section
-        class="bg-amber-50 border border-amber-200 border-l-4 border-l-amber-500
-               rounded-xl p-5 sm:p-6"
+        class="rounded-xl border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50 p-5 sm:p-6"
         aria-labelledby="factors-title"
       >
 
         <div class="flex items-start gap-3">
 
-          <div class="p-2 bg-amber-100 rounded-lg flex-shrink-0">
+          <div
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-amber-700"
+            aria-hidden="true"
+          >
             <svg
-              class="h-5 w-5 text-amber-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -720,9 +674,9 @@
           </div>
 
 
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
 
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
+            <div class="mb-1 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
 
               <h2
                 id="factors-title"
@@ -733,7 +687,7 @@
 
               <span
                 id="factors-badge"
-                class="hidden w-fit text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-200 text-amber-800"
+                class="hidden w-fit rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800"
               >
                 <span id="factors-count">0</span>
                 factor<span id="factors-plural">s</span> present
@@ -742,7 +696,7 @@
             </div>
 
 
-            <p class="text-xs text-amber-700 mb-4 leading-relaxed">
+            <p class="mb-4 text-xs leading-relaxed text-amber-800">
               Select the factors currently present in your field to receive a more specific recommendation.
             </p>
 
@@ -756,22 +710,12 @@
                 {% if item.factor %}
 
                 <label
-                  class="factor-row flex items-start gap-3
-                         cursor-pointer
-                         rounded-lg
-                         px-2 py-2
-                         -mx-2
-                         transition-colors duration-150
-                         hover:bg-amber-100"
+                  class="factor-row -mx-2 flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-amber-100"
                 >
 
                   <input
                     type="checkbox"
-                    class="factor-checkbox mt-0.5 h-4 w-4
-                           rounded border-amber-400
-                           text-amber-600
-                           focus:ring-amber-500
-                           flex-shrink-0 cursor-pointer"
+                    class="factor-checkbox mt-0.5 h-4 w-4 flex-shrink-0 cursor-pointer rounded border-amber-400 text-amber-600 focus:ring-amber-500"
                     data-factor="{{ item.factor }}"
                     data-action="{{ item.action }}"
                     data-expected-result="{{ item.expected_result }}"
@@ -779,10 +723,7 @@
                   />
 
                   <span
-                    class="text-sm text-amber-800
-                           group-hover:text-amber-900
-                           select-none
-                           leading-relaxed"
+                    class="select-none text-sm leading-relaxed text-amber-900"
                   >
                     {{ item.factor }}
                   </span>
@@ -805,19 +746,21 @@
       {% if detailed_treatment.cultural_practices and detection.severity_pct|default:0 >= detailed_treatment.severity_threshold|default:70 %}
       <section
         id="sec-cultural"
-        class="bg-white rounded-xl shadow-sm border border-green-200 p-5 sm:p-6"
+        class="rounded-xl border border-green-200 bg-white p-5 shadow-sm sm:p-6"
         aria-labelledby="cultural-title"
       >
 
         <div class="flex items-start gap-3">
 
-          <div class="p-2 bg-green-100 rounded-lg flex-shrink-0">
+          <div
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700"
+            aria-hidden="true"
+          >
             <svg
-              class="h-5 w-5 text-green-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -829,39 +772,32 @@
           </div>
 
 
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
 
-            <div class="flex flex-wrap items-center gap-2 mb-2">
+            <div class="mb-2 flex flex-wrap items-center gap-2">
 
               <h2
                 id="cultural-title"
-                class="text-lg font-bold text-green-900"
+                class="text-lg font-bold text-gray-900"
               >
                 General Cultural Practices
               </h2>
 
-              <span
-                class="text-xs px-2 py-1 rounded-full
-                       bg-green-100 text-green-700 font-medium"
-              >
+              <span class="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
                 Integrated Pest Management (IPM)
               </span>
 
             </div>
 
 
-            <p class="text-xs text-green-700 mb-3 leading-relaxed">
+            <p class="mb-3 text-xs leading-relaxed text-gray-600">
               These are general agronomic practices recommended for this disease.
               For field-specific actions, use the factor selections above.
             </p>
 
 
             <div
-              class="text-sm text-gray-700 whitespace-pre-line
-                     leading-relaxed
-                     bg-green-50
-                     border border-green-100
-                     p-4 rounded-lg"
+              class="rounded-lg border border-green-100 bg-green-50 p-4 text-sm leading-relaxed text-gray-700"
             >
               {{ detailed_treatment.cultural_practices }}
             </div>
@@ -878,15 +814,18 @@
       {% if detailed_treatment.chemical_control and detection.severity_pct|default:0 >= detailed_treatment.severity_threshold|default:70 %}
       <section
         id="sec-chemical"
-        class="bg-white rounded-xl shadow-sm border border-red-200 p-5 sm:p-6"
+        class="rounded-xl border border-red-200 bg-white p-5 shadow-sm sm:p-6"
         aria-labelledby="chemical-title"
       >
 
         <div class="flex items-start gap-3">
 
-          <div class="p-2 bg-red-100 rounded-lg flex-shrink-0">
+          <div
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-700"
+            aria-hidden="true"
+          >
             <svg
-              class="h-5 w-5 text-red-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -902,21 +841,18 @@
           </div>
 
 
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
 
-            <div class="flex flex-wrap items-center gap-2 mb-3">
+            <div class="mb-3 flex flex-wrap items-center gap-2">
 
               <h2
                 id="chemical-title"
-                class="text-lg font-bold text-red-900"
+                class="text-lg font-bold text-gray-900"
               >
                 Chemical Control Guide
               </h2>
 
-              <span
-                class="text-xs px-2 py-1 rounded-full
-                       bg-red-100 text-red-700 font-medium"
-              >
+              <span class="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
                 Only if Cultural IPM is Insufficient
               </span>
 
@@ -924,10 +860,9 @@
 
 
             <div
-              class="bg-red-50 border border-red-200 border-l-4 border-l-red-400
-                     p-4 rounded-lg mb-3"
+              class="mb-3 rounded-lg border border-red-200 border-l-4 border-l-red-500 bg-red-50 p-4"
             >
-              <p class="text-xs text-red-700 font-semibold leading-relaxed">
+              <p class="text-xs font-semibold leading-relaxed text-red-800">
                 IMPORTANT: Always follow the registered product label instructions
                 and consult DA technicians before chemical application.
               </p>
@@ -935,11 +870,7 @@
 
 
             <div
-              class="text-sm text-gray-700 whitespace-pre-line
-                     leading-relaxed
-                     bg-red-50
-                     border border-red-100
-                     p-4 rounded-lg"
+              class="rounded-lg border border-red-100 bg-red-50 p-4 text-sm leading-relaxed text-gray-700"
             >
               {{ detailed_treatment.chemical_control }}
             </div>
@@ -954,19 +885,21 @@
            KNOWLEDGE REFERENCE
            ===================================================== -->
       <section
-        class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sm:p-6"
+        class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"
         aria-labelledby="knowledge-reference-title"
       >
 
-        <div class="flex items-start gap-3 mb-4">
+        <div class="mb-4 flex items-start gap-3">
 
-          <div class="p-2 bg-indigo-50 rounded-lg flex-shrink-0">
+          <div
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700"
+            aria-hidden="true"
+          >
             <svg
-              class="h-5 w-5 text-indigo-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -977,7 +910,7 @@
             </svg>
           </div>
 
-          <div>
+          <div class="min-w-0">
             <h2
               id="knowledge-reference-title"
               class="text-lg font-bold text-gray-900"
@@ -985,7 +918,7 @@
               Knowledge Reference
             </h2>
 
-            <p class="mt-1 text-sm text-gray-600 leading-relaxed">
+            <p class="mt-1 text-sm leading-relaxed text-gray-600">
               Review the approved knowledge guides associated with this treatment.
             </p>
           </div>
@@ -1000,16 +933,14 @@
             {% for kb in detailed_treatment.knowledge_entries %}
 
             <article
-              class="border border-gray-200 rounded-lg p-4
-                     hover:bg-gray-50 hover:border-gray-300
-                     transition-colors duration-200"
+              class="rounded-lg border border-gray-200 p-4 transition-colors duration-200 hover:border-green-200 hover:bg-green-50/30"
             >
 
-              <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                 <div class="min-w-0">
 
-                  <h3 class="font-semibold text-gray-900 break-words">
+                  <h3 class="break-words font-semibold text-gray-900">
                     {{ kb.name }}
                   </h3>
 
@@ -1022,16 +953,7 @@
 
                 <a
                   href="{% url 'polls:knowledge_detail' kb.pk %}"
-                  class="inline-flex w-full sm:w-auto items-center justify-center gap-2
-                         px-3 py-2
-                         rounded-lg
-                         border border-blue-200
-                         text-blue-700
-                         bg-blue-50
-                         hover:bg-blue-100
-                         text-xs font-medium
-                         transition-colors duration-200
-                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  class="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition-colors duration-200 hover:border-green-300 hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto"
                 >
                   <span>View Full Knowledge</span>
 
@@ -1060,9 +982,9 @@
 
         {% else %}
 
-          <div class="rounded-lg bg-gray-50 border border-gray-200 p-4">
+          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
 
-            <p class="text-sm text-gray-600 leading-relaxed">
+            <p class="text-sm leading-relaxed text-gray-600">
 
               {% if show_non_actionable_knowledge_hint %}
                 No Knowledge reference is required for this result category.
@@ -1085,19 +1007,21 @@
            ===================================================== -->
       {% if detailed_treatment.detailed_text %}
       <section
-        class="bg-gray-50 rounded-xl border border-gray-200 p-5 sm:p-6"
+        class="rounded-xl border border-gray-200 bg-gray-50 p-5 sm:p-6"
         aria-labelledby="additional-details-title"
       >
 
         <div class="flex items-start gap-3">
 
-          <div class="p-2 bg-gray-100 rounded-lg flex-shrink-0">
+          <div
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-gray-600"
+            aria-hidden="true"
+          >
             <svg
-              class="h-5 w-5 text-gray-600"
+              class="h-5 w-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
-              aria-hidden="true"
             >
               <path
                 stroke-linecap="round"
@@ -1108,18 +1032,16 @@
             </svg>
           </div>
 
-          <div class="flex-1 min-w-0">
+          <div class="min-w-0 flex-1">
 
             <h2
               id="additional-details-title"
-              class="text-lg font-bold text-gray-900 mb-3"
+              class="mb-3 text-lg font-bold text-gray-900"
             >
               Additional Information
             </h2>
 
-            <div
-              class="text-sm text-gray-700 whitespace-pre-line leading-relaxed"
-            >
+            <div class="text-sm leading-relaxed text-gray-700">
               {{ detailed_treatment.detailed_text }}
             </div>
 
@@ -1136,20 +1058,19 @@
            NO DETAILED TREATMENT
            ===================================================== -->
       <section
-        class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-10 lg:p-12 text-center"
+        class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-10 lg:p-12"
         aria-labelledby="no-treatment-title"
       >
 
         <div
-          class="mx-auto flex items-center justify-center
-                 h-16 w-16 rounded-full bg-gray-100"
+          class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400"
+          aria-hidden="true"
         >
           <svg
-            class="h-9 w-9 text-gray-400"
+            class="h-8 w-8"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
-            aria-hidden="true"
           >
             <path
               stroke-linecap="round"
@@ -1168,17 +1089,16 @@
           No Detailed Treatment Available
         </h2>
 
-        <p class="mt-2 text-sm text-gray-600 leading-relaxed">
+        <p class="mt-2 text-sm leading-relaxed text-gray-600">
           Basic treatment information is shown in the detection record.
         </p>
 
 
         {% if detection.treatment_text %}
         <div
-          class="mt-5 bg-gray-50 border border-gray-200 rounded-lg
-                 p-4 text-left"
+          class="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-left"
         >
-          <p class="text-sm text-gray-700 leading-relaxed whitespace-pre-line">
+          <p class="whitespace-pre-line text-sm leading-relaxed text-gray-700">
             {{ detection.treatment_text }}
           </p>
         </div>
@@ -1243,42 +1163,59 @@
 
 
   /*
-   * Supported gradient classes.
-   * Keep these explicit so Tailwind can detect them during build.
+   * Existing urgency values may still contain the old
+   * gradient classes. They are mapped here to semantic
+   * surface classes instead of rendering gradients.
    */
-  const ALL_GRADIENTS = [
-    'from-blue-500',
-    'to-indigo-600',
+  const URGENCY_SURFACES = {
+    'from-blue-500 to-indigo-600':
+      'border-green-200 bg-green-50',
 
-    'from-yellow-500',
-    'to-amber-600',
+    'from-yellow-500 to-amber-600':
+      'border-amber-200 bg-amber-50',
 
-    'from-orange-500',
-    'to-red-600',
+    'from-orange-500 to-red-600':
+      'border-orange-200 bg-orange-50',
 
-    'from-red-500',
-    'to-rose-700',
+    'from-red-500 to-rose-700':
+      'border-red-200 bg-red-50',
 
-    'from-red-600',
-    'to-rose-800',
+    'from-red-600 to-rose-800':
+      'border-red-200 bg-red-50',
 
-    'from-blue-600',
-    'to-indigo-700'
+    'from-blue-600 to-indigo-700':
+      'border-green-200 bg-green-50'
+  };
+
+
+  const ALL_SURFACE_CLASSES = [
+    'border-green-200',
+    'bg-green-50',
+    'border-amber-200',
+    'bg-amber-50',
+    'border-orange-200',
+    'bg-orange-50',
+    'border-red-200',
+    'bg-red-50'
   ];
 
 
   function setCardGradient(gradient) {
-    ALL_GRADIENTS.forEach(function (className) {
+    ALL_SURFACE_CLASSES.forEach(function (className) {
       card.classList.remove(className);
     });
 
-    String(gradient || '')
+    const key = String(gradient || '').trim();
+
+    const surface =
+      URGENCY_SURFACES[key] ||
+      'border-green-200 bg-green-50';
+
+    surface
       .split(/\s+/)
       .filter(Boolean)
       .forEach(function (className) {
-        if (ALL_GRADIENTS.includes(className)) {
-          card.classList.add(className);
-        }
+        card.classList.add(className);
       });
   }
 
@@ -1357,28 +1294,31 @@
 
     const links = [];
 
+
     if (culturalSection) {
       links.push(
         '<a href="#sec-cultural" ' +
-        'class="text-green-200 underline underline-offset-2 hover:text-white">' +
+        'class="font-medium text-green-700 underline underline-offset-2 hover:text-green-900">' +
         'Cultural IPM' +
         '</a>'
       );
     }
 
+
     if (chemicalSection) {
       links.push(
         '<a href="#sec-chemical" ' +
-        'class="text-red-200 underline underline-offset-2 hover:text-white">' +
+        'class="font-medium text-red-700 underline underline-offset-2 hover:text-red-900">' +
         'Chemical Control' +
         '</a>'
       );
     }
 
+
     if (preventionSection) {
       links.push(
         '<a href="#sec-prevention" ' +
-        'class="text-blue-200 underline underline-offset-2 hover:text-white">' +
+        'class="font-medium text-green-700 underline underline-offset-2 hover:text-green-900">' +
         'Prevention' +
         '</a>'
       );
@@ -1387,10 +1327,10 @@
 
     const linksHtml = links.length
       ? `
-        <div class="mt-2 text-[11px] text-white/60">
+        <div class="mt-2 text-[11px] text-gray-500">
           See full guidance below:
           ${links.join(
-            '<span class="mx-1 text-white/40">·</span>'
+            '<span class="mx-1 text-gray-300">·</span>'
           )}
         </div>
       `
@@ -1398,13 +1338,13 @@
 
 
     return `
-      <div class="mt-3 pt-3 border-t border-white/20">
+      <div class="mt-3 border-t border-gray-200 pt-3">
 
-        <div class="text-xs font-semibold text-red-200">
+        <div class="text-xs font-semibold text-red-700">
           Severity ${escapeHtml(severityPct)}% — additional management may be needed.
         </div>
 
-        <div class="mt-1 text-xs text-red-100 leading-relaxed">
+        <div class="mt-1 text-xs leading-relaxed text-gray-600">
           ${escapeHtml(severityHighMsg)}
         </div>
 
@@ -1505,6 +1445,7 @@
 
 
     const maxIndex = levels.length - 1;
+
     const levelIndex = Math.min(
       count,
       maxIndex
@@ -1534,12 +1475,12 @@
 
           const separator =
             index > 0
-              ? 'border-t border-white/20 pt-2.5 mt-2.5'
+              ? 'border-t border-gray-200 pt-2.5 mt-2.5'
               : '';
 
           const actionHtml = part.action
             ? `
-              <div class="font-semibold text-white">
+              <div class="font-semibold text-gray-900">
                 • ${escapeHtml(part.action)}
               </div>
             `
@@ -1547,7 +1488,7 @@
 
           const resultHtml = part.result
             ? `
-              <div class="pl-4 pt-1 text-blue-100 text-xs italic">
+              <div class="pl-4 pt-1 text-gray-500 text-xs italic">
                 ↳ ${escapeHtml(part.result)}
               </div>
             `
@@ -1565,7 +1506,7 @@
     } else {
 
       qrnDetail.innerHTML = `
-        <span class="text-blue-100">
+        <span class="text-gray-600">
           ${escapeHtml(level.detail || '')}
         </span>
       `;

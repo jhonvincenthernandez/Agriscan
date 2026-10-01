@@ -4177,6 +4177,47 @@ def admin_user_delete(request, pk: int):
         return redirect('polls:admin_users_list')
     return redirect('polls:admin_users_list')
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth import get_user_model
+from .forms import AdminDeleteUserForm
+
+User = get_user_model()
+
+def is_admin(user):
+    return user.is_authenticated and hasattr(user, 'profile') and user.profile.role == 'admin'
+
+@login_required
+@user_passes_test(is_admin)
+def user_delete_perm(request, user_id):
+    """
+    Permanently deletes a user after verifying the current admin's password.
+    """
+    target_user = get_object_or_404(User, pk=user_id)
+
+    # Iniiwasan ang accidental self-deletion ng Admin
+    if target_user.pk == request.user.pk:
+        messages.error(request, "You cannot permanently delete your own administrator account.")
+        return redirect('polls:admin_users_list')
+
+    if request.method == 'POST':
+        form = AdminDeleteUserForm(request.POST, admin_user=request.user)
+        if form.is_valid():
+            username = target_user.username
+            target_user.delete()  # Permanent Hard Delete
+            messages.success(request, f"The user account '{username}' has been permanently deleted from the system.")
+            return redirect('polls:admin_users_list')
+        else:
+            for error in form.non_field_errors():
+                messages.error(request, error)
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{error}")
+
+    return redirect('polls:admin_users_list')
+    
+
 
 # API Endpoints
 
@@ -4424,109 +4465,358 @@ def treatments_delete(request, pk):
 @login_required
 def announcements_list(request):
     """
-    Display all announcements for the current user
-    - Filters by role and targeting
-    - Shows unread count
-    - Paginated results
-    - Handles mark_all_read POST action
+    Display announcements for the current user.
+
+    Default display order:
+        1. Unread
+        2. Urgent
+        3. Warning
+        4. Advisory / Announcement
+        5. Information
+
+    Within the same unread/read + priority group:
+        Newest published announcement first.
+
+    Filters:
+        - role and targeting
+        - read status
+        - category
+        - active/draft status for staff
+        - search
+        - pagination
+
+    Handles:
+        - mark_all_read POST action
     """
     from django.http import JsonResponse
+    from django.db.models import (
+        Case,
+        When,
+        Value,
+        IntegerField,
+        Exists,
+        OuterRef,
+        F,
+    )
+
+    from .models import Announcement, UserNotification
+
     profile = request.user.profile
 
+    # ------------------------------------------------------------------
     # Handle mark_all_read POST action
-    if request.method == 'POST' and request.POST.get('action') == 'mark_all_read':
-        all_unread = services.get_user_announcements(profile, unread_only=True)
-        from .models import Announcement
-        for ann in all_unread:
-            services.mark_announcement_as_read(ann, profile)
-        messages.success(request, "All announcements marked as read.")
-        return redirect('polls:announcements_list')
-
-    # Check filter status first
-    status_filter = request.GET.get('status')
-
-    from .models import Announcement
-    is_staff = profile.role in ('admin', 'technician')
-
-    # Get announcements for this user with unread filter if needed
-    if status_filter == 'unread':
-        announcements = services.get_user_announcements(profile, unread_only=True)
-    elif status_filter in ('active', 'draft') and is_staff:
-        # Staff can filter by active/draft state (excludes deleted)
-        all_ann = Announcement.objects.filter(is_deleted=False)
-        announcements = all_ann.filter(is_active=(status_filter == 'active'))
-    else:
-        announcements = services.get_user_announcements(profile)
-
-    # Filter by category if requested
-    category = request.GET.get('category')
-    if category:
-        announcements = announcements.filter(category=category)
-
-    # Filter by read status (for "read only" option)
-    if status_filter == 'read':
-        announcements = announcements.filter(is_read=True)
-
-    # Search: title, content, or created_by username
-    search = request.GET.get('search', '').strip()
-    if search:
-        from django.db.models import Q
-        announcements = announcements.filter(
-            Q(title__icontains=search) |
-            Q(content__icontains=search) |
-            Q(created_by__user__username__icontains=search) |
-            Q(created_by__user__first_name__icontains=search) |
-            Q(created_by__user__last_name__icontains=search)
+    # ------------------------------------------------------------------
+    if (
+        request.method == 'POST'
+        and request.POST.get('action') == 'mark_all_read'
+    ):
+        all_unread = services.get_user_announcements(
+            profile,
+            unread_only=True
         )
 
+        for ann in all_unread:
+            services.mark_announcement_as_read(
+                ann,
+                profile
+            )
+
+        messages.success(
+            request,
+            "All announcements marked as read."
+        )
+
+        return redirect('polls:announcements_list')
+
+    # ------------------------------------------------------------------
+    # Read current filters
+    # ------------------------------------------------------------------
+    status_filter = request.GET.get('status')
+
+    category = request.GET.get('category')
+
+    search = request.GET.get(
+        'search',
+        ''
+    ).strip()
+
+    sort = request.GET.get(
+        'sort',
+        ''
+    ).strip()
+
+    # ------------------------------------------------------------------
+    # Role
+    # ------------------------------------------------------------------
+    is_staff = profile.role in (
+        'admin',
+        'technician',
+    )
+
+    # ------------------------------------------------------------------
+    # Get announcements
+    # ------------------------------------------------------------------
+    if status_filter == 'unread':
+
+        announcements = services.get_user_announcements(
+            profile,
+            unread_only=True
+        )
+
+    elif status_filter in ('active', 'draft') and is_staff:
+
+        # Staff can inspect active/draft announcements.
+        # Deleted announcements remain excluded.
+        all_ann = Announcement.objects.filter(
+            is_deleted=False
+        )
+
+        announcements = all_ann.filter(
+            is_active=(status_filter == 'active')
+        )
+
+    else:
+
+        announcements = services.get_user_announcements(
+            profile
+        )
+
+    # ------------------------------------------------------------------
+    # IMPORTANT:
+    # is_read belongs to UserNotification, not Announcement.
+    #
+    # Annotate every announcement with the current user's read state.
+    #
+    # False = unread
+    # True  = read
+    #
+    # Exists() is efficient because the database only needs to determine
+    # whether a matching read notification exists for this user.
+    # ------------------------------------------------------------------
+    user_read_notification = UserNotification.objects.filter(
+        user=profile,
+        announcement=OuterRef('pk'),
+        is_read=True,
+    )
+
+    announcements = announcements.annotate(
+        is_read=Exists(user_read_notification)
+    )
+
+    # ------------------------------------------------------------------
+    # Filter by category
+    # ------------------------------------------------------------------
+    if category:
+        announcements = announcements.filter(
+            category=category
+        )
+
+    # ------------------------------------------------------------------
+    # Filter by read status
+    # ------------------------------------------------------------------
+    if status_filter == 'read':
+        announcements = announcements.filter(
+            is_read=True
+        )
+
+    # ------------------------------------------------------------------
+    # Search
+    # ------------------------------------------------------------------
+    if search:
+        from django.db.models import Q
+
+        announcements = announcements.filter(
+            Q(title__icontains=search)
+            | Q(content__icontains=search)
+            | Q(
+                created_by__user__username__icontains=search
+            )
+            | Q(
+                created_by__user__first_name__icontains=search
+            )
+            | Q(
+                created_by__user__last_name__icontains=search
+            )
+        )
+
+    # ------------------------------------------------------------------
+    # Default ordering
+    #
+    # Only apply this when no explicit sort parameter is supplied.
+    #
+    # Group 1:
+    #   Unread
+    #
+    # Group 2:
+    #   Read
+    #
+    # Inside each group:
+    #   Urgent
+    #   Warning
+    #   Advisory / Announcement
+    #   Information
+    #
+    # Then:
+    #   Newest published announcement first.
+    #
+    # created_at and pk are deterministic tie-breakers.
+    # ------------------------------------------------------------------
+    if not sort:
+
+        unread_order = Case(
+            When(
+                is_read=False,
+                then=Value(0)
+            ),
+            default=Value(1),
+            output_field=IntegerField(),
+        )
+
+        priority_order = Case(
+            When(
+                priority='urgent',
+                then=Value(0)
+            ),
+            When(
+                priority='warning',
+                then=Value(1)
+            ),
+            When(
+                priority='advisory',
+                then=Value(2)
+            ),
+            When(
+                priority='info',
+                then=Value(3)
+            ),
+            default=Value(4),
+            output_field=IntegerField(),
+        )
+
+        announcements = announcements.order_by(
+            unread_order,
+            priority_order,
+            F('published_at').desc(nulls_last=True),
+            F('created_at').desc(),
+            F('pk').desc(),
+        )
+
+    # ------------------------------------------------------------------
     # Pagination
-    allowed_page_sizes = [10, 20, 50, 100]
+    # ------------------------------------------------------------------
+    allowed_page_sizes = [
+        10,
+        20,
+        50,
+        100,
+    ]
+
     try:
-        page_size = int(request.GET.get('page_size', 20))
+        page_size = int(
+            request.GET.get(
+                'page_size',
+                20
+            )
+        )
+
     except (TypeError, ValueError):
         page_size = 20
+
     if page_size not in allowed_page_sizes:
         page_size = 20
 
-    paginator = Paginator(announcements, page_size)
-    page = request.GET.get('page', 1)
-    announcements_page = paginator.get_page(page)
-    query_string = _build_query_string(request)
+    paginator = Paginator(
+        announcements,
+        page_size
+    )
 
-    # Get unread count
-    unread_count = services.get_unread_announcements_count(profile)
+    page = request.GET.get(
+        'page',
+        1
+    )
 
-    # Draft / active counts (staff only, exclude deleted)
+    announcements_page = paginator.get_page(
+        page
+    )
+
+    query_string = _build_query_string(
+        request
+    )
+
+    # ------------------------------------------------------------------
+    # Unread count
+    # ------------------------------------------------------------------
+    unread_count = services.get_unread_announcements_count(
+        profile
+    )
+
+    # ------------------------------------------------------------------
+    # Staff active/draft counts
+    # ------------------------------------------------------------------
     if is_staff:
-        draft_count = Announcement.objects.filter(is_active=False, is_deleted=False).count()
-        active_count = Announcement.objects.filter(is_active=True, is_deleted=False).count()
+
+        draft_count = Announcement.objects.filter(
+            is_active=False,
+            is_deleted=False
+        ).count()
+
+        active_count = Announcement.objects.filter(
+            is_active=True,
+            is_deleted=False
+        ).count()
+
     else:
+
         draft_count = 0
         active_count = 0
 
-    # Get available categories for filter
+    # ------------------------------------------------------------------
+    # Categories
+    # ------------------------------------------------------------------
     categories = Announcement.CATEGORY_CHOICES
 
+    # ------------------------------------------------------------------
+    # Context
+    # ------------------------------------------------------------------
     context = {
         'announcements': announcements_page,
         'page_obj': announcements_page,
         'paginator': paginator,
         'is_paginated': announcements_page.has_other_pages(),
-        'page_range': announcements_page.paginator.get_elided_page_range(announcements_page.number, on_each_side=1, on_ends=1),
+
+        'page_range': (
+            announcements_page.paginator
+            .get_elided_page_range(
+                announcements_page.number,
+                on_each_side=1,
+                on_ends=1
+            )
+        ),
+
         'query_string': query_string,
+
         'unread_count': unread_count,
+
         'categories': categories,
         'current_category': category,
         'current_status': status_filter,
         'current_search': search,
+
         'draft_count': draft_count,
         'active_count': active_count,
+
         'is_staff': is_staff,
+
         'page_size': page_size,
         'allowed_page_sizes': allowed_page_sizes,
     }
-    
-    return render(request, 'announcements/list.html', context)
+
+    return render(
+        request,
+        'announcements/list.html',
+        context
+    )
+
 
 @login_required
 def announcement_detail(request, pk):
@@ -4542,45 +4832,71 @@ def announcement_detail(request, pk):
     from .models import Announcement, UserNotification
 
     profile = request.user.profile
-    is_staff_user = profile.role in {'admin', 'technician'}
 
-    # Base query: never show archived/deleted announcements.
+    is_staff_user = profile.role in {
+        'admin',
+        'technician',
+    }
+
+    # ------------------------------------------------------------------
+    # Base query
+    # ------------------------------------------------------------------
     announcement_qs = Announcement.objects.filter(
         pk=pk,
         is_deleted=False,
     )
 
-    # Staff can inspect drafts; regular users can only view active items.
+    # ------------------------------------------------------------------
+    # Regular users can only access active announcements.
+    # Staff can inspect drafts.
+    # ------------------------------------------------------------------
     if not is_staff_user:
-        announcement_qs = announcement_qs.filter(is_active=True)
+        announcement_qs = announcement_qs.filter(
+            is_active=True
+        )
 
     announcement = get_object_or_404(
         announcement_qs
     )
 
-    # Regular users must belong to the announcement's target audience.
+    # ------------------------------------------------------------------
+    # Regular users must be included in the announcement's target users.
+    # ------------------------------------------------------------------
     if not is_staff_user:
-        user_announcements = services.get_user_announcements(profile)
 
-        if not user_announcements.filter(pk=announcement.pk).exists():
+        user_announcements = services.get_user_announcements(
+            profile
+        )
+
+        if not user_announcements.filter(
+            pk=announcement.pk
+        ).exists():
+
             messages.error(
                 request,
                 "You don't have permission to view this announcement."
             )
-            return redirect('polls:announcements_list')
 
-    # Only active announcements should generate read records.
-    # Drafts remain visible to staff but are not treated as published.
+            return redirect(
+                'polls:announcements_list'
+            )
+
+    # ------------------------------------------------------------------
+    # Read state
+    # ------------------------------------------------------------------
     is_read = False
     read_at = None
 
+    # Drafts are visible to staff but should not create read records.
     if announcement.is_active:
+
         services.mark_announcement_as_read(
             announcement,
             profile
         )
 
         try:
+
             user_notif = UserNotification.objects.get(
                 user=profile,
                 announcement=announcement,
@@ -4590,9 +4906,13 @@ def announcement_detail(request, pk):
             read_at = user_notif.read_at
 
         except UserNotification.DoesNotExist:
+
             is_read = False
             read_at = None
 
+    # ------------------------------------------------------------------
+    # Context
+    # ------------------------------------------------------------------
     context = {
         'announcement': announcement,
         'is_read': is_read,
@@ -4606,20 +4926,27 @@ def announcement_detail(request, pk):
         context
     )
 
+
 @login_required
 def announcement_mark_read(request, pk):
     """
     AJAX endpoint to mark an announcement as read.
 
     Only POST requests are accepted.
+
     Deleted announcements cannot be accessed.
+
     Inactive announcements are ignored safely because
     drafts should not be marked as read.
     """
     from django.http import JsonResponse
     from .models import Announcement
 
+    # ------------------------------------------------------------------
+    # Only POST is allowed.
+    # ------------------------------------------------------------------
     if request.method != 'POST':
+
         return JsonResponse(
             {
                 'success': False,
@@ -4630,19 +4957,29 @@ def announcement_mark_read(request, pk):
 
     profile = request.user.profile
 
+    # ------------------------------------------------------------------
+    # Retrieve announcement.
+    #
     # Do not require is_active=True here.
-    # This prevents an unnecessary 404 when the announcement
-    # exists but is inactive or scheduled.
+    # This allows the endpoint to safely handle an inactive announcement
+    # without returning an unnecessary 404.
+    # ------------------------------------------------------------------
     announcement = get_object_or_404(
         Announcement,
         pk=pk,
         is_deleted=False
     )
 
+    # ------------------------------------------------------------------
     # Draft/inactive announcements do not need read tracking.
-    # Return a successful response instead of a 404.
+    # ------------------------------------------------------------------
     if not announcement.is_active:
-        unread_count = services.get_unread_announcements_count(profile)
+
+        unread_count = (
+            services.get_unread_announcements_count(
+                profile
+            )
+        )
 
         return JsonResponse(
             {
@@ -4652,13 +4989,19 @@ def announcement_mark_read(request, pk):
             }
         )
 
-    # Mark the active announcement as read.
+    # ------------------------------------------------------------------
+    # Mark active announcement as read.
+    # ------------------------------------------------------------------
     services.mark_announcement_as_read(
         announcement,
         profile
     )
 
-    unread_count = services.get_unread_announcements_count(profile)
+    unread_count = (
+        services.get_unread_announcements_count(
+            profile
+        )
+    )
 
     return JsonResponse(
         {
@@ -4691,32 +5034,53 @@ def announcement_create(request):
     from .models import Announcement
 
     if request.method == 'POST':
-        form = AnnouncementForm(request.POST)
+
+        form = AnnouncementForm(
+            request.POST
+        )
 
         if form.is_valid():
-            announcement = form.save(commit=False)
-            announcement.created_by = request.user.profile
 
-            publish_timing = form.cleaned_data.get(
-                'publish_timing',
-                'immediate'
+            announcement = form.save(
+                commit=False
             )
 
-            # The form clears published_at for immediate mode.
-            # Set the actual publication timestamp only when
-            # the announcement is immediately active.
+            announcement.created_by = (
+                request.user.profile
+            )
+
+            publish_timing = (
+                form.cleaned_data.get(
+                    'publish_timing',
+                    'immediate'
+                )
+            )
+
+            # ----------------------------------------------------------
+            # Immediate publishing
+            # ----------------------------------------------------------
             if publish_timing == 'immediate':
+
                 if announcement.is_active:
-                    announcement.published_at = timezone.now()
+                    announcement.published_at = (
+                        timezone.now()
+                    )
+
                 else:
                     announcement.published_at = None
 
-            # Scheduled mode preserves the future published_at
-            # value validated by AnnouncementForm.
+            # ----------------------------------------------------------
+            # Scheduled mode preserves the validated future timestamp.
+            # ----------------------------------------------------------
             announcement.save()
 
+            # ----------------------------------------------------------
+            # Post-save publishing behavior
+            # ----------------------------------------------------------
             if announcement.is_active:
+
                 if publish_timing == 'immediate':
+
                     _queue_announcement_email_send(
                         announcement.pk
                     )
@@ -4727,14 +5091,18 @@ def announcement_create(request):
                         'published. Email and notifications are '
                         'being sent in the background.'
                     )
+
                 else:
+
                     messages.success(
                         request,
                         f'Announcement "{announcement.title}" '
                         'scheduled. Recipients will get '
                         'notifications at publish time.'
                     )
+
             else:
+
                 messages.success(
                     request,
                     f'Announcement "{announcement.title}" '
@@ -4742,11 +5110,17 @@ def announcement_create(request):
                     'notify users.'
                 )
 
-            return redirect('polls:announcements_list')
+            return redirect(
+                'polls:announcements_list'
+            )
 
     else:
+
         form = AnnouncementForm()
 
+    # ------------------------------------------------------------------
+    # Context
+    # ------------------------------------------------------------------
     context = {
         'form': form,
         'title': 'Create New Announcement',
@@ -4792,48 +5166,75 @@ def announcement_edit(request, pk):
         pk=pk
     )
 
-    # Capture the original state before processing the form.
+    # ------------------------------------------------------------------
+    # Capture original state before processing form.
+    # ------------------------------------------------------------------
     was_active = announcement.is_active
     original_published_at = announcement.published_at
 
-    # Publication controls are locked after activation.
+    # Publication controls become locked after activation.
     publish_locked = was_active
 
+    # ------------------------------------------------------------------
+    # POST
+    # ------------------------------------------------------------------
     if request.method == 'POST':
+
         form = AnnouncementForm(
             request.POST,
             instance=announcement
         )
 
         if form.is_valid():
-            updated = form.save(commit=False)
 
-            publish_timing = form.cleaned_data.get(
-                'publish_timing',
-                'immediate'
+            updated = form.save(
+                commit=False
             )
 
-            if publish_locked:
-                # Preserve the original publication timestamp
-                # for already-active announcements.
-                updated.published_at = original_published_at
+            publish_timing = (
+                form.cleaned_data.get(
+                    'publish_timing',
+                    'immediate'
+                )
+            )
 
+            # ----------------------------------------------------------
+            # Existing active announcement
+            # ----------------------------------------------------------
+            if publish_locked:
+
+                # Never change original publication timestamp.
+                updated.published_at = (
+                    original_published_at
+                )
+
+            # ----------------------------------------------------------
+            # Existing draft
+            # ----------------------------------------------------------
             elif not was_active:
-                # Handle draft-to-draft and draft-to-active updates.
+
                 if publish_timing == 'immediate':
+
                     if updated.is_active:
-                        updated.published_at = timezone.now()
+                        updated.published_at = (
+                            timezone.now()
+                        )
+
                     else:
                         updated.published_at = None
 
                 # Scheduled mode preserves the future
-                # published_at value validated by the form.
+                # published_at validated by AnnouncementForm.
 
             updated.save()
 
-            # Handle draft-to-active transitions.
+            # ----------------------------------------------------------
+            # Draft → Active transition
+            # ----------------------------------------------------------
             if not was_active and updated.is_active:
+
                 if publish_timing == 'immediate':
+
                     _queue_announcement_email_send(
                         updated.pk
                     )
@@ -4844,27 +5245,40 @@ def announcement_edit(request, pk):
                         'published. Email and notifications are '
                         'being sent in the background.'
                     )
+
                 else:
+
                     messages.success(
                         request,
                         f'Announcement "{updated.title}" '
                         'scheduled. Recipients will get '
                         'notifications at publish time.'
                     )
+
             else:
+
                 messages.success(
                     request,
                     f'Announcement "{updated.title}" '
                     'updated successfully!'
                 )
 
-            return redirect('polls:announcements_list')
+            return redirect(
+                'polls:announcements_list'
+            )
 
+    # ------------------------------------------------------------------
+    # GET
+    # ------------------------------------------------------------------
     else:
+
         form = AnnouncementForm(
             instance=announcement
         )
 
+    # ------------------------------------------------------------------
+    # Context
+    # ------------------------------------------------------------------
     context = {
         'form': form,
         'announcement': announcement,
@@ -4886,19 +5300,37 @@ def announcement_edit(request, pk):
 @role_required(['admin'])
 def announcement_delete(request, pk):
     """
-    Archive announcement (Admin only)
+    Archive announcement.
+
+    Admin only.
     """
     from .models import Announcement
-    
-    announcement = get_object_or_404(Announcement, pk=pk, is_deleted=False)
-    
+
+    announcement = get_object_or_404(
+        Announcement,
+        pk=pk,
+        is_deleted=False
+    )
+
     if request.method == 'POST':
+
         title = announcement.title
+
         announcement.archive()
-        messages.success(request, f'📦 Announcement "{title}" archived. Manage from Trash & Archive.')
-        return redirect('polls:announcements_list')
-    
-    return redirect('polls:announcements_list')
+
+        messages.success(
+            request,
+            f'📦 Announcement "{title}" archived. '
+            'Manage from Trash & Archive.'
+        )
+
+        return redirect(
+            'polls:announcements_list'
+        )
+
+    return redirect(
+        'polls:announcements_list'
+    )
 
 
 # ============================================================================

@@ -2,31 +2,41 @@
 {% block title %}System Settings Audit Log · AgriScan+{% endblock %}
 
 {% block content %}
-<section class="page-container">
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">System Settings Audit Log</h1>
-        <p class="mt-1 text-sm text-gray-500">View all changes made to the system configuration settings.</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-          <svg class="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+<section class="page-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+  <!-- Page Header -->
+  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+      <div class="min-w-0">
+        <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-3">
+          <svg class="h-6 w-6 sm:h-7 sm:w-7 text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
           </svg>
-          <span class="text-sm font-semibold text-blue-700">{{ total_count }} Entr{{ total_count|pluralize:"y,ies" }}</span>
-        </div>
-        <a href="{% url 'polls:system_settings' %}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition text-sm font-medium">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          <span>System Settings Audit Log</span>
+        </h1>
+        <p class="mt-2 text-sm text-gray-600 leading-relaxed">
+          View and manage all changes made to the system configuration settings.
+        </p>
+      </div>
+
+      <div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:flex-shrink-0">
+        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+          <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          {{ total_count }} Entr{{ total_count|pluralize:"y,ies" }}
+        </span>
+
+        <a href="{% url 'polls:system_settings' %}" class="btn btn-secondary">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
           </svg>
           Back to Settings
         </a>
-        <a href="{% url 'polls:system_settings_audit_list' %}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition text-sm font-medium">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+
+        <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">
+          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
           Refresh
         </a>
@@ -34,12 +44,12 @@
     </div>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <form method="get" action="{% url 'polls:system_settings_audit_list' %}" class="space-y-2">
-
-      <!-- Row 1: Search + Search button + Clear -->
-      <div class="flex flex-wrap gap-2 items-center">
-        <div class="relative flex-1 min-w-[200px]">
+  <!-- Filters & Search -->
+  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
+    <form method="get" action="{% url 'polls:system_settings_audit_list' %}" class="space-y-4">
+      <!-- Row 1: Search + Actions -->
+      <div class="flex flex-col sm:flex-row gap-3">
+        <div class="relative flex-1">
           <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -48,135 +58,137 @@
           <input id="audit-search" type="text" name="search" value="{{ search_query }}"
                  placeholder="Search user, field, values… (Ctrl+K)"
                  autocomplete="off"
-                 class="block w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"/>
+                 class="form-input pl-9" />
         </div>
 
-        <!-- Keep filter state when searching -->
+        <!-- Preserve filter state when searching -->
         <input type="hidden" name="sort" value="{{ sort }}">
         <input type="hidden" name="page_size" value="{{ page_size }}">
 
-        <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-          Search
-        </button>
+          <button type="submit" class="btn btn-primary">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Search
+          </button>
 
-        {% if filters_active %}
-        <a href="{% url 'polls:system_settings_audit_list' %}"
-           class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-          Clear
-        </a>
-        {% endif %}
+          {% if filters_active %}
+          <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Clear
+          </a>
+          {% endif %}
       </div>
 
-      <!-- Row 2: Sort + Page size + count -->
-      <div class="flex flex-wrap gap-2 items-center">
-        <select name="sort" onchange="this.form.submit()"
-                class="appearance-none pl-3 pr-8 py-2 min-w-[150px] text-sm rounded-lg border border-gray-300 bg-white focus:border-indigo-500 focus:ring-indigo-500
-                       bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><path fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%221.5%22 d=%22M4 6l4 4 4-4%22/></svg>')]
-                       bg-no-repeat bg-[right_0.5rem_center] bg-[length:1rem_1rem]">
+      <!-- Row 2: Sort + Page size -->
+      <div class="flex flex-grid gap-3 items-center">
+        <select name="sort" onchange="this.form.submit()" class="form-select w-auto min-w-[160px]">
           <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
           <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
           <option value="user" {% if sort == 'user' %}selected{% endif %}>User A → Z</option>
           <option value="-user" {% if sort == '-user' %}selected{% endif %}>User Z → A</option>
         </select>
 
-        <select name="page_size" onchange="this.form.submit()"
-                class="appearance-none pl-3 pr-8 py-2 min-w-[120px] text-sm rounded-lg border border-gray-300 bg-white focus:border-indigo-500 focus:ring-indigo-500
-                       bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22><path fill=%22none%22 stroke=%22%236b7280%22 stroke-width=%221.5%22 d=%22M4 6l4 4 4-4%22/></svg>')]
-                       bg-no-repeat bg-[right_0.5rem_center] bg-[length:1rem_1rem]">
+        <select name="page_size" onchange="this.form.submit()" class="form-select w-auto min-w-[140px]">
           <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
           <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
           <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
           <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
         </select>
-
       </div>
-
     </form>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-    <!-- Bulk action toolbar (hidden until rows are selected) -->
-    <div id="audit-bulk-toolbar" class="hidden no-print px-6 py-3 bg-blue-50 border-b border-blue-200 flex items-center gap-3">
-      <span id="audit-bulk-count" class="text-sm font-semibold text-blue-800">0 selected</span>
-      <button type="button" onclick="confirmBulkAuditArchive()"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition">
+  <!-- Audit Log Table -->
+  <div class="agri-card overflow-hidden">
+    <!-- Bulk action toolbar -->
+    <div id="audit-bulk-toolbar" class="no-print items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5 flex">
+      <span id="audit-bulk-count" class="text-sm font-semibold text-amber-900">0 selected</span>
+      <button type="button" onclick="confirmBulkAuditArchive()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1">
         <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
         </svg>
         Archive Selected
       </button>
-      <button type="button" onclick="clearAuditSelection()"
-              class="text-xs text-blue-600 hover:text-blue-800 font-medium ml-auto">✕ Clear selection</button>
+      <button type="button" onclick="clearAuditSelection()" class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500">
+        ✕ Clear selection
+      </button>
     </div>
 
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm">
-        <thead class="bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase">
+        <thead class="bg-slate-50/80 border-b border-slate-200">
           <tr>
-            <th class="px-4 py-3 w-8 no-print">
+            <th class="px-4 sm:px-6 py-3 w-8 no-print">
               <input type="checkbox" id="audit-select-all-cb"
-                     class="h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer"
+                     class="h-4 w-4 rounded border-gray-300 text-emerald-600 cursor-pointer focus:ring-emerald-500"
                      title="Select all on this page" />
             </th>
-            <th class="px-4 py-3">When</th>
-            <th class="px-4 py-3">Who</th>
-            <th class="px-4 py-3">Changes</th>
-            <th class="px-4 py-3">Actions</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">When</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Who</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Changes</th>
+            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-gray-100">
           {% for entry in audits %}
-          <tr class="border-t border-gray-100 audit-row">
-            <td class="px-4 py-3">
-              <input type="checkbox" class="row-cb h-4 w-4 rounded border-gray-300 text-blue-600 cursor-pointer" value="{{ entry.pk }}" />
+          <tr class="audit-row hover:bg-slate-50/50 transition-colors">
+            <td class="px-4 sm:px-6 py-4">
+              <input type="checkbox" class="row-cb h-4 w-4 rounded border-gray-300 text-emerald-600 cursor-pointer focus:ring-emerald-500" value="{{ entry.pk }}" />
             </td>
-            <td class="px-4 py-3 text-gray-600">{{ entry.changed_at|date:'M d, Y H:i' }}</td>
-            <td class="px-4 py-3 text-gray-700">
+            <td class="px-4 sm:px-6 py-4 text-gray-600 whitespace-nowrap">{{ entry.changed_at|date:'M d, Y H:i' }}</td>
+            <td class="px-4 sm:px-6 py-4 text-gray-700">
               {% if entry.changed_by %}
-                {{ entry.changed_by.get_full_name|default:entry.changed_by.username }}
+                <span class="font-medium">{{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</span>
               {% else %}
-                (system)
+                <span class="text-gray-500 italic">(system)</span>
               {% endif %}
             </td>
-            <td class="px-4 py-3 text-gray-700">
+            <td class="px-4 sm:px-6 py-4 text-gray-700">
               {% if entry.details.changes %}
-                <ul class="list-disc list-inside space-y-1">
+                <ul class="space-y-1.5">
                   {% for key, diff in entry.details.changes.items %}
-                    <li><span class="font-semibold">{{ key }}</span>: {{ diff.from }} → {{ diff.to }}</li>
+                    <li class="flex items-start gap-2 text-xs">
+                      <span class="shrink-0 mt-0.5 h-1.5 w-1.5 rounded-full bg-gray-300"></span>
+                      <span>
+                        <span class="font-semibold text-gray-900">{{ key }}</span>: 
+                        <span class="text-red-600 line-through decoration-red-300">{{ diff.from }}</span> 
+                        <span class="text-gray-400 mx-1">→</span> 
+                        <span class="text-emerald-700 font-medium">{{ diff.to }}</span>
+                      </span>
+                    </li>
                   {% endfor %}
                 </ul>
               {% else %}
-                <p class="text-xs text-gray-500">No changes recorded (saved current values).</p>
+                <p class="text-xs text-gray-400 italic">No changes recorded (saved current values).</p>
               {% endif %}
             </td>
-            <td class="px-4 py-3">
-              <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2">
-                <a
-                  href="{% url 'polls:system_settings_audit_revert' entry.pk %}"
-                  data-open-delete="true"
-                  data-delete-type="revert"
-                  data-delete-label="Revert to audit entry #{{ entry.pk }}"
-                  data-delete-subtitle="This will overwrite current settings with the values saved in this audit entry."
-                  data-delete-notice="This action will restore the captured settings state."
-                  data-delete-title="Revert settings?"
-                  data-delete-confirm="Yes, Revert"
-                  class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
+            <td class="px-4 sm:px-6 py-4">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                <a href="{% url 'polls:system_settings_audit_revert' entry.pk %}"
+                   data-open-delete="true"
+                   data-delete-type="revert"
+                   data-delete-label="Revert to audit entry #{{ entry.pk }}"
+                   data-delete-subtitle="This will overwrite current settings with the values saved in this audit entry."
+                   data-delete-notice="This action will restore the captured settings state."
+                   data-delete-title="Revert settings?"
+                   data-delete-confirm="Yes, Revert"
+                   class="relative z-10 inline-flex min-h-[34px] items-center rounded-md border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
+                  <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                  </svg>
                   Revert
                 </a>
 
-                <a
-                  href="{% url 'polls:system_settings_audit_archive' entry.pk %}"
-                  data-open-delete="true"
-                  data-delete-label="Audit entry #{{ entry.pk }}"
-                  class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                >
+                <a href="{% url 'polls:system_settings_audit_archive' entry.pk %}"
+                   data-open-delete="true"
+                   data-delete-label="Audit entry #{{ entry.pk }}"
+                   class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100">
+                  <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                  </svg>
                   Archive
                 </a>
               </div>
@@ -184,27 +196,51 @@
           </tr>
           {% empty %}
           <tr>
-            <td colspan="5" class="px-4 py-6 text-center text-gray-500">No audit entries yet.</td>
+            <td colspan="5" class="px-4 sm:px-6 py-12 text-center">
+              <div class="flex flex-col items-center justify-center text-gray-500">
+                <svg class="h-10 w-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <p class="text-sm font-medium">No audit entries found.</p>
+                <p class="text-xs text-gray-400 mt-1">Changes to system settings will appear here.</p>
+              </div>
+            </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
+    <!-- Pagination -->
     {% if audits.has_other_pages %}
-    <div class="mt-4 flex justify-between items-center">
-      <div class="text-xs text-gray-500">Page {{ audits.number }} of {{ audits.paginator.num_pages }}</div>
+    <div class="px-4 sm:px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="text-xs text-gray-500">
+        Page {{ audits.number }} of {{ audits.paginator.num_pages }}
+      </div>
       <div class="flex gap-2">
         {% if audits.has_previous %}
-        <a href="?page={{ audits.previous_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">Previous</a>
+        <a href="?page={{ audits.previous_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+           class="btn btn-secondary btn-sm">
+          <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+          </svg>
+          Previous
+        </a>
         {% endif %}
         {% if audits.has_next %}
-        <a href="?page={{ audits.next_page_number }}" class="px-3 py-1 rounded border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">Next</a>
+        <a href="?page={{ audits.next_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+           class="btn btn-secondary btn-sm">
+          Next
+          <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
         {% endif %}
       </div>
     </div>
     {% endif %}
   </div>
+
 </section>
 
 <script>
@@ -230,7 +266,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Highlight selected rows
     document.querySelectorAll('.audit-row').forEach(row => {
       const cb = row.querySelector('.row-cb');
-      row.classList.toggle('bg-blue-50', cb && cb.checked);
+      row.classList.toggle('bg-emerald-50/50', cb && cb.checked);
     });
   }
 
@@ -261,7 +297,7 @@ function clearAuditSelection() {
   const sa = document.getElementById('audit-select-all-cb');
   if (sa) { sa.checked = false; sa.indeterminate = false; }
   document.getElementById('audit-bulk-toolbar')?.classList.add('hidden');
-  document.querySelectorAll('.audit-row').forEach(r => r.classList.remove('bg-blue-50'));
+  document.querySelectorAll('.audit-row').forEach(r => r.classList.remove('bg-emerald-50/50'));
 }
 
 function confirmBulkAuditArchive() {

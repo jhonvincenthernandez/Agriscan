@@ -4,98 +4,159 @@
 {% block content %}
 
 <!-- Print-only header -->
-<div id="print-header" style="display:none" class="mb-4 border-b pb-3">
+<div id="print-header" style="display:none" class="mb-4 border-b border-gray-200 pb-3">
   <h1 class="text-xl font-bold text-gray-900">AgriScan+ · Harvest Records</h1>
-  <p class="text-sm text-gray-500 mt-1">
+  <p class="mt-1 text-sm text-gray-500">
     Printed on <span id="print-date"></span>
     {% if request.GET.search or request.GET.season or request.GET.variety or request.GET.year %}
-     · Filtered view{% endif %}
+      · Filtered view
+    {% endif %}
   </p>
 </div>
 
-<section class="page-container">
-  <!-- Page Header -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          <svg class="h-7 w-7 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-          Harvest Records
-        </h1>
-        <p class="mt-1 text-sm text-gray-500">Track actual harvest metrics for completed planting cycles.</p>
+<section class="page-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+  <!-- =========================================================
+       PAGE HEADER
+       ========================================================= -->
+  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+
+      <!-- Title / description -->
+      <div class="min-w-0">
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+
+          <div class="min-w-0">
+            <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+              Harvest Records
+            </h1>
+            <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+              Track actual harvest metrics for completed planting cycles.
+            </p>
+          </div>
+        </div>
       </div>
-      <div class="flex flex-col sm:flex-row items-center gap-3">
-        <div class="flex items-center gap-2 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <svg class="h-5 w-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+
+      <!-- Page actions -->
+      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+
+        <!-- Record count -->
+        <div class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 text-sm font-medium text-gray-700" aria-label="{{ total_count }} harvest record{{ total_count|pluralize }}">
+          <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          <span class="text-sm font-semibold text-yellow-700">{{ total_count }} Record{{ total_count|pluralize }}</span>
+          <span>{{ total_count }} Record{{ total_count|pluralize }}</span>
         </div>
-        <button onclick="handlePagePrint()" class="no-print inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium text-sm">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-          Print
+
+        <!-- Print -->
+        <button type="button" onclick="handlePagePrint()" class="btn btn-secondary no-print w-full sm:w-auto">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H9v4a2 2 0 002 2zm6-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          <span>Print</span>
         </button>
-        <div class="relative">
-          <button onclick="openHarvestExportModal()" class="no-print flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition shadow-sm font-medium text-sm">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Export
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-          </button>
-        </div>
-        <a href="{% url 'polls:harvest_create' %}" class="no-print inline-flex items-center gap-2 px-4 py-2 bg-yellow-600 text-white text-sm font-medium rounded-lg hover:bg-yellow-700 transition shadow-sm">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+        <!-- Export -->
+        <button type="button" onclick="openHarvestExportModal()" class="btn btn-secondary no-print w-full sm:w-auto">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>Export</span>
+        </button>
+
+        <!-- New harvest -->
+        <a href="{% url 'polls:harvest_create' %}" class="btn btn-primary no-print w-full sm:w-auto">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
           </svg>
-          New Harvest
+          <span>New Harvest</span>
         </a>
       </div>
     </div>
 
-    <div class="mt-6 bg-gray-50 border border-gray-200 rounded-lg">
-      <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-        <form method="get" class="space-y-3">
-          <div class="flex items-center gap-2">
-                 <input id="harvest-search" type="text" name="search" value="{{ request.GET.search }}"
-                   placeholder="🔍Search ID, field, variety, season, or year… (Ctrl+K)"
-                   autocomplete="off"
-                   class="flex-1 min-w-0 rounded-md border-gray-200 text-sm px-3 py-2" />
-            <input type="hidden" name="field" value="{{ request.GET.field }}">
-            <input type="hidden" name="variety" value="{{ request.GET.variety }}">
-            <input type="hidden" name="season" value="{{ request.GET.season }}">
-            <input type="hidden" name="year" value="{{ request.GET.year }}">
-            <input type="hidden" name="sort" value="{{ request.GET.sort }}">
-            <input type="hidden" name="page_size" value="{{ page_size }}">
-            <button type="submit" data-loading class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white px-4 py-2 rounded-lg hover:from-yellow-600 hover:to-yellow-700 transition-all shadow-sm hover:shadow text-sm font-medium flex items-center gap-1">
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              Search
-            </button>
-            {% if request.GET.search or request.GET.field or request.GET.variety or request.GET.season or request.GET.year %}
-            <a href="{% url 'polls:harvests_list' %}" class="px-4 py-2 text-gray-500 text-sm font-medium rounded-lg hover:bg-gray-100 transition">Clear</a>
-            {% endif %}
+    <!-- =======================================================
+         SEARCH / FILTERS
+         ======================================================= -->
+    <div class="mt-6 border-t border-gray-100 pt-5">
+      <form method="get" class="space-y-4">
+
+        <!-- Search -->
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <div class="min-w-0 flex-1">
+            <label for="harvest-search" class="sr-only">Search harvest records</label>
+            <input
+              id="harvest-search"
+              type="text"
+              name="search"
+              value="{{ request.GET.search }}"
+              placeholder="Search field, variety, season, year, or ID… (Ctrl+K)"
+              autocomplete="off"
+              class="form-input"
+            />
           </div>
 
-          <div class="flex flex-wrap items-center gap-2">
-            {# Visible field dropdown removed — field filtering is available via the main search or the hidden `field` input above. #}
-            <select name="variety" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[140px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+          <input type="hidden" name="field" value="{{ request.GET.field }}">
+
+          <div class="flex gap-2">
+            <button type="submit" data-loading class="btn btn-primary w-full sm:w-auto">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+              </svg>
+              <span>Search</span>
+            </button>
+
+            {% if request.GET.search or request.GET.field or request.GET.variety or request.GET.season or request.GET.year %}
+              <a href="{% url 'polls:harvests_list' %}" class="btn btn-secondary w-full sm:w-auto">
+                Clear
+              </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Filters Grid -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+
+          <!-- Variety -->
+          <div class="min-w-0">
+            <label for="harvest-variety-filter" class="sr-only">Filter by variety</label>
+            <select id="harvest-variety-filter" name="variety" onchange="this.form.submit()" class="form-select form-select-sm">
               <option value="">All Varieties</option>
               {% for v in varieties %}
                 <option value="{{ v }}" {% if request.GET.variety == v %}selected{% endif %}>{{ v }}</option>
               {% endfor %}
             </select>
-            <select name="season" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[130px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+          </div>
+
+          <!-- Season -->
+          <div class="min-w-0">
+            <label for="harvest-season-filter" class="sr-only">Filter by season</label>
+            <select id="harvest-season-filter" name="season" onchange="this.form.submit()" class="form-select form-select-sm">
               <option value="">All Seasons</option>
               <option value="wet" {% if request.GET.season == 'wet' %}selected{% endif %}>Wet</option>
               <option value="dry" {% if request.GET.season == 'dry' %}selected{% endif %}>Dry</option>
             </select>
-            <select name="year" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[110px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+          </div>
+
+          <!-- Year -->
+          <div class="min-w-0">
+            <label for="harvest-year-filter" class="sr-only">Filter by year</label>
+            <select id="harvest-year-filter" name="year" onchange="this.form.submit()" class="form-select form-select-sm">
               <option value="">All Years</option>
               {% for y in years %}
                 <option value="{{ y }}" {% if request.GET.year == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
               {% endfor %}
             </select>
-            <select name="sort" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[140px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+          </div>
+
+          <!-- Sort -->
+          <div class="min-w-0">
+            <label for="harvest-sort-filter" class="sr-only">Sort harvest records</label>
+            <select id="harvest-sort-filter" name="sort" onchange="this.form.submit()" class="form-select form-select-sm">
               <option value="-harvest_date" {% if sort_by == '-harvest_date' %}selected{% endif %}>Newest</option>
               <option value="harvest_date" {% if sort_by == 'harvest_date' %}selected{% endif %}>Oldest</option>
               <option value="-yield_tons_per_ha" {% if sort_by == '-yield_tons_per_ha' %}selected{% endif %}>Yield ↓</option>
@@ -104,149 +165,247 @@
               <option value="-planting__field__name" {% if sort_by == '-planting__field__name' %}selected{% endif %}>Field Z-A</option>
               <option value="planting__variety__code" {% if sort_by == 'planting__variety__code' %}selected{% endif %}>Variety A-Z</option>
               <option value="-planting__variety__code" {% if sort_by == '-planting__variety__code' %}selected{% endif %}>Variety Z-A</option>
-              <option value="pk" {% if sort_by == 'pk' %}selected{% endif %}>ID ↑</option>
-              <option value="-pk" {% if sort_by == '-pk' %}selected{% endif %}>ID ↓</option>
             </select>
-            <select name="page_size" onchange="this.form.submit()" class="rounded-md border-gray-200 text-sm pl-3 pr-8 py-2 min-w-[100px] appearance-none bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat">
+          </div>
+
+          <!-- Page size -->
+          <div class="min-w-0">
+            <label for="harvest-page-size" class="sr-only">Records per page</label>
+            <select id="harvest-page-size" name="page_size" onchange="this.form.submit()" class="form-select form-select-sm">
               <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
               <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
               <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
               <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
             </select>
           </div>
-        </form>
-      </div>
+        </div>
+
+        <!-- Current filter context -->
+        {% if request.GET.search or request.GET.field or request.GET.variety or request.GET.season or request.GET.year %}
+          <div class="flex items-center gap-2 text-xs text-gray-500">
+            <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 14.414V19l-2 2v-6.586a1 1 0 00-.293-.707L4.293 7.293A1 1 0 014 6.586V4z"/>
+            </svg>
+            <span>Filters are applied to the current records view.</span>
+          </div>
+        {% endif %}
+      </form>
     </div>
   </div>
 
+  <!-- =========================================================
+       RECORDS
+       ========================================================= -->
   {% if records %}
+
     <form method="post" action="{% url 'polls:harvests_bulk_archive' %}" id="harvest-bulk-form" class="printable">
       {% csrf_token %}
       <input type="hidden" name="_next" value="{{ request.get_full_path }}">
 
-      <div id="bulk-toolbar" class="hidden no-print mb-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg flex flex-wrap items-center gap-3">
-        <span class="text-sm font-medium text-amber-800">
-          <span id="selected-count">0</span> selected
-        </span>
-        <button type="button"
-                data-open-bulk-archive="true"
-                data-bulk-form-id="harvest-bulk-form"
-                data-bulk-action-url="{% url 'polls:harvests_bulk_archive' %}"
-                data-bulk-label-singular="harvest record"
-                data-bulk-label-plural="harvest records"
-                data-bulk-title="Archive Harvest Records?"
-                data-bulk-subtitle="They will be archived and can be restored from Trash."
-                data-bulk-confirm="Yes, Archive"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold rounded-lg transition">
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8l1 12a2 2 0 002 2h8a2 2 0 002-2l1-12"></path>
+      <!-- =====================================================
+           BULK TOOLBAR
+           ===================================================== -->
+      <div
+        id="bulk-toolbar"
+        class="no-print hidden items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5"
+        role="region"
+        aria-label="Bulk harvest record actions"
+      >
+        <div class="flex min-w-0 items-center gap-2">
+         
+
+          <span class="text-sm font-semibold text-amber-900">
+            <span id="selected-count">0</span> selected
+          </span>
+        </div>
+
+        <button
+          type="button"
+          data-open-bulk-archive="true"
+          data-bulk-form-id="harvest-bulk-form"
+          data-bulk-action-url="{% url 'polls:harvests_bulk_archive' %}"
+          data-bulk-label-singular="harvest record"
+          data-bulk-label-plural="harvest records"
+          data-bulk-title="Archive Harvest Records?"
+          data-bulk-subtitle="They will be archived and can be restored from Trash."
+          data-bulk-confirm="Yes, Archive"
+          class="btn btn-sm bg-amber-600 text-white border-amber-600 hover:bg-amber-700 hover:border-amber-700 focus:ring-amber-500"
+        >
+          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
           </svg>
           Archive Selected
         </button>
-        <button type="button" onclick="clearSelection()" class="text-xs text-amber-600 hover:text-amber-800 transition">Clear selection</button>
+
+        <button type="button" onclick="clearSelection()" class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500">
+          Clear selection
+        </button>
       </div>
 
-      <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <!-- =====================================================
+           TABLE (Optimal Horizontal Scrolling for Small Screens)
+           ===================================================== -->
+      <div class="agri-card overflow-hidden">
         <div class="overflow-x-auto">
-          <table role="table" aria-label="Harvest records" class="min-w-full divide-y divide-gray-200 text-sm">
+          <table
+            role="table"
+            aria-label="Harvest records"
+            class="min-w-[900px] divide-y divide-gray-200 text-sm"
+          >
             <thead class="bg-gray-50">
-              <tr class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                <th class="px-4 py-3 w-8 no-print">
-                  <input type="checkbox" id="select-all-cb" class="h-4 w-4 rounded border-gray-300 text-amber-600 cursor-pointer" title="Select all on this page">
+              <tr class="text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+
+                <!-- Select -->
+                <th scope="col" class="w-10 px-3 py-3 sm:px-4 no-print">
+                  <label for="select-all-cb" class="sr-only">Select all harvest records on this page</label>
+                  <input
+                    type="checkbox"
+                    id="select-all-cb"
+                    class="h-4 w-4 cursor-pointer rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                    title="Select all on this page"
+                    aria-label="Select all harvest records on this page"
+                  >
                 </th>
-                <th class="px-4 py-3 whitespace-nowrap">
-                  <a href="?sort={% if sort_by == 'pk' %}-pk{% else %}pk{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
-                    ID
-                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'pk' or sort_by == '-pk' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                      {% if sort_by == 'pk' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+
+                <!-- Field -->
+                <th scope="col" class="whitespace-nowrap px-3 py-3 sm:px-4">
+                  <a href="?sort={% if sort_by == 'planting__field__name' %}-planting__field__name{% else %}planting__field__name{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.field %}&field={{ request.GET.field }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="group inline-flex items-center gap-1 transition-colors hover:text-emerald-700">
+                    <span>Field</span>
+                    <svg class="h-3 w-3 shrink-0 {% if sort_by == 'planting__field__name' or sort_by == '-planting__field__name' %}text-emerald-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      {% if sort_by == 'planting__field__name' %}
+                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                      {% else %}
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      {% endif %}
+                    </svg>
                   </a>
                 </th>
-                <th class="px-4 py-3 whitespace-nowrap">
-                  <a href="?sort={% if sort_by == 'planting__field__name' %}-planting__field__name{% else %}planting__field__name{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
-                    Field
-                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'planting__field__name' or sort_by == '-planting__field__name' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                      {% if sort_by == 'planting__field__name' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+
+                <!-- Variety -->
+                <th scope="col" class="whitespace-nowrap px-3 py-3 sm:px-4">
+                  <a href="?sort={% if sort_by == 'planting__variety__code' %}-planting__variety__code{% else %}planting__variety__code{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.field %}&field={{ request.GET.field }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="group inline-flex items-center gap-1 transition-colors hover:text-emerald-700">
+                    <span>Variety</span>
+                    <svg class="h-3 w-3 shrink-0 {% if sort_by == 'planting__variety__code' or sort_by == '-planting__variety__code' %}text-emerald-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      {% if sort_by == 'planting__variety__code' %}
+                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                      {% else %}
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      {% endif %}
+                    </svg>
                   </a>
                 </th>
-                <th class="px-4 py-3 whitespace-nowrap">
-                  <a href="?sort={% if sort_by == 'planting__variety__code' %}-planting__variety__code{% else %}planting__variety__code{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
-                    Variety
-                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'planting__variety__code' or sort_by == '-planting__variety__code' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                      {% if sort_by == 'planting__variety__code' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+
+                <!-- Season -->
+                <th scope="col" class="whitespace-nowrap px-3 py-3 sm:px-4">
+                  <a href="?sort={% if sort_by == 'planting__season' %}-planting__season{% else %}planting__season{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.field %}&field={{ request.GET.field }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="group inline-flex items-center gap-1 transition-colors hover:text-emerald-700">
+                    <span>Season</span>
+                    <svg class="h-3 w-3 shrink-0 {% if sort_by == 'planting__season' or sort_by == '-planting__season' %}text-emerald-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      {% if sort_by == 'planting__season' %}
+                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                      {% else %}
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      {% endif %}
+                    </svg>
                   </a>
                 </th>
-                <th class="px-4 py-3 whitespace-nowrap">
-                  <a href="?sort={% if sort_by == 'planting__season' %}-planting__season{% else %}planting__season{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
-                    Season
-                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'planting__season' or sort_by == '-planting__season' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                      {% if sort_by == 'planting__season' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+
+                <!-- Harvest Date -->
+                <th scope="col" class="whitespace-nowrap px-3 py-3 sm:px-4">
+                  <a href="?sort={% if sort_by == '-harvest_date' %}harvest_date{% else %}-harvest_date{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.field %}&field={{ request.GET.field }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="group inline-flex items-center gap-1 transition-colors hover:text-emerald-700">
+                    <span>Harvest Date</span>
+                    <svg class="h-3 w-3 shrink-0 {% if sort_by == 'harvest_date' or sort_by == '-harvest_date' %}text-emerald-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      {% if sort_by == '-harvest_date' %}
+                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l4-4a1 1 0 000-1.414z" clip-rule="evenodd"/>
+                      {% else %}
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      {% endif %}
+                    </svg>
                   </a>
                 </th>
-                <th class="px-4 py-3 whitespace-nowrap">
-                  <a href="?sort={% if sort_by == '-harvest_date' %}harvest_date{% else %}-harvest_date{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
-                    Harvest Date
-                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'harvest_date' or sort_by == '-harvest_date' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                      {% if sort_by == '-harvest_date' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
+
+                <!-- Yield -->
+                <th scope="col" class="whitespace-nowrap px-3 py-3 sm:px-4">
+                  <a href="?sort={% if sort_by == '-yield_tons_per_ha' %}yield_tons_per_ha{% else %}-yield_tons_per_ha{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.field %}&field={{ request.GET.field }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="group inline-flex items-center gap-1 transition-colors hover:text-emerald-700">
+                    <span>Yield (t/ha)</span>
+                    <svg class="h-3 w-3 shrink-0 {% if sort_by == 'yield_tons_per_ha' or sort_by == '-yield_tons_per_ha' %}text-emerald-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      {% if sort_by == '-yield_tons_per_ha' %}
+                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
+                      {% else %}
+                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                      {% endif %}
+                    </svg>
                   </a>
                 </th>
-                <th class="px-4 py-3 whitespace-nowrap">
-                  <a href="?sort={% if sort_by == '-yield_tons_per_ha' %}yield_tons_per_ha{% else %}-yield_tons_per_ha{% endif %}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}" class="inline-flex items-center gap-1 hover:text-amber-600 transition-colors group">
-                    Yield (t/ha)
-                    <svg class="w-3 h-3 flex-shrink-0 {% if sort_by == 'yield_tons_per_ha' or sort_by == '-yield_tons_per_ha' %}text-amber-600{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity" fill="currentColor" viewBox="0 0 20 20">
-                      {% if sort_by == '-yield_tons_per_ha' %}<path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>{% else %}<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>{% endif %}</svg>
-                  </a>
-                </th>
-                <th class="px-4 py-3">Quality</th>
-                <th class="px-4 py-3 no-print">Actions</th>
+
+                <!-- Quality -->
+                <th scope="col" class="whitespace-nowrap px-3 py-3 sm:px-4">Quality</th>
+
+                <!-- Actions -->
+                <th scope="col" class="no-print whitespace-nowrap px-3 py-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+
+            <tbody class="divide-y divide-gray-100 bg-white">
               {% for r in records %}
-              <tr>
-                <td class="px-4 py-3 no-print">
-                  <input type="checkbox" name="selected_ids" value="{{ r.pk }}" class="row-cb h-4 w-4 rounded border-gray-300 text-amber-600 cursor-pointer" aria-label="Select harvest {{ r.pk }}">
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-700">{{ r.pk }}</td>
-                <td class="px-4 py-3 text-sm text-gray-700">{{ r.planting.field.name }}</td>
-                <td class="px-4 py-3 text-sm text-gray-700">{% if r.planting.variety %}{{ r.planting.variety.code }}{% else %}—{% endif %}</td>
-                <td class="px-4 py-3 text-sm text-gray-700">{{ r.planting.season|capfirst }}</td>
-                <td class="px-4 py-3 text-sm text-gray-700">{{ r.harvest_date }}</td>
-                <td class="px-4 py-3 text-sm text-gray-700">{{ r.yield_tons_per_ha }}</td>
-                <td class="px-4 py-3">
-                  {% if r.grain_quality == 'premium' %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">Premium</span>
-                  {% elif r.grain_quality == 'well_milled' %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Well Milled</span>
-                  {% elif r.grain_quality == 'regular_milled' %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-600">Regular</span>
-                  {% elif r.grain_quality == 'under_grade' %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-600">Under Grade</span>
-                  {% else %}
-                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">{{ r.grain_quality|default:'Not assessed' }}</span>
-                  {% endif %}
-                </td>
-                <td class="px-4 py-3 text-sm text-gray-700 space-x-1 no-print">
-                  <a href="{% url 'polls:harvest_edit' r.pk %}" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition text-xs font-medium">
-                    Edit
-                  </a>
+                <tr class="harvest-row cursor-pointer transition-colors hover:bg-gray-50" data-harvest-row="{{ r.pk }}">
 
-                  {% if r.is_active %}
-                    <a href="{% url 'polls:harvest_archive' r.pk %}"
-                       data-open-delete="true"
-                       data-delete-label="Harvest #{{ r.pk }}"
-                       data-delete-subtitle="Archive this harvest record?"
-                       class="inline-flex items-center gap-1 px-3 py-1 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition text-xs font-medium">
-                      Archive
-                    </a>
-                  {% else %}
-                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
-                      Archived
-                    </span>
-                  {% endif %}
+                  <!-- Checkbox -->
+                  <td class="no-print px-3 py-3 sm:px-4">
+                    <input type="checkbox" name="selected_ids" value="{{ r.pk }}" class="row-cb h-4 w-4 cursor-pointer rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" aria-label="Select harvest {{ r.pk }}">
+                  </td>
 
-                  {# Hard delete removed for harvest records to avoid losing historical data. #}
-                </td>
-              </tr>
+                  <!-- Field -->
+                  <td class="px-3 py-3 text-sm text-gray-800 sm:px-4">
+                    <div class="font-medium">{{ r.planting.field.name }}</div>
+                  </td>
+
+                  <!-- Variety -->
+                  <td class="px-3 py-3 text-sm text-gray-700 sm:px-4">
+                    {% if r.planting.variety %}
+                      {{ r.planting.variety.code }}
+                    {% else %}
+                      <span class="text-gray-400">—</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Season -->
+                  <td class="px-3 py-3 text-sm text-gray-700 sm:px-4">{{ r.planting.season|capfirst }}</td>
+
+                  <!-- Harvest Date -->
+                  <td class="whitespace-nowrap px-3 py-3 text-sm text-gray-700 sm:px-4">{{ r.harvest_date }}</td>
+
+                  <!-- Yield -->
+                  <td class="whitespace-nowrap px-3 py-3 text-sm font-medium text-gray-800 sm:px-4">{{ r.yield_tons_per_ha }}</td>
+
+                  <!-- Quality -->
+                  <td class="px-3 py-3 sm:px-4">
+                    {% if r.grain_quality == 'premium' %}
+                      <span class="inline-flex items-center rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-700">Premium</span>
+                    {% elif r.grain_quality == 'well_milled' %}
+                      <span class="inline-flex items-center rounded-md border border-sky-200 bg-sky-50 px-2 py-1 text-xs font-semibold text-sky-700">Well Milled</span>
+                    {% elif r.grain_quality == 'regular_milled' %}
+                      <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-600">Regular</span>
+                    {% elif r.grain_quality == 'under_grade' %}
+                      <span class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700">Under Grade</span>
+                    {% else %}
+                      <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">{{ r.grain_quality|default:'Not assessed' }}</span>
+                    {% endif %}
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="no-print whitespace-nowrap px-3 py-3 sm:px-4 text-right">
+                    <div class="inline-flex items-center justify-end gap-2">
+                      <a href="{% url 'polls:harvest_edit' r.pk %}" class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100">Edit</a>
+
+                      {% if r.is_active %}
+                        <a href="{% url 'polls:harvest_archive' r.pk %}" data-open-delete="true" data-delete-label="Harvest #{{ r.pk }}" data-delete-subtitle="Archive this harvest record?" class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100">Archive</a>
+                      {% else %}
+                        <span class="inline-flex min-h-9 items-center rounded-md border border-gray-200 bg-gray-100 px-3 text-xs font-medium text-gray-600">Archived</span>
+                      {% endif %}
+                    </div>
+                  </td>
+
+                </tr>
               {% endfor %}
             </tbody>
           </table>
@@ -255,80 +414,150 @@
         {% if page_obj and is_paginated %}
           {% include 'partials/_pagination.html' %}
         {% endif %}
+
       </div>
     </form>
 
+    <!-- =======================================================
+         ROW SELECTION SCRIPT
+         ======================================================= -->
     <script>
-      (function(){
+      (function () {
         const selectAll = document.getElementById('select-all-cb');
         const bulkToolbar = document.getElementById('bulk-toolbar');
         const selectedCountEl = document.getElementById('selected-count');
+        const rows = document.querySelectorAll('.harvest-row');
 
         function updateSelectionState() {
+          const checkboxes = document.querySelectorAll('.row-cb');
           const checked = document.querySelectorAll('.row-cb:checked').length;
+          const total = checkboxes.length;
+
           selectedCountEl.textContent = checked;
+
           bulkToolbar.classList.toggle('hidden', checked === 0);
+          bulkToolbar.classList.toggle('flex', checked > 0);
+
+          checkboxes.forEach(function (checkbox) {
+            const row = checkbox.closest('.harvest-row');
+            if (!row) return;
+
+            row.classList.toggle('bg-emerald-50', checkbox.checked);
+            row.classList.toggle('hover:bg-emerald-50', checkbox.checked);
+            row.setAttribute('aria-selected', checkbox.checked ? 'true' : 'false');
+          });
+
           if (selectAll) {
-            const total = document.querySelectorAll('.row-cb').length;
             selectAll.checked = total > 0 && checked === total;
+            selectAll.indeterminate = checked > 0 && checked < total;
           }
         }
 
-        window.clearSelection = function() {
-          document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
-          if (selectAll) selectAll.checked = false;
+        window.clearSelection = function () {
+          document.querySelectorAll('.row-cb').forEach(function (checkbox) {
+            checkbox.checked = false;
+          });
+
+          if (selectAll) {
+            selectAll.checked = false;
+            selectAll.indeterminate = false;
+          }
+
           updateSelectionState();
         };
 
         if (selectAll) {
-          selectAll.addEventListener('change', function() {
-            document.querySelectorAll('.row-cb').forEach(cb => cb.checked = selectAll.checked);
+          selectAll.addEventListener('change', function () {
+            document.querySelectorAll('.row-cb').forEach(function (checkbox) {
+              checkbox.checked = selectAll.checked;
+            });
             updateSelectionState();
           });
         }
 
-        document.addEventListener('change', function(e) {
-          if (e.target && e.target.classList && e.target.classList.contains('row-cb')) {
+        document.addEventListener('change', function (event) {
+          if (event.target && event.target.classList && event.target.classList.contains('row-cb')) {
             updateSelectionState();
           }
+        });
+
+        rows.forEach(function (row) {
+          row.addEventListener('click', function (event) {
+            if (event.target.closest('a, button, input, select, textarea, label')) {
+              return;
+            }
+            const checkbox = row.querySelector('.row-cb');
+            if (!checkbox) return;
+
+            checkbox.checked = !checkbox.checked;
+            updateSelectionState();
+          });
         });
 
         updateSelectionState();
       })();
     </script>
+
   {% else %}
-    <div class="py-16 text-center text-gray-500">
-      <svg class="mx-auto h-16 w-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-      </svg>
-      <p class="mt-4 text-sm">No harvest records found. Try changing your filters or add a new record.</p>
+
+    <!-- =======================================================
+         EMPTY STATE
+         ======================================================= -->
+    <div class="agri-card">
+      <div class="px-5 py-14 text-center sm:px-6">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-gray-50 text-gray-400">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/>
+          </svg>
+        </div>
+
+        <h2 class="mt-4 text-base font-semibold text-gray-900">No harvest records found</h2>
+        <p class="mx-auto mt-1 max-w-md text-sm leading-6 text-gray-500">Try changing your filters or add a new harvest record.</p>
+
+        <div class="mt-5 flex flex-col justify-center gap-2 sm:flex-row">
+          {% if request.GET.search or request.GET.field or request.GET.variety or request.GET.season or request.GET.year %}
+            <a href="{% url 'polls:harvests_list' %}" class="btn btn-secondary">Clear filters</a>
+          {% endif %}
+
+          <a href="{% url 'polls:harvest_create' %}" class="btn btn-primary">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            <span>New Harvest</span>
+          </a>
+        </div>
+      </div>
     </div>
+
   {% endif %}
+
 </section>
+
 {% include 'partials/_ctrlk.html' with input_id='harvest-search' %}
+
 {% endblock %}
 
 {% block modals %}
 <script>
-function openHarvestExportModal() {
-  openExportModal({
-    title: 'Export Harvest Records',
-    csvUrl: '{% url "polls:export_harvests_csv" %}',
-    pdfUrl: '{% url "polls:export_harvests_pdf" %}',
-    showBarangay: true,
-    cols: [
-      { value: 'id', label: 'ID' },
-      { value: 'date', label: 'Created' },
-      { value: 'variety', label: 'Variety' },
-      { value: 'field', label: 'Field' },
-      { value: 'yield_tons_per_ha', label: 'Yield (t/ha)' },
-      { value: 'area', label: 'Area (ha)' },
-      { value: 'total_tons', label: 'Total Tons' },
-      { value: 'harvest_date', label: 'Harvest Date' },
-      { value: 'quality', label: 'Grain Quality' },
-      { value: 'notes', label: 'Notes' },
-    ],
-  });
-}
+  function openHarvestExportModal() {
+    openExportModal({
+      title: 'Export Harvest Records',
+      csvUrl: '{% url "polls:export_harvests_csv" %}',
+      pdfUrl: '{% url "polls:export_harvests_pdf" %}',
+      showBarangay: true,
+      cols: [
+        { value: 'id', label: 'ID' },
+        { value: 'date', label: 'Created' },
+        { value: 'variety', label: 'Variety' },
+        { value: 'field', label: 'Field' },
+        { value: 'yield_tons_per_ha', label: 'Yield (t/ha)' },
+        { value: 'area', label: 'Area (ha)' },
+        { value: 'total_tons', label: 'Total Tons' },
+        { value: 'harvest_date', label: 'Harvest Date' },
+        { value: 'quality', label: 'Grain Quality' },
+        { value: 'notes', label: 'Notes' },
+      ],
+    });
+  }
 </script>
 {% endblock %}

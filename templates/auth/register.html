@@ -7,12 +7,12 @@
 <section class="relative isolate min-h-[calc(100vh-5rem)] overflow-hidden bg-slate-50">
   <!-- Background Decoration -->
   <div
-    class="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-blue-100/50 blur-3xl"
+    class="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"
     aria-hidden="true"
   ></div>
 
   <div
-    class="pointer-events-none absolute -bottom-40 -right-32 h-96 w-96 rounded-full bg-sky-100/60 blur-3xl"
+    class="pointer-events-none absolute -bottom-40 -right-32 h-96 w-96 rounded-full bg-emerald-50/60 blur-3xl"
     aria-hidden="true"
   ></div>
 
@@ -26,7 +26,7 @@
         <div class="mb-7 text-center lg:text-left">
           <a
             href="/"
-            class="inline-flex items-center gap-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            class="inline-flex items-center gap-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
             aria-label="AgriScan+ home"
           >
             <img
@@ -36,12 +36,12 @@
             />
 
             <span class="text-xl font-bold tracking-tight text-slate-900">
-              AgriScan<span class="text-blue-600">+</span>
+              AgriScan<span class="text-emerald-700">+</span>
             </span>
           </a>
         </div>
 
-        <!-- Registration Card -->
+        <!-- Card -->
         <div
           class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/50 sm:p-8"
         >
@@ -49,12 +49,11 @@
             <h1
               class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"
             >
-              Create your account
+              Create an account
             </h1>
 
             <p class="mt-2 text-sm leading-6 text-slate-500">
-              Get started with organized field records, disease scans, and
-              yield insights.
+              Get started with organized field records, disease scans, and yield insights.
             </p>
           </div>
 
@@ -72,14 +71,14 @@
           </div>
           {% endif %}
 
-          <!-- Form-Level Errors -->
+          <!-- Non-Field Errors -->
           {% if form.non_field_errors %}
-          <div
-            class="auth-alert auth-alert--error mb-5"
-            role="alert"
-            aria-live="polite"
-          >
-            {{ form.non_field_errors }}
+          <div class="mb-5 space-y-2" aria-live="polite">
+            {% for error in form.non_field_errors %}
+            <div class="auth-alert auth-alert--error" role="alert">
+              {{ error }}
+            </div>
+            {% endfor %}
           </div>
           {% endif %}
 
@@ -90,19 +89,28 @@
             <!-- Username -->
             <div>
               <label
-                for="id_username"
+                for="{{ form.username.id_for_label }}"
                 class="mb-2 block text-sm font-semibold text-slate-700"
               >
                 Username
               </label>
 
-              {{ form.username }}
+              <input
+                id="{{ form.username.id_for_label }}"
+                name="{{ form.username.html_name }}"
+                type="text"
+                required
+                autocomplete="username"
+                autocapitalize="none"
+                spellcheck="false"
+                autofocus
+                placeholder="Choose a username"
+                value="{{ form.username.value|default:'' }}"
+                class="auth-input w-full"
+              />
 
               {% if form.username.errors %}
-              <p
-                class="mt-2 text-sm leading-5 text-red-600"
-                role="alert"
-              >
+              <p class="mt-1.5 text-xs text-red-600" role="alert">
                 {{ form.username.errors.0 }}
               </p>
               {% endif %}
@@ -111,19 +119,25 @@
             <!-- Email -->
             <div>
               <label
-                for="id_email"
+                for="{{ form.email.id_for_label }}"
                 class="mb-2 block text-sm font-semibold text-slate-700"
               >
                 Email address
               </label>
 
-              {{ form.email }}
+              <input
+                id="{{ form.email.id_for_label }}"
+                name="{{ form.email.html_name }}"
+                type="email"
+                required
+                autocomplete="email"
+                placeholder="Enter your email"
+                value="{{ form.email.value|default:'' }}"
+                class="auth-input w-full"
+              />
 
               {% if form.email.errors %}
-              <p
-                class="mt-2 text-sm leading-5 text-red-600"
-                role="alert"
-              >
+              <p class="mt-1.5 text-xs text-red-600" role="alert">
                 {{ form.email.errors.0 }}
               </p>
               {% endif %}
@@ -132,24 +146,32 @@
             <!-- Password -->
             <div>
               <label
-                for="id_password1"
+                for="{{ form.password1.id_for_label }}"
                 class="mb-2 block text-sm font-semibold text-slate-700"
               >
                 Password
               </label>
 
               <div class="relative">
-                {{ form.password1 }}
+                <input
+                  id="{{ form.password1.id_for_label }}"
+                  name="{{ form.password1.html_name }}"
+                  type="password"
+                  required
+                  autocomplete="new-password"
+                  placeholder="Create a password"
+                  class="auth-input w-full pr-12"
+                />
 
                 <button
                   type="button"
-                  class="password-toggle absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                  data-target="id_password1"
+                  class="password-toggle absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-600"
+                  data-target="{{ form.password1.id_for_label }}"
                   aria-label="Show password"
                   aria-pressed="false"
                 >
                   <svg
-                    class="password-eye h-5 w-5"
+                    class="password-eye-icon h-5 w-5"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -165,10 +187,7 @@
               </div>
 
               {% if form.password1.errors %}
-              <p
-                class="mt-2 text-sm leading-5 text-red-600"
-                role="alert"
-              >
+              <p class="mt-1.5 text-xs text-red-600" role="alert">
                 {{ form.password1.errors.0 }}
               </p>
               {% endif %}
@@ -177,24 +196,32 @@
             <!-- Confirm Password -->
             <div>
               <label
-                for="id_password2"
+                for="{{ form.password2.id_for_label }}"
                 class="mb-2 block text-sm font-semibold text-slate-700"
               >
                 Confirm password
               </label>
 
               <div class="relative">
-                {{ form.password2 }}
+                <input
+                  id="{{ form.password2.id_for_label }}"
+                  name="{{ form.password2.html_name }}"
+                  type="password"
+                  required
+                  autocomplete="new-password"
+                  placeholder="Confirm your password"
+                  class="auth-input w-full pr-12"
+                />
 
                 <button
                   type="button"
-                  class="password-toggle absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
-                  data-target="id_password2"
+                  class="password-toggle absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-xl text-slate-400 transition hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-600"
+                  data-target="{{ form.password2.id_for_label }}"
                   aria-label="Show password"
                   aria-pressed="false"
                 >
                   <svg
-                    class="password-eye h-5 w-5"
+                    class="password-eye-icon h-5 w-5"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -203,17 +230,14 @@
                     stroke-linejoin="round"
                     aria-hidden="true"
                   >
-                    <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7-9.5-7Z" />
+                    <path d="M2.5 12s3.5-7 9.5-7 9.5 7 9.5 7-3.5 7-9.5 7-9.5-7Z" />
                     <circle cx="12" cy="12" r="3" />
                   </svg>
                 </button>
               </div>
 
               {% if form.password2.errors %}
-              <p
-                class="mt-2 text-sm leading-5 text-red-600"
-                role="alert"
-              >
+              <p class="mt-1.5 text-xs text-red-600" role="alert">
                 {{ form.password2.errors.0 }}
               </p>
               {% endif %}
@@ -247,7 +271,7 @@
               Already have an account?
               <a
                 href="{% url 'polls:login' %}"
-                class="font-semibold text-blue-600 transition hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="font-semibold text-emerald-700 transition hover:text-emerald-800 hover:underline focus:outline-none focus:ring-2 focus:ring-emerald-600 focus:ring-offset-2"
               >
                 Sign in
               </a>
@@ -266,10 +290,10 @@
       <div class="mx-auto max-w-xl lg:max-w-none">
         <!-- Badge -->
         <div
-          class="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700"
+          class="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800"
         >
           <span
-            class="h-1.5 w-1.5 rounded-full bg-blue-600"
+            class="h-1.5 w-1.5 rounded-full bg-emerald-600"
             aria-hidden="true"
           ></span>
 
@@ -281,13 +305,13 @@
           class="max-w-xl text-3xl font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl"
         >
           Everything you need for
-          <span class="text-blue-600">smarter farm management.</span>
+          <span class="text-emerald-700">smarter farm management.</span>
         </h2>
 
         <p
           class="mt-5 max-w-lg text-base leading-7 text-slate-600 sm:text-lg"
         >
-          Create your AgriScan+ account and keep your rice farming records,
+          Create your AgriScan+ account to keep your rice farming records,
           disease detection results, and yield insights organized.
         </p>
 
@@ -298,41 +322,7 @@
             class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
             <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600"
-              aria-hidden="true"
-            >
-              <svg
-                class="h-5 w-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.7"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path d="M3 7h18v14H3z" />
-                <path d="M7 7V4h10v3" />
-                <path d="M7 12h10M7 16h6" />
-              </svg>
-            </div>
-
-            <div>
-              <h3 class="text-sm font-semibold text-slate-900">
-                Field Records
-              </h3>
-
-              <p class="mt-1 text-xs leading-5 text-slate-500">
-                Keep important farm information organized.
-              </p>
-            </div>
-          </div>
-
-          <!-- Feature 2 -->
-          <div
-            class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
-          >
-            <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"
               aria-hidden="true"
             >
               <svg
@@ -351,21 +341,21 @@
 
             <div>
               <h3 class="text-sm font-semibold text-slate-900">
-                Disease Scanning
+                Disease Detection
               </h3>
 
               <p class="mt-1 text-xs leading-5 text-slate-500">
-                Review rice leaf disease detection results.
+                Analyze rice leaf images.
               </p>
             </div>
           </div>
 
-          <!-- Feature 3 -->
+          <!-- Feature 2 -->
           <div
             class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
             <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"
               aria-hidden="true"
             >
               <svg
@@ -384,21 +374,21 @@
 
             <div>
               <h3 class="text-sm font-semibold text-slate-900">
-                Yield Insights
+                Yield Prediction
               </h3>
 
               <p class="mt-1 text-xs leading-5 text-slate-500">
-                Access estimated yield information.
+                Review estimated harvest output.
               </p>
             </div>
           </div>
 
-          <!-- Feature 4 -->
+          <!-- Feature 3 -->
           <div
             class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
           >
             <div
-              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600"
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"
               aria-hidden="true"
             >
               <svg
@@ -417,11 +407,44 @@
 
             <div>
               <h3 class="text-sm font-semibold text-slate-900">
-                Farm Reports
+                Farm Records
               </h3>
 
               <p class="mt-1 text-xs leading-5 text-slate-500">
-                Keep your results accessible and organized.
+                Organize activities and results.
+              </p>
+            </div>
+          </div>
+
+          <!-- Feature 4 -->
+          <div
+            class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <div
+              class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700"
+              aria-hidden="true"
+            >
+              <svg
+                class="h-5 w-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M6 2h12v20H6z" />
+                <path d="M9 6h6M9 10h6M9 14h6M9 18h3" />
+              </svg>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-semibold text-slate-900">
+                Reports
+              </h3>
+
+              <p class="mt-1 text-xs leading-5 text-slate-500">
+                Access organized farm reports.
               </p>
             </div>
           </div>
@@ -429,10 +452,10 @@
 
         <!-- Supporting Note -->
         <div
-          class="mt-7 flex items-start gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4"
+          class="mt-7 flex items-start gap-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/60 p-4"
         >
           <svg
-            class="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
+            class="mt-0.5 h-5 w-5 shrink-0 text-emerald-700"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
@@ -446,9 +469,8 @@
             <path d="M12 8h.01" />
           </svg>
 
-          <p class="text-xs leading-5 text-blue-800 sm:text-sm">
-            Your account helps you access the features available in your
-            AgriScan+ workspace.
+          <p class="text-xs leading-5 text-emerald-900 sm:text-sm">
+            Your account helps you access the features available in your AgriScan+ workspace.
           </p>
         </div>
       </div>
@@ -465,25 +487,17 @@
       button.addEventListener("click", function () {
         const targetId = button.getAttribute("data-target");
         const passwordInput = document.getElementById(targetId);
-        const eyeIcon = button.querySelector(".password-eye");
+        const eyeIcon = button.querySelector(".password-eye-icon");
 
         if (!passwordInput || !eyeIcon) {
           return;
         }
 
         const isVisible = passwordInput.type === "text";
-
         passwordInput.type = isVisible ? "password" : "text";
 
-        button.setAttribute(
-          "aria-label",
-          isVisible ? "Show password" : "Hide password"
-        );
-
-        button.setAttribute(
-          "aria-pressed",
-          String(!isVisible)
-        );
+        button.setAttribute("aria-label", isVisible ? "Show password" : "Hide password");
+        button.setAttribute("aria-pressed", String(!isVisible));
 
         eyeIcon.innerHTML = isVisible
           ? `

@@ -14,7 +14,7 @@
     content="AgriScan+ — Smart farming platform for rice disease detection, yield prediction, and farm records."
   />
 
-  <meta name="theme-color" content="#2563eb" />
+  <meta name="theme-color" content="#15803d" />
 
   <title>{% block title %}AgriScan+{% endblock %}</title>
 
@@ -31,20 +31,20 @@
 
   <style>
     /* =========================================================
-       AgriScan+ Authentication Design System
-       Clean SaaS · Responsive · Accessible
+       AgriScan+ Authentication Design System (Aligned with base.html)
        ========================================================= */
 
     :root {
-      --auth-primary: #2563eb;
-      --auth-primary-hover: #1d4ed8;
-      --auth-text: #0f172a;
-      --auth-muted: #64748b;
-      --auth-border: #e2e8f0;
-      --auth-input-border: #cbd5e1;
-      --auth-focus-ring: rgba(59, 130, 246, 0.22);
-      --auth-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
-      --auth-transition: 180ms ease;
+      --agri-primary: #15803d;
+      --agri-primary-hover: #166534;
+      --agri-primary-active: #14532d;
+      --agri-text: #1f2937;
+      --agri-text-muted: #6b7280;
+      --agri-border: #e5e7eb;
+      --agri-input-border: #d1d5db;
+      --agri-focus: rgba(22, 101, 52, 0.22);
+      --agri-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+      --agri-transition: 180ms ease;
     }
 
     /* =========================================================
@@ -58,7 +58,7 @@
 
     body {
       min-width: 320px;
-      color: var(--auth-text);
+      color: var(--agri-text);
       background: #f8fafc;
       text-rendering: optimizeLegibility;
       -webkit-font-smoothing: antialiased;
@@ -77,13 +77,12 @@
     input:focus-visible,
     select:focus-visible,
     textarea:focus-visible {
-      outline: 2px solid var(--auth-primary);
+      outline: 2px solid var(--agri-primary);
       outline-offset: 3px;
     }
 
     /* =========================================================
        Authentication Inputs
-       Compatible with manually created inputs and Django forms
        ========================================================= */
 
     .auth-input {
@@ -91,55 +90,54 @@
       width: 100%;
       min-height: 2.875rem;
       margin-top: 0.375rem;
-      border: 1px solid var(--auth-input-border);
+      border: 1px solid var(--agri-input-border);
       border-radius: 0.75rem;
       background-color: #ffffff;
       padding: 0.75rem 0.875rem;
-      color: var(--auth-text);
+      color: var(--agri-text);
       font-size: 0.875rem;
       line-height: 1.25rem;
-      box-shadow: var(--auth-shadow);
+      box-shadow: var(--agri-shadow);
       transition:
-        border-color var(--auth-transition),
-        box-shadow var(--auth-transition),
-        background-color var(--auth-transition);
+        border-color var(--agri-transition),
+        box-shadow var(--agri-transition),
+        background-color var(--agri-transition);
     }
 
     .auth-input::placeholder {
-      color: #94a3b8;
+      color: #9ca3af;
       opacity: 1;
     }
 
     .auth-input:hover {
-      border-color: #94a3b8;
+      border-color: #9ca3af;
     }
 
     .auth-input:focus {
-      border-color: #3b82f6;
+      border-color: var(--agri-primary);
       outline: none;
       background-color: #ffffff;
       box-shadow:
-        0 0 0 3px var(--auth-focus-ring),
-        var(--auth-shadow);
+        0 0 0 3px var(--agri-focus),
+        var(--agri-shadow);
     }
 
     .auth-input:disabled {
       cursor: not-allowed;
-      background-color: #f1f5f9;
+      background-color: #f3f4f6;
       opacity: 0.7;
     }
 
     .auth-input[aria-invalid="true"] {
-      border-color: #ef4444;
+      border-color: #dc2626;
     }
 
     .auth-input[aria-invalid="true"]:focus {
       box-shadow:
-        0 0 0 3px rgba(239, 68, 68, 0.16),
-        var(--auth-shadow);
+        0 0 0 3px rgba(220, 38, 38, 0.16),
+        var(--agri-shadow);
     }
 
-    /* Improve Django-generated form controls */
     select.auth-input,
     textarea.auth-input {
       appearance: auto;
@@ -158,7 +156,7 @@
       gap: 0.5rem;
       border: 1px solid transparent;
       border-radius: 0.75rem;
-      background-color: var(--auth-primary);
+      background-color: var(--agri-primary);
       padding: 0.75rem 1.25rem;
       color: #ffffff;
       font-size: 0.875rem;
@@ -167,29 +165,29 @@
       text-align: center;
       box-shadow:
         0 1px 2px rgba(15, 23, 42, 0.08),
-        0 2px 4px rgba(37, 99, 235, 0.08);
+        0 2px 4px rgba(21, 128, 61, 0.08);
       cursor: pointer;
       transition:
-        background-color var(--auth-transition),
-        box-shadow var(--auth-transition),
-        transform var(--auth-transition);
+        background-color var(--agri-transition),
+        box-shadow var(--agri-transition),
+        transform var(--agri-transition);
     }
 
     .auth-button:hover {
-      background-color: var(--auth-primary-hover);
+      background-color: var(--agri-primary-hover);
       box-shadow:
         0 4px 10px rgba(15, 23, 42, 0.1),
-        0 4px 12px rgba(37, 99, 235, 0.14);
+        0 4px 12px rgba(21, 128, 61, 0.14);
       transform: translateY(-1px);
     }
 
     .auth-button:active {
       transform: translateY(0);
-      box-shadow: var(--auth-shadow);
+      box-shadow: var(--agri-shadow);
     }
 
     .auth-button:focus-visible {
-      outline: 2px solid #3b82f6;
+      outline: 2px solid var(--agri-primary);
       outline-offset: 3px;
     }
 
@@ -220,9 +218,9 @@
     }
 
     .auth-alert--info {
-      border-color: #bfdbfe;
-      background-color: #eff6ff;
-      color: #1e40af;
+      border-color: #bae6fd;
+      background-color: #f0f9ff;
+      color: #0369a1;
     }
 
     .auth-alert--success {
@@ -234,7 +232,7 @@
     .auth-alert--warning {
       border-color: #fde68a;
       background-color: #fffbeb;
-      color: #92400e;
+      color: #b45309;
     }
 
     /* =========================================================
@@ -250,14 +248,14 @@
     }
 
     /* =========================================================
-       Header
+       Header (Preserved as optimal)
        ========================================================= */
 
     .auth-header {
       position: sticky;
       top: 0;
       z-index: 40;
-      border-bottom: 1px solid var(--auth-border);
+      border-bottom: 1px solid var(--agri-border);
       background: rgba(255, 255, 255, 0.94);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
@@ -268,11 +266,11 @@
       align-items: center;
       gap: 0.625rem;
       border-radius: 0.75rem;
-      color: #1d4ed8;
+      color: var(--agri-primary);
       font-size: 1.125rem;
       font-weight: 700;
       letter-spacing: -0.025em;
-      transition: opacity var(--auth-transition);
+      transition: opacity var(--agri-transition);
     }
 
     .auth-brand:hover {
@@ -284,7 +282,7 @@
       width: 2.25rem;
       border-radius: 0.75rem;
       object-fit: cover;
-      box-shadow: 0 0 0 1px #e2e8f0;
+      box-shadow: 0 0 0 1px var(--agri-border);
     }
 
     /* =========================================================
@@ -292,12 +290,12 @@
        ========================================================= */
 
     .auth-footer {
-      border-top: 1px solid var(--auth-border);
+      border-top: 1px solid var(--agri-border);
       background: #ffffff;
     }
 
     .auth-footer-text {
-      color: #64748b;
+      color: var(--agri-text-muted);
       font-size: 0.75rem;
       line-height: 1.25rem;
     }
@@ -359,7 +357,7 @@
         />
 
         <span>
-          AgriScan<span class="text-blue-600">+</span>
+          AgriScan<span class="text-emerald-600">+</span>
         </span>
       </a>
     </div>
@@ -378,7 +376,7 @@
       <p class="auth-footer-text">
         &copy;
         <span id="year"></span>
-        AgriScan+. All rights reserved.
+        <span class="font-medium text-gray-700">AgriScan+</span> All rights reserved.
       </p>
 
       <p class="auth-footer-text italic">

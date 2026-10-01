@@ -1,100 +1,135 @@
 ﻿{% extends "base.html" %}
-{% block title %}{{ action|title }} User - AgriScan+{% endblock %}
+{% block title %}{{ action|title }} User · AgriScan+{% endblock %}
 
 {% block content %}
-<section class="page-container">
-    <div class="bg-white rounded-lg shadow-sm p-8">
-      <!-- Warning Icon -->
-      <div class="flex items-center justify-center mb-6">
-        <div class="flex-shrink-0 h-16 w-16 rounded-full {% if action == 'deactivate' %}bg-red-100{% else %}bg-green-100{% endif %} flex items-center justify-center">
-          <svg class="h-10 w-10 {% if action == 'deactivate' %}text-red-600{% else %}text-green-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<section class="page-container max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+  <div class="agri-card p-6 sm:p-8">
+
+    <!-- Status Icon -->
+    <div class="flex items-center justify-center mb-6">
+      <div class="flex-shrink-0 h-16 w-16 rounded-full flex items-center justify-center
+        {% if action == 'deactivate' %}bg-red-50 border border-red-200{% else %}bg-emerald-50 border border-emerald-200{% endif %}">
+        <svg class="h-8 w-8 {% if action == 'deactivate' %}text-red-600{% else %}text-emerald-600{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {% if action == 'deactivate' %}
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          {% else %}
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          {% endif %}
+        </svg>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-center text-gray-900 mb-2">
+      {{ action|title }} User Account?
+    </h1>
+    <p class="text-sm text-center text-gray-500 mb-6">
+      {% if action == 'deactivate' %}
+        This will temporarily disable the user's access to the system.
+      {% else %}
+        This will restore the user's full access to the system.
+      {% endif %}
+    </p>
+
+    <!-- User Info Card -->
+    <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
+      <div class="flex items-center gap-4">
+        <!-- Avatar (Solid emerald, consistent with user_edit.html) -->
+        <div class="flex-shrink-0 h-12 w-12 bg-emerald-600 rounded-full flex items-center justify-center shadow-sm">
+          <span class="text-white font-bold text-base">
+            {{ user_to_toggle.username|slice:":2"|upper }}
+          </span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Username</p>
+          <p class="text-base font-semibold text-gray-900 truncate">@{{ user_to_toggle.username }}</p>
+          <p class="text-xs text-gray-500 truncate">
+            {{ user_to_toggle.get_full_name|default:"No name set" }}
+            {% if user_to_toggle.profile %}
+              · {{ user_to_toggle.profile.get_role_display }}
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning / Info Message -->
+    <div class="{% if action == 'deactivate' %}agri-alert agri-alert-danger{% else %}agri-alert agri-alert-success{% endif %} mb-6">
+      <div class="flex items-start gap-3">
+        <svg class="h-5 w-5 shrink-0 mt-0.5 {% if action == 'deactivate' %}text-red-500{% else %}text-emerald-500{% endif %}" fill="currentColor" viewBox="0 0 20 20">
+          {% if action == 'deactivate' %}
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+          {% else %}
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          {% endif %}
+        </svg>
+        <div class="text-sm">
+          {% if action == 'deactivate' %}
+            <p class="font-semibold mb-2">Deactivating this account will:</p>
+            <ul class="space-y-1 text-red-700/90">
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-red-400"></span>
+                Prevent the user from logging in
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-red-400"></span>
+                Keep all user data intact (fields, scans, yields)
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-red-400"></span>
+                Allow you to reactivate the account later
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-red-400"></span>
+                This is <strong>REVERSIBLE</strong> (better than deletion)
+              </li>
+            </ul>
+          {% else %}
+            <p class="font-semibold mb-2">Activating this account will:</p>
+            <ul class="space-y-1 text-emerald-700/90">
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                Allow the user to login again
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                Restore full access to their data
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="shrink-0 mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+                Enable all features for this user
+              </li>
+            </ul>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Buttons -->
+    <form method="POST">
+      {% csrf_token %}
+      <div class="flex flex-col-reverse sm:flex-row gap-3 justify-center pt-2">
+        <a href="{{ cancel_url }}" class="btn btn-secondary w-full sm:w-auto justify-center">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+          Cancel
+        </a>
+        <button type="submit" class="btn w-full sm:w-auto justify-center {% if action == 'deactivate' %}btn-danger{% else %}btn-primary{% endif %}">
+          <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             {% if action == 'deactivate' %}
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
             {% else %}
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
             {% endif %}
           </svg>
-        </div>
+          Yes, {{ action|title }} Account
+        </button>
       </div>
+    </form>
 
-      <!-- Title -->
-      <h2 class="text-2xl font-bold text-center text-gray-900 mb-4">
-        {{ action|title }} User Account?
-      </h2>
-
-      <!-- User Info -->
-      <div class="bg-gray-50 rounded-lg p-4 mb-6">
-        <div class="flex items-center justify-center">
-          <div class="flex-shrink-0 h-12 w-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span class="text-white font-bold text-lg">
-              {{ user_to_toggle.username|slice:":2"|upper }}
-            </span>
-          </div>
-          <div class="ml-4 text-left">
-            <p class="text-sm font-medium text-gray-500">Username</p>
-            <p class="text-lg font-bold text-gray-900">@{{ user_to_toggle.username }}</p>
-            <p class="text-sm text-gray-500">
-              {{ user_to_toggle.get_full_name|default:"No name set" }}
-              {% if user_to_toggle.profile %}
-                • {{ user_to_toggle.profile.get_role_display }}
-              {% endif %}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Warning Message -->
-      <div class="{% if action == 'deactivate' %}bg-red-50 border-l-4 border-red-500{% else %}bg-green-50 border-l-4 border-green-500{% endif %} p-4 mb-6">
-        <div class="flex">
-          <svg class="h-5 w-5 {% if action == 'deactivate' %}text-red-400{% else %}text-green-400{% endif %}" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
-          </svg>
-          <div class="ml-3">
-            <p class="text-sm {% if action == 'deactivate' %}text-red-700{% else %}text-green-700{% endif %}">
-              {% if action == 'deactivate' %}
-                <strong>Deactivating this account will:</strong>
-                <ul class="list-disc ml-5 mt-2 space-y-1">
-                  <li>Prevent the user from logging in</li>
-                  <li>Keep all user data intact (fields, scans, yields)</li>
-                  <li>Allow you to reactivate the account later</li>
-                  <li>This is REVERSIBLE (better than deletion)</li>
-                </ul>
-              {% else %}
-                <strong>Activating this account will:</strong>
-                <ul class="list-disc ml-5 mt-2 space-y-1">
-                  <li>Allow the user to login again</li>
-                  <li>Restore full access to their data</li>
-                  <li>Enable all features for this user</li>
-                </ul>
-              {% endif %}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Confirmation Buttons -->
-      <form method="POST">
-        {% csrf_token %}
-        <div class="flex flex-col sm:flex-row gap-3 justify-center">
-          <a href="{{ cancel_url }}" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition w-full sm:w-auto justify-center">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            Cancel
-          </a>
-          <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg transition w-full sm:w-auto justify-center {% if action == 'deactivate' %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %}">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {% if action == 'deactivate' %}
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-              {% else %}
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              {% endif %}
-            </svg>
-            Yes, {{ action|title }} Account
-          </button>
-        </div>
-      </form>
-    </div>
   </div>
+
 </section>
 {% endblock %}
