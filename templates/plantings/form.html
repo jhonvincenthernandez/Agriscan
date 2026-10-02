@@ -3,23 +3,18 @@
 
 {% block content %}
 <section class="page-container">
-  <!-- Page Header -->
-  <div class="mb-6 border-b border-gray-200 bg-white px-5 py-5 sm:px-6">
+  <!-- Page Header Card -->
+  <div class="agri-card mb-6 p-4 sm:p-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="min-w-0">
         <div class="flex items-start gap-3">
-          <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-          </div>
+          
 
           <div class="min-w-0">
-            <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+            <h1 class="min-w-0 truncate text-xl font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-2xl">
               {% if is_edit %}Edit Planting Cycle{% else %}Create New Planting Cycle{% endif %}
             </h1>
-            <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
+            <p class="mt-1.5 max-w-2xl text-sm text-[var(--color-text-secondary)]">
               {% if is_edit %}
                 Update the details for this planting cycle.
               {% else %}
@@ -32,7 +27,7 @@
 
       <a href="{% url 'polls:plantings_list' %}"
          onclick="history.back(); return false;"
-         class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:min-h-[42px]">
+         class="btn btn-secondary shrink-0">
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
@@ -42,19 +37,19 @@
     </div>
   </div>
 
-  <!-- Form -->
-  <div class="bg-white px-5 py-5 sm:px-6 sm:py-6">
+  <!-- Form Card -->
+  <div class="agri-card p-5 sm:p-6">
     <form method="post" class="space-y-7">
       {% csrf_token %}
 
       {% include 'partials/forms/_errors.html' %}
 
-      <!-- Owner / Farmer Selector -->
+      <!-- Owner / Farmer Selector (Staff Only) -->
       {% if is_staff and not is_edit %}
-      <section class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-5">
+      <section class="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4 sm:p-5">
         <div class="mb-4">
           <div class="flex items-start gap-3">
-            <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-green-200 bg-green-50 text-green-700">
+            <div class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-xs)] border border-[var(--color-brand-border)] bg-[var(--color-brand-light)] text-[var(--color-brand)]">
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
@@ -62,11 +57,11 @@
             </div>
 
             <div>
-              <label for="id_owner_filter" class="block text-sm font-semibold text-gray-900">
+              <label for="id_owner_filter" class="block text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
                 Field Owner (User)
-                <span class="text-red-600" aria-hidden="true">*</span>
+                <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
               </label>
-              <p class="mt-1 text-xs leading-5 text-gray-500">
+              <p class="mt-1 text-[var(--text-xs)] text-[var(--color-text-secondary)]">
                 Select a user to show only their available fields.
               </p>
             </div>
@@ -84,7 +79,7 @@
             id="id_owner_filter"
             name="_owner_filter_display"
             data-searchable="true"
-            class="{{ form.owner_filter.field.widget.attrs.class }}"
+            class="form-select"
           >
             <option value="">— Select a User —</option>
 
@@ -101,16 +96,16 @@
 
         <!-- Status message -->
         {% if not target_profile %}
-        <div class="mt-3 flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs leading-5 text-amber-800">
-          <svg class="mt-0.5 h-4 w-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <div class="agri-alert agri-alert-warning mt-3 flex items-start gap-2">
+          <svg class="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-warning-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M12 9v2m0 4h.01M10.29 3.86l-7.82 13a2 2 0 001.71 3h15.64a2 2 0 001.71-3l-7.82-13a2 2 0 00-3.42 0z"/>
           </svg>
           <span>Select a user — only their available fields will load below.</span>
         </div>
         {% else %}
-        <div class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-green-200 bg-green-50 px-3 py-2.5 text-xs leading-5 text-green-800">
-          <svg class="h-4 w-4 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <div class="agri-alert agri-alert-success mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <svg class="h-4 w-4 shrink-0 text-[var(--color-brand)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M5 13l4 4L19 7"/>
           </svg>
@@ -122,7 +117,7 @@
             </strong>
           </span>
 
-          <span class="rounded-md border border-green-200 bg-white px-2 py-0.5 font-medium text-green-700">
+          <span class="agri-badge">
             {{ target_profile.get_role_display }}
           </span>
         </div>
@@ -133,13 +128,13 @@
       <!-- Field & Variety -->
       <div class="grid gap-5 md:grid-cols-2">
         <!-- Field Selection -->
-        <div class="min-w-0">
-          <label for="id_field" class="mb-1.5 block text-sm font-medium text-gray-800">
+        <div class="min-w-0 form-field">
+          <label for="id_field" class="mb-1.5 block">
             {{ form.field.label }}
-            <span class="text-red-600" aria-hidden="true">*</span>
+            <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
 
             {% if is_edit %}
-            <span class="ml-2 inline-flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 align-middle text-xs font-medium text-gray-600">
+            <span class="ml-2 inline-flex items-center gap-1 rounded-[var(--radius-xs)] border border-[var(--color-border)] bg-[var(--color-overlay)] px-2 py-0.5 align-middle text-[var(--text-xs)] font-medium text-[var(--color-text-secondary)]">
               <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
@@ -152,23 +147,22 @@
           {{ form.field }}
 
           {% if form.field.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-field" class="form-error mt-1.5" role="alert">
             {% for err in form.field.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.field.help_text %}
-          <p class="mt-1.5 text-xs leading-5 {% if is_edit %}rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-amber-700{% else %}text-gray-500{% endif %}">
+          <p id="help-field" class="form-help mt-1.5 {% if is_edit %}agri-alert agri-alert-warning mt-2{% endif %}">
             {{ form.field.help_text }}
           </p>
           {% endif %}
 
           {% if not form.field.field.queryset and not is_edit %}
-          <div class="mt-2.5 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-800">
+          <div class="agri-alert agri-alert-warning mt-2.5">
             <strong class="font-semibold">No fields available.</strong>
             Please
-            <a href="{% url 'polls:field_create' %}"
-               class="font-semibold underline decoration-amber-400 underline-offset-2 hover:text-amber-900">
+            <a href="{% url 'polls:field_create' %}" class="font-semibold underline">
               create a field
             </a>
             first.
@@ -177,18 +171,18 @@
         </div>
 
         <!-- Variety Selection -->
-        <div class="min-w-0">
-          <label for="id_variety" class="mb-1.5 block text-sm font-medium text-gray-800">
+        <div class="min-w-0 form-field">
+          <label for="id_variety" class="mb-1.5 block">
             {{ form.variety.label }}
-            <span class="text-red-600" aria-hidden="true">*</span>
+            <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           <select
             id="id_variety"
             name="{{ form.variety.html_name }}"
             data-searchable="true"
+            class="form-select"
             required
-            
           >
             <option value="">Select a rice variety</option>
 
@@ -206,147 +200,57 @@
           </select>
 
           {% if form.variety.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-variety" class="form-error mt-1.5" role="alert">
             {% for err in form.variety.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.variety.help_text %}
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-variety" class="form-help mt-1.5">
             {{ form.variety.help_text }}
           </p>
           {% endif %}
         </div>
       </div>
 
-      <!-- Searchable Select Initialization -->
-      <script>
-      // Initialize searchable selects on this page for <select data-searchable="true">.
-      (function () {
-        const selects = Array.from(document.querySelectorAll('select[data-searchable="true"]'));
-        if (!selects.length) return;
-
-        selects.forEach(function (select) {
-          if (select.dataset._searchableInit === '1') return;
-          select.dataset._searchableInit = '1';
-
-          const wrapper = document.createElement('div');
-          wrapper.className = 'relative';
-          select.parentNode.insertBefore(wrapper, select);
-
-          const input = document.createElement('input');
-          input.type = 'search';
-          input.placeholder = 'Type to search…';
-          input.className = select.className;
-          input.style.paddingRight = '2.5rem';
-
-          const icon = document.createElement('div');
-          icon.className = 'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2';
-          icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
-
-          const options = Array.from(select.options);
-          const originalValue = select.value;
-
-          if (originalValue) {
-            const sel = options.find(o => o.value === originalValue);
-            if (sel) input.value = sel.text;
-          }
-
-          select.style.display = 'none';
-
-          const dropdown = document.createElement('div');
-          dropdown.className = 'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg hidden';
-
-          wrapper.appendChild(input);
-          wrapper.appendChild(icon);
-          wrapper.appendChild(select);
-          wrapper.appendChild(dropdown);
-
-          function filterOptions(term) {
-            dropdown.innerHTML = '';
-            const t = term.toLowerCase();
-
-            const filtered = options.filter(o =>
-              o.value && o.text.toLowerCase().includes(t)
-            );
-
-            if (filtered.length === 0) {
-              dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">No matches found</div>';
-            } else {
-              filtered.forEach(function (opt) {
-                const div = document.createElement('div');
-                div.className = 'cursor-pointer border-b border-gray-100 px-4 py-2.5 text-sm text-gray-700 last:border-b-0 hover:bg-green-50 hover:text-green-800';
-                div.textContent = opt.text;
-                div.dataset.value = opt.value;
-
-                div.addEventListener('click', function () {
-                  select.value = this.dataset.value;
-                  input.value = this.textContent;
-                  dropdown.classList.add('hidden');
-                  select.dispatchEvent(new Event('change'));
-                });
-
-                dropdown.appendChild(div);
-              });
-            }
-
-            dropdown.classList.remove('hidden');
-          }
-
-          input.addEventListener('focus', function () {
-            filterOptions(this.value);
-          });
-
-          input.addEventListener('input', function () {
-            filterOptions(this.value);
-          });
-
-          document.addEventListener('click', function (e) {
-            if (!wrapper.contains(e.target)) {
-              dropdown.classList.add('hidden');
-            }
-          });
-        });
-      })();
-      </script>
-
       <!-- Season & Planting Method -->
-      <div class="grid gap-5 border-t border-gray-100 pt-6 md:grid-cols-2">
-        <div class="min-w-0">
-          <label for="id_season" class="mb-1.5 block text-sm font-medium text-gray-800">
+      <div class="agri-divider"></div>
+      <div class="grid gap-5 md:grid-cols-2">
+        <div class="min-w-0 form-field">
+          <label for="id_season" class="mb-1.5 block">
             {{ form.season.label }}
           </label>
 
           {{ form.season }}
 
           {% if form.season.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-season" class="form-error mt-1.5" role="alert">
             {% for err in form.season.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.season.help_text %}
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-season" class="form-help mt-1.5">
             {{ form.season.help_text }}
           </p>
           {% endif %}
         </div>
 
-        <div class="min-w-0">
-          <label for="id_planting_method" class="mb-1.5 block text-sm font-medium text-gray-800">
+        <div class="min-w-0 form-field">
+          <label for="id_planting_method" class="mb-1.5 block">
             {{ form.planting_method.label }}
           </label>
 
           {{ form.planting_method }}
 
           {% if form.planting_method.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-planting_method" class="form-error mt-1.5" role="alert">
             {% for err in form.planting_method.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.planting_method.help_text %}
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-planting_method" class="form-help mt-1.5">
             {{ form.planting_method.help_text }}
           </p>
           {% endif %}
@@ -354,43 +258,44 @@
       </div>
 
       <!-- Area & Seed Rate -->
-      <div class="grid gap-5 border-t border-gray-100 pt-6 md:grid-cols-2">
-        <div class="min-w-0">
-          <label for="id_area_planted_ha" class="mb-1.5 block text-sm font-medium text-gray-800">
+      <div class="agri-divider"></div>
+      <div class="grid gap-5 md:grid-cols-2">
+        <div class="min-w-0 form-field">
+          <label for="id_area_planted_ha" class="mb-1.5 block">
             {{ form.area_planted_ha.label }}
-            <span class="text-red-600" aria-hidden="true">*</span>
+            <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           {{ form.area_planted_ha }}
 
           {% if form.area_planted_ha.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-area_planted_ha" class="form-error mt-1.5" role="alert">
             {% for err in form.area_planted_ha.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.area_planted_ha.help_text %}
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-area_planted_ha" class="form-help mt-1.5">
             {{ form.area_planted_ha.help_text }}
           </p>
           {% endif %}
         </div>
 
-        <div class="min-w-0">
-          <label for="id_seed_rate_kg_per_ha" class="mb-1.5 block text-sm font-medium text-gray-800">
+        <div class="min-w-0 form-field">
+          <label for="id_seed_rate_kg_per_ha" class="mb-1.5 block">
             {{ form.seed_rate_kg_per_ha.label }}
           </label>
 
           {{ form.seed_rate_kg_per_ha }}
 
           {% if form.seed_rate_kg_per_ha.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-seed_rate_kg_per_ha" class="form-error mt-1.5" role="alert">
             {% for err in form.seed_rate_kg_per_ha.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.seed_rate_kg_per_ha.help_text %}
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-seed_rate_kg_per_ha" class="form-help mt-1.5">
             {{ form.seed_rate_kg_per_ha.help_text }}
           </p>
           {% endif %}
@@ -398,12 +303,13 @@
       </div>
 
       <!-- Planting & Expected Harvest Dates -->
-      <div class="grid gap-5 border-t border-gray-100 pt-6 md:grid-cols-2">
+      <div class="agri-divider"></div>
+      <div class="grid gap-5 md:grid-cols-2">
         <!-- Planting Date -->
-        <div class="min-w-0">
-          <label for="id_planting_date" class="mb-1.5 block text-sm font-medium text-gray-800">
+        <div class="min-w-0 form-field">
+          <label for="id_planting_date" class="mb-1.5 block">
             {{ form.planting_date.label }}
-            <span class="text-red-600" aria-hidden="true">*</span>
+            <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           <input
@@ -413,32 +319,29 @@
             value="{% if form.planting_date.value %}{{ form.planting_date.value|date:'Y-m-d' }}{% endif %}"
             required
             data-allowed-past="{{ allowed_past_days_planting|default:30 }}"
-            class="mt-0 block min-h-[44px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:min-h-[42px] sm:text-sm"
           />
 
           {% if form.planting_date.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-planting_date" class="form-error mt-1.5" role="alert">
             {% for err in form.planting_date.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-planting_date" class="form-help mt-1.5">
             Set harvest date below → this date will auto-compute. Or set this date → harvest auto-computes.
           </p>
         </div>
 
         <!-- Expected Harvest Date -->
-        <div class="min-w-0">
-          <label for="id_expected_harvest_date" class="mb-1.5 block text-sm font-medium text-gray-800">
+        <div class="min-w-0 form-field">
+          <label for="id_expected_harvest_date" class="mb-1.5 block">
             {{ form.expected_harvest_date.label }}
 
-            <span id="harvest-auto-badge"
-                  class="hidden ml-2 inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-0.5 align-middle text-xs font-medium text-green-700">
+            <span id="harvest-auto-badge" class="hidden ml-2 agri-badge">
               Auto-computed
             </span>
 
-            <span id="planting-auto-badge"
-                  class="hidden ml-2 inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2 py-0.5 align-middle text-xs font-medium text-blue-700">
+            <span id="planting-auto-badge" class="hidden ml-2 inline-flex items-center rounded-full border border-[var(--color-info-border)] bg-[var(--color-info-soft)] px-2 py-0.5 align-middle text-[var(--text-sm)] font-medium text-[var(--color-info-text)]">
               Planting date auto-computed
             </span>
           </label>
@@ -449,16 +352,15 @@
             name="{{ form.expected_harvest_date.html_name }}"
             value="{% if form.expected_harvest_date.value %}{{ form.expected_harvest_date.value|date:'Y-m-d' }}{% endif %}"
             data-allowed-past="{{ allowed_past_days_planting|default:30 }}"
-            class="mt-0 block min-h-[44px] w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm outline-none transition focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:min-h-[42px] sm:text-sm"
           />
 
           {% if form.expected_harvest_date.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-expected_harvest_date" class="form-error mt-1.5" role="alert">
             {% for err in form.expected_harvest_date.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-expected_harvest_date" class="form-help mt-1.5">
             Set this → planting date auto-computes. Or set planting date above → this auto-computes.
           </p>
         </div>
@@ -467,11 +369,11 @@
       <!-- Auto-compute Information -->
       <div
         id="date-info-badge"
-        class="hidden items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3.5 py-2.5 text-sm text-green-800"
+        class="hidden agri-alert agri-alert-success flex items-center gap-2"
         role="status"
         aria-live="polite"
       >
-        <svg class="h-4 w-4 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <svg class="h-4 w-4 shrink-0 text-[var(--color-brand)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
         </svg>
@@ -479,29 +381,30 @@
       </div>
 
       <!-- Status & Actual Harvest -->
-      <div class="grid gap-5 border-t border-gray-100 pt-6 md:grid-cols-2">
-        <div class="min-w-0">
-          <label for="id_status" class="mb-1.5 block text-sm font-medium text-gray-800">
+      <div class="agri-divider"></div>
+      <div class="grid gap-5 md:grid-cols-2">
+        <div class="min-w-0 form-field">
+          <label for="id_status" class="mb-1.5 block">
             {{ form.status.label }}
           </label>
 
           {{ form.status }}
 
           {% if form.status.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-status" class="form-error mt-1.5" role="alert">
             {% for err in form.status.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.status.help_text %}
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-status" class="form-help mt-1.5">
             {{ form.status.help_text }}
           </p>
           {% endif %}
         </div>
 
-        <div class="min-w-0">
-          <label for="id_actual_harvest_date" class="mb-1.5 block text-sm font-medium text-gray-800">
+        <div class="min-w-0 form-field">
+          <label for="id_actual_harvest_date" class="mb-1.5 block">
             {{ form.actual_harvest_date.label }}
           </label>
 
@@ -511,17 +414,16 @@
             name="{{ form.actual_harvest_date.html_name }}"
             value="{% if form.actual_harvest_date.value %}{{ form.actual_harvest_date.value|date:'Y-m-d' }}{% endif %}"
             readonly
-            class="mt-0 block min-h-[44px] w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-base text-gray-600 shadow-sm outline-none sm:min-h-[42px] sm:text-sm"
           />
 
           {% if form.actual_harvest_date.errors %}
-          <p class="mt-1.5 text-sm text-red-600" role="alert">
+          <p id="error-actual_harvest_date" class="form-error mt-1.5" role="alert">
             {% for err in form.actual_harvest_date.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
           {% if form.actual_harvest_date.help_text %}
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-actual_harvest_date" class="form-help mt-1.5">
             {{ form.actual_harvest_date.help_text }}
           </p>
           {% endif %}
@@ -529,8 +431,9 @@
       </div>
 
       <!-- Notes -->
-      <div class="border-t border-gray-100 pt-6">
-        <label for="id_notes" class="mb-1.5 block text-sm font-medium text-gray-800">
+      <div class="agri-divider"></div>
+      <div class="form-field">
+        <label for="id_notes" class="mb-1.5 block">
           {{ form.notes.label }}
         </label>
 
@@ -538,36 +441,37 @@
           id="id_notes"
           name="{{ form.notes.html_name }}"
           rows="4"
-          class="mt-0 block w-full resize-y rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-base text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:text-sm"
+          class="form-textarea"
           placeholder="Optional notes about this planting cycle"
         >{{ form.notes.value|default:'' }}</textarea>
 
         {% if form.notes.errors %}
-        <p class="mt-1.5 text-sm text-red-600" role="alert">
+        <p id="error-notes" class="form-error mt-1.5" role="alert">
           {% for err in form.notes.errors %}{{ err }}{% endfor %}
         </p>
         {% endif %}
 
         {% if form.notes.help_text %}
-        <p class="mt-1.5 text-xs leading-5 text-gray-500">
+        <p id="help-notes" class="form-help mt-1.5">
           {{ form.notes.help_text }}
         </p>
         {% endif %}
       </div>
 
       <!-- Actions -->
-      <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-6 sm:flex-row sm:justify-end">
+      <div class="agri-divider"></div>
+      <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <a
           href="{% url 'polls:plantings_list' %}"
           onclick="history.back(); return false;"
-          class="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:min-h-[42px]"
+          class="btn btn-secondary"
         >
           Cancel
         </a>
 
         <button
           type="submit"
-          class="inline-flex min-h-[44px] items-center justify-center rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:min-h-[42px]"
+          class="btn btn-primary"
         >
           {% if is_edit %}Update Planting{% else %}Create Planting{% endif %}
         </button>
@@ -576,55 +480,45 @@
   </div>
 </section>
 
+<!-- Searchable Selects Helper -->
 <script>
-/* ── Searchable owner dropdown + owner-change reload ────────────────────── */
 (function () {
-  const ownerSelect = document.getElementById('id_owner_filter');
-  if (!ownerSelect) return; // non-staff role — element doesn't exist
+  const selects = Array.from(document.querySelectorAll('select[data-searchable="true"]'));
+  if (!selects.length) return;
 
-  /* ---- wire up change → submit form to reload fields ---- */
-  ownerSelect.addEventListener('change', function () {
-    const profileIdInput = document.getElementById('profile-id-input');
-    const changeFlag     = document.getElementById('change-owner-flag');
-    if (profileIdInput) profileIdInput.value = this.value;
-    if (changeFlag)     changeFlag.value     = '1';
-    this.closest('form').submit();
-  });
-
-  /* ---- make the select searchable (same pattern as fields/form.html) ---- */
-  if (ownerSelect.dataset.searchable === 'true' && ownerSelect.dataset._searchableInit !== '1') {
-    ownerSelect.dataset._searchableInit = '1';
+  selects.forEach(function (select) {
+    if (select.dataset._searchableInit === '1') return;
+    select.dataset._searchableInit = '1';
 
     const wrapper = document.createElement('div');
-    wrapper.className = 'relative sm:max-w-sm';
-    ownerSelect.parentNode.insertBefore(wrapper, ownerSelect);
+    wrapper.className = 'relative';
+    select.parentNode.insertBefore(wrapper, select);
 
-    const searchInput = document.createElement('input');
-    searchInput.type        = 'text';
-    searchInput.placeholder = 'Type to search user...';
-    searchInput.className   = ownerSelect.className;
-    searchInput.style.paddingRight = '2.5rem';
+    const input = document.createElement('input');
+    input.type = 'search';
+    input.placeholder = 'Type to search…';
+    input.style.paddingRight = '2.5rem';
 
     const icon = document.createElement('div');
-    icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
-    icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
+    icon.className = 'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]';
+    icon.innerHTML = '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
 
-    const options = Array.from(ownerSelect.options);
-    const originalValue = ownerSelect.value;
+    const options = Array.from(select.options);
+    const originalValue = select.value;
 
     if (originalValue) {
       const sel = options.find(o => o.value === originalValue);
-      if (sel) searchInput.value = sel.text.replace(/^\S+\s/, '').trim();
+      if (sel) input.value = sel.text;
     }
 
-    ownerSelect.style.display = 'none';
+    select.style.display = 'none';
 
     const dropdown = document.createElement('div');
-    dropdown.className = 'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg hidden';
+    dropdown.className = 'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] hidden';
 
-    wrapper.appendChild(searchInput);
+    wrapper.appendChild(input);
     wrapper.appendChild(icon);
-    wrapper.appendChild(ownerSelect);
+    wrapper.appendChild(select);
     wrapper.appendChild(dropdown);
 
     function filterOptions(term) {
@@ -636,22 +530,19 @@
       );
 
       if (filtered.length === 0) {
-        dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">No matches found</div>';
+        dropdown.innerHTML = '<div class="px-4 py-3 text-[var(--text-sm)] text-[var(--color-text-muted)]">No matches found</div>';
       } else {
         filtered.forEach(function (opt) {
           const div = document.createElement('div');
-
-          div.className = 'cursor-pointer border-b border-gray-100 px-4 py-2.5 text-sm text-gray-700 last:border-b-0 hover:bg-green-50 hover:text-green-800';
+          div.className = 'cursor-pointer border-b border-[var(--color-border)] px-4 py-2.5 text-[var(--text-sm)] text-[var(--color-text)] last:border-b-0 hover:bg-[var(--color-brand-light)] hover:text-[var(--color-brand)]';
           div.textContent = opt.text;
           div.dataset.value = opt.value;
 
           div.addEventListener('click', function () {
-            ownerSelect.value = this.dataset.value;
-            searchInput.value = this.textContent.replace(/^\S+\s/, '').trim();
+            select.value = this.dataset.value;
+            input.value = this.textContent;
             dropdown.classList.add('hidden');
-
-            // trigger change to reload fields
-            ownerSelect.dispatchEvent(new Event('change'));
+            select.dispatchEvent(new Event('change'));
           });
 
           dropdown.appendChild(div);
@@ -661,11 +552,11 @@
       dropdown.classList.remove('hidden');
     }
 
-    searchInput.addEventListener('focus', function () {
+    input.addEventListener('focus', function () {
       filterOptions(this.value);
     });
 
-    searchInput.addEventListener('input', function () {
+    input.addEventListener('input', function () {
       filterOptions(this.value);
     });
 
@@ -674,10 +565,27 @@
         dropdown.classList.add('hidden');
       }
     });
-  }
+  });
 })();
 </script>
 
+<!-- Dynamic Owner Dropdown JS -->
+<script>
+(function () {
+  const ownerSelect = document.getElementById('id_owner_filter');
+  if (!ownerSelect) return;
+
+  ownerSelect.addEventListener('change', function () {
+    const profileIdInput = document.getElementById('profile-id-input');
+    const changeFlag     = document.getElementById('change-owner-flag');
+    if (profileIdInput) profileIdInput.value = this.value;
+    if (changeFlag)     changeFlag.value     = '1';
+    this.closest('form').submit();
+  });
+})();
+</script>
+
+<!-- Auto-Compute Dates JS -->
 <script>
 (function () {
   const varietySelect  = document.getElementById('id_variety');
@@ -688,11 +596,9 @@
   const harvestBadge   = document.getElementById('harvest-auto-badge');
   const plantingBadge  = document.getElementById('planting-auto-badge');
 
-  // Defensive early-exit: page might render without these inputs (list, partials, etc.)
   if (!varietySelect || !plantingInput || !harvestInput) return;
 
-  // Tracks which field was last auto-computed so we don't create loops
-  let lastAutoComputed = null; // 'harvest' | 'planting' | null
+  let lastAutoComputed = null;
 
   function getGrowthDays() {
     const opt = varietySelect.selectedOptions && varietySelect.selectedOptions[0];
@@ -722,7 +628,6 @@
   }
 
   function showBadge(mode, growthDays, computedDate) {
-    // mode: 'harvest' = harvest was computed, 'planting' = planting was computed
     harvestBadge.classList.toggle('hidden', mode !== 'harvest');
     plantingBadge.classList.toggle('hidden', mode !== 'planting');
 
@@ -748,8 +653,6 @@
     lastAutoComputed = null;
   }
 
-  // ── When VARIETY changes ───────────────────────────────────────────────────
-  // Re-compute harvest from planting (or planting from harvest if only harvest is set)
   varietySelect.addEventListener('change', function () {
     const days = getGrowthDays();
 
@@ -759,13 +662,11 @@
     }
 
     if (plantingInput.value) {
-      // Planting is set → compute harvest
       const computed = addDays(plantingInput.value, days);
       harvestInput.value = computed;
       lastAutoComputed = 'harvest';
       showBadge('harvest', days, computed);
     } else if (harvestInput.value) {
-      // Only harvest is set → compute planting
       const computed = subtractDays(harvestInput.value, days);
       plantingInput.value = computed;
       lastAutoComputed = 'planting';
@@ -775,7 +676,6 @@
 
   function handlePlantingChange() {
     if (lastAutoComputed === 'planting') {
-      // This change was triggered by our own reverse-compute — skip to avoid loop
       lastAutoComputed = null;
       return;
     }
@@ -793,14 +693,11 @@
     showBadge('harvest', days, computed);
   }
 
-  // ── When PLANTING DATE changes ─────────────────────────────────────────────
-  // Forward compute: harvest = planting + growthDays
   plantingInput.addEventListener('input', handlePlantingChange);
   plantingInput.addEventListener('change', handlePlantingChange);
 
   function handleHarvestChange() {
     if (lastAutoComputed === 'harvest') {
-      // This change was triggered by our own forward-compute — skip to avoid loop
       lastAutoComputed = null;
       return;
     }
@@ -818,20 +715,11 @@
     showBadge('planting', days, computed);
   }
 
-  // ── When HARVEST DATE changes ──────────────────────────────────────────────
-  // Reverse compute: planting = harvest - growthDays
   harvestInput.addEventListener('input', handleHarvestChange);
   harvestInput.addEventListener('change', handleHarvestChange);
 
-  // ── On page load: if both dates exist (edit mode), show the info badge ─────
   (function initBadge() {
     const days = getGrowthDays();
-
-    /*
-     * Preserve the existing initialization behavior.
-     * renderVarietyIndicator() is intentionally not introduced here because
-     * it is not defined in this template and is unrelated to the UI update.
-     */
     if (days && plantingInput.value && harvestInput.value) {
       showBadge('harvest', days, harvestInput.value);
     }
@@ -839,6 +727,7 @@
 })();
 </script>
 
+<!-- Date Min Constraint JS -->
 <script>
 (function () {
   const plantingInput = document.getElementById('id_planting_date');
@@ -850,11 +739,9 @@
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
-
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  // Read allowed past days from data attribute (server set via template)
   const allowedPast = Math.max(
     0,
     parseInt(
@@ -872,21 +759,15 @@
 
   plantingInput.setAttribute('min', toIsoDate(minDateObj));
   expectedInput.setAttribute('min', toIsoDate(minDateObj));
-
-  // Prevent selecting a future date
-  //plantingInput.setAttribute('max', toIsoDate(today));
 })();
 </script>
 
+<!-- Searchable Field Select JS -->
 {% if not is_edit %}
 <script>
 (function () {
-  // Make the main field select searchable (create mode only)
   const fieldSelect = document.getElementById('id_field');
-  if (!fieldSelect) return;
-
-  // Avoid double-initializing
-  if (fieldSelect.dataset._searchableInit === '1') return;
+  if (!fieldSelect || fieldSelect.dataset._searchableInit === '1') return;
   fieldSelect.dataset._searchableInit = '1';
 
   const wrapper = document.createElement('div');
@@ -896,12 +777,11 @@
   const searchInput = document.createElement('input');
   searchInput.type = 'text';
   searchInput.placeholder = 'Type to search planting cycles...';
-  searchInput.className = fieldSelect.className;
   searchInput.style.paddingRight = '2.5rem';
 
   const icon = document.createElement('div');
-  icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
-  icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
+  icon.className = 'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]';
+  icon.innerHTML = '<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
 
   const options = Array.from(fieldSelect.options);
   const originalValue = fieldSelect.value;
@@ -914,7 +794,7 @@
   fieldSelect.style.display = 'none';
 
   const dropdown = document.createElement('div');
-  dropdown.className = 'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg hidden';
+  dropdown.className = 'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] hidden';
 
   wrapper.appendChild(searchInput);
   wrapper.appendChild(icon);
@@ -923,7 +803,6 @@
 
   function filterOptions(term) {
     dropdown.innerHTML = '';
-
     const t = term.toLowerCase();
 
     const filtered = options.filter(o =>
@@ -931,12 +810,11 @@
     );
 
     if (filtered.length === 0) {
-      dropdown.innerHTML = '<div class="px-4 py-3 text-sm text-gray-500">No matches found</div>';
+      dropdown.innerHTML = '<div class="px-4 py-3 text-[var(--text-sm)] text-[var(--color-text-muted)]">No matches found</div>';
     } else {
       filtered.forEach(function (opt) {
         const div = document.createElement('div');
-
-        div.className = 'cursor-pointer border-b border-gray-100 px-4 py-2.5 text-sm text-gray-700 last:border-b-0 hover:bg-green-50 hover:text-green-800';
+        div.className = 'cursor-pointer border-b border-[var(--color-border)] px-4 py-2.5 text-[var(--text-sm)] text-[var(--color-text)] last:border-b-0 hover:bg-[var(--color-brand-light)] hover:text-[var(--color-brand)]';
         div.textContent = opt.text;
         div.dataset.value = opt.value;
 
@@ -944,8 +822,6 @@
           fieldSelect.value = this.dataset.value;
           searchInput.value = this.textContent;
           dropdown.classList.add('hidden');
-
-          // trigger change so other listeners (crop indicator) update
           fieldSelect.dispatchEvent(new Event('change'));
         });
 

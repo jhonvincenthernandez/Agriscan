@@ -5,17 +5,12 @@
 <section class="page-container">
   <!-- Page Header -->
   <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div class="min-w-0">
-        <div class="flex items-center gap-2">
-          
-
-          <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-            {% if is_edit %}Edit{% else %}New{% endif %} Harvest Record
-          </h1>
-        </div>
-
-        <p class="mt-1.5 max-w-2xl text-sm leading-6 text-gray-600">
+        <h1 class="text-xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-2xl">
+          {% if is_edit %}Edit{% else %}New{% endif %} Harvest Record
+        </h1>
+        <p class="mt-1 max-w-2xl text-sm text-[var(--color-text-secondary)]">
           Record actual harvest yield and post-harvest information for a planting cycle.
         </p>
       </div>
@@ -55,11 +50,11 @@
 
       <!-- Harvest Information -->
       <div>
-        <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
-          <h2 class="text-base font-semibold text-gray-900">
+        <div class="border-b border-[var(--color-border)] px-4 py-4 sm:px-5 lg:px-6">
+          <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
             Harvest Information
           </h2>
-          <p class="mt-1 text-sm leading-5 text-gray-600">
+          <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
             Select the planting cycle and provide the actual harvest information.
           </p>
         </div>
@@ -71,22 +66,22 @@
               <div class="form-field" id="field-{{ field.name }}">
                 <label
                   for="{{ field.id_for_label }}"
-                  class="block text-sm font-medium text-gray-700"
+                  class="block text-sm font-semibold text-[var(--color-text-primary)] mb-1.5"
                 >
                   {{ field.label }}
                   {% if field.field.required %}
-                    <span class="text-red-600" aria-hidden="true">*</span>
+                    <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
                   {% endif %}
                 </label>
 
-                <div class="mt-1">
+                <div>
                   {% with current_value=field.value|default:form.instance.planting_id %}
                     {% with current_value_str=current_value|stringformat:"s" instance_value=form.instance.planting_id|stringformat:"s" %}
 
                       <select
                         name="{{ field.html_name }}"
                         id="{{ field.id_for_label }}"
-                        class="{{ field.field.widget.attrs.class }}"
+                        class="form-select {{ field.field.widget.attrs.class }}"
                         data-searchable="true"
                       >
                         <option value="">-- Select --</option>
@@ -141,24 +136,21 @@
                 </div>
 
                 {% if field.help_text %}
-                  <p
-                    id="help-{{ field.name }}"
-                    class="mt-1 text-xs leading-5 text-gray-500"
-                  >
+                  <p id="help-{{ field.name }}" class="form-help mt-1 text-xs">
                     {{ field.help_text }}
                   </p>
                 {% endif %}
 
                 {% if not field.field.queryset %}
-                  <div class="mt-3 rounded-md border border-yellow-200 bg-yellow-50 p-3">
-                    <p class="text-sm leading-5 text-yellow-800">
+                  <div class="agri-alert agri-alert-warning mt-3 flex flex-col items-start gap-2">
+                    <p class="text-sm">
                       <strong>No planting cycles found.</strong>
                       Create a planting cycle first so you can record a harvest.
                     </p>
 
                     <a
                       href="{% url 'polls:planting_create' %}"
-                      class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-yellow-700 underline hover:text-yellow-900"
+                      class="inline-flex items-center gap-1 text-sm font-semibold underline hover:opacity-80"
                     >
                       <svg
                         class="h-4 w-4"
@@ -180,11 +172,7 @@
                 {% endif %}
 
                 {% if field.errors %}
-                  <p
-                    id="error-{{ field.name }}"
-                    class="mt-1 text-sm text-red-600 field-error"
-                    role="alert"
-                  >
+                  <p id="error-{{ field.name }}" class="form-error mt-1" role="alert">
                     {% for err in field.errors %}
                       {{ err }}{% if not forloop.last %}<br />{% endif %}
                     {% endfor %}
@@ -224,7 +212,7 @@
       </div>
 
       <!-- Actions -->
-      <div class="border-t border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+      <div class="border-t border-[var(--color-border)] px-4 py-4 sm:px-5 lg:px-6">
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
           <button
             type="submit"
@@ -261,7 +249,7 @@
 </section>
 
 <script>
-// Auto-calculate yield (tons/ha) when actual yield or area changes.
+// Auto-calculate yield (tons/ha) at sync options from planting selection
 document.addEventListener('DOMContentLoaded', function () {
   const yieldField = document.getElementById('id_yield_tons_per_ha');
   const actualField = document.getElementById('id_actual_yield_tons');
@@ -276,71 +264,53 @@ document.addEventListener('DOMContentLoaded', function () {
     const area = parseFloat(areaField.value);
 
     if (area > 0 && actual >= 0) {
-      const calc = (actual / area).toFixed(2);
-      yieldField.value = calc;
+      yieldField.value = (actual / area).toFixed(2);
     } else {
       yieldField.value = '';
     }
   }
 
   [actualField, areaField].forEach(field => {
-    if (!field) return;
-    field.addEventListener('input', recalcYield);
+    if (field) field.addEventListener('input', recalcYield);
   });
 
-  // Trigger initial calculation on load.
   recalcYield();
 
   function syncGrainQualityFromPlanting() {
     if (!plantingField || !grainQualityField) return;
 
-    const selected =
-      plantingField.options[plantingField.selectedIndex];
+    const selected = plantingField.options[plantingField.selectedIndex];
+    const quality = selected && selected.dataset ? (selected.dataset.grainQuality || '') : '';
 
-    const quality =
-      selected && selected.dataset
-        ? (selected.dataset.grainQuality || '')
-        : '';
-
-    grainQualityField.value = quality;
+    if (quality) {
+      grainQualityField.value = quality;
+    }
   }
 
   if (plantingField) {
-    plantingField.addEventListener(
-      'change',
-      syncGrainQualityFromPlanting
-    );
-
+    plantingField.addEventListener('change', syncGrainQualityFromPlanting);
     syncGrainQualityFromPlanting();
   }
 });
-</script>
 
-<script>
-// Lightweight searchable select enhancer for selects with
-// data-searchable="true".
+// Searchable Select Enhancer
 document.addEventListener('DOMContentLoaded', function () {
-  const selects = Array.from(
-    document.querySelectorAll('select[data-searchable="true"]')
-  );
-
+  const selects = Array.from(document.querySelectorAll('select[data-searchable="true"]'));
   if (!selects.length) return;
 
   selects.forEach(function (select) {
     const wrapper = document.createElement('div');
-    wrapper.className = 'relative';
+    wrapper.className = 'relative w-full';
 
     const input = document.createElement('input');
     input.type = 'search';
     input.placeholder = 'Search fields…';
-    input.className =
-      'form-input';
+    input.className = 'form-input';
     input.setAttribute('aria-haspopup', 'listbox');
     input.setAttribute('aria-expanded', 'false');
 
     const list = document.createElement('ul');
-    list.className =
-      'absolute z-50 mt-1 hidden max-h-60 w-full overflow-auto rounded-md border border-gray-200 bg-white shadow-sm';
+    list.className = 'absolute z-50 mt-1 hidden max-h-60 w-full overflow-auto rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface)] shadow-md';
     list.setAttribute('role', 'listbox');
 
     const options = Array.from(select.options).map(opt => ({
@@ -355,10 +325,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       filtered.forEach((opt, i) => {
         const li = document.createElement('li');
-
-        li.className =
-          'cursor-pointer px-3 py-2 text-sm hover:bg-gray-50';
-
+        li.className = 'cursor-pointer px-3 py-2 text-sm transition-colors duration-150 hover:bg-[var(--color-overlay)] text-[var(--color-text)]';
         li.dataset.value = opt.value;
         li.setAttribute('role', 'option');
 
@@ -367,37 +334,23 @@ document.addEventListener('DOMContentLoaded', function () {
         const metaParts = [];
 
         try {
-          if (el) {
-            const d = el.dataset || {};
-
-            if (d.ecosystemType) {
-              metaParts.push(d.ecosystemType);
-            }
-
-            if (d.areaHa) {
-              metaParts.push(d.areaHa + ' ha');
-            }
-
-            if (d.plantingDate) {
-              metaParts.push(d.plantingDate);
-            }
+          if (el && el.dataset) {
+            if (el.dataset.ecosystemType) metaParts.push(el.dataset.ecosystemType);
+            if (el.dataset.areaHa) metaParts.push(el.dataset.areaHa + ' ha');
+            if (el.dataset.plantingDate) metaParts.push(el.dataset.plantingDate);
           }
-        } catch (e) {
-          // Ignore dataset read errors.
-        }
+        } catch (e) {}
 
         if (metaParts.length) {
           const left = document.createElement('div');
           left.className = 'flex min-w-0 flex-col';
 
           const main = document.createElement('div');
-          main.className =
-            'truncate text-sm text-gray-900';
+          main.className = 'truncate text-sm font-medium text-[var(--color-text-primary)]';
           main.textContent = title;
 
           const meta = document.createElement('div');
-          meta.className =
-            'truncate text-xs text-gray-500';
+          meta.className = 'truncate text-xs text-[var(--color-text-muted)]';
           meta.textContent = metaParts.join(' · ');
 
           left.appendChild(main);
@@ -408,25 +361,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         if (opt.disabled) {
-          li.classList.add(
-            'cursor-not-allowed',
-            'text-gray-400'
-          );
+          li.classList.add('cursor-not-allowed', 'opacity-50');
           li.setAttribute('aria-disabled', 'true');
         }
 
         if (i === highlightIndex) {
-          li.classList.add('bg-gray-100');
+          li.classList.add('bg-[var(--color-overlay)]');
         }
 
         list.appendChild(li);
       });
     }
 
-    const initial = options.filter(
-      o => o.value !== ''
-    );
-
+    const initial = options.filter(o => o.value !== '');
     renderList(initial, -1);
 
     select.style.position = 'absolute';
@@ -434,11 +381,7 @@ document.addEventListener('DOMContentLoaded', function () {
     select.setAttribute('aria-hidden', 'true');
     select.tabIndex = -1;
 
-    select.parentNode.insertBefore(
-      wrapper,
-      select
-    );
-
+    select.parentNode.insertBefore(wrapper, select);
     wrapper.appendChild(input);
     wrapper.appendChild(list);
     wrapper.appendChild(select);
@@ -448,182 +391,84 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function openList() {
       list.classList.remove('hidden');
-      input.setAttribute(
-        'aria-expanded',
-        'true'
-      );
+      input.setAttribute('aria-expanded', 'true');
     }
 
     function closeList() {
       list.classList.add('hidden');
-      input.setAttribute(
-        'aria-expanded',
-        'false'
-      );
-
+      input.setAttribute('aria-expanded', 'false');
       highlight = -1;
       renderList(filtered, highlight);
     }
 
-    input.addEventListener(
-      'input',
-      function () {
-        const q = input.value
-          .trim()
-          .toLowerCase();
+    input.addEventListener('input', function () {
+      const q = input.value.trim().toLowerCase();
+      filtered = initial.filter(o => o.text.toLowerCase().includes(q));
+      renderList(filtered, -1);
+      openList();
+    });
 
-        filtered = initial.filter(o =>
-          o.text.toLowerCase().includes(q)
-        );
+    input.addEventListener('focus', function () {
+      filtered = initial;
+      renderList(filtered, -1);
+      openList();
+    });
 
-        renderList(filtered, -1);
-        openList();
-      }
-    );
+    input.addEventListener('keydown', function (evt) {
+      if (list.classList.contains('hidden')) return;
+      const count = filtered.length;
+      if (!count) return;
 
-    input.addEventListener(
-      'focus',
-      function () {
-        filtered = initial;
-        renderList(filtered, -1);
-        openList();
-      }
-    );
-
-    input.addEventListener(
-      'keydown',
-      function (evt) {
-        if (list.classList.contains('hidden')) {
-          return;
+      if (evt.key === 'ArrowDown') {
+        evt.preventDefault();
+        highlight = (highlight + 1) % count;
+        renderList(filtered, highlight);
+        scrollToHighlight();
+      } else if (evt.key === 'ArrowUp') {
+        evt.preventDefault();
+        highlight = (highlight - 1 + count) % count;
+        renderList(filtered, highlight);
+        scrollToHighlight();
+      } else if (evt.key === 'Enter') {
+        evt.preventDefault();
+        if (highlight >= 0 && filtered[highlight]) {
+          selectValue(filtered[highlight].value);
         }
-
-        const count = filtered.length;
-
-        if (!count) {
-          return;
-        }
-
-        if (evt.key === 'ArrowDown') {
-          evt.preventDefault();
-
-          highlight =
-            (highlight + 1) % count;
-
-          renderList(
-            filtered,
-            highlight
-          );
-
-          scrollToHighlight();
-        } else if (evt.key === 'ArrowUp') {
-          evt.preventDefault();
-
-          highlight =
-            (highlight - 1 + count) % count;
-
-          renderList(
-            filtered,
-            highlight
-          );
-
-          scrollToHighlight();
-        } else if (evt.key === 'Enter') {
-          evt.preventDefault();
-
-          if (
-            highlight >= 0 &&
-            filtered[highlight]
-          ) {
-            selectValue(
-              filtered[highlight].value
-            );
-          }
-        } else if (evt.key === 'Escape') {
-          closeList();
-        }
+      } else if (evt.key === 'Escape') {
+        closeList();
       }
-    );
+    });
 
     function scrollToHighlight() {
-      const items =
-        Array.from(list.children);
-
-      if (
-        highlight < 0 ||
-        highlight >= items.length
-      ) {
-        return;
-      }
-
-      const el = items[highlight];
-
-      el.scrollIntoView({
-        block: 'nearest'
-      });
+      const items = Array.from(list.children);
+      if (highlight < 0 || highlight >= items.length) return;
+      items[highlight].scrollIntoView({ block: 'nearest' });
     }
 
-    list.addEventListener(
-      'click',
-      function (e) {
-        const li =
-          e.target.closest('li');
-
-        if (
-          !li ||
-          li.getAttribute(
-            'aria-disabled'
-          ) === 'true'
-        ) {
-          return;
-        }
-
-        selectValue(
-          li.dataset.value
-        );
-      }
-    );
+    list.addEventListener('click', function (e) {
+      const li = e.target.closest('li');
+      if (!li || li.getAttribute('aria-disabled') === 'true') return;
+      selectValue(li.dataset.value);
+    });
 
     function selectValue(value) {
       select.value = value;
-
-      const selOpt = options.find(
-        o => o.value === value
-      );
-
-      input.value = selOpt
-        ? selOpt.text
-        : '';
-
+      const selOpt = options.find(o => o.value === value);
+      input.value = selOpt ? selOpt.text : '';
       closeList();
-
-      select.dispatchEvent(
-        new Event('change', {
-          bubbles: true
-        })
-      );
+      select.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    const selectedOption =
-      select.selectedOptions[0];
-
-    const selectedText =
-      selectedOption &&
-      selectedOption.value
-        ? selectedOption.text
-        : '';
-
-    if (selectedText) {
-      input.value = selectedText;
+    const selectedOption = select.selectedOptions[0];
+    if (selectedOption && selectedOption.value) {
+      input.value = selectedOption.text;
     }
 
-    document.addEventListener(
-      'click',
-      function (e) {
-        if (!wrapper.contains(e.target)) {
-          closeList();
-        }
+    document.addEventListener('click', function (e) {
+      if (!wrapper.contains(e.target)) {
+        closeList();
       }
-    );
+    });
   });
 });
 </script>

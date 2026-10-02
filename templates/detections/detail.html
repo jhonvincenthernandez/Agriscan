@@ -12,7 +12,7 @@
        PAGE HEADER
        ========================================================= -->
   <header
-    class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6"
+    class="agri-card mb-6 p-4 sm:p-6"
   >
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
@@ -20,7 +20,7 @@
         <div class="flex items-start gap-3">
 
           <div
-            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 sm:h-11 sm:w-11"
+            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-brand-light)] text-[var(--color-brand)] sm:h-11 sm:w-11"
             aria-hidden="true"
           >
             <svg
@@ -45,18 +45,18 @@
           </div>
 
           <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-wide text-green-700">
+            <p class="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-brand)]">
               Disease Detection
             </p>
 
             <h1
               id="detection-page-title"
-              class="mt-1 text-xl font-bold text-gray-900 sm:text-2xl"
+              class="mt-1 text-xl font-bold text-[var(--color-text-primary)] sm:text-2xl"
             >
               Detection Details &amp; Treatment
             </h1>
 
-            <p class="mt-1 max-w-2xl text-sm leading-relaxed text-gray-500">
+            <p class="mt-1 max-w-2xl text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               Review the detection result, severity, and recommended management strategies.
             </p>
           </div>
@@ -72,10 +72,10 @@
           id="print-btn"
           type="button"
           onclick="handlePagePrint('print-header')"
-          class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors duration-200 hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto"
+          class="btn btn-secondary w-full sm:w-auto"
         >
           <svg
-            class="h-4 w-4 text-gray-500"
+            class="h-4 w-4 text-[var(--color-text-secondary)]"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -96,7 +96,7 @@
         <a
           href="{% url 'polls:detections_list' %}"
           onclick="history.back(); return false;"
-          class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-gray-100 px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-200 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:w-auto"
+          class="btn btn-secondary w-full sm:w-auto"
         >
           <svg
             class="h-5 w-5"
@@ -126,19 +126,19 @@
        ========================================================= -->
   <div
     id="print-header"
-    class="mb-6 hidden border border-gray-300 bg-white p-4 print:block"
+    class="mb-6 hidden border border-[var(--color-border-strong)] bg-white p-4 print:block"
   >
-    <h2 class="text-xl font-bold text-gray-900">
+    <h2 class="text-xl font-bold text-[var(--color-text-primary)]">
       Detection Detail Report
     </h2>
 
-    <p class="mt-1 text-sm text-gray-600">
+    <p class="mt-1 text-[var(--text-sm)] text-[var(--color-text-secondary)]">
       Detection ID: {{ detection.pk }}
       <span aria-hidden="true">•</span>
       {{ detection.disease.name|default:"Unknown" }}
     </p>
 
-    <p class="mt-1 text-sm text-gray-600">
+    <p class="mt-1 text-[var(--text-sm)] text-[var(--color-text-secondary)]">
       Generated:
       <span id="print-date"></span>
     </p>
@@ -161,12 +161,12 @@
            DETECTION SUMMARY
            ===================================================== -->
       <section
-        class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+        class="agri-card overflow-hidden"
         aria-labelledby="detection-summary-title"
       >
 
         <!-- Image -->
-        <div class="relative bg-gray-50">
+        <div class="relative bg-[var(--color-overlay)]">
 
           {% if detection.image_path %}
 
@@ -180,7 +180,7 @@
           {% else %}
 
             <div
-              class="flex h-56 w-full flex-col items-center justify-center bg-gray-50 text-gray-400 sm:h-64 lg:h-72"
+              class="flex h-56 w-full flex-col items-center justify-center bg-[var(--color-overlay)] text-[var(--color-text-muted)] sm:h-64 lg:h-72"
               role="img"
               aria-label="No detection image available"
             >
@@ -199,7 +199,7 @@
                 />
               </svg>
 
-              <span class="mt-2 text-sm">
+              <span class="mt-2 text-[var(--text-sm)]">
                 No image available
               </span>
             </div>
@@ -219,29 +219,29 @@
 
           <!-- Disease -->
           <div
-            class="rounded-lg border p-4
+            class="rounded-[var(--radius-sm)] border p-4
               {% if detection.disease.name == 'Healthy' %}
-                border-green-200 bg-green-50
+                border-[var(--color-success-border)] bg-[var(--color-success-soft)]
               {% elif detection.disease.name == UNKNOWN_LABEL %}
-                border-gray-200 bg-gray-50
+                border-[var(--color-border)] bg-[var(--color-overlay)]
               {% else %}
-                border-red-200 bg-red-50
+                border-[var(--color-danger-border)] bg-[var(--color-danger-soft)]
               {% endif %}"
           >
             <p
-              class="mb-1 text-xs font-semibold uppercase tracking-wide
+              class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide
                 {% if detection.disease.name == 'Healthy' %}
-                  text-green-700
+                  text-[var(--color-success-text)]
                 {% elif detection.disease.name == UNKNOWN_LABEL %}
-                  text-gray-600
+                  text-[var(--color-text-secondary)]
                 {% else %}
-                  text-red-700
+                  text-[var(--color-danger-text)]
                 {% endif %}"
             >
               Disease
             </p>
 
-            <p class="break-words text-lg font-bold text-gray-900">
+            <p class="break-words text-lg font-bold text-[var(--color-text-primary)]">
               {{ detection.disease.name|default:"Unknown" }}
             </p>
           </div>
@@ -250,23 +250,23 @@
           <!-- Metrics -->
           <div class="grid grid-cols-2 gap-3">
 
-            <div class="rounded-lg border border-green-200 bg-green-50 p-4">
-              <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-green-500">
+            <div class="rounded-[var(--radius-sm)] border border-[var(--color-success-border)] bg-[var(--color-success-soft)] p-4">
+              <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-success-text)]">
                 Confidence
               </p>
 
-              <p class="text-lg font-bold text-green-900">
+              <p class="text-lg font-bold text-[var(--color-success-text)]">
                 {{ detection.confidence_pct|default:"0" }}%
               </p>
             </div>
 
 
-            <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
-              <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
+            <div class="rounded-[var(--radius-sm)] border border-[var(--color-warning-border)] bg-[var(--color-warning-soft)] p-4">
+              <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-warning-text)]">
                 Severity
               </p>
 
-              <p class="text-lg font-bold text-amber-900">
+              <p class="text-lg font-bold text-[var(--color-warning-text)]">
                 {{ detection.severity_pct|default:"0" }}%
               </p>
             </div>
@@ -276,18 +276,18 @@
 
           <!-- Field -->
           {% if detection.planting %}
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
 
-            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-700">
+            <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
               Field
             </p>
 
-            <p class="break-words text-sm font-semibold text-gray-900">
+            <p class="break-words text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
               {{ detection.planting.field.name }}
             </p>
 
             {% if detection.planting.field.area_hectares %}
-              <p class="mt-1.5 text-xs font-medium text-gray-700">
+              <p class="mt-1.5 text-[var(--text-xs)] font-medium text-[var(--color-text-secondary)]">
                 {{ detection.planting.field.area_hectares }} hectares
               </p>
             {% endif %}
@@ -297,13 +297,13 @@
 
 
           <!-- Date -->
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
 
-            <p class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
+            <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
               Detected On
             </p>
 
-            <p class="text-sm font-medium text-gray-900">
+            <p class="text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
               {{ detection.created_at|date:"F d, Y h:i A" }}
             </p>
 
@@ -317,7 +317,7 @@
            QUICK ACTIONS
            ===================================================== -->
       <section
-        class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5"
+        class="agri-card p-4 sm:p-5"
         aria-labelledby="quick-actions-title"
       >
 
@@ -325,12 +325,12 @@
 
           <h2
             id="quick-actions-title"
-            class="text-sm font-semibold uppercase tracking-wide text-gray-900"
+            class="text-[var(--text-sm)] font-semibold uppercase tracking-wide text-[var(--color-text-primary)]"
           >
             Quick Actions
           </h2>
 
-          <span class="text-xs text-gray-400">
+          <span class="text-[var(--text-xs)] text-[var(--color-text-muted)]">
             Detection #{{ detection.pk }}
           </span>
 
@@ -342,10 +342,10 @@
           {% if not is_farmer %}
           <a
             href="{% url 'polls:detections_edit' detection.pk %}"
-            class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors duration-200 hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+            class="btn btn-secondary btn-block"
           >
-            <svg
-              class="h-4 w-4 text-gray-500"
+           <svg
+              class="h-4 w-4 text-[var(--color-text-secondary)]"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -355,11 +355,16 @@
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 15a3 3 0 100-6 3 3 0 000 6z"
               />
             </svg>
-
-            <span>Edit Detection</span>
+            <span>View Detection</span>
           </a>
           {% endif %}
 
@@ -367,7 +372,7 @@
           {% if detection.disease.name != UNKNOWN_LABEL %}
           <a
             href="{% url 'polls:yield_prediction' %}?detection_id={{ detection.pk }}"
-            class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
+            class="btn btn-primary btn-block"
           >
             <svg
               class="h-5 w-5"
@@ -387,7 +392,7 @@
             <span>Yield Prediction Tool</span>
           </a>
 
-          <p class="px-1 text-xs leading-relaxed text-gray-500">
+          <p class="px-1 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-muted)]">
             Uses this detection record as the starting point for yield prediction.
           </p>
           {% endif %}
@@ -400,14 +405,14 @@
            SUPPORT
            ===================================================== -->
       <section
-        class="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm sm:p-6"
+        class="agri-card border-[var(--color-brand-border)] bg-[var(--color-brand-light)] p-5 sm:p-6"
         aria-labelledby="support-title"
       >
 
         <div class="flex items-start gap-3">
 
           <div
-            class="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-green-700"
+            class="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface)] text-[var(--color-brand)]"
             aria-hidden="true"
           >
             <svg
@@ -428,18 +433,18 @@
 
           <div class="min-w-0 flex-1">
 
-            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-green-700">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-brand)]">
               Support
             </p>
 
             <h2
               id="support-title"
-              class="mt-1 text-lg font-bold text-gray-900"
+              class="mt-1 text-lg font-bold text-[var(--color-text-primary)]"
             >
               Need Help?
             </h2>
 
-            <p class="mt-2 text-sm leading-relaxed text-gray-600">
+            <p class="mt-2 text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               For severe infections or when treatment is uncertain, contact your local DA field technician for professional guidance.
             </p>
 
@@ -448,7 +453,7 @@
               href="https://mail.google.com/mail/?view=cm&fs=1&to=santeodororice37@gmail.com&su=AgriScan%20Support%20Request&body=Hello%20DA%20Support%2C%0D%0A%0D%0AI%20need%20guidance%20for%20this%20rice%20detection.%0D%0A%0D%0ADetection%20ID%3A%20{{ detection.pk }}%0D%0ADisease%3A%20{{ detection.disease.name|default:'Unknown'|urlencode }}%0D%0ASeverity%3A%20{{ detection.severity_pct|default:0 }}%25%0D%0AField%3A%20{{ detection.planting.field.name|default:'Unknown'|urlencode }}%0D%0A%0D%0AThank%20you."
               target="_blank"
               rel="noopener noreferrer"
-              class="mt-4 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors duration-200 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto"
+              class="btn btn-primary mt-4 w-full sm:w-auto"
             >
               <span>Contact DA Support</span>
 
@@ -488,14 +493,14 @@
            ===================================================== -->
       <section
         id="quick-rec-card"
-        class="rounded-xl border border-green-200 bg-green-50 p-5 shadow-sm sm:p-6"
+        class="agri-card border-[var(--color-brand-border)] bg-[var(--color-brand-light)] p-5 sm:p-6"
         aria-labelledby="recommended-action-title"
       >
 
         <div class="flex items-start gap-3">
 
           <div
-            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white text-green-700"
+            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface)] text-[var(--color-brand)]"
             aria-hidden="true"
           >
             <svg
@@ -520,7 +525,7 @@
 
               <h2
                 id="recommended-action-title"
-                class="text-lg font-bold text-gray-900"
+                class="text-lg font-bold text-[var(--color-text-primary)]"
               >
                 Recommended Action
               </h2>
@@ -530,13 +535,13 @@
               <div class="flex flex-wrap items-center gap-2">
 
                 <span
-                  class="rounded-full px-2.5 py-1 text-xs font-semibold
+                  class="rounded-full px-2.5 py-1 text-[var(--text-xs)] font-semibold
                     {% if treatment_obj.priority >= 8 %}
-                      bg-red-100 text-red-800
+                      bg-[var(--color-danger-soft)] text-[var(--color-danger-text)]
                     {% elif treatment_obj.priority >= 4 %}
-                      bg-amber-100 text-amber-800
+                      bg-[var(--color-warning-soft)] text-[var(--color-warning-text)]
                     {% else %}
-                      bg-green-100 text-green-800
+                      bg-[var(--color-success-soft)] text-[var(--color-success-text)]
                     {% endif %}"
                 >
                   Priority {{ treatment_obj.priority }}/10
@@ -546,7 +551,7 @@
                 {% if not is_farmer %}
                 <a
                   href="{% url 'polls:treatments_edit' treatment_obj.pk %}"
-                  class="text-xs font-medium text-green-700 underline underline-offset-2 transition-colors hover:text-green-900"
+                  class="text-[var(--text-xs)] font-medium text-[var(--color-brand)] underline underline-offset-2 transition-colors hover:text-[var(--color-brand-hover)]"
                   title="Edit this treatment record"
                 >
                   Edit treatment
@@ -561,7 +566,7 @@
 
             <p
               id="quick-rec-base"
-              class="leading-relaxed text-gray-700"
+              class="leading-relaxed text-[var(--color-text)]"
             >
               {{ detailed_treatment.short_text }}
             </p>
@@ -570,10 +575,10 @@
             {% if detailed_treatment.factors_favoring %}
             <p
               id="quick-rec-prompt"
-              class="mt-2 flex items-start gap-1.5 text-xs leading-relaxed text-gray-500"
+              class="mt-2 flex items-start gap-1.5 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-muted)]"
             >
               <svg
-                class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-green-700"
+                class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[var(--color-brand)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -597,7 +602,7 @@
             <!-- Dynamic Factor Notice -->
             <div
               id="quick-rec-notice"
-              class="hidden mt-4 border-t border-green-200 pt-4"
+              class="hidden mt-4 border-t border-[var(--color-border)] pt-4"
               role="status"
               aria-live="polite"
             >
@@ -606,7 +611,7 @@
 
                 <svg
                   id="qrn-icon"
-                  class="mt-0.5 h-5 w-5 flex-shrink-0 text-green-700"
+                  class="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--color-brand)]"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -625,12 +630,12 @@
 
                   <p
                     id="qrn-label"
-                    class="text-sm font-semibold text-gray-900"
+                    class="text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]"
                   ></p>
 
                   <div
                     id="qrn-detail"
-                    class="mt-1 text-sm leading-relaxed text-gray-700"
+                    class="mt-1 text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]"
                   ></div>
 
                 </div>
@@ -648,14 +653,14 @@
            ===================================================== -->
       {% if detailed_treatment.factors_favoring %}
       <section
-        class="rounded-xl border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50 p-5 sm:p-6"
+        class="agri-card border-[var(--color-warning-border)] border-l-4 border-l-[var(--color-warning-text)] bg-[var(--color-warning-soft)] p-5 sm:p-6"
         aria-labelledby="factors-title"
       >
 
         <div class="flex items-start gap-3">
 
           <div
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-amber-700"
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface)] text-[var(--color-warning-text)]"
             aria-hidden="true"
           >
             <svg
@@ -680,14 +685,14 @@
 
               <h2
                 id="factors-title"
-                class="text-lg font-bold text-amber-900"
+                class="text-lg font-bold text-[var(--color-warning-text)]"
               >
                 Factors Favoring Disease
               </h2>
 
               <span
                 id="factors-badge"
-                class="hidden w-fit rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800"
+                class="hidden w-fit rounded-full bg-[var(--color-surface)] px-2.5 py-1 text-[var(--text-xs)] font-semibold text-[var(--color-warning-text)] border border-[var(--color-warning-border)]"
               >
                 <span id="factors-count">0</span>
                 factor<span id="factors-plural">s</span> present
@@ -696,7 +701,7 @@
             </div>
 
 
-            <p class="mb-4 text-xs leading-relaxed text-amber-800">
+            <p class="mb-4 text-[var(--text-xs)] leading-relaxed text-[var(--color-warning-text)]">
               Select the factors currently present in your field to receive a more specific recommendation.
             </p>
 
@@ -710,12 +715,12 @@
                 {% if item.factor %}
 
                 <label
-                  class="factor-row -mx-2 flex cursor-pointer items-start gap-3 rounded-lg px-2 py-2 transition-colors duration-150 hover:bg-amber-100"
+                  class="factor-row -mx-2 flex cursor-pointer items-start gap-3 rounded-[var(--radius-sm)] px-2 py-2 transition-colors duration-150 hover:bg-amber-100/60"
                 >
 
                   <input
                     type="checkbox"
-                    class="factor-checkbox mt-0.5 h-4 w-4 flex-shrink-0 cursor-pointer rounded border-amber-400 text-amber-600 focus:ring-amber-500"
+                    class="factor-checkbox mt-0.5"
                     data-factor="{{ item.factor }}"
                     data-action="{{ item.action }}"
                     data-expected-result="{{ item.expected_result }}"
@@ -723,7 +728,7 @@
                   />
 
                   <span
-                    class="select-none text-sm leading-relaxed text-amber-900"
+                    class="select-none text-[var(--text-sm)] leading-relaxed text-[var(--color-warning-text)]"
                   >
                     {{ item.factor }}
                   </span>
@@ -746,14 +751,14 @@
       {% if detailed_treatment.cultural_practices and detection.severity_pct|default:0 >= detailed_treatment.severity_threshold|default:70 %}
       <section
         id="sec-cultural"
-        class="rounded-xl border border-green-200 bg-white p-5 shadow-sm sm:p-6"
+        class="agri-card p-5 sm:p-6"
         aria-labelledby="cultural-title"
       >
 
         <div class="flex items-start gap-3">
 
           <div
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700"
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-brand-light)] text-[var(--color-brand)]"
             aria-hidden="true"
           >
             <svg
@@ -778,26 +783,26 @@
 
               <h2
                 id="cultural-title"
-                class="text-lg font-bold text-gray-900"
+                class="text-lg font-bold text-[var(--color-text-primary)]"
               >
                 General Cultural Practices
               </h2>
 
-              <span class="rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+              <span class="rounded-full bg-[var(--color-brand-light)] px-2.5 py-1 text-[var(--text-xs)] font-medium text-[var(--color-brand)]">
                 Integrated Pest Management (IPM)
               </span>
 
             </div>
 
 
-            <p class="mb-3 text-xs leading-relaxed text-gray-600">
+            <p class="mb-3 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-secondary)]">
               These are general agronomic practices recommended for this disease.
               For field-specific actions, use the factor selections above.
             </p>
 
 
             <div
-              class="rounded-lg border border-green-100 bg-green-50 p-4 text-sm leading-relaxed text-gray-700"
+              class="rounded-[var(--radius-sm)] border border-[var(--color-brand-border)] bg-[var(--color-brand-light)] p-4 text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]"
             >
               {{ detailed_treatment.cultural_practices }}
             </div>
@@ -814,14 +819,14 @@
       {% if detailed_treatment.chemical_control and detection.severity_pct|default:0 >= detailed_treatment.severity_threshold|default:70 %}
       <section
         id="sec-chemical"
-        class="rounded-xl border border-red-200 bg-white p-5 shadow-sm sm:p-6"
+        class="agri-card border-[var(--color-danger-border)] p-5 sm:p-6"
         aria-labelledby="chemical-title"
       >
 
         <div class="flex items-start gap-3">
 
           <div
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-700"
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-danger-soft)] text-[var(--color-danger)]"
             aria-hidden="true"
           >
             <svg
@@ -847,12 +852,12 @@
 
               <h2
                 id="chemical-title"
-                class="text-lg font-bold text-gray-900"
+                class="text-lg font-bold text-[var(--color-text-primary)]"
               >
                 Chemical Control Guide
               </h2>
 
-              <span class="rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+              <span class="rounded-full bg-[var(--color-danger-soft)] px-2.5 py-1 text-[var(--text-xs)] font-medium text-[var(--color-danger-text)]">
                 Only if Cultural IPM is Insufficient
               </span>
 
@@ -860,9 +865,9 @@
 
 
             <div
-              class="mb-3 rounded-lg border border-red-200 border-l-4 border-l-red-500 bg-red-50 p-4"
+              class="mb-3 rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] border-l-4 border-l-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4"
             >
-              <p class="text-xs font-semibold leading-relaxed text-red-800">
+              <p class="text-[var(--text-xs)] font-semibold leading-relaxed text-[var(--color-danger-text)]">
                 IMPORTANT: Always follow the registered product label instructions
                 and consult DA technicians before chemical application.
               </p>
@@ -870,7 +875,7 @@
 
 
             <div
-              class="rounded-lg border border-red-100 bg-red-50 p-4 text-sm leading-relaxed text-gray-700"
+              class="rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] bg-[var(--color-danger-soft)] p-4 text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]"
             >
               {{ detailed_treatment.chemical_control }}
             </div>
@@ -885,14 +890,14 @@
            KNOWLEDGE REFERENCE
            ===================================================== -->
       <section
-        class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"
+        class="agri-card p-5 sm:p-6"
         aria-labelledby="knowledge-reference-title"
       >
 
         <div class="mb-4 flex items-start gap-3">
 
           <div
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700"
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-overlay)] text-[var(--color-text-primary)]"
             aria-hidden="true"
           >
             <svg
@@ -913,12 +918,12 @@
           <div class="min-w-0">
             <h2
               id="knowledge-reference-title"
-              class="text-lg font-bold text-gray-900"
+              class="text-lg font-bold text-[var(--color-text-primary)]"
             >
               Knowledge Reference
             </h2>
 
-            <p class="mt-1 text-sm leading-relaxed text-gray-600">
+            <p class="mt-1 text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               Review the approved knowledge guides associated with this treatment.
             </p>
           </div>
@@ -933,18 +938,18 @@
             {% for kb in detailed_treatment.knowledge_entries %}
 
             <article
-              class="rounded-lg border border-gray-200 p-4 transition-colors duration-200 hover:border-green-200 hover:bg-green-50/30"
+              class="rounded-[var(--radius-sm)] border border-[var(--color-border)] p-4 transition-colors duration-200 hover:border-[var(--color-brand-border)] hover:bg-[var(--color-brand-light)]"
             >
 
               <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                 <div class="min-w-0">
 
-                  <h3 class="break-words font-semibold text-gray-900">
+                  <h3 class="break-words font-semibold text-[var(--color-text-primary)]">
                     {{ kb.name }}
                   </h3>
 
-                  <p class="mt-1 text-xs text-gray-500">
+                  <p class="mt-1 text-[var(--text-xs)] text-[var(--color-text-muted)]">
                     {{ kb.category|title }}
                   </p>
 
@@ -953,7 +958,7 @@
 
                 <a
                   href="{% url 'polls:knowledge_detail' kb.pk %}"
-                  class="inline-flex min-h-[40px] w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition-colors duration-200 hover:border-green-300 hover:bg-green-50 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto"
+                  class="btn btn-secondary btn-sm w-full sm:w-auto"
                 >
                   <span>View Full Knowledge</span>
 
@@ -982,9 +987,9 @@
 
         {% else %}
 
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
 
-            <p class="text-sm leading-relaxed text-gray-600">
+            <p class="text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
 
               {% if show_non_actionable_knowledge_hint %}
                 No Knowledge reference is required for this result category.
@@ -1007,14 +1012,14 @@
            ===================================================== -->
       {% if detailed_treatment.detailed_text %}
       <section
-        class="rounded-xl border border-gray-200 bg-gray-50 p-5 sm:p-6"
+        class="agri-card bg-[var(--color-overlay)] p-5 sm:p-6"
         aria-labelledby="additional-details-title"
       >
 
         <div class="flex items-start gap-3">
 
           <div
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-white text-gray-600"
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
             aria-hidden="true"
           >
             <svg
@@ -1036,12 +1041,12 @@
 
             <h2
               id="additional-details-title"
-              class="mb-3 text-lg font-bold text-gray-900"
+              class="mb-3 text-lg font-bold text-[var(--color-text-primary)]"
             >
               Additional Information
             </h2>
 
-            <div class="text-sm leading-relaxed text-gray-700">
+            <div class="text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]">
               {{ detailed_treatment.detailed_text }}
             </div>
 
@@ -1058,12 +1063,12 @@
            NO DETAILED TREATMENT
            ===================================================== -->
       <section
-        class="rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm sm:p-10 lg:p-12"
+        class="agri-card p-6 text-center sm:p-10 lg:p-12"
         aria-labelledby="no-treatment-title"
       >
 
         <div
-          class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-gray-400"
+          class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-overlay)] text-[var(--color-text-muted)]"
           aria-hidden="true"
         >
           <svg
@@ -1084,21 +1089,21 @@
 
         <h2
           id="no-treatment-title"
-          class="mt-4 text-lg font-semibold text-gray-900"
+          class="mt-4 text-lg font-semibold text-[var(--color-text-primary)]"
         >
           No Detailed Treatment Available
         </h2>
 
-        <p class="mt-2 text-sm leading-relaxed text-gray-600">
+        <p class="mt-2 text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
           Basic treatment information is shown in the detection record.
         </p>
 
 
         {% if detection.treatment_text %}
         <div
-          class="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4 text-left"
+          class="mt-5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4 text-left"
         >
-          <p class="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+          <p class="whitespace-pre-line text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]">
             {{ detection.treatment_text }}
           </p>
         </div>
@@ -1141,12 +1146,6 @@
     return;
   }
 
-
-  /*
-   * Data supplied by Django.
-   * These remain server-controlled and are used only to
-   * dynamically update the recommendation display.
-   */
   const levels = {{ urgency_levels_json|safe }};
   const factorActions = {{ factors_with_actions_json|safe }};
 
@@ -1161,44 +1160,23 @@
   const severityHighMsg =
     "{{ detailed_treatment.severity_high_msg|default:''|escapejs }}";
 
-
-  /*
-   * Existing urgency values may still contain the old
-   * gradient classes. They are mapped here to semantic
-   * surface classes instead of rendering gradients.
-   */
   const URGENCY_SURFACES = {
-    'from-blue-500 to-indigo-600':
-      'border-green-200 bg-green-50',
-
-    'from-yellow-500 to-amber-600':
-      'border-amber-200 bg-amber-50',
-
-    'from-orange-500 to-red-600':
-      'border-orange-200 bg-orange-50',
-
-    'from-red-500 to-rose-700':
-      'border-red-200 bg-red-50',
-
-    'from-red-600 to-rose-800':
-      'border-red-200 bg-red-50',
-
-    'from-blue-600 to-indigo-700':
-      'border-green-200 bg-green-50'
+    'from-blue-500 to-indigo-600': 'border-[var(--color-brand-border)] bg-[var(--color-brand-light)]',
+    'from-yellow-500 to-amber-600': 'border-[var(--color-warning-border)] bg-[var(--color-warning-soft)]',
+    'from-orange-500 to-red-600': 'border-[var(--color-warning-border)] bg-[var(--color-warning-soft)]',
+    'from-red-500 to-rose-700': 'border-[var(--color-danger-border)] bg-[var(--color-danger-soft)]',
+    'from-red-600 to-rose-800': 'border-[var(--color-danger-border)] bg-[var(--color-danger-soft)]',
+    'from-blue-600 to-indigo-700': 'border-[var(--color-brand-border)] bg-[var(--color-brand-light)]'
   };
 
-
   const ALL_SURFACE_CLASSES = [
-    'border-green-200',
-    'bg-green-50',
-    'border-amber-200',
-    'bg-amber-50',
-    'border-orange-200',
-    'bg-orange-50',
-    'border-red-200',
-    'bg-red-50'
+    'border-[var(--color-brand-border)]',
+    'bg-[var(--color-brand-light)]',
+    'border-[var(--color-warning-border)]',
+    'bg-[var(--color-warning-soft)]',
+    'border-[var(--color-danger-border)]',
+    'bg-[var(--color-danger-soft)]'
   ];
-
 
   function setCardGradient(gradient) {
     ALL_SURFACE_CLASSES.forEach(function (className) {
@@ -1206,23 +1184,13 @@
     });
 
     const key = String(gradient || '').trim();
+    const surface = URGENCY_SURFACES[key] || 'border-[var(--color-brand-border)] bg-[var(--color-brand-light)]';
 
-    const surface =
-      URGENCY_SURFACES[key] ||
-      'border-green-200 bg-green-50';
-
-    surface
-      .split(/\s+/)
-      .filter(Boolean)
-      .forEach(function (className) {
-        card.classList.add(className);
-      });
+    surface.split(/\s+/).filter(Boolean).forEach(function (className) {
+      card.classList.add(className);
+    });
   }
 
-
-  /*
-   * Safe HTML escaping for database-provided values.
-   */
   function escapeHtml(value) {
     return String(value ?? '')
       .replace(/&/g, '&amp;')
@@ -1232,36 +1200,22 @@
       .replace(/'/g, '&#039;');
   }
 
-
   function updateFactorRows() {
     checkboxes.forEach(function (checkbox) {
       const row = checkbox.closest('.factor-row');
 
-      if (!row) {
-        return;
-      }
+      if (!row) return;
 
       if (checkbox.checked) {
-        row.classList.add(
-          'bg-amber-100',
-          'ring-1',
-          'ring-amber-200'
-        );
+        row.classList.add('bg-amber-100/80', 'ring-1', 'ring-[var(--color-warning-border)]');
       } else {
-        row.classList.remove(
-          'bg-amber-100',
-          'ring-1',
-          'ring-amber-200'
-        );
+        row.classList.remove('bg-amber-100/80', 'ring-1', 'ring-[var(--color-warning-border)]');
       }
     });
   }
 
-
   function updateBadge(count) {
-    if (!badge || !countEl || !pluralEl) {
-      return;
-    }
+    if (!badge || !countEl || !pluralEl) return;
 
     if (count > 0) {
       countEl.textContent = count;
@@ -1272,279 +1226,121 @@
     }
   }
 
-
   function buildSeverityNotice() {
-    if (
-      !severityHighMsg ||
-      severityPct < severityThreshold
-    ) {
-      return '';
-    }
+    if (!severityHighMsg || severityPct < severityThreshold) return '';
 
-
-    const culturalSection =
-      document.getElementById('sec-cultural');
-
-    const chemicalSection =
-      document.getElementById('sec-chemical');
-
-    const preventionSection =
-      document.getElementById('sec-prevention');
-
+    const culturalSection = document.getElementById('sec-cultural');
+    const chemicalSection = document.getElementById('sec-chemical');
+    const preventionSection = document.getElementById('sec-prevention');
 
     const links = [];
 
-
     if (culturalSection) {
       links.push(
-        '<a href="#sec-cultural" ' +
-        'class="font-medium text-green-700 underline underline-offset-2 hover:text-green-900">' +
-        'Cultural IPM' +
-        '</a>'
+        '<a href="#sec-cultural" class="font-medium text-[var(--color-brand)] underline underline-offset-2 hover:text-[var(--color-brand-hover)]">Cultural IPM</a>'
       );
     }
-
 
     if (chemicalSection) {
       links.push(
-        '<a href="#sec-chemical" ' +
-        'class="font-medium text-red-700 underline underline-offset-2 hover:text-red-900">' +
-        'Chemical Control' +
-        '</a>'
+        '<a href="#sec-chemical" class="font-medium text-[var(--color-danger)] underline underline-offset-2 hover:text-[var(--color-danger-hover)]">Chemical Control</a>'
       );
     }
-
 
     if (preventionSection) {
       links.push(
-        '<a href="#sec-prevention" ' +
-        'class="font-medium text-green-700 underline underline-offset-2 hover:text-green-900">' +
-        'Prevention' +
-        '</a>'
+        '<a href="#sec-prevention" class="font-medium text-[var(--color-brand)] underline underline-offset-2 hover:text-[var(--color-brand-hover)]">Prevention</a>'
       );
     }
 
-
     const linksHtml = links.length
-      ? `
-        <div class="mt-2 text-[11px] text-gray-500">
-          See full guidance below:
-          ${links.join(
-            '<span class="mx-1 text-gray-300">·</span>'
-          )}
-        </div>
-      `
+      ? `<div class="mt-2 text-[11px] text-[var(--color-text-muted)]">See full guidance below: ${links.join('<span class="mx-1 text-[var(--color-border-strong)]">·</span>')}</div>`
       : '';
 
-
     return `
-      <div class="mt-3 border-t border-gray-200 pt-3">
-
-        <div class="text-xs font-semibold text-red-700">
+      <div class="mt-3 border-t border-[var(--color-border)] pt-3">
+        <div class="text-[var(--text-xs)] font-semibold text-[var(--color-danger-text)]">
           Severity ${escapeHtml(severityPct)}% — additional management may be needed.
         </div>
-
-        <div class="mt-1 text-xs leading-relaxed text-gray-600">
+        <div class="mt-1 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-secondary)]">
           ${escapeHtml(severityHighMsg)}
         </div>
-
         ${linksHtml}
-
       </div>
     `;
   }
 
-
   function updateRecommendation() {
-
     const checked = checkboxes.filter(function (checkbox) {
       return checkbox.checked;
     });
 
     const count = checked.length;
 
-
     updateBadge(count);
     updateFactorRows();
 
-
-    /*
-     * Nothing selected:
-     * restore the default recommendation.
-     */
     if (count === 0) {
-
       notice.classList.add('hidden');
+      if (baseText) baseText.classList.remove('hidden');
+      if (promptText) promptText.classList.remove('hidden');
 
-      if (baseText) {
-        baseText.classList.remove('hidden');
-      }
-
-      if (promptText) {
-        promptText.classList.remove('hidden');
-      }
-
-      setCardGradient(
-        'from-blue-500 to-indigo-600'
-      );
-
+      setCardGradient('from-blue-500 to-indigo-600');
       qrnLabel.textContent = '';
       qrnDetail.innerHTML = '';
-
       return;
     }
 
+    if (baseText) baseText.classList.add('hidden');
+    if (promptText) promptText.classList.add('hidden');
 
-    /*
-     * Factors selected:
-     * replace the generic recommendation with
-     * factor-specific guidance.
-     */
-    if (baseText) {
-      baseText.classList.add('hidden');
-    }
-
-    if (promptText) {
-      promptText.classList.add('hidden');
-    }
-
-
-    /*
-     * Collect specific actions.
-     */
     const specificParts = checked
       .map(function (checkbox) {
-
-        const action =
-          checkbox.dataset.action || '';
-
-        const expectedResult =
-          checkbox.dataset.expectedResult || '';
-
-        if (!action) {
-          return null;
-        }
-
-        return {
-          action: action,
-          result: expectedResult
-        };
+        const action = checkbox.dataset.action || '';
+        const expectedResult = checkbox.dataset.expectedResult || '';
+        if (!action) return null;
+        return { action: action, result: expectedResult };
       })
       .filter(Boolean);
 
-
-    /*
-     * Determine urgency level.
-     *
-     * The original logic uses the number of
-     * selected factors as the level index.
-     */
-    if (!Array.isArray(levels) || !levels.length) {
-      return;
-    }
-
+    if (!Array.isArray(levels) || !levels.length) return;
 
     const maxIndex = levels.length - 1;
-
-    const levelIndex = Math.min(
-      count,
-      maxIndex
-    );
-
+    const levelIndex = Math.min(count, maxIndex);
     const level = levels[levelIndex];
 
-
-    if (!level) {
-      return;
-    }
-
+    if (!level) return;
 
     setCardGradient(level.bg);
+    qrnLabel.textContent = level.label || 'Recommended Action';
 
-    qrnLabel.textContent =
-      level.label || 'Recommended Action';
-
-
-    /*
-     * Build factor-specific action content.
-     */
     if (specificParts.length) {
-
       qrnDetail.innerHTML = specificParts
         .map(function (part, index) {
+          const separator = index > 0 ? 'border-t border-[var(--color-border)] pt-2.5 mt-2.5' : '';
+          const actionHtml = part.action ? `<div class="font-semibold text-[var(--color-text-primary)]">• ${escapeHtml(part.action)}</div>` : '';
+          const resultHtml = part.result ? `<div class="pl-4 pt-1 text-[var(--color-text-muted)] text-[var(--text-xs)] italic">↳ ${escapeHtml(part.result)}</div>` : '';
 
-          const separator =
-            index > 0
-              ? 'border-t border-gray-200 pt-2.5 mt-2.5'
-              : '';
-
-          const actionHtml = part.action
-            ? `
-              <div class="font-semibold text-gray-900">
-                • ${escapeHtml(part.action)}
-              </div>
-            `
-            : '';
-
-          const resultHtml = part.result
-            ? `
-              <div class="pl-4 pt-1 text-gray-500 text-xs italic">
-                ↳ ${escapeHtml(part.result)}
-              </div>
-            `
-            : '';
-
-          return `
-            <div class="${separator}">
-              ${actionHtml}
-              ${resultHtml}
-            </div>
-          `;
+          return `<div class="${separator}">${actionHtml}${resultHtml}</div>`;
         })
         .join('');
-
     } else {
-
-      qrnDetail.innerHTML = `
-        <span class="text-gray-600">
-          ${escapeHtml(level.detail || '')}
-        </span>
-      `;
-
+      qrnDetail.innerHTML = `<span class="text-[var(--color-text-secondary)]">${escapeHtml(level.detail || '')}</span>`;
     }
 
-
-    /*
-     * Add severity escalation information.
-     */
-    const severityHtml =
-      buildSeverityNotice();
-
+    const severityHtml = buildSeverityNotice();
     if (severityHtml) {
       qrnDetail.innerHTML += severityHtml;
     }
 
-
     notice.classList.remove('hidden');
   }
 
-
-  /*
-   * Initialize listeners.
-   */
   checkboxes.forEach(function (checkbox) {
-    checkbox.addEventListener(
-      'change',
-      updateRecommendation
-    );
+    checkbox.addEventListener('change', updateRecommendation);
   });
 
-
-  /*
-   * Initial state.
-   */
   updateRecommendation();
-
 })();
 </script>
 {% endif %}
@@ -1558,50 +1354,21 @@
   'use strict';
 
   function updatePrintDate() {
-    const printDate =
-      document.getElementById('print-date');
-
-    if (!printDate) {
-      return;
-    }
-
-    printDate.textContent =
-      new Date().toLocaleString();
+    const printDate = document.getElementById('print-date');
+    if (!printDate) return;
+    printDate.textContent = new Date().toLocaleString();
   }
 
+  window.addEventListener('beforeprint', updatePrintDate);
 
-  window.addEventListener(
-    'beforeprint',
-    updatePrintDate
-  );
+  window.addEventListener('DOMContentLoaded', function () {
+    const printButton = document.getElementById('print-btn');
+    if (!printButton) return;
 
-
-  /*
-   * Fallback in case the shared print helper is not available.
-   * If handlePagePrint exists in base.html, it remains the
-   * preferred implementation.
-   */
-  window.addEventListener(
-    'DOMContentLoaded',
-    function () {
-
-      const printButton =
-        document.getElementById('print-btn');
-
-      if (!printButton) {
-        return;
-      }
-
-      printButton.addEventListener(
-        'click',
-        function () {
-          updatePrintDate();
-        }
-      );
-
-    }
-  );
-
+    printButton.addEventListener('click', function () {
+      updatePrintDate();
+    });
+  });
 })();
 </script>
 
@@ -1611,7 +1378,6 @@
      ============================================================= -->
 <style>
 @media print {
-
   .no-print {
     display: none !important;
   }
@@ -1635,7 +1401,8 @@
   .shadow-sm,
   .shadow-md,
   .shadow-lg,
-  .shadow-xl {
+  .shadow-xl,
+  .agri-card {
     box-shadow: none !important;
   }
 
@@ -1650,7 +1417,6 @@
   main {
     break-inside: avoid;
   }
-
 }
 </style>
 

@@ -11,46 +11,25 @@
        PAGE HEADER
        ========================================================= -->
   <div class="agri-card p-4 sm:p-5 lg:p-6">
-
     <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
 
       <!-- Page identity -->
       <div class="min-w-0 flex-1">
-
         <div class="flex flex-wrap items-center gap-2">
-
           <div class="flex min-w-0 items-center gap-2.5">
+            
 
-            <svg
-              class="h-6 w-6 shrink-0 text-green-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-
-            <h1 class="min-w-0 truncate text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+            <h1 class="min-w-0 truncate text-xl font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-2xl">
               {% if is_edit %}
                 Edit Field
               {% else %}
                 Create New Field
               {% endif %}
             </h1>
-
           </div>
-
-          
-
         </div>
 
-        <p class="mt-1.5 max-w-2xl text-sm text-gray-500">
+        <p class="mt-1.5 max-w-2xl text-sm text-[var(--color-text-secondary)]">
           {% if is_edit %}
             Update the details for this agricultural field.
           {% elif role in 'admin,technician' %}
@@ -59,16 +38,14 @@
             Add a new agricultural field to your account.
           {% endif %}
         </p>
-
       </div>
 
       <!-- Header action -->
       <div class="w-full sm:w-auto">
-
         <a
           href="{% url 'polls:fields_list' %}"
           onclick="if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) { history.back(); return false; }"
-          class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:min-h-[42px]"
+          class="btn btn-secondary w-full sm:w-auto"
         >
           <svg
             class="h-4 w-4"
@@ -86,11 +63,9 @@
           </svg>
           Back to Fields
         </a>
-
       </div>
 
     </div>
-
   </div>
 
 
@@ -100,12 +75,10 @@
   <div class="agri-card mt-5 overflow-hidden p-0 sm:mt-6">
 
     <!-- Form header -->
-    <div class="border-b border-gray-200 bg-gray-50/70 px-4 py-4 sm:px-6">
-
+    <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-4 sm:px-6">
       <div class="flex items-start gap-3">
-
         <svg
-          class="mt-0.5 h-5 w-5 shrink-0 text-gray-600"
+          class="mt-0.5 h-5 w-5 shrink-0 text-[var(--color-text-secondary)]"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -120,69 +93,53 @@
         </svg>
 
         <div class="min-w-0">
-
-          <h2 class="text-base font-semibold text-gray-900 sm:text-lg">
+          <h2 class="text-base font-semibold text-[var(--color-text-primary)] sm:text-lg">
             Field Information
           </h2>
-
-          <p class="mt-0.5 text-xs text-gray-500 sm:text-sm">
+          <p class="mt-0.5 text-xs text-[var(--color-text-secondary)] sm:text-sm">
             Enter the field details below. Optional information can be added later.
           </p>
-
         </div>
-
       </div>
-
     </div>
 
 
     <!-- Form body -->
     <div class="p-4 sm:p-6 lg:p-7">
-
       <form method="post" class="space-y-8" novalidate>
-
         {% csrf_token %}
 
         {% include 'partials/forms/_errors.html' %}
-
 
         <!-- =====================================================
              OWNER
              ===================================================== -->
         {% if form.owner %}
-
         <section>
-
           <div class="mb-4">
-
-            <h3 class="text-sm font-semibold text-gray-900">
+            <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">
               Field Owner
             </h3>
-
-            <p class="mt-0.5 text-xs text-gray-500 sm:text-sm">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)] sm:text-sm">
               Select the farmer associated with this field.
             </p>
-
           </div>
 
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-
+          <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-canvas)] p-4">
             <label
               for="id_owner"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
             >
               {{ form.owner.label }}
-              <span class="text-red-500" aria-hidden="true">*</span>
+              <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
             </label>
 
             <div class="relative">
-
               {{ form.owner }}
-
             </div>
 
             {% if form.owner.errors %}
-              <p class="mt-1.5 text-sm text-red-600" role="alert">
+              <p class="form-error mt-1.5" role="alert">
                 {% for err in form.owner.errors %}
                   {{ err }}
                 {% endfor %}
@@ -190,15 +147,12 @@
             {% endif %}
 
             {% if form.owner.help_text %}
-              <p class="mt-1.5 text-xs text-gray-500">
+              <p class="form-help mt-1.5">
                 {{ form.owner.help_text }}
               </p>
             {% endif %}
-
           </div>
-
         </section>
-
         {% endif %}
 
 
@@ -206,30 +160,25 @@
              BASIC FIELD DETAILS
              ===================================================== -->
         <section>
-
           <div class="mb-4">
-
-            <h3 class="text-sm font-semibold text-gray-900">
+            <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">
               Basic Details
             </h3>
-
-            <p class="mt-0.5 text-xs text-gray-500 sm:text-sm">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)] sm:text-sm">
               Provide the field name and total cultivated area.
             </p>
-
           </div>
 
           <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
 
             <!-- Field name -->
             <div>
-
               <label
                 for="id_name"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.name.label }}
-                <span class="text-red-500" aria-hidden="true">*</span>
+                <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
               </label>
 
               <input
@@ -244,7 +193,7 @@
               />
 
               {% if form.name.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.name.errors %}
                     {{ err }}
                   {% endfor %}
@@ -252,27 +201,24 @@
               {% endif %}
 
               {% if form.name.help_text %}
-                <p class="mt-1.5 text-xs text-gray-500">
+                <p class="form-help mt-1.5">
                   {{ form.name.help_text }}
                 </p>
               {% endif %}
-
             </div>
 
 
             <!-- Area -->
             <div>
-
               <label
                 for="id_area_hectares"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.area_hectares.label }}
-                <span class="text-red-500" aria-hidden="true">*</span>
+                <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
               </label>
 
               <div class="relative">
-
                 <input
                   type="number"
                   id="id_area_hectares"
@@ -287,16 +233,15 @@
                 />
 
                 <span
-                  class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-gray-500"
+                  class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-[var(--color-text-muted)]"
                   aria-hidden="true"
                 >
                   ha
                 </span>
-
               </div>
 
               {% if form.area_hectares.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.area_hectares.errors %}
                     {{ err }}
                   {% endfor %}
@@ -304,15 +249,13 @@
               {% endif %}
 
               {% if form.area_hectares.help_text %}
-                <p class="mt-1.5 text-xs text-gray-500">
+                <p class="form-help mt-1.5">
                   {{ form.area_hectares.help_text }}
                 </p>
               {% endif %}
-
             </div>
 
           </div>
-
         </section>
 
 
@@ -320,13 +263,10 @@
              LOCATION
              ===================================================== -->
         <section>
-
           <div class="mb-4">
-
             <div class="flex items-center gap-2">
-
               <svg
-                class="h-4 w-4 shrink-0 text-gray-600"
+                class="h-4 w-4 shrink-0 text-[var(--color-text-secondary)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -346,37 +286,30 @@
                 />
               </svg>
 
-              <h3 class="text-sm font-semibold text-gray-900">
+              <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">
                 Location
               </h3>
-
             </div>
 
-            <p class="mt-1 text-xs text-gray-500 sm:text-sm">
+            <p class="mt-1 text-xs text-[var(--color-text-secondary)] sm:text-sm">
               Add the field's province, municipality, and barangay.
               These fields are optional.
             </p>
-
           </div>
-
 
           <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
 
             <!-- Province -->
             <div>
-
               <label
                 for="id_province"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.province.label }}
-
                 {% if form.province.field.required %}
-                  <span class="text-red-500" aria-hidden="true">*</span>
+                  <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
                 {% else %}
-                  <span class="text-xs font-normal text-gray-400">
-                    (Optional)
-                  </span>
+                  <span class="text-xs font-normal text-[var(--color-text-muted)]">(Optional)</span>
                 {% endif %}
               </label>
 
@@ -391,35 +324,29 @@
                 class="form-input w-full"
                 placeholder="e.g., Oriental Mindoro"
               />
-
               <datalist id="province-list"></datalist>
 
               {% if form.province.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.province.errors %}
                     {{ err }}
                   {% endfor %}
                 </p>
               {% endif %}
-
             </div>
 
 
             <!-- Municipality -->
             <div>
-
               <label
                 for="id_municipality"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.municipality.label }}
-
                 {% if form.municipality.field.required %}
-                  <span class="text-red-500" aria-hidden="true">*</span>
+                  <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
                 {% else %}
-                  <span class="text-xs font-normal text-gray-400">
-                    (Optional)
-                  </span>
+                  <span class="text-xs font-normal text-[var(--color-text-muted)]">(Optional)</span>
                 {% endif %}
               </label>
 
@@ -434,35 +361,29 @@
                 class="form-input w-full"
                 placeholder="e.g., Naujan"
               />
-
               <datalist id="municipality-list"></datalist>
 
               {% if form.municipality.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.municipality.errors %}
                     {{ err }}
                   {% endfor %}
                 </p>
               {% endif %}
-
             </div>
 
 
             <!-- Barangay -->
             <div>
-
               <label
                 for="id_barangay"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.barangay.label }}
-
                 {% if form.barangay.field.required %}
-                  <span class="text-red-500" aria-hidden="true">*</span>
+                  <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
                 {% else %}
-                  <span class="text-xs font-normal text-gray-400">
-                    (Optional)
-                  </span>
+                  <span class="text-xs font-normal text-[var(--color-text-muted)]">(Optional)</span>
                 {% endif %}
               </label>
 
@@ -477,21 +398,18 @@
                 class="form-input w-full"
                 placeholder="e.g., San Nicolas"
               />
-
               <datalist id="barangay-list"></datalist>
 
               {% if form.barangay.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.barangay.errors %}
                     {{ err }}
                   {% endfor %}
                 </p>
               {% endif %}
-
             </div>
 
           </div>
-
         </section>
 
 
@@ -499,13 +417,10 @@
              FIELD CONDITIONS
              ===================================================== -->
         <section>
-
           <div class="mb-4">
-
             <div class="flex items-center gap-2">
-
               <svg
-                class="h-4 w-4 shrink-0 text-gray-600"
+                class="h-4 w-4 shrink-0 text-[var(--color-text-secondary)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -519,38 +434,32 @@
                 />
               </svg>
 
-              <h3 class="text-sm font-semibold text-gray-900">
+              <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">
                 Field Conditions
               </h3>
-
             </div>
 
-            <p class="mt-1 text-xs text-gray-500 sm:text-sm">
+            <p class="mt-1 text-xs text-[var(--color-text-secondary)] sm:text-sm">
               Optional information about the field's soil, ecosystem, and flooding condition.
             </p>
-
           </div>
-
 
           <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
 
             <!-- Soil type -->
             <div>
-
               <label
                 for="id_soil_type"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.soil_type.label }}
-                <span class="text-xs font-normal text-gray-400">
-                  (Optional)
-                </span>
+                <span class="text-xs font-normal text-[var(--color-text-muted)]">(Optional)</span>
               </label>
 
               {{ form.soil_type }}
 
               {% if form.soil_type.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.soil_type.errors %}
                     {{ err }}
                   {% endfor %}
@@ -558,31 +467,27 @@
               {% endif %}
 
               {% if form.soil_type.help_text %}
-                <p class="mt-1.5 text-xs text-gray-500">
+                <p class="form-help mt-1.5">
                   {{ form.soil_type.help_text }}
                 </p>
               {% endif %}
-
             </div>
 
 
             <!-- Ecosystem type -->
             <div>
-
               <label
                 for="id_ecosystem_type"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.ecosystem_type.label }}
-                <span class="text-xs font-normal text-gray-400">
-                  (Optional)
-                </span>
+                <span class="text-xs font-normal text-[var(--color-text-muted)]">(Optional)</span>
               </label>
 
               {{ form.ecosystem_type }}
 
               {% if form.ecosystem_type.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.ecosystem_type.errors %}
                     {{ err }}
                   {% endfor %}
@@ -590,58 +495,50 @@
               {% endif %}
 
               {% if form.ecosystem_type.help_text %}
-                <p class="mt-1.5 text-xs text-gray-500">
+                <p class="form-help mt-1.5">
                   {{ form.ecosystem_type.help_text }}
                 </p>
               {% endif %}
-
             </div>
 
           </div>
 
 
           <!-- Flood prone -->
-          <div class="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-4">
-
+          <div class="mt-5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-canvas)] p-4">
             <div class="flex items-start gap-3">
-
               <div class="pt-0.5">
                 {{ form.flood_prone }}
               </div>
 
               <div class="min-w-0">
-
                 <label
                   for="id_flood_prone"
-                  class="block cursor-pointer text-sm font-medium text-gray-800"
+                  class="block cursor-pointer text-sm font-medium text-[var(--color-text-primary)]"
                 >
                   {{ form.flood_prone.label }}
                 </label>
 
                 {% if form.flood_prone.help_text %}
-                  <p class="mt-0.5 text-xs text-gray-500">
+                  <p class="form-help mt-0.5">
                     {{ form.flood_prone.help_text }}
                   </p>
                 {% else %}
-                  <p class="mt-0.5 text-xs text-gray-500">
+                  <p class="form-help mt-0.5">
                     Mark this field if it is prone to seasonal flooding.
                   </p>
                 {% endif %}
 
                 {% if form.flood_prone.errors %}
-                  <p class="mt-1.5 text-sm text-red-600" role="alert">
+                  <p class="form-error mt-1.5" role="alert">
                     {% for err in form.flood_prone.errors %}
                       {{ err }}
                     {% endfor %}
                   </p>
                 {% endif %}
-
               </div>
-
             </div>
-
           </div>
-
         </section>
 
 
@@ -649,13 +546,10 @@
              GPS COORDINATES
              ===================================================== -->
         <section>
-
           <div class="mb-4">
-
             <div class="flex flex-wrap items-center gap-2">
-
               <svg
-                class="h-4 w-4 shrink-0 text-gray-600"
+                class="h-4 w-4 shrink-0 text-[var(--color-text-secondary)]"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -667,39 +561,28 @@
                   stroke-width="2"
                   d="M12 21s7-6.1 7-12a7 7 0 10-14 0c0 5.9 7 12 7 12z"
                 />
-                <circle
-                  cx="12"
-                  cy="9"
-                  r="2.5"
-                  stroke-width="2"
-                />
+                <circle cx="12" cy="9" r="2.5" stroke-width="2" />
               </svg>
 
-              <h3 class="text-sm font-semibold text-gray-900">
+              <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">
                 GPS Coordinates
               </h3>
 
-              <span class="text-xs text-gray-400">
-                (Optional)
-              </span>
-
+              <span class="text-xs text-[var(--color-text-muted)]">(Optional)</span>
             </div>
 
-            <p class="mt-1 text-xs text-gray-500 sm:text-sm">
+            <p class="mt-1 text-xs text-[var(--color-text-secondary)] sm:text-sm">
               Provide both latitude and longitude, or leave both empty.
             </p>
-
           </div>
-
 
           <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
 
             <!-- Latitude -->
             <div>
-
               <label
                 for="id_gps_lat"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.gps_lat.label }}
               </label>
@@ -717,22 +600,20 @@
               />
 
               {% if form.gps_lat.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.gps_lat.errors %}
                     {{ err }}
                   {% endfor %}
                 </p>
               {% endif %}
-
             </div>
 
 
             <!-- Longitude -->
             <div>
-
               <label
                 for="id_gps_lon"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]"
               >
                 {{ form.gps_lon.label }}
               </label>
@@ -750,33 +631,29 @@
               />
 
               {% if form.gps_lon.errors %}
-                <p class="mt-1.5 text-sm text-red-600" role="alert">
+                <p class="form-error mt-1.5" role="alert">
                   {% for err in form.gps_lon.errors %}
                     {{ err }}
                   {% endfor %}
                 </p>
               {% endif %}
-
             </div>
 
           </div>
 
           {% if form.gps_lat.help_text %}
-            <p class="mt-2 text-xs text-gray-500">
+            <p class="form-help mt-2">
               {{ form.gps_lat.help_text }}
             </p>
           {% endif %}
-
         </section>
 
 
         <!-- =====================================================
              FORM ACTIONS
              ===================================================== -->
-        <div class="border-t border-gray-200 pt-5">
-
+        <div class="border-t border-[var(--color-border)] pt-5">
           <div class="flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
-
             <a
               href="{% url 'polls:fields_list' %}"
               onclick="if (document.referrer && document.referrer.indexOf(window.location.origin) === 0) { history.back(); return false; }"
@@ -820,17 +697,13 @@
                 Create Field
               {% endif %}
             </button>
-
           </div>
-
         </div>
 
       </form>
-
     </div>
 
   </div>
-
 </section>
 
 
@@ -846,28 +719,22 @@ document.addEventListener('DOMContentLoaded', function () {
   const ownerSelect = document.getElementById('id_owner');
 
   if (ownerSelect && ownerSelect.dataset.searchable === 'true') {
-
     const wrapper = document.createElement('div');
     wrapper.className = 'relative';
 
     ownerSelect.parentNode.insertBefore(wrapper, ownerSelect);
 
     const searchInput = document.createElement('input');
-
     searchInput.type = 'text';
     searchInput.placeholder = 'Search owner by name or username...';
     searchInput.autocomplete = 'off';
-    searchInput.className =
-      'form-input w-full pr-10';
+    searchInput.className = 'form-input w-full pr-10';
 
     const icon = document.createElement('div');
-
-    icon.className =
-      'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2';
-
+    icon.className = 'pointer-events-none absolute right-3 top-1/2 -translate-y-1/2';
     icon.innerHTML = `
       <svg
-        class="h-5 w-5 text-gray-400"
+        class="h-5 w-5 text-[var(--color-text-muted)]"
         fill="none"
         stroke="currentColor"
         viewBox="0 0 24 24"
@@ -886,15 +753,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const originalValue = ownerSelect.value;
 
     if (originalValue) {
-
       const selectedOption = options.find(function (option) {
         return option.value === originalValue;
       });
-
       if (selectedOption) {
         searchInput.value = selectedOption.text;
       }
-
     }
 
     const wasRequired = ownerSelect.required;
@@ -904,125 +768,79 @@ document.addEventListener('DOMContentLoaded', function () {
     ownerSelect.style.display = 'none';
 
     const dropdown = document.createElement('div');
-
     dropdown.className =
-      'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg hidden';
+      'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-[var(--shadow-md)] hidden';
 
     wrapper.appendChild(searchInput);
     wrapper.appendChild(icon);
     wrapper.appendChild(ownerSelect);
     wrapper.appendChild(dropdown);
 
-
     function filterOptions(searchTerm) {
-
       dropdown.innerHTML = '';
-
       const term = (searchTerm || '').toLowerCase().trim();
 
       const filtered = options.filter(function (option) {
-
-        if (!option.value) {
-          return false;
-        }
-
+        if (!option.value) return false;
         return option.text.toLowerCase().includes(term);
-
       });
 
-
       if (filtered.length === 0) {
-
         dropdown.innerHTML = `
-          <div class="px-4 py-3 text-sm text-gray-500">
+          <div class="px-4 py-3 text-sm text-[var(--color-text-muted)]">
             No matching owners found.
           </div>
         `;
-
       } else {
-
         filtered.forEach(function (option) {
-
           const item = document.createElement('button');
-
           item.type = 'button';
-
           item.className =
-            'block w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-green-50 hover:text-green-800 focus:bg-green-50 focus:text-green-800 focus:outline-none transition-colors';
-
+            'block w-full px-4 py-2.5 text-left text-sm text-[var(--color-text)] hover:bg-[var(--color-brand-light)] hover:text-[var(--color-brand)] focus:bg-[var(--color-brand-light)] focus:text-[var(--color-brand)] focus:outline-none transition-colors';
           item.textContent = option.text;
           item.dataset.value = option.value;
 
           item.addEventListener('click', function () {
-
             ownerSelect.value = this.dataset.value;
             searchInput.value = this.textContent;
-
             searchInput.setCustomValidity('');
-
             dropdown.classList.add('hidden');
-
           });
 
           dropdown.appendChild(item);
-
         });
-
       }
 
       dropdown.classList.remove('hidden');
-
     }
-
 
     searchInput.addEventListener('focus', function () {
       filterOptions(this.value);
     });
 
-
     searchInput.addEventListener('input', function () {
-
       filterOptions(this.value);
-
       ownerSelect.value = '';
-
       searchInput.setCustomValidity('');
-
     });
 
-
     const form = ownerSelect.closest('form');
-
     if (form) {
-
       form.addEventListener('submit', function (event) {
-
         if (wasRequired && !ownerSelect.value) {
-
           event.preventDefault();
-
-          searchInput.setCustomValidity(
-            'Please select an owner.'
-          );
-
+          searchInput.setCustomValidity('Please select an owner.');
           searchInput.reportValidity();
           searchInput.focus();
-
         }
-
       });
-
     }
 
-
     document.addEventListener('click', function (event) {
-
       if (!wrapper.contains(event.target)) {
         dropdown.classList.add('hidden');
       }
-
     });
-
   }
 
 
@@ -1032,24 +850,13 @@ document.addEventListener('DOMContentLoaded', function () {
      ========================================================= */
   const psgcBase = 'https://psgc.gitlab.io/api';
 
-  const provinceInput =
-    document.getElementById('id_province');
+  const provinceInput = document.getElementById('id_province');
+  const municipalityInput = document.getElementById('id_municipality');
+  const barangayInput = document.getElementById('id_barangay');
 
-  const municipalityInput =
-    document.getElementById('id_municipality');
-
-  const barangayInput =
-    document.getElementById('id_barangay');
-
-  const provinceList =
-    document.getElementById('province-list');
-
-  const municipalityList =
-    document.getElementById('municipality-list');
-
-  const barangayList =
-    document.getElementById('barangay-list');
-
+  const provinceList = document.getElementById('province-list');
+  const municipalityList = document.getElementById('municipality-list');
+  const barangayList = document.getElementById('barangay-list');
 
   const cache = {
     provinces: null,
@@ -1058,406 +865,156 @@ document.addEventListener('DOMContentLoaded', function () {
     barangaysByMunicipality: {}
   };
 
-
   function debounce(fn, wait) {
-
     let timer;
-
     return function () {
-
       const args = arguments;
-
       clearTimeout(timer);
-
       timer = setTimeout(function () {
         fn.apply(null, args);
       }, wait);
-
     };
-
   }
 
-
   function toOptionList(datalist, items) {
-
-    if (!datalist) {
-      return;
-    }
-
+    if (!datalist) return;
     datalist.innerHTML = '';
-
     items.forEach(function (item) {
-
       const option = document.createElement('option');
-
       option.value = item.name || '';
-
       if (item.code) {
         option.dataset.code = item.code;
       }
-
       datalist.appendChild(option);
-
     });
-
   }
-
 
   function matchCode(input, datalist) {
-
-    if (!input || !datalist) {
-      return '';
-    }
-
+    if (!input || !datalist) return '';
     const value = (input.value || '').trim();
-
-    if (!value) {
-      return '';
-    }
+    if (!value) return '';
 
     const match = Array.from(datalist.options).find(function (option) {
-
-      return (
-        (option.value || '').trim().toLowerCase() ===
-        value.toLowerCase()
-      );
-
+      return (option.value || '').trim().toLowerCase() === value.toLowerCase();
     });
 
-    return match
-      ? (match.dataset.code || '')
-      : '';
-
+    return match ? (match.dataset.code || '') : '';
   }
 
-
   async function fetchJson(url) {
-
     const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json'
-      }
+      headers: { 'Accept': 'application/json' }
     });
-
     if (!response.ok) {
       throw new Error('PSGC request failed');
     }
-
     return await response.json();
-
   }
-
 
   async function loadProvinces() {
-
-    if (cache.provinces) {
-      return cache.provinces;
-    }
-
-    const data = await fetchJson(
-      psgcBase + '/provinces/'
-    );
-
-    cache.provinces =
-      Array.isArray(data) ? data : [];
-
+    if (cache.provinces) return cache.provinces;
+    const data = await fetchJson(psgcBase + '/provinces/');
+    cache.provinces = Array.isArray(data) ? data : [];
     return cache.provinces;
-
   }
 
-
   async function loadMunicipalities(provinceCode) {
-
     if (provinceCode) {
-
       if (cache.municipalitiesByProvince[provinceCode]) {
         return cache.municipalitiesByProvince[provinceCode];
       }
-
-      const data = await fetchJson(
-        psgcBase +
-        '/provinces/' +
-        provinceCode +
-        '/cities-municipalities/'
-      );
-
-      cache.municipalitiesByProvince[provinceCode] =
-        Array.isArray(data) ? data : [];
-
+      const data = await fetchJson(psgcBase + '/provinces/' + provinceCode + '/cities-municipalities/');
+      cache.municipalitiesByProvince[provinceCode] = Array.isArray(data) ? data : [];
       return cache.municipalitiesByProvince[provinceCode];
-
     }
 
-
-    if (cache.allMunicipalities) {
-      return cache.allMunicipalities;
-    }
-
-    const data = await fetchJson(
-      psgcBase + '/cities-municipalities/'
-    );
-
-    cache.allMunicipalities =
-      Array.isArray(data) ? data : [];
-
+    if (cache.allMunicipalities) return cache.allMunicipalities;
+    const data = await fetchJson(psgcBase + '/cities-municipalities/');
+    cache.allMunicipalities = Array.isArray(data) ? data : [];
     return cache.allMunicipalities;
-
   }
 
-
   async function loadBarangays(municipalityCode) {
-
-    if (!municipalityCode) {
-      return [];
-    }
-
+    if (!municipalityCode) return [];
     if (cache.barangaysByMunicipality[municipalityCode]) {
       return cache.barangaysByMunicipality[municipalityCode];
     }
-
-    const data = await fetchJson(
-      psgcBase +
-      '/cities-municipalities/' +
-      municipalityCode +
-      '/barangays/'
-    );
-
-    cache.barangaysByMunicipality[municipalityCode] =
-      Array.isArray(data) ? data : [];
-
+    const data = await fetchJson(psgcBase + '/cities-municipalities/' + municipalityCode + '/barangays/');
+    cache.barangaysByMunicipality[municipalityCode] = Array.isArray(data) ? data : [];
     return cache.barangaysByMunicipality[municipalityCode];
-
   }
 
-
-  if (
-    provinceInput &&
-    municipalityInput &&
-    barangayInput
-  ) {
-
-    /* =======================================================
-       PROVINCE
-       ======================================================= */
+  if (provinceInput && municipalityInput && barangayInput) {
+    /* Province */
     async function refreshProvinces() {
-
       try {
-
-        const provinces =
-          await loadProvinces();
-
-        toOptionList(
-          provinceList,
-          provinces
-        );
-
+        const provinces = await loadProvinces();
+        toOptionList(provinceList, provinces);
       } catch (error) {
-
-        console.warn(
-          'PSGC provinces unavailable. Manual entry is allowed.',
-          error
-        );
-
+        console.warn('PSGC provinces unavailable. Manual entry is allowed.', error);
       }
-
     }
 
+    provinceInput.addEventListener('focus', refreshProvinces);
+    provinceInput.addEventListener('input', debounce(refreshProvinces, 250));
+    provinceInput.addEventListener('change', function () {
+      const code = matchCode(provinceInput, provinceList);
+      provinceInput.dataset.code = code;
+      if (!code) return;
 
-    provinceInput.addEventListener(
-      'focus',
-      refreshProvinces
-    );
+      municipalityInput.value = '';
+      barangayInput.value = '';
+      municipalityInput.dataset.code = '';
+      barangayInput.dataset.code = '';
 
+      if (municipalityList) municipalityList.innerHTML = '';
+      if (barangayList) barangayList.innerHTML = '';
+    });
 
-    provinceInput.addEventListener(
-      'input',
-      debounce(
-        refreshProvinces,
-        250
-      )
-    );
-
-
-    provinceInput.addEventListener(
-      'change',
-      function () {
-
-        const code =
-          matchCode(
-            provinceInput,
-            provinceList
-          );
-
-        provinceInput.dataset.code =
-          code;
-
-        if (!code) {
-          return;
-        }
-
-        municipalityInput.value = '';
-        barangayInput.value = '';
-
-        municipalityInput.dataset.code = '';
-        barangayInput.dataset.code = '';
-
-        if (municipalityList) {
-          municipalityList.innerHTML = '';
-        }
-
-        if (barangayList) {
-          barangayList.innerHTML = '';
-        }
-
-      }
-    );
-
-
-    /* =======================================================
-       MUNICIPALITY
-       ======================================================= */
+    /* Municipality */
     async function refreshMunicipalities() {
-
       try {
-
-        const provinceCode =
-          provinceInput.dataset.code || '';
-
-        const list =
-          await loadMunicipalities(
-            provinceCode
-          );
-
-        toOptionList(
-          municipalityList,
-          list
-        );
-
+        const provinceCode = provinceInput.dataset.code || '';
+        const list = await loadMunicipalities(provinceCode);
+        toOptionList(municipalityList, list);
       } catch (error) {
-
-        console.warn(
-          'PSGC municipalities unavailable. Manual entry is allowed.',
-          error
-        );
-
+        console.warn('PSGC municipalities unavailable. Manual entry is allowed.', error);
       }
-
     }
 
+    municipalityInput.addEventListener('focus', refreshMunicipalities);
+    municipalityInput.addEventListener('input', debounce(refreshMunicipalities, 250));
+    municipalityInput.addEventListener('change', function () {
+      const code = matchCode(municipalityInput, municipalityList);
+      municipalityInput.dataset.code = code;
+      if (!code) return;
 
-    municipalityInput.addEventListener(
-      'focus',
-      refreshMunicipalities
-    );
+      barangayInput.value = '';
+      barangayInput.dataset.code = '';
+      if (barangayList) barangayList.innerHTML = '';
+    });
 
-
-    municipalityInput.addEventListener(
-      'input',
-      debounce(
-        refreshMunicipalities,
-        250
-      )
-    );
-
-
-    municipalityInput.addEventListener(
-      'change',
-      function () {
-
-        const code =
-          matchCode(
-            municipalityInput,
-            municipalityList
-          );
-
-        municipalityInput.dataset.code =
-          code;
-
-        if (!code) {
-          return;
-        }
-
-        barangayInput.value = '';
-        barangayInput.dataset.code = '';
-
-        if (barangayList) {
-          barangayList.innerHTML = '';
-        }
-
-      }
-    );
-
-
-    /* =======================================================
-       BARANGAY
-       ======================================================= */
+    /* Barangay */
     async function refreshBarangays() {
-
       try {
+        const municipalityCode = municipalityInput.dataset.code || '';
+        if (!municipalityCode) return;
 
-        const municipalityCode =
-          municipalityInput.dataset.code || '';
-
-        if (!municipalityCode) {
-          return;
-        }
-
-        const list =
-          await loadBarangays(
-            municipalityCode
-          );
-
-        toOptionList(
-          barangayList,
-          list
-        );
-
+        const list = await loadBarangays(municipalityCode);
+        toOptionList(barangayList, list);
       } catch (error) {
-
-        console.warn(
-          'PSGC barangays unavailable. Manual entry is allowed.',
-          error
-        );
-
+        console.warn('PSGC barangays unavailable. Manual entry is allowed.', error);
       }
-
     }
 
-
-    barangayInput.addEventListener(
-      'focus',
-      refreshBarangays
-    );
-
-
-    barangayInput.addEventListener(
-      'input',
-      debounce(
-        refreshBarangays,
-        250
-      )
-    );
-
-
-    barangayInput.addEventListener(
-      'change',
-      function () {
-
-        const code =
-          matchCode(
-            barangayInput,
-            barangayList
-          );
-
-        barangayInput.dataset.code =
-          code;
-
-      }
-    );
-
+    barangayInput.addEventListener('focus', refreshBarangays);
+    barangayInput.addEventListener('input', debounce(refreshBarangays, 250));
+    barangayInput.addEventListener('change', function () {
+      const code = matchCode(barangayInput, barangayList);
+      barangayInput.dataset.code = code;
+    });
   }
 
 });
 </script>
-
 {% endblock %}

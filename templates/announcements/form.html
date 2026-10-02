@@ -8,27 +8,21 @@
   <!-- =========================================================
        PAGE HEADER
   ========================================================== -->
-  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
       <div class="min-w-0">
-        <div class="flex items-start gap-3">
-          
+        <h1 class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl break-words">
+          {{ title }}
+        </h1>
 
-          <div class="min-w-0">
-            <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl break-words">
-              {{ title }}
-            </h1>
-
-            <p class="mt-1.5 max-w-2xl text-sm text-gray-500">
-              {% if is_create %}
-                Create a new announcement for your target audience.
-              {% else %}
-                Update the content and visibility of this announcement.
-              {% endif %}
-            </p>
-          </div>
-        </div>
+        <p class="mt-1.5 max-w-2xl text-sm text-gray-500">
+          {% if is_create %}
+            Create a new announcement for your target audience.
+          {% else %}
+            Update the content and visibility of this announcement.
+          {% endif %}
+        </p>
       </div>
 
       <a
@@ -37,7 +31,7 @@
         class="btn btn-secondary w-full sm:w-auto"
       >
         <svg
-          class="h-4 w-4"
+          class="h-4 w-4 shrink-0"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -50,7 +44,6 @@
             d="M10 19l-7-7m0 0l7-7m-7 7h18"
           />
         </svg>
-
         Back to Announcements
       </a>
 
@@ -64,11 +57,11 @@
   <div class="agri-card overflow-hidden">
 
     <!-- Form Header -->
-    <div class="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-5 lg:px-6">
+    <div class="border-b border-gray-200 bg-gray-50/80 px-4 py-4 sm:px-5 lg:px-6">
       <div class="flex items-center gap-3">
 
         <div
-          class="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-white border border-gray-200 text-gray-600"
+          class="hidden sm:flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-xs"
           aria-hidden="true"
         >
           <svg
@@ -104,7 +97,7 @@
          EMAIL NOTIFICATION NOTICE
     ======================================================== -->
     <div class="px-4 pt-4 sm:px-5 lg:px-6 lg:pt-5">
-      <div class="agri-alert agri-alert-warning">
+      <div class="agri-alert agri-alert-warning flex items-start gap-3">
         <svg
           class="mt-0.5 h-5 w-5 shrink-0"
           fill="none"
@@ -120,7 +113,7 @@
           />
         </svg>
 
-        <p class="text-sm leading-6">
+        <div class="text-sm leading-6">
           {% if is_create %}
             <strong>Notification behavior:</strong>
             <strong>Immediate Publish</strong> with
@@ -133,7 +126,7 @@
             Toggle <strong>Active</strong> to show or hide the announcement
             from users.
           {% endif %}
-        </p>
+        </div>
       </div>
     </div>
 
@@ -171,7 +164,7 @@
             Basic Information
           </h2>
 
-          <p class="mt-1 text-sm text-gray-500">
+          <p class="mt-0.5 text-xs text-gray-500 sm:text-sm">
             Provide the main details of your announcement.
           </p>
         </div>
@@ -180,10 +173,10 @@
         <div class="space-y-5">
 
           <!-- Title -->
-          <div>
+          <div class="form-field">
             <label
               for="{{ form.title.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.title.label }}
               {% if form.title.field.required %}
@@ -194,15 +187,18 @@
             {{ form.title }}
 
             {% if form.title.help_text %}
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p
+                id="help-{{ form.title.name }}"
+                class="form-help mt-1.5 text-xs text-gray-500"
+              >
                 {{ form.title.help_text }}
               </p>
             {% endif %}
 
             {% if form.title.errors %}
               <p
-                class="mt-1.5 text-sm text-red-600"
-                id="error-title"
+                id="error-{{ form.title.name }}"
+                class="form-error mt-1.5 text-xs text-red-600"
                 role="alert"
               >
                 {{ form.title.errors|join:", " }}
@@ -212,10 +208,10 @@
 
 
           <!-- Content -->
-          <div>
+          <div class="form-field">
             <label
               for="{{ form.content.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.content.label }}
               {% if form.content.field.required %}
@@ -226,11 +222,17 @@
             {{ form.content }}
 
             {% if form.content.help_text %}
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p
+                id="help-{{ form.content.name }}"
+                class="form-help mt-1.5 text-xs text-gray-500"
+              >
                 {{ form.content.help_text }}
               </p>
             {% else %}
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p
+                id="help-{{ form.content.name }}"
+                class="form-help mt-1.5 text-xs text-gray-500"
+              >
                 Provide clear information such as pest alerts, recommended
                 actions, contact details, and relevant instructions.
               </p>
@@ -238,8 +240,8 @@
 
             {% if form.content.errors %}
               <p
-                class="mt-1.5 text-sm text-red-600"
-                id="error-content"
+                id="error-{{ form.content.name }}"
+                class="form-error mt-1.5 text-xs text-red-600"
                 role="alert"
               >
                 {{ form.content.errors|join:", " }}
@@ -252,10 +254,10 @@
           <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
 
             <!-- Category -->
-            <div>
+            <div class="form-field">
               <label
                 for="{{ form.category.id_for_label }}"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-xs font-semibold text-gray-700"
               >
                 {{ form.category.label }}
                 {% if form.category.field.required %}
@@ -266,15 +268,18 @@
               {{ form.category }}
 
               {% if form.category.help_text %}
-                <p class="mt-1.5 text-xs leading-5 text-gray-500">
+                <p
+                  id="help-{{ form.category.name }}"
+                  class="form-help mt-1.5 text-xs text-gray-500"
+                >
                   {{ form.category.help_text }}
                 </p>
               {% endif %}
 
               {% if form.category.errors %}
                 <p
-                  class="mt-1.5 text-sm text-red-600"
-                  id="error-category"
+                  id="error-{{ form.category.name }}"
+                  class="form-error mt-1.5 text-xs text-red-600"
                   role="alert"
                 >
                   {{ form.category.errors|join:", " }}
@@ -284,10 +289,10 @@
 
 
             <!-- Priority -->
-            <div>
+            <div class="form-field">
               <label
                 for="{{ form.priority.id_for_label }}"
-                class="mb-1.5 block text-sm font-medium text-gray-700"
+                class="mb-1.5 block text-xs font-semibold text-gray-700"
               >
                 {{ form.priority.label }}
                 {% if form.priority.field.required %}
@@ -298,15 +303,18 @@
               {{ form.priority }}
 
               {% if form.priority.help_text %}
-                <p class="mt-1.5 text-xs leading-5 text-gray-500">
+                <p
+                  id="help-{{ form.priority.name }}"
+                  class="form-help mt-1.5 text-xs text-gray-500"
+                >
                   {{ form.priority.help_text }}
                 </p>
               {% endif %}
 
               {% if form.priority.errors %}
                 <p
-                  class="mt-1.5 text-sm text-red-600"
-                  id="error-priority"
+                  id="error-{{ form.priority.name }}"
+                  class="form-error mt-1.5 text-xs text-red-600"
                   role="alert"
                 >
                   {{ form.priority.errors|join:", " }}
@@ -330,7 +338,7 @@
             Who Should See This?
           </h2>
 
-          <p class="mt-1 text-sm text-gray-500">
+          <p class="mt-0.5 text-xs text-gray-500 sm:text-sm">
             Select the intended announcement audience.
           </p>
         </div>
@@ -339,10 +347,10 @@
         <div class="space-y-5">
 
           <!-- Audience -->
-          <div>
+          <div class="form-field">
             <label
               for="{{ form.target_audience.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.target_audience.label }}
               {% if form.target_audience.field.required %}
@@ -353,15 +361,18 @@
             {{ form.target_audience }}
 
             {% if form.target_audience.help_text %}
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p
+                id="help-{{ form.target_audience.name }}"
+                class="form-help mt-1.5 text-xs text-gray-500"
+              >
                 {{ form.target_audience.help_text }}
               </p>
             {% endif %}
 
             {% if form.target_audience.errors %}
               <p
-                class="mt-1.5 text-sm text-red-600"
-                id="error-target-audience"
+                id="error-{{ form.target_audience.name }}"
+                class="form-error mt-1.5 text-xs text-red-600"
                 role="alert"
               >
                 {{ form.target_audience.errors|join:", " }}
@@ -371,10 +382,10 @@
 
 
           <!-- Barangay -->
-          <div id="barangay-field" class="hidden">
+          <div id="barangay-field" class="form-field hidden">
             <label
               for="{{ form.target_barangay.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.target_barangay.label }}
               {% if form.target_barangay.field.required %}
@@ -385,15 +396,18 @@
             {{ form.target_barangay }}
 
             {% if form.target_barangay.help_text %}
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p
+                id="help-{{ form.target_barangay.name }}"
+                class="form-help mt-1.5 text-xs text-gray-500"
+              >
                 {{ form.target_barangay.help_text }}
               </p>
             {% endif %}
 
             {% if form.target_barangay.errors %}
               <p
-                class="mt-1.5 text-sm text-red-600"
-                id="error-target-barangay"
+                id="error-{{ form.target_barangay.name }}"
+                class="form-error mt-1.5 text-xs text-red-600"
                 role="alert"
               >
                 {{ form.target_barangay.errors|join:", " }}
@@ -403,10 +417,10 @@
 
 
           <!-- User -->
-          <div id="user-field" class="hidden">
+          <div id="user-field" class="form-field hidden">
             <label
               for="{{ form.target_user.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.target_user.label }}
               {% if form.target_user.field.required %}
@@ -417,15 +431,18 @@
             {{ form.target_user }}
 
             {% if form.target_user.help_text %}
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p
+                id="help-{{ form.target_user.name }}"
+                class="form-help mt-1.5 text-xs text-gray-500"
+              >
                 {{ form.target_user.help_text }}
               </p>
             {% endif %}
 
             {% if form.target_user.errors %}
               <p
-                class="mt-1.5 text-sm text-red-600"
-                id="error-target-user"
+                id="error-{{ form.target_user.name }}"
+                class="form-error mt-1.5 text-xs text-red-600"
                 role="alert"
               >
                 {{ form.target_user.errors|join:", " }}
@@ -447,7 +464,7 @@
             Schedule &amp; Expiration
           </h2>
 
-          <p class="mt-1 text-sm text-gray-500">
+          <p class="mt-0.5 text-xs text-gray-500 sm:text-sm">
             Configure how and when the announcement becomes visible.
           </p>
         </div>
@@ -456,10 +473,10 @@
         <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
 
           <!-- Publishing Mode -->
-          <div>
+          <div class="form-field">
             <label
               for="{{ form.publish_timing.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.publish_timing.label }}
               {% if form.publish_timing.field.required %}
@@ -471,7 +488,7 @@
 
               <!-- Locked publishing mode -->
               <div
-                class="flex min-h-[42px] items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-600"
+                class="flex min-h-[var(--field-h)] items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
                 aria-disabled="true"
               >
 
@@ -528,7 +545,7 @@
 
               </div>
 
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p class="mt-1.5 text-xs text-gray-500">
                 Publishing mode is locked once this announcement is live.
               </p>
 
@@ -544,15 +561,18 @@
               {{ form.publish_timing }}
 
               {% if form.publish_timing.help_text %}
-                <p class="mt-1.5 text-xs leading-5 text-gray-500">
+                <p
+                  id="help-{{ form.publish_timing.name }}"
+                  class="form-help mt-1.5 text-xs text-gray-500"
+                >
                   {{ form.publish_timing.help_text }}
                 </p>
               {% endif %}
 
               {% if form.publish_timing.errors %}
                 <p
-                  class="mt-1.5 text-sm text-red-600"
-                  id="error-publish-timing"
+                  id="error-{{ form.publish_timing.name }}"
+                  class="form-error mt-1.5 text-xs text-red-600"
                   role="alert"
                 >
                   {{ form.publish_timing.errors|join:", " }}
@@ -564,10 +584,10 @@
 
 
           <!-- Publish Date and Time -->
-          <div>
+          <div class="form-field">
             <label
               for="{{ form.published_at.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.published_at.label }}
               {% if form.published_at.field.required %}
@@ -579,7 +599,7 @@
 
               <!-- Locked publication date -->
               <div
-                class="flex min-h-[42px] items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2.5 text-sm text-gray-600"
+                class="flex min-h-[var(--field-h)] items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
                 aria-disabled="true"
               >
                 <svg
@@ -606,7 +626,7 @@
                 </span>
               </div>
 
-              <p class="mt-1.5 flex items-start gap-1 text-xs leading-5 text-gray-500">
+              <p class="mt-1.5 flex items-start gap-1 text-xs text-gray-500">
                 <svg
                   class="mt-0.5 h-3.5 w-3.5 shrink-0"
                   fill="none"
@@ -638,15 +658,18 @@
               </div>
 
               {% if form.published_at.help_text %}
-                <p class="mt-1.5 text-xs leading-5 text-gray-500">
+                <p
+                  id="help-{{ form.published_at.name }}"
+                  class="form-help mt-1.5 text-xs text-gray-500"
+                >
                   {{ form.published_at.help_text }}
                 </p>
               {% endif %}
 
               {% if form.published_at.errors %}
                 <p
-                  class="mt-1.5 text-sm text-red-600"
-                  id="error-published-at"
+                  id="error-{{ form.published_at.name }}"
+                  class="form-error mt-1.5 text-xs text-red-600"
                   role="alert"
                 >
                   {{ form.published_at.errors|join:", " }}
@@ -658,10 +681,10 @@
 
 
           <!-- Expiration Date -->
-          <div class="md:col-span-2">
+          <div class="form-field md:col-span-2">
             <label
               for="{{ form.expires_at.id_for_label }}"
-              class="mb-1.5 block text-sm font-medium text-gray-700"
+              class="mb-1.5 block text-xs font-semibold text-gray-700"
             >
               {{ form.expires_at.label }}
               {% if form.expires_at.field.required %}
@@ -672,15 +695,18 @@
             {{ form.expires_at }}
 
             {% if form.expires_at.help_text %}
-              <p class="mt-1.5 text-xs leading-5 text-gray-500">
+              <p
+                id="help-{{ form.expires_at.name }}"
+                class="form-help mt-1.5 text-xs text-gray-500"
+              >
                 {{ form.expires_at.help_text }}
               </p>
             {% endif %}
 
             {% if form.expires_at.errors %}
               <p
-                class="mt-1.5 text-sm text-red-600"
-                id="error-expires-at"
+                id="error-{{ form.expires_at.name }}"
+                class="form-error mt-1.5 text-xs text-red-600"
                 role="alert"
               >
                 {{ form.expires_at.errors|join:", " }}
@@ -698,11 +724,11 @@
       <div class="px-4 py-5 sm:px-5 sm:py-6 lg:px-6">
 
         <div
-          class="flex items-start gap-3 rounded-md border p-4
+          class="form-field flex items-start gap-3 rounded-lg border p-4 transition-colors
           {% if not is_create and announcement.is_active %}
-            border-green-200 bg-green-50
+            border-green-200 bg-green-50/70
           {% else %}
-            border-yellow-200 bg-yellow-50
+            border-amber-200 bg-amber-50/70
           {% endif %}"
         >
 
@@ -713,12 +739,12 @@
           <div class="min-w-0">
             <label
               for="{{ form.is_active.id_for_label }}"
-              class="cursor-pointer text-sm font-medium text-gray-800"
+              class="cursor-pointer text-sm font-semibold text-gray-900"
             >
               {{ form.is_active.label }}
             </label>
 
-            <p class="mt-1 text-xs leading-5 text-gray-600 sm:text-sm">
+            <p class="mt-0.5 text-xs text-gray-600 sm:text-sm">
               {% if is_create %}
 
                 Leave unchecked to save this announcement as a draft.
@@ -735,7 +761,7 @@
                 {% else %}
 
                   Currently a
-                  <strong class="text-yellow-700">draft</strong>.
+                  <strong class="text-amber-700">draft</strong>.
                   Check this option to make it visible to users.
 
                 {% endif %}
@@ -748,8 +774,8 @@
 
         {% if form.is_active.errors %}
           <p
-            class="mt-1.5 text-sm text-red-600"
-            id="error-is-active"
+            id="error-{{ form.is_active.name }}"
+            class="form-error mt-1.5 text-xs text-red-600"
             role="alert"
           >
             {{ form.is_active.errors|join:", " }}
@@ -762,9 +788,9 @@
       <!-- =====================================================
            5. ACTION BUTTONS
       ====================================================== -->
-      <div class="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 lg:px-6">
+      <div class="flex flex-col-reverse gap-3 border-t border-gray-200 bg-gray-50/80 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 lg:px-6">
 
-        <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+        <div class="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row">
 
           <!-- Cancel -->
           <a
@@ -773,7 +799,7 @@
             class="btn btn-secondary w-full sm:w-auto"
           >
             <svg
-              class="h-4 w-4"
+              class="h-4 w-4 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -786,7 +812,6 @@
                 d="M6 18L18 6M6 6l12 12"
               />
             </svg>
-
             Cancel
           </a>
 
@@ -795,9 +820,10 @@
           <button
             type="submit"
             class="btn btn-primary w-full sm:w-auto"
+            data-loading
           >
             <svg
-              class="h-4 w-4"
+              class="h-4 w-4 shrink-0"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -810,7 +836,6 @@
                 d="M5 13l4 4L19 7"
               />
             </svg>
-
             {{ submit_text }}
           </button>
 
@@ -822,11 +847,24 @@
           <a
             href="{% url 'polls:announcement_delete' announcement.pk %}"
             data-open-delete="true"
-            data-delete-label="{{ announcement.title }}"
+            data-delete-label="Announcement: {{ announcement.title }}"
+            data-delete-subtitle="This will archive the announcement and move it to Trash & Archive."
             class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
           >
-           
-
+            <svg
+              class="h-4 w-4 shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
             Archive
           </a>
         {% endif %}
@@ -840,9 +878,9 @@
   <!-- =========================================================
        QUICK TIPS
   ========================================================== -->
-  <div class="mt-5 sm:mt-6 agri-alert agri-alert-info">
+  <div class="mt-6 agri-alert agri-alert-info flex items-start gap-3">
     <svg
-      class="mt-0.5 h-5 w-5 shrink-0"
+      class="mt-0.5 h-5 w-5 shrink-0 text-sky-700"
       fill="none"
       stroke="currentColor"
       viewBox="0 0 24 24"
@@ -857,11 +895,11 @@
     </svg>
 
     <div class="min-w-0">
-      <h3 class="text-sm font-semibold">
+      <h3 class="text-sm font-semibold text-sky-900">
         Quick Tips
       </h3>
 
-      <ul class="mt-2 space-y-1.5 text-sm leading-5">
+      <ul class="mt-1.5 space-y-1 text-xs text-sky-800 sm:text-sm">
         <li>• Use emojis in titles to make alerts easier to notice.</li>
         <li>• Use <strong>Urgent</strong> priority only for critical announcements.</li>
         <li>• Target a specific barangay for localized rice disease alerts.</li>
@@ -999,7 +1037,7 @@
 
       dropdown.className = [
         "absolute left-0 right-0 z-50 mt-1 hidden",
-        "max-h-60 overflow-y-auto rounded-md",
+        "max-h-60 overflow-y-auto rounded-lg",
         "border border-gray-200 bg-white shadow-md"
       ].join(" ");
 
@@ -1032,7 +1070,7 @@
       function createEmptyMessage() {
         const emptyMessage = document.createElement("div");
 
-        emptyMessage.className = "px-4 py-3 text-sm text-gray-500";
+        emptyMessage.className = "px-4 py-3 text-xs text-gray-500";
         emptyMessage.textContent = "No matches found.";
 
         return emptyMessage;
@@ -1060,8 +1098,8 @@
             item.type = "button";
 
             item.className = [
-              "block w-full px-4 py-2.5 text-left text-sm",
-              "text-gray-700 transition hover:bg-green-50",
+              "block w-full px-4 py-2.5 text-left text-xs font-medium",
+              "text-gray-700 transition hover:bg-green-50 hover:text-green-800",
               "focus:bg-green-50 focus:outline-none"
             ].join(" ");
 

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block title %}{% if is_edit %}Edit{% else %}Create{% endif %} Knowledge Entry · AgriScan+{% endblock %}
 
 {% block content %}
@@ -6,13 +7,12 @@
 
   <!-- Page Header -->
   <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="min-w-0">
-        <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+        <h1 class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl">
           {% if is_edit %}Edit{% else %}New{% endif %} Knowledge Entry
         </h1>
-
-        <p class="mt-1.5 max-w-2xl text-sm leading-6 text-gray-600">
+        <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
           Add or update farming knowledge, symptoms, causes, and prevention guidance.
         </p>
       </div>
@@ -47,161 +47,151 @@
     method="post"
     enctype="multipart/form-data"
     class="space-y-6"
+    novalidate
   >
     {% csrf_token %}
 
     {% include 'partials/forms/_errors.html' %}
 
-    <!-- Basic Information -->
+    <!-- Basic Information Section -->
     <div class="agri-card overflow-hidden">
-      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+      <div class="border-b border-gray-200 bg-gray-50/50 px-4 py-4 sm:px-5 lg:px-6">
         <h2 class="text-base font-semibold text-gray-900">
           Basic Information
         </h2>
-
         <p class="mt-1 text-sm leading-5 text-gray-600">
           Provide the main identity and classification for this knowledge entry.
         </p>
       </div>
 
       <div class="p-4 sm:p-5 lg:p-6">
-        {% for field in form %}
-          {% if field.name == 'name' %}
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {% include 'partials/forms/_field.html' with field=field %}
-              {% include 'partials/forms/_field.html' with field=form.category %}
-            </div>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {% if form.name %}
+            {% include 'partials/forms/_field.html' with field=form.name %}
           {% endif %}
-        {% endfor %}
+          
+          {% if form.category %}
+            {% include 'partials/forms/_field.html' with field=form.category %}
+          {% endif %}
+        </div>
       </div>
     </div>
 
-
-    <!-- Knowledge Content -->
+    <!-- Knowledge Content Section -->
     <div class="agri-card overflow-hidden">
-      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+      <div class="border-b border-gray-200 bg-gray-50/50 px-4 py-4 sm:px-5 lg:px-6">
         <h2 class="text-base font-semibold text-gray-900">
           Knowledge Content
         </h2>
-
         <p class="mt-1 text-sm leading-5 text-gray-600">
           Describe the condition and the symptoms that farmers should recognize.
         </p>
       </div>
 
       <div class="p-4 sm:p-5 lg:p-6">
-        {% for field in form %}
-          {% if field.name == 'description' %}
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {% include 'partials/forms/_field.html' with field=field %}
-              {% include 'partials/forms/_field.html' with field=form.symptoms %}
-            </div>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {% if form.description %}
+            {% include 'partials/forms/_field.html' with field=form.description %}
           {% endif %}
-        {% endfor %}
+
+          {% if form.symptoms %}
+            {% include 'partials/forms/_field.html' with field=form.symptoms %}
+          {% endif %}
+        </div>
       </div>
     </div>
 
-
-    <!-- Agricultural Guidance -->
+    <!-- Agricultural Guidance Section -->
     <div class="agri-card overflow-hidden">
-      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+      <div class="border-b border-gray-200 bg-gray-50/50 px-4 py-4 sm:px-5 lg:px-6">
         <h2 class="text-base font-semibold text-gray-900">
           Agricultural Guidance
         </h2>
-
         <p class="mt-1 text-sm leading-5 text-gray-600">
           Document known causes and prevention guidance for this knowledge entry.
         </p>
       </div>
 
       <div class="p-4 sm:p-5 lg:p-6">
-        {% for field in form %}
-          {% if field.name == 'causes' %}
-            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-              {% include 'partials/forms/_field.html' with field=field %}
-              {% include 'partials/forms/_field.html' with field=form.prevention %}
-            </div>
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {% if form.causes %}
+            {% include 'partials/forms/_field.html' with field=form.causes %}
           {% endif %}
-        {% endfor %}
+
+          {% if form.prevention %}
+            {% include 'partials/forms/_field.html' with field=form.prevention %}
+          {% endif %}
+        </div>
       </div>
     </div>
 
-
-    <!-- Media / Upload -->
+    <!-- Media / Upload Section -->
     <div class="agri-card overflow-hidden">
-      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+      <div class="border-b border-gray-200 bg-gray-50/50 px-4 py-4 sm:px-5 lg:px-6">
         <h2 class="text-base font-semibold text-gray-900">
           Media &amp; Upload
         </h2>
-
         <p class="mt-1 text-sm leading-5 text-gray-600">
           Add or update the supporting image or media for this knowledge entry.
         </p>
       </div>
 
       <div class="p-4 sm:p-5 lg:p-6">
-        {% for field in form %}
-          {% if field.name != 'name' and field.name != 'category' and field.name != 'description' and field.name != 'symptoms' and field.name != 'causes' and field.name != 'prevention' and field.name != 'is_published' %}
-            {% include 'partials/forms/_field.html' with field=field %}
-          {% endif %}
-        {% endfor %}
+        <div class="grid grid-cols-1 gap-5">
+          {% for field in form %}
+            {% if field.name not in 'name,category,description,symptoms,causes,prevention,is_published' %}
+              {% include 'partials/forms/_field.html' with field=field %}
+            {% endif %}
+          {% endfor %}
+        </div>
       </div>
     </div>
 
-
-    <!-- Publishing -->
+    <!-- Publishing Control Section -->
     <div class="agri-card overflow-hidden">
-      <div class="border-b border-gray-200 px-4 py-4 sm:px-5 lg:px-6">
+      <div class="border-b border-gray-200 bg-gray-50/50 px-4 py-4 sm:px-5 lg:px-6">
         <h2 class="text-base font-semibold text-gray-900">
           Publishing
         </h2>
-
         <p class="mt-1 text-sm leading-5 text-gray-600">
           Control whether this knowledge entry is available as published content.
         </p>
       </div>
 
       <div class="p-4 sm:p-5 lg:p-6">
-        {% for field in form %}
-          {% if field.name == 'is_published' %}
-            <div class="flex items-start gap-3">
-              <div class="pt-0.5">
-                {{ field }}
-              </div>
-
-              <div class="min-w-0">
-                <label
-                  for="{{ field.id_for_label }}"
-                  class="block text-sm font-medium text-gray-700"
-                >
-                  {{ field.label }}
-                </label>
-
-                {% if field.help_text %}
-                  <p class="mt-1 text-xs leading-5 text-gray-500">
-                    {{ field.help_text }}
-                  </p>
-                {% endif %}
-
-                {% for error in field.errors %}
-                  <p
-                    class="mt-1 text-sm text-red-600"
-                    role="alert"
-                  >
-                    {{ error }}
-                  </p>
-                {% endfor %}
-              </div>
+        {% if form.is_published %}
+          <div class="flex items-start gap-3">
+            <div class="pt-0.5">
+              {{ form.is_published }}
             </div>
-          {% endif %}
-        {% endfor %}
+            <div class="min-w-0">
+              <label
+                for="{{ form.is_published.id_for_label }}"
+                class="block text-sm font-semibold text-gray-900 cursor-pointer"
+              >
+                {{ form.is_published.label }}
+              </label>
+
+              {% if form.is_published.help_text %}
+                <p class="mt-1 text-xs leading-5 text-gray-500" id="help-{{ form.is_published.name }}">
+                  {{ form.is_published.help_text }}
+                </p>
+              {% endif %}
+
+              {% for error in form.is_published.errors %}
+                <p class="mt-1 text-sm font-medium text-red-600" id="error-{{ form.is_published.name }}" role="alert">
+                  {{ error }}
+                </p>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
       </div>
     </div>
 
-
-    <!-- Actions -->
+    <!-- Sticky / Bottom Actions Card -->
     <div class="agri-card p-4 sm:p-5 lg:p-6">
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm leading-5 text-gray-500">
           Review the information before saving this knowledge entry.
         </p>

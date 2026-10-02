@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+
 {% block title %}Manage Knowledge Base · AgriScan+{% endblock %}
 
 {% block content %}
@@ -7,11 +8,11 @@
   {% include 'partials/_ctrlk.html' with input_id='knowledge-admin-search' %}
 
   <!-- Page Header -->
-  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
       <div class="min-w-0">
-        <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900">
+        <h1 class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl">
           Knowledge Base Management
         </h1>
 
@@ -20,15 +21,15 @@
         </p>
       </div>
 
-      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+      <div class="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center">
 
-        <!-- Entry Count -->
+        <!-- Entry Count Badge -->
         <div
-          class="inline-flex items-center justify-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700"
+          class="inline-flex min-h-[var(--btn-h)] items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 shadow-xs"
           aria-label="Total knowledge entries"
         >
           <svg
-            class="h-4 w-4 text-green-700"
+            class="h-4 w-4 shrink-0 text-green-700"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -47,11 +48,25 @@
           </span>
         </div>
 
-        <!-- Create -->
+        <!-- Create Button -->
         <a
           href="{% url 'polls:knowledge_create' %}"
           class="btn btn-primary w-full sm:w-auto"
         >
+          <svg
+            class="h-4 w-4 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
           New entry
         </a>
 
@@ -61,22 +76,22 @@
 
 
   <!-- Search & Filters -->
-  <div class="agri-card p-4 sm:p-5 mb-6">
+  <div class="agri-card mb-6 p-4 sm:p-5">
 
     <div class="mb-4">
-      <h2 class="text-sm font-semibold text-gray-900">
+      <h2 class="text-base font-semibold text-gray-900">
         Search and filter
       </h2>
 
-      <p class="mt-1 text-xs text-gray-500">
+      <p class="mt-0.5 text-xs text-gray-500">
         Narrow the knowledge base by keyword, category, publication status, or page size.
       </p>
     </div>
 
     <form method="get" class="space-y-4">
 
-      <!-- Search -->
-      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <!-- Search Field -->
+      <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center">
 
         <div class="relative min-w-0 flex-1">
           <label
@@ -115,7 +130,7 @@
           data-loading
         >
           <svg
-            class="h-4 w-4"
+            class="h-4 w-4 shrink-0"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -128,7 +143,6 @@
               d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
             />
           </svg>
-
           Search
         </button>
 
@@ -144,14 +158,14 @@
       </div>
 
 
-      <!-- Filters -->
+      <!-- Select Filters -->
       <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
 
         <!-- Category -->
         <div>
           <label
             for="knowledge-category-filter"
-            class="mb-1.5 block text-xs font-medium text-gray-700"
+            class="mb-1.5 block text-xs font-semibold text-gray-700"
           >
             Category
           </label>
@@ -213,7 +227,7 @@
         <div>
           <label
             for="knowledge-status-filter"
-            class="mb-1.5 block text-xs font-medium text-gray-700"
+            class="mb-1.5 block text-xs font-semibold text-gray-700"
           >
             Publication status
           </label>
@@ -247,7 +261,7 @@
         <div>
           <label
             for="knowledge-page-size"
-            class="mb-1.5 block text-xs font-medium text-gray-700"
+            class="mb-1.5 block text-xs font-semibold text-gray-700"
           >
             Entries per page
           </label>
@@ -275,7 +289,7 @@
   </div>
 
 
-  <!-- Knowledge Entries -->
+  <!-- Knowledge Entries Table -->
   <div class="agri-card overflow-hidden">
 
     <form
@@ -292,13 +306,12 @@
       >
 
 
-      <!-- Bulk Toolbar -->
+      <!-- Bulk Actions Toolbar -->
       <div
         id="bulk-toolbar"
-        class="no-print items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5 flex"
+        class="no-print hidden items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5"
       >
-        
-        <span class="text-sm font-semibold text-amber-900">
+        <span class="text-xs font-semibold text-amber-900 sm:text-sm">
           <span id="selected-count">0</span> selected
         </span>
 
@@ -314,80 +327,66 @@
           data-bulk-confirm="Yes, Archive"
           class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
         >
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
+          <svg
+            class="h-3.5 w-3.5 shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
           </svg>
-
           Archive selected
         </button>
 
         <button
           type="button"
           onclick="clearSelection()"
-          class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
+          class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-amber-900 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
         >
           Clear selection
         </button>
       </div>
 
 
-      <!-- Table -->
+      <!-- Table Container -->
       <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
+        <table class="min-w-full text-left text-sm">
 
-          <thead class="border-b border-gray-200 bg-gray-50 text-left">
+          <thead class="border-b border-gray-200 bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-600">
             <tr>
 
-              <th
-                scope="col"
-                class="w-12 px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
-              >
+              <th scope="col" class="w-12 px-4 py-3 sm:px-5">
                 <input
                   type="checkbox"
                   id="select-all-cb"
-                  class="h-4 w-4 cursor-pointer rounded border-gray-300 text-green-700 focus:ring-green-600"
                   title="Select all on this page"
                   aria-label="Select all knowledge entries on this page"
                 >
               </th>
 
-              <th
-                scope="col"
-                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
-              >
+              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
                 Name
               </th>
 
-              <th
-                scope="col"
-                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
-              >
+              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
                 Category
               </th>
 
-              <th
-                scope="col"
-                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
-              >
+              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
                 Status
               </th>
 
-              <th
-                scope="col"
-                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
-              >
+              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
                 Updated
               </th>
 
-              <th
-                scope="col"
-                class="whitespace-nowrap px-4 py-3 text-xs font-semibold text-gray-600 sm:px-5"
-              >
+              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
                 Actions
               </th>
 
@@ -395,74 +394,82 @@
           </thead>
 
 
-          <tbody class="divide-y divide-gray-100">
+          <tbody class="divide-y divide-gray-100 bg-white">
 
             {% for entry in entries %}
 
-              <tr class="transition hover:bg-gray-50">
+              <tr class="transition hover:bg-gray-50/80">
 
-                <!-- Selection -->
+                <!-- Checkbox -->
                 <td class="px-4 py-3 sm:px-5">
                   <input
                     type="checkbox"
                     name="selected_ids"
                     value="{{ entry.pk }}"
-                    class="row-cb h-4 w-4 cursor-pointer rounded border-gray-300 text-green-700 focus:ring-green-600"
+                    class="row-cb"
                     aria-label="Select {{ entry.name }}"
                   >
                 </td>
 
 
-                <!-- Name -->
+                <!-- Title & Description -->
                 <td class="max-w-xs px-4 py-3 sm:px-5">
-                  <div class="font-medium text-gray-900">
+                  <a
+                    href="{% url 'polls:knowledge_detail' entry.pk %}"
+                    class="font-semibold text-gray-900 hover:text-green-700 hover:underline"
+                  >
                     {{ entry.name }}
-                  </div>
+                  </a>
+                  {% if entry.description %}
+                    <p class="mt-0.5 line-clamp-1 text-xs text-gray-500">
+                      {{ entry.description }}
+                    </p>
+                  {% endif %}
                 </td>
 
 
-                <!-- Category -->
-                <td class="px-4 py-3 sm:px-5">
+                <!-- Category Badge -->
+                <td class="whitespace-nowrap px-4 py-3 sm:px-5">
 
                   {% if entry.category == 'disease' %}
 
-                    <span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+                    <span class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
                       Disease
                     </span>
 
                   {% elif entry.category == 'pest' %}
 
-                    <span class="inline-flex items-center rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700">
+                    <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
                       Pest
                     </span>
 
                   {% elif entry.category == 'crop_nutrition' %}
 
-                    <span class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+                    <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
                       Crop Nutrition
                     </span>
 
                   {% elif entry.category == 'irrigation' %}
 
-                    <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
+                    <span class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
                       Irrigation
                     </span>
 
                   {% elif entry.category == 'soil' %}
 
-                    <span class="inline-flex items-center rounded-md bg-lime-50 px-2 py-1 text-xs font-medium text-lime-700">
+                    <span class="inline-flex items-center rounded-md border border-lime-200 bg-lime-50 px-2.5 py-0.5 text-xs font-medium text-lime-700">
                       Soil
                     </span>
 
                   {% elif entry.category == 'post_harvest' %}
 
-                    <span class="inline-flex items-center rounded-md bg-orange-50 px-2 py-1 text-xs font-medium text-orange-700">
+                    <span class="inline-flex items-center rounded-md border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-medium text-orange-700">
                       Post-Harvest
                     </span>
 
                   {% else %}
 
-                    <span class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                    <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
                       {{ entry.get_category_display }}
                     </span>
 
@@ -471,24 +478,21 @@
                 </td>
 
 
-                <!-- Status -->
-                <td class="px-4 py-3 sm:px-5">
+                <!-- Publication Status -->
+                <td class="whitespace-nowrap px-4 py-3 sm:px-5">
 
                   {% if entry.is_published %}
 
-                    <span
-                      class="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700"
-                      aria-label="Published"
-                    >
+                    <span class="agri-badge">
+                      <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
                       Published
                     </span>
 
                   {% else %}
 
-                    <span
-                      class="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700"
-                      aria-label="Draft"
-                    >
+                    <span class="inline-flex items-center rounded-full border border-gray-300 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
                       Draft
                     </span>
 
@@ -497,14 +501,14 @@
                 </td>
 
 
-                <!-- Updated -->
-                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 sm:px-5">
+                <!-- Last Updated -->
+                <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-500 sm:px-5">
                   {{ entry.updated_at|date:'M d, Y' }}
                 </td>
 
 
-                <!-- Actions -->
-                <td class="px-4 py-3 sm:px-5">
+                <!-- Action Buttons -->
+                <td class="whitespace-nowrap px-4 py-3 sm:px-5">
 
                   <div class="flex flex-wrap items-center gap-2">
 
@@ -543,25 +547,42 @@
               <tr>
                 <td
                   colspan="6"
-                  class="px-4 py-10 text-center sm:px-5"
+                  class="px-4 py-12 text-center sm:px-5"
                 >
-                  <div class="mx-auto max-w-md">
+                  <div class="mx-auto max-w-sm">
 
-                    <p class="text-sm font-medium text-gray-900">
-                      No knowledge entries found.
+                    <svg
+                      class="mx-auto h-10 w-10 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="1.5"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                      />
+                    </svg>
+
+                    <p class="mt-3 text-sm font-semibold text-gray-900">
+                      No knowledge entries found
                     </p>
 
-                    <p class="mt-1 text-sm text-gray-500">
-                      Try adjusting your search or filters.
+                    <p class="mt-1 text-xs text-gray-500">
+                      Try adjusting your search query or clear the active filters.
                     </p>
 
                     {% if search_query or category_filter or status_filter %}
-                      <a
-                        href="{% url 'polls:knowledge_admin_list' %}"
-                        class="btn btn-secondary btn-sm mt-4"
-                      >
-                        Clear filters
-                      </a>
+                      <div class="mt-4">
+                        <a
+                          href="{% url 'polls:knowledge_admin_list' %}"
+                          class="btn btn-secondary btn-sm"
+                        >
+                          Clear all filters
+                        </a>
+                      </div>
                     {% endif %}
 
                   </div>
@@ -591,10 +612,11 @@
   <script>
     // Bulk selection handlers for knowledge admin list
     (function () {
+      "use strict";
+
       const selectAll = document.getElementById('select-all-cb');
       const selectedCountEl = document.getElementById('selected-count');
       const bulkToolbar = document.getElementById('bulk-toolbar');
-      const form = document.getElementById('kb-bulk-form');
 
       function updateSelectedCount() {
         const checked = document.querySelectorAll('.row-cb:checked').length;
@@ -606,8 +628,10 @@
         if (bulkToolbar) {
           if (checked > 0) {
             bulkToolbar.classList.remove('hidden');
+            bulkToolbar.classList.add('flex');
           } else {
             bulkToolbar.classList.add('hidden');
+            bulkToolbar.classList.remove('flex');
           }
         }
       }
@@ -660,7 +684,7 @@
         }
       });
 
-      // Initial state
+      // Initial state sync
       updateSelectedCount();
     })();
   </script>

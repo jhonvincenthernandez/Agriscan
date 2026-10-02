@@ -1745,7 +1745,7 @@ def detections_bulk_delete(request):
     # deleted_at kaya may gap sa audit trail kung kailan na-archive.
     count = qs.count()
     qs.delete()
-    messages.success(request, f"📦 {count} detection{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
+    messages.success(request, f" {count} detection{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
     return _redirect_back_or_default(request, 'polls:detections_list')
 
 
@@ -1777,7 +1777,7 @@ def detections_delete(request, pk: int):
         # Ang manual na is_active=False ay hindi nagse-set ng deleted_at
         # kaya may gap sa audit trail kung kailan na-archive ang record.
         detection.delete()
-        messages.success(request, f"📦 Detection #{pk} archived. Manage from Trash & Archive.")
+        messages.success(request, f" Detection #{pk} archived. Manage from Trash & Archive.")
         return _redirect_back_or_default(request, 'polls:detections_list')
     return _redirect_back_or_default(request, 'polls:detections_list')
 
@@ -1966,7 +1966,7 @@ def yield_records_bulk_delete(request):
     # ang behavior at mase-set ang deleted_at sa lahat ng records.
     count = qs.count()
     qs.delete()
-    messages.success(request, f"📦 {count} yield record{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
+    messages.success(request, f" {count} yield record{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
     return _redirect_back_or_default(request, 'polls:yield_records_list')
 
 
@@ -1996,7 +1996,7 @@ def yield_record_delete(request, pk: int):
     
     if request.method == "POST":
         record.delete()
-        messages.success(request, f"📦 Yield record #{pk} archived. Manage from Trash & Archive.")
+        messages.success(request, f" Yield record #{pk} archived. Manage from Trash & Archive.")
         return _redirect_back_or_default(request, 'polls:yield_records_list')
     return _redirect_back_or_default(request, 'polls:yield_records_list')
 
@@ -2754,7 +2754,7 @@ def field_delete(request, pk: int):
     if request.method == 'POST':
         field_name = field.name
         field.delete()
-        messages.success(request, f"📦 Field '{field_name}' archived. Manage from Trash & Archive.")
+        messages.success(request, f" Field '{field_name}' archived. Manage from Trash & Archive.")
         return _redirect_back_or_default(request, 'polls:fields_list')
     return _redirect_back_or_default(request, 'polls:fields_list')
 
@@ -3031,7 +3031,7 @@ def planting_delete(request, pk: int):
     if request.method == 'POST':
         field_name = planting.field.name
         planting.delete()
-        messages.success(request, f"📦 Planting record for field '{field_name}' archived. Manage from Trash & Archive.")
+        messages.success(request, f" Planting record for field '{field_name}' archived. Manage from Trash & Archive.")
         return _redirect_back_or_default(request, 'polls:plantings_list')
     return _redirect_back_or_default(request, 'polls:plantings_list')
 
@@ -3239,7 +3239,7 @@ def harvest_archive(request, pk: int):
 
     if request.method == 'POST':
         record.delete()
-        messages.success(request, "📦 Harvest record archived. Manage from Trash & Archive.")
+        messages.success(request, " Harvest record archived. Manage from Trash & Archive.")
         return _redirect_back_or_default(request, 'polls:harvests_list')
 
     return _redirect_back_or_default(request, 'polls:harvests_list')
@@ -3273,7 +3273,7 @@ def harvests_bulk_archive(request):
 
     count = qs.count()
     qs.delete()
-    messages.success(request, f"📦 {count} harvest record{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
+    messages.success(request, f" {count} harvest record{'s' if count != 1 else ''} archived. Manage from Trash & Archive.")
     return _redirect_back_or_default(request, 'polls:harvests_list')
 
 
@@ -3705,7 +3705,7 @@ def system_settings_audit_bulk_archive(request):
     updated = qs.delete()
 
     if updated:
-        messages.success(request, f"📦 {updated} audit entr{'y' if updated == 1 else 'ies'} archived. Manage from Trash & Archive.")
+        messages.success(request, f" {updated} audit entr{'y' if updated == 1 else 'ies'} archived. Manage from Trash & Archive.")
     else:
         messages.info(request, "No audit entries were archived.")
 
@@ -3722,7 +3722,7 @@ def system_settings_audit_archive(request, pk: int):
         # Tagalog: Gamitin ang SoftDeleteModel.delete() para consistent ang
         # behavior — nagse-set ng PAREHONG is_active=False AT deleted_at=now().
         audit.delete()
-        messages.success(request, "📦 Audit entry archived. Manage from Trash & Archive.")
+        messages.success(request, " Audit entry archived. Manage from Trash & Archive.")
         return _redirect_back_or_default(request, 'polls:system_settings_audit_list')
 
     return _redirect_back_or_default(request, 'polls:system_settings_audit_list')
@@ -4017,7 +4017,7 @@ def knowledge_archive(request, pk: int):
         entry.is_published = False
         entry.save(update_fields=['is_published'])
         entry.delete()
-        messages.success(request, '📦 Knowledge entry archived. Manage from Trash & Archive.')
+        messages.success(request, ' Knowledge entry archived. Manage from Trash & Archive.')
     return _redirect_back_or_default(request, 'polls:knowledge_admin_list')
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -4036,7 +4036,7 @@ def knowledge_bulk_archive(request):
     updated = qs.delete()
 
     if updated:
-        messages.success(request, f"📦 {updated} knowledge entr{'y' if updated == 1 else 'ies'} archived. Manage from Trash & Archive.")
+        messages.success(request, f" {updated} knowledge entr{'y' if updated == 1 else 'ies'} archived. Manage from Trash & Archive.")
     else:
         messages.info(request, 'No knowledge entries were archived.')
 
@@ -4453,7 +4453,7 @@ def treatments_delete(request, pk):
     if request.method == 'POST':
         disease_name = treatment.disease.name
         treatment.delete()
-        messages.success(request, f'📦 Treatment for "{disease_name}" archived. Manage from Trash & Archive.')
+        messages.success(request, f' Treatment for "{disease_name}" archived. Manage from Trash & Archive.')
         return _redirect_back_or_default(request, 'polls:treatments_list')
     return _redirect_back_or_default(request, 'polls:treatments_list')
 
@@ -5320,7 +5320,7 @@ def announcement_delete(request, pk):
 
         messages.success(
             request,
-            f'📦 Announcement "{title}" archived. '
+            f' Announcement "{title}" archived. '
             'Manage from Trash & Archive.'
         )
 
@@ -5491,7 +5491,7 @@ def varieties_list(request):
             qs = RiceVariety.objects.filter(pk__in=pks, is_active=True)
             updated = qs.count()
             qs.delete()
-            messages.success(request, f'📦 {updated} variet{"y" if updated == 1 else "ies"} archived. Manage from Trash & Archive.')
+            messages.success(request, f' {updated} variet{"y" if updated == 1 else "ies"} archived. Manage from Trash & Archive.')
         return redirect(request.get_full_path())
 
     # Base queryset — active only, annotate planting count for sort + display
@@ -5605,7 +5605,7 @@ def variety_create(request):
             variety = form.save()
             messages.success(
                 request,
-                f'✅ Rice variety "{variety.code}" created successfully!'
+                f' Rice variety "{variety.code}" created successfully!'
             )
             return redirect('polls:varieties_list')
     else:
@@ -5636,7 +5636,7 @@ def variety_edit(request, pk):
             variety = form.save()
             messages.success(
                 request,
-                f'✅ Rice variety "{variety.code}" updated successfully!'
+                f' Rice variety "{variety.code}" updated successfully!'
             )
             return redirect('polls:varieties_list')
     else:
@@ -5666,7 +5666,7 @@ def variety_delete(request, pk):
         variety.delete()
         messages.success(
             request,
-            f'📦 Variety "{variety.code}" archived. '
+            f' Variety "{variety.code}" archived. '
             f'Existing plantings are preserved. Manage from Trash & Archive.'
         )
         return _redirect_back_or_default(request, 'polls:varieties_list')
@@ -5683,7 +5683,7 @@ def variety_restore(request, pk):
         variety.restore()
         messages.success(
             request,
-            f'✅ Variety "{variety.code}" restored and is now active again.'
+            f' Variety "{variety.code}" restored and is now active again.'
         )
     return redirect('polls:varieties_list')
 
@@ -5719,7 +5719,7 @@ def trash_management(request):
                     for obj in qs:
                         obj.restore()
                         restored += 1
-                    messages.success(request, f'✅ {restored} announcement{"" if restored == 1 else "s"} restored successfully.')
+                    messages.success(request, f' {restored} announcement{"" if restored == 1 else "s"} restored successfully.')
                 elif action == 'purge':
                     deleted = 0
                     failed = 0
@@ -5730,7 +5730,7 @@ def trash_management(request):
                         except ProtectedError:
                             failed += 1
                     if deleted:
-                        messages.warning(request, f'🗑️ {deleted} announcement{"" if deleted == 1 else "s"} permanently deleted.')
+                        messages.warning(request, f' {deleted} announcement{"" if deleted == 1 else "s"} permanently deleted.')
                     if failed:
                         messages.error(request, f'{failed} announcement{"" if failed == 1 else "s"} could not be deleted due to protected related records.')
             else:
@@ -5751,7 +5751,7 @@ def trash_management(request):
                         for obj in qs:
                             obj.restore()
                             restored += 1
-                        messages.success(request, f'✅ {restored} {model_name.replace("_", " ")}{"" if restored == 1 else "s"} restored successfully.')
+                        messages.success(request, f' {restored} {model_name.replace("_", " ")}{"" if restored == 1 else "s"} restored successfully.')
                     elif action == 'purge':
                         deleted = 0
                         failed = 0
@@ -5767,7 +5767,7 @@ def trash_management(request):
                             except ProtectedError:
                                 failed += 1
                         if deleted:
-                            messages.warning(request, f'🗑️ {deleted} {model_name.replace("_", " ")}{"" if deleted == 1 else "s"} permanently deleted.')
+                            messages.warning(request, f' {deleted} {model_name.replace("_", " ")}{"" if deleted == 1 else "s"} permanently deleted.')
                         if failed:
                             messages.error(request, f'{failed} {model_name.replace("_", " ")}{"" if failed == 1 else "s"} could not be deleted due to protected related records.')
 
@@ -5780,10 +5780,10 @@ def trash_management(request):
                 obj = Announcement.objects.get(pk=obj_pk, is_deleted=True)
                 if action == 'restore':
                     obj.restore()
-                    messages.success(request, f'✅ Announcement #{obj_pk} restored successfully.')
+                    messages.success(request, f' Announcement #{obj_pk} restored successfully.')
                 elif action == 'purge':
                     obj.hard_delete()
-                    messages.warning(request, f'🗑️ Announcement #{obj_pk} permanently deleted.')
+                    messages.warning(request, f' Announcement #{obj_pk} permanently deleted.')
             except Announcement.DoesNotExist:
                 messages.error(request, 'Announcement not found or not in trash.')
         else:
@@ -5802,7 +5802,7 @@ def trash_management(request):
                         obj = model_cls.all_objects.get(pk=obj_pk, is_active=False)
                     if action == 'restore':
                         obj.restore()
-                        messages.success(request, f'✅ {model_name.capitalize()} #{obj_pk} restored successfully.')
+                        messages.success(request, f' {model_name.capitalize()} #{obj_pk} restored successfully.')
                     elif action == 'purge':
                         try:
                             if hasattr(obj, 'purge'):
@@ -5811,7 +5811,7 @@ def trash_management(request):
                                 obj.hard_delete()
                             else:
                                 obj.delete()
-                            messages.warning(request, f'🗑️ {model_name.capitalize()} #{obj_pk} permanently deleted.')
+                            messages.warning(request, f' {model_name.capitalize()} #{obj_pk} permanently deleted.')
                         except ProtectedError:
                             messages.error(request, f'Error: {model_name.capitalize()} #{obj_pk} cannot be deleted due to protected related records.')
                 except model_cls.DoesNotExist:

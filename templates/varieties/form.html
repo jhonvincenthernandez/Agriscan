@@ -3,23 +3,21 @@
   varieties/form.html
   ─────────────────────────────────────────────────────────────────────────────
   Kumpletong form para sa pag-create at pag-edit ng Rice Variety.
-  Naka-grupo sa 7 sections para sa mas maayos na pag-fill-up.
-  Ginagamit ng variety_create at variety_edit views.
-  Lahat ng user-visible na text ay English; comments ay Tagalog/Filipino.
+  Naka-align sa global Design System ng base.html.
 {% endcomment %}
 
-{% block title %}{{ title }} - AgriScan{% endblock %}
+{% block title %}{{ title }} - AgriScan+{% endblock %}
 
 {% block content %}
 <section class="page-container">
 
   {# ── Page Header ──────────────────────────────────────────────────────── #}
-  <div class="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+  <div class="agri-card mb-6 p-5 sm:p-6">
     <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div class="min-w-0">
         <div class="flex items-start gap-3">
-          <span class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-[var(--color-brand-light)] text-[var(--color-brand)]">
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round"
                     stroke-linejoin="round"
                     stroke-width="1.8"
@@ -28,14 +26,14 @@
           </span>
 
           <div class="min-w-0">
-            <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+            <h1 class="text-xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-2xl">
               {{ title }}
             </h1>
 
-            <p class="mt-1 text-sm leading-5 text-gray-500">
+            <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
               {% if variety %}
                 Update information for rice variety
-                <strong class="font-medium text-gray-700">{{ variety.code }}</strong>
+                <strong class="font-medium text-[var(--color-text-primary)]">{{ variety.code }}</strong>
               {% else %}
                 Add a new rice variety to the system
               {% endif %}
@@ -45,7 +43,7 @@
       </div>
 
       <a href="{{ cancel_url }}"
-         class="inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:w-auto">
+         class="btn btn-secondary w-full sm:w-auto">
         <svg class="h-4 w-4 flex-shrink-0"
              fill="none"
              stroke="currentColor"
@@ -69,9 +67,9 @@
 
     {# Non-field errors — pangkalahatang error messages #}
     {% if form.non_field_errors %}
-    <div class="mb-6 flex gap-3 rounded-lg border border-red-200 bg-red-50 p-4"
+    <div class="agri-alert agri-alert-danger mb-6 flex gap-3"
          role="alert">
-      <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600"
+      <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--color-danger)]"
            fill="currentColor"
            viewBox="0 0 20 20"
            aria-hidden="true">
@@ -81,11 +79,11 @@
       </svg>
 
       <div class="min-w-0">
-        <p class="text-sm font-semibold text-red-800">
+        <p class="font-semibold text-[var(--color-danger-text)]">
           Please fix the following errors:
         </p>
 
-        <div class="mt-1 text-sm leading-5 text-red-700">
+        <div class="mt-1 leading-5">
           {{ form.non_field_errors }}
         </div>
       </div>
@@ -93,19 +91,19 @@
     {% endif %}
 
     {# ═══ SECTION 1 — Variety Identification ═════════════════════════════ #}
-    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+    <div class="agri-card mb-6 overflow-hidden">
+      <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-4 sm:px-6">
         <div class="flex items-start gap-3">
-          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-green-700 text-xs font-semibold text-white">
+          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[var(--color-brand)] text-xs font-semibold text-white">
             1
           </span>
 
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
               Variety Identification
             </h2>
 
-            <p class="mt-0.5 text-xs leading-5 text-gray-500">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               Primary identification details of the variety
             </p>
           </div>
@@ -114,125 +112,116 @@
 
       <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-2">
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.code.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
-            Variety Code <span class="text-red-600" aria-hidden="true">*</span>
+                 class="mb-1.5 block">
+            Variety Code <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           {{ form.code }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.code.name }}" class="form-help mt-1.5">
             Unique code (e.g. RC222, NSIC Rc222)
           </p>
 
           {% if form.code.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.code.name }}" class="form-error mt-1.5 font-medium">
             {{ form.code.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.name.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
-            Variety Name <span class="text-red-600" aria-hidden="true">*</span>
+                 class="mb-1.5 block">
+            Variety Name <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           {{ form.name }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.name.name }}" class="form-help mt-1.5">
             Full name of the variety
           </p>
 
           {% if form.name.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.name.name }}" class="form-error mt-1.5 font-medium">
             {{ form.name.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.variety_type.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
-            Variety Type <span class="text-red-600" aria-hidden="true">*</span>
+                 class="mb-1.5 block">
+            Variety Type <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           {{ form.variety_type }}
 
           {% if form.variety_type.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.variety_type.name }}" class="form-error mt-1.5 font-medium">
             {{ form.variety_type.errors.0 }}
           </p>
           {% endif %}
 
           <details class="mt-2">
-            <summary class="cursor-pointer select-none text-xs font-medium text-green-700 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1">
+            <summary class="cursor-pointer select-none text-xs font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]">
               Variety Type Guide
             </summary>
 
-            <div class="mt-2 space-y-1.5 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs leading-5 text-gray-600">
+            <div class="mt-2 space-y-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-3 text-xs leading-5 text-[var(--color-text-secondary)]">
               <p>
-                <strong class="font-semibold text-gray-700">Inbred</strong> — Self-pollinated; stable traits.
-                Suited for rainfed/irrigated systems, low seed cost.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Inbred</strong> — Self-pollinated; stable traits. Suited for rainfed/irrigated systems, low seed cost.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Hybrid</strong> — Cross-pollinated; higher yield potential.
-                Best for high-input irrigated and commercial production.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Hybrid</strong> — Cross-pollinated; higher yield potential. Best for high-input irrigated and commercial production.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Traditional / Local</strong> — Indigenous varieties;
-                stress-tolerant with specific flavor/aroma; promotes biodiversity.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Traditional / Local</strong> — Indigenous varieties; stress-tolerant with specific flavor/aroma; promotes biodiversity.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Specialty</strong> — Aromatic, glutinous, or high-protein.
-                For niche markets and premium rice.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Specialty</strong> — Aromatic, glutinous, or high-protein. For niche markets and premium rice.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Stress-Tolerant</strong> — Drought/flood-tolerant varieties
-                designed for climate-extreme areas.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Stress-Tolerant</strong> — Drought/flood-tolerant varieties designed for climate-extreme areas.
               </p>
             </div>
           </details>
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.release_year.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Release Year
           </label>
 
           {{ form.release_year }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.release_year.name }}" class="form-help mt-1.5">
             Year released by DA / PhilRice
           </p>
 
           {% if form.release_year.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.release_year.name }}" class="form-error mt-1.5 font-medium">
             {{ form.release_year.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div class="md:col-span-2">
+        <div class="form-field md:col-span-2">
           <label for="{{ form.developer.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Developer / Breeding Institution
           </label>
 
           {{ form.developer }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.developer.name }}" class="form-help mt-1.5">
             e.g. PhilRice, IRRI, DA-RFU Region III
           </p>
 
           {% if form.developer.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.developer.name }}" class="form-error mt-1.5 font-medium">
             {{ form.developer.errors.0 }}
           </p>
           {% endif %}
@@ -242,19 +231,19 @@
     </div>
 
     {# ═══ SECTION 2 — Agronomic Characteristics ══════════════════════════ #}
-    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+    <div class="agri-card mb-6 overflow-hidden">
+      <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-4 sm:px-6">
         <div class="flex items-start gap-3">
-          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-green-700 text-xs font-semibold text-white">
+          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[var(--color-brand)] text-xs font-semibold text-white">
             2
           </span>
 
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
               Agronomic Characteristics
             </h2>
 
-            <p class="mt-0.5 text-xs leading-5 text-gray-500">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               Biological traits of the variety
             </p>
           </div>
@@ -263,80 +252,80 @@
 
       <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-2 lg:grid-cols-3">
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.average_growth_days.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
-            Growth Duration (days) <span class="text-red-600" aria-hidden="true">*</span>
+                 class="mb-1.5 block">
+            Growth Duration (days) <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           {{ form.average_growth_days }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.average_growth_days.name }}" class="form-help mt-1.5">
             Short: 90-110 · Medium: 111-135 · Long: 136-165
           </p>
 
           {% if form.average_growth_days.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.average_growth_days.name }}" class="form-error mt-1.5 font-medium">
             {{ form.average_growth_days.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.plant_height_cm.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Plant Height (cm)
           </label>
 
           {{ form.plant_height_cm }}
 
           {% if form.plant_height_cm.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.plant_height_cm.name }}" class="form-error mt-1.5 font-medium">
             {{ form.plant_height_cm.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.tillering_capacity.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Tillering Capacity
           </label>
 
           {{ form.tillering_capacity }}
 
           {% if form.tillering_capacity.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.tillering_capacity.name }}" class="form-error mt-1.5 font-medium">
             {{ form.tillering_capacity.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.grain_type.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Grain Type
           </label>
 
           {{ form.grain_type }}
 
           {% if form.grain_type.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.grain_type.name }}" class="form-error mt-1.5 font-medium">
             {{ form.grain_type.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.lodging_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Lodging Resistance
           </label>
 
           {{ form.lodging_resistance }}
 
           {% if form.lodging_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.lodging_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.lodging_resistance.errors.0 }}
           </p>
           {% endif %}
@@ -346,19 +335,19 @@
     </div>
 
     {# ═══ SECTION 3 — Environmental Adaptation ═══════════════════════════ #}
-    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+    <div class="agri-card mb-6 overflow-hidden">
+      <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-4 sm:px-6">
         <div class="flex items-start gap-3">
-          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-green-700 text-xs font-semibold text-white">
+          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[var(--color-brand)] text-xs font-semibold text-white">
             3
           </span>
 
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
               Environmental Adaptation
             </h2>
 
-            <p class="mt-0.5 text-xs leading-5 text-gray-500">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               Optimal growing environment for the variety
             </p>
           </div>
@@ -367,109 +356,100 @@
 
       <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-2 lg:grid-cols-3">
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.climate_type.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
-            Climate Type <span class="text-red-600" aria-hidden="true">*</span>
+                 class="mb-1.5 block">
+            Climate Type <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
           </label>
 
           {{ form.climate_type }}
 
           {% if form.climate_type.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.climate_type.name }}" class="form-error mt-1.5 font-medium">
             {{ form.climate_type.errors.0 }}
           </p>
           {% endif %}
 
           <details class="mt-2">
-            <summary class="cursor-pointer select-none text-xs font-medium text-green-700 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1">
+            <summary class="cursor-pointer select-none text-xs font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]">
               Climate Type Guide
             </summary>
 
-            <div class="mt-2 space-y-1.5 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs leading-5 text-gray-600">
+            <div class="mt-2 space-y-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-3 text-xs leading-5 text-[var(--color-text-secondary)]">
               <p>
-                <strong class="font-semibold text-gray-700">Irrigated</strong> — Consistent water supply;
-                optimal for high-yield commercial varieties.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Irrigated</strong> — Consistent water supply; optimal for high-yield commercial varieties.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Rainfed Lowland</strong> — Dependent on rainfall;
-                use drought-tolerant inbred varieties.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Rainfed Lowland</strong> — Dependent on rainfall; use drought-tolerant inbred varieties.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Upland</strong> — Dry, non-flooded areas;
-                stress-tolerant or local varieties.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Upland</strong> — Dry, non-flooded areas; stress-tolerant or local varieties.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Flood-Prone</strong> — Areas with seasonal flooding;
-                use submergence-tolerant varieties (e.g. Swarna-Sub1).
+                <strong class="font-semibold text-[var(--color-text-primary)]">Flood-Prone</strong> — Areas with seasonal flooding; use submergence-tolerant varieties (e.g. Swarna-Sub1).
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Saline-Prone</strong> — Coastal or salt-affected soil;
-                use salt-tolerant varieties.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Saline-Prone</strong> — Coastal or salt-affected soil; use salt-tolerant varieties.
               </p>
             </div>
           </details>
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.soil_type_compatibility.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Soil Type Compatibility
           </label>
 
           {{ form.soil_type_compatibility }}
 
           {% if form.soil_type_compatibility.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.soil_type_compatibility.name }}" class="form-error mt-1.5 font-medium">
             {{ form.soil_type_compatibility.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.flood_tolerance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Flood Tolerance
           </label>
 
           {{ form.flood_tolerance }}
 
           {% if form.flood_tolerance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.flood_tolerance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.flood_tolerance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.drought_tolerance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Drought Tolerance
           </label>
 
           {{ form.drought_tolerance }}
 
           {% if form.drought_tolerance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.drought_tolerance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.drought_tolerance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.temperature_tolerance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Temperature Tolerance
           </label>
 
           {{ form.temperature_tolerance }}
 
           {% if form.temperature_tolerance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.temperature_tolerance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.temperature_tolerance.errors.0 }}
           </p>
           {% endif %}
@@ -479,19 +459,19 @@
     </div>
 
     {# ═══ SECTION 4 — Yield Characteristics ══════════════════════════════ #}
-    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+    <div class="agri-card mb-6 overflow-hidden">
+      <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-4 sm:px-6">
         <div class="flex items-start gap-3">
-          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-green-700 text-xs font-semibold text-white">
+          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[var(--color-brand)] text-xs font-semibold text-white">
             4
           </span>
 
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
               Yield Characteristics
             </h2>
 
-            <p class="mt-0.5 text-xs leading-5 text-gray-500">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               Harvest performance and grain quality
             </p>
           </div>
@@ -500,54 +480,54 @@
 
       <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-3">
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.average_yield_t_ha.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Average Yield (t/ha)
           </label>
 
           {{ form.average_yield_t_ha }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.average_yield_t_ha.name }}" class="form-help mt-1.5">
             Typical attainable yield under normal conditions
           </p>
 
           {% if form.average_yield_t_ha.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.average_yield_t_ha.name }}" class="form-error mt-1.5 font-medium">
             {{ form.average_yield_t_ha.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.potential_yield_t_ha.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Potential Yield (t/ha)
           </label>
 
           {{ form.potential_yield_t_ha }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.potential_yield_t_ha.name }}" class="form-help mt-1.5">
             Maximum achievable yield under optimal conditions
           </p>
 
           {% if form.potential_yield_t_ha.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.potential_yield_t_ha.name }}" class="form-error mt-1.5 font-medium">
             {{ form.potential_yield_t_ha.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.grain_quality.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Grain Quality
           </label>
 
           {{ form.grain_quality }}
 
           {% if form.grain_quality.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.grain_quality.name }}" class="form-error mt-1.5 font-medium">
             {{ form.grain_quality.errors.0 }}
           </p>
           {% endif %}
@@ -557,19 +537,19 @@
     </div>
 
     {# ═══ SECTION 5 — Pest and Disease Resistance ═════════════════════════ #}
-    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+    <div class="agri-card mb-6 overflow-hidden">
+      <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-4 sm:px-6">
         <div class="flex items-start gap-3">
-          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-green-700 text-xs font-semibold text-white">
+          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[var(--color-brand)] text-xs font-semibold text-white">
             5
           </span>
 
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
               Pest and Disease Resistance
             </h2>
 
-            <p class="mt-0.5 text-xs leading-5 text-gray-500">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               Resistance ratings for major rice diseases
             </p>
           </div>
@@ -577,205 +557,205 @@
       </div>
 
       {# Legend para sa resistance levels #}
-      <div class="flex flex-wrap gap-2 border-b border-gray-100 px-5 py-4 sm:px-6">
-        <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700">
+      <div class="flex flex-wrap gap-2 border-b border-[var(--color-border)] px-5 py-4 sm:px-6">
+        <span class="agri-badge">
           R — Resistant
         </span>
 
-        <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700">
+        <span class="inline-flex items-center rounded-full border border-[var(--color-border-strong)] bg-[var(--color-overlay)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-primary)]">
           MR — Moderately Resistant
         </span>
 
-        <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+        <span class="inline-flex items-center rounded-full border border-[var(--color-warning-border)] bg-[var(--color-warning-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-warning-text)]">
           S — Susceptible
         </span>
 
-        <span class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+        <span class="inline-flex items-center rounded-full border border-[var(--color-danger-border)] bg-[var(--color-danger-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-danger-text)]">
           HS — Highly Susceptible
         </span>
 
-        <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600">
+        <span class="inline-flex items-center rounded-full border border-[var(--color-border)] bg-[var(--color-canvas)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)]">
           U — Unknown
         </span>
       </div>
 
       <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-2 lg:grid-cols-3">
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.blast_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Leaf Blast
           </label>
 
           {{ form.blast_resistance }}
 
           {% if form.blast_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.blast_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.blast_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.neck_blast_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Neck Blast
           </label>
 
           {{ form.neck_blast_resistance }}
 
           {% if form.neck_blast_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.neck_blast_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.neck_blast_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.blight_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Bacterial Leaf Blight
           </label>
 
           {{ form.blight_resistance }}
 
           {% if form.blight_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.blight_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.blight_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.brown_spot_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Brown Spot
           </label>
 
           {{ form.brown_spot_resistance }}
 
           {% if form.brown_spot_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.brown_spot_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.brown_spot_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.false_smut_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             False Smut
           </label>
 
           {{ form.false_smut_resistance }}
 
           {% if form.false_smut_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.false_smut_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.false_smut_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.leaf_scald_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Leaf Scald
           </label>
 
           {{ form.leaf_scald_resistance }}
 
           {% if form.leaf_scald_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.leaf_scald_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.leaf_scald_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.leaf_smut_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Leaf Smut
           </label>
 
           {{ form.leaf_smut_resistance }}
 
           {% if form.leaf_smut_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.leaf_smut_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.leaf_smut_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.narrow_brown_spot_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Narrow Brown Spot
           </label>
 
           {{ form.narrow_brown_spot_resistance }}
 
           {% if form.narrow_brown_spot_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.narrow_brown_spot_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.narrow_brown_spot_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.rice_hispa_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Rice Hispa
           </label>
 
           {{ form.rice_hispa_resistance }}
 
           {% if form.rice_hispa_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.rice_hispa_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.rice_hispa_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.sheath_blight_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Sheath Blight
           </label>
 
           {{ form.sheath_blight_resistance }}
 
           {% if form.sheath_blight_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.sheath_blight_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.sheath_blight_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.tungro_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Tungro
           </label>
 
           {{ form.tungro_resistance }}
 
           {% if form.tungro_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.tungro_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.tungro_resistance.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.unhealthy_flowers_resistance.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Unhealthy Flowers
           </label>
 
           {{ form.unhealthy_flowers_resistance }}
 
           {% if form.unhealthy_flowers_resistance.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.unhealthy_flowers_resistance.name }}" class="form-error mt-1.5 font-medium">
             {{ form.unhealthy_flowers_resistance.errors.0 }}
           </p>
           {% endif %}
@@ -785,19 +765,19 @@
     </div>
 
     {# ═══ SECTION 6 — Seed Management ════════════════════════════════════ #}
-    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+    <div class="agri-card mb-6 overflow-hidden">
+      <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-4 sm:px-6">
         <div class="flex items-start gap-3">
-          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-green-700 text-xs font-semibold text-white">
+          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[var(--color-brand)] text-xs font-semibold text-white">
             6
           </span>
 
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
               Seed Management
             </h2>
 
-            <p class="mt-0.5 text-xs leading-5 text-gray-500">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               Ensure planting material quality
             </p>
           </div>
@@ -806,83 +786,74 @@
 
       <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-3">
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.seed_source.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Seed Source
           </label>
 
           {{ form.seed_source }}
 
           {% if form.seed_source.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.seed_source.name }}" class="form-error mt-1.5 font-medium">
             {{ form.seed_source.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.seed_certification.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Certification Level
           </label>
 
           {{ form.seed_certification }}
 
           {% if form.seed_certification.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.seed_certification.name }}" class="form-error mt-1.5 font-medium">
             {{ form.seed_certification.errors.0 }}
           </p>
           {% endif %}
 
           <details class="mt-2">
-            <summary class="cursor-pointer select-none text-xs font-medium text-green-700 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1">
+            <summary class="cursor-pointer select-none text-xs font-semibold text-[var(--color-brand)] hover:text-[var(--color-brand-hover)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand)]">
               Certification Level Guide
             </summary>
 
-            <div class="mt-2 space-y-1.5 rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs leading-5 text-gray-600">
+            <div class="mt-2 space-y-1.5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-3 text-xs leading-5 text-[var(--color-text-secondary)]">
               <p>
-                <strong class="font-semibold text-gray-700">Breeder Seed</strong> — Purest seed from breeding institutions;
-                used for multiplication programs.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Breeder Seed</strong> — Purest seed from breeding institutions; used for multiplication programs.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Foundation Seed</strong> — Derived from breeder seed;
-                for large-scale certified seed production.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Foundation Seed</strong> — Derived from breeder seed; for large-scale certified seed production.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Registered Seed</strong> — Meets standards;
-                for commercial planting at moderate scale.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Registered Seed</strong> — Meets standards; for commercial planting at moderate scale.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Certified Seed</strong> — Market-ready and approved
-                for distribution; direct planting by farmers.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Certified Seed</strong> — Market-ready and approved for distribution; direct planting by farmers.
               </p>
-
               <p>
-                <strong class="font-semibold text-gray-700">Truthfully Labeled / Local</strong> — Usually farmer-saved
-                seeds; lower uniformity and yield guarantee.
+                <strong class="font-semibold text-[var(--color-text-primary)]">Truthfully Labeled / Local</strong> — Usually farmer-saved seeds; lower uniformity and yield guarantee.
               </p>
             </div>
           </details>
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.germination_rate_pct.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Germination Rate (%)
           </label>
 
           {{ form.germination_rate_pct }}
 
-          <p class="mt-1.5 text-xs leading-5 text-gray-500">
+          <p id="help-{{ form.germination_rate_pct.name }}" class="form-help mt-1.5">
             Minimum recommended: 85%
           </p>
 
           {% if form.germination_rate_pct.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.germination_rate_pct.name }}" class="form-error mt-1.5 font-medium">
             {{ form.germination_rate_pct.errors.0 }}
           </p>
           {% endif %}
@@ -892,19 +863,19 @@
     </div>
 
     {# ═══ SECTION 7 — Management Recommendations ══════════════════════════ #}
-    <div class="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div class="border-b border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+    <div class="agri-card mb-6 overflow-hidden">
+      <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-5 py-4 sm:px-6">
         <div class="flex items-start gap-3">
-          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-green-700 text-xs font-semibold text-white">
+          <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md bg-[var(--color-brand)] text-xs font-semibold text-white">
             7
           </span>
 
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-[var(--color-text-primary)]">
               Management Recommendations
             </h2>
 
-            <p class="mt-0.5 text-xs leading-5 text-gray-500">
+            <p class="mt-0.5 text-xs text-[var(--color-text-secondary)]">
               Best practices for crop management
             </p>
           </div>
@@ -913,76 +884,76 @@
 
       <div class="grid grid-cols-1 gap-5 p-5 sm:p-6 md:grid-cols-2">
 
-        <div class="md:col-span-2">
+        <div class="form-field md:col-span-2">
           <label for="{{ form.fertilizer_schedule.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Fertilizer Schedule
           </label>
 
           {{ form.fertilizer_schedule }}
 
           {% if form.fertilizer_schedule.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.fertilizer_schedule.name }}" class="form-error mt-1.5 font-medium">
             {{ form.fertilizer_schedule.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.water_management.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Water Management Method
           </label>
 
           {{ form.water_management }}
 
           {% if form.water_management.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.water_management.name }}" class="form-error mt-1.5 font-medium">
             {{ form.water_management.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div>
+        <div class="form-field">
           <label for="{{ form.plant_spacing_cm.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Plant Spacing
           </label>
 
           {{ form.plant_spacing_cm }}
 
           {% if form.plant_spacing_cm.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.plant_spacing_cm.name }}" class="form-error mt-1.5 font-medium">
             {{ form.plant_spacing_cm.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div class="md:col-span-2">
+        <div class="form-field md:col-span-2">
           <label for="{{ form.planting_season.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Recommended Planting Season
           </label>
 
           {{ form.planting_season }}
 
           {% if form.planting_season.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.planting_season.name }}" class="form-error mt-1.5 font-medium">
             {{ form.planting_season.errors.0 }}
           </p>
           {% endif %}
         </div>
 
-        <div class="md:col-span-2">
+        <div class="form-field md:col-span-2">
           <label for="{{ form.notes.id_for_label }}"
-                 class="mb-1.5 block text-sm font-medium text-gray-700">
+                 class="mb-1.5 block">
             Additional Notes
           </label>
 
           {{ form.notes }}
 
           {% if form.notes.errors %}
-          <p class="mt-1.5 text-xs font-medium text-red-600">
+          <p id="error-{{ form.notes.name }}" class="form-error mt-1.5 font-medium">
             {{ form.notes.errors.0 }}
           </p>
           {% endif %}
@@ -991,22 +962,21 @@
       </div>
     </div>
 
-    {# ── Bottom Action Buttons — nasa ilalim lamang ng form ─────────────── #}
-    {# Hindi fixed para hindi nakadikit sa bottom ng screen. #}
-    <div class="mb-6 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm sm:px-6">
+    {# ── Bottom Action Buttons ────────────────────────────────────────── #}
+    <div class="agri-card mb-6 px-5 py-4 sm:px-6">
       <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
-        <div class="text-center text-sm leading-5 text-gray-500 sm:text-left">
+        <div class="text-center text-sm text-[var(--color-text-secondary)] sm:text-left">
           {% if variety %}
             Used in
-            <strong class="font-semibold text-gray-700">
+            <strong class="font-semibold text-[var(--color-text-primary)]">
               {{ variety.plantings.count }}
             </strong>
             planting record{{ variety.plantings.count|pluralize }}.
           {% else %}
-            <span class="text-gray-400">
+            <span class="text-[var(--color-text-muted)]">
               Fields marked
-              <span class="text-red-600" aria-hidden="true">*</span>
+              <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
               are required
             </span>
           {% endif %}
@@ -1016,19 +986,13 @@
 
           {# Cancel button #}
           <a href="{{ cancel_url }}"
-             class="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
+             class="btn btn-secondary">
             Cancel
           </a>
 
-          {# Archive button — edit mode lang #}
-          {% if variety %}
-          
-          {% endif %}
-
           {# Save / Create button #}
           <button type="submit"
-                  class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-green-700 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
-
+                  class="btn btn-primary">
             <svg class="h-4 w-4 flex-shrink-0"
                  fill="none"
                  stroke="currentColor"
@@ -1051,10 +1015,10 @@
 
   {# ── Edit-mode stats card ─────────────────────────────────────────────── #}
   {% if variety %}
-  <div class="mb-6 rounded-xl border border-gray-200 bg-gray-50 p-5">
+  <div class="agri-card mb-6 bg-[var(--color-overlay)] p-5">
 
-    <h3 class="mb-4 flex items-center gap-2 text-sm font-semibold text-gray-700">
-      <svg class="h-4 w-4 flex-shrink-0 text-gray-400"
+    <h3 class="mb-4 flex items-center gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+      <svg class="h-4 w-4 flex-shrink-0 text-[var(--color-text-muted)]"
            fill="none"
            stroke="currentColor"
            viewBox="0 0 24 24"
@@ -1070,43 +1034,43 @@
 
     <dl class="grid grid-cols-2 gap-3 text-center sm:grid-cols-4">
 
-      <div class="rounded-lg border border-gray-200 bg-white p-3">
-        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
+      <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+        <dt class="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
           ID
         </dt>
 
-        <dd class="mt-1 text-lg font-semibold text-gray-900 font-mono">
+        <dd class="mt-1 text-lg font-semibold text-[var(--color-text-primary)] font-mono">
           #{{ variety.pk }}
         </dd>
       </div>
 
-      <div class="rounded-lg border border-gray-200 bg-white p-3">
-        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
+      <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+        <dt class="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
           Code
         </dt>
 
-        <dd class="mt-1 truncate text-lg font-semibold text-green-700"
+        <dd class="mt-1 truncate text-lg font-semibold text-[var(--color-brand)]"
             title="{{ variety.code }}">
           {{ variety.code }}
         </dd>
       </div>
 
-      <div class="rounded-lg border border-gray-200 bg-white p-3">
-        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
+      <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+        <dt class="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
           Plantings
         </dt>
 
-        <dd class="mt-1 text-lg font-semibold text-gray-900">
+        <dd class="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
           {{ variety.plantings.count }}
         </dd>
       </div>
 
-      <div class="rounded-lg border border-gray-200 bg-white p-3">
-        <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">
+      <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+        <dt class="text-xs font-medium uppercase tracking-wide text-[var(--color-text-muted)]">
           Growth
         </dt>
 
-        <dd class="mt-1 text-lg font-semibold text-gray-900">
+        <dd class="mt-1 text-lg font-semibold text-[var(--color-text-primary)]">
           {{ variety.average_growth_days }}d
         </dd>
       </div>

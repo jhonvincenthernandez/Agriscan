@@ -6,11 +6,11 @@
 
   <!-- Page Header -->
   <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
       <div class="min-w-0">
         <div class="flex items-center gap-2.5">
-          <svg class="h-5 w-5 shrink-0 text-green-700 sm:h-6 sm:w-6"
+          <svg class="h-6 w-6 shrink-0 text-[var(--color-brand)]"
                fill="none"
                stroke="currentColor"
                viewBox="0 0 24 24"
@@ -21,12 +21,12 @@
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
           </svg>
 
-          <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+          <h1 class="text-xl font-bold tracking-tight sm:text-2xl">
             Yield Record
           </h1>
         </div>
 
-        <p class="mt-1.5 max-w-2xl text-sm leading-6 text-gray-600">
+        <p class="mt-1 max-w-2xl text-sm text-[var(--color-text-secondary)]">
           Review the generated yield prediction and its source records.
         </p>
       </div>
@@ -56,10 +56,10 @@
   <!-- Record Information -->
   <div class="agri-card mb-6 overflow-hidden">
 
-    <div class="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-5 lg:px-6">
+    <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-3.5 sm:px-5 lg:px-6">
       <div class="flex items-start gap-2.5">
 
-        <svg class="mt-0.5 h-4 w-4 shrink-0 text-green-700"
+        <svg class="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-brand)]"
              fill="none"
              stroke="currentColor"
              viewBox="0 0 24 24"
@@ -71,11 +71,11 @@
         </svg>
 
         <div class="min-w-0">
-          <h2 class="text-sm font-semibold text-gray-900">
+          <h2 class="text-sm font-semibold text-[var(--color-text-primary)]">
             Yield Prediction Record
           </h2>
 
-          <p class="mt-0.5 text-xs leading-5 text-gray-500">
+          <p class="mt-0.5 text-xs text-[var(--color-text-muted)]">
             Values shown here are generated from the associated planting and detection records.
           </p>
         </div>
@@ -86,10 +86,10 @@
 
     <div class="p-4 sm:p-5 lg:p-6">
 
-      <div class="rounded-lg border border-green-200 bg-green-50 p-4 sm:p-5">
+      <div class="agri-alert agri-alert-info">
         <div class="flex items-start gap-3">
 
-          <svg class="mt-0.5 h-5 w-5 shrink-0 text-green-700"
+          <svg class="mt-0.5 h-5 w-5 shrink-0"
                fill="none"
                stroke="currentColor"
                viewBox="0 0 24 24"
@@ -101,11 +101,11 @@
           </svg>
 
           <div class="min-w-0">
-            <p class="text-sm font-semibold text-green-900">
+            <p class="text-sm font-semibold">
               Generated Yield Record
             </p>
 
-            <p class="mt-1 text-xs leading-5 text-green-800">
+            <p class="mt-0.5 text-xs leading-relaxed">
               This record contains prediction results derived from the associated
               planting and detection information. Source and model-generated values
               are not manually editable here.
@@ -123,11 +123,11 @@
   <!-- Source & Prediction Details -->
   <div class="agri-card overflow-hidden">
 
-    <div class="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-5 lg:px-6">
+    <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-4 py-3.5 sm:px-5 lg:px-6">
 
       <div class="flex items-start gap-2.5">
 
-        <svg class="mt-0.5 h-4 w-4 shrink-0 text-green-700"
+        <svg class="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-brand)]"
              fill="none"
              stroke="currentColor"
              viewBox="0 0 24 24"
@@ -135,15 +135,15 @@
           <path stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
-                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 002 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
 
         <div class="min-w-0">
-          <h2 class="text-sm font-semibold text-gray-900">
+          <h2 class="text-sm font-semibold text-[var(--color-text-primary)]">
             Record Details
           </h2>
 
-          <p class="mt-0.5 text-xs leading-5 text-gray-500">
+          <p class="mt-0.5 text-xs text-[var(--color-text-muted)]">
             Source records, prediction metrics, and generated model information.
           </p>
         </div>
@@ -165,42 +165,41 @@
 
             <div class="form-field">
 
-              <div class="flex items-center justify-between gap-3">
+              <div class="flex items-center justify-between gap-3 mb-1.5">
 
-                <label for="{{ field.id_for_label }}"
-                       class="block text-sm font-medium text-gray-700">
+                <label for="{{ field.id_for_label }}">
                   {{ field.label }}
                 </label>
 
-                <span class="shrink-0 text-xs font-medium text-gray-500">
+                <span class="agri-badge !bg-[var(--color-overlay)] !text-[var(--color-text-muted)] !border-[var(--color-border)] !text-[11px]">
                   Read-only
                 </span>
 
               </div>
 
-              <div class="mt-1.5">
+              <div>
 
                 {% if field.field.widget.input_type == 'select' %}
 
-                  <div class="min-h-[42px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  <div class="min-h-[var(--field-h)] rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-overlay)] px-3 py-2 text-[var(--field-fs)] text-[var(--color-text)] flex items-center">
                     {{ field.selected_label|default:field.value|default:"—" }}
                   </div>
 
                 {% elif field.field.widget.input_type == 'date' %}
 
-                  <div class="min-h-[42px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  <div class="min-h-[var(--field-h)] rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-overlay)] px-3 py-2 text-[var(--field-fs)] text-[var(--color-text)] flex items-center">
                     {{ field.value|default:"—" }}
                   </div>
 
                 {% elif field.name == 'model_meta' %}
 
-                  <div class="min-h-[90px] whitespace-pre-wrap break-words rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm leading-6 text-gray-700">
+                  <div class="min-h-[90px] whitespace-pre-wrap break-words rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-overlay)] px-3 py-2 text-[var(--field-fs)] leading-relaxed text-[var(--color-text)]">
                     {{ field.value|default:"—" }}
                   </div>
 
                 {% else %}
 
-                  <div class="min-h-[42px] rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                  <div class="min-h-[var(--field-h)] rounded-[var(--radius-sm)] border border-[var(--color-border-strong)] bg-[var(--color-overlay)] px-3 py-2 text-[var(--field-fs)] text-[var(--color-text)] flex items-center">
                     {{ field.value|default:"—" }}
                   </div>
 
@@ -208,10 +207,9 @@
 
               </div>
 
-             
-
               {% if field.errors %}
-                <p class="mt-1 text-sm text-red-600"
+                <p class="mt-1 form-error"
+                   id="error-{{ field.name }}"
                    role="alert">
                   {% for err in field.errors %}
                     {{ err }}{% if not forloop.last %}<br />{% endif %}
@@ -230,9 +228,6 @@
     </div>
 
   </div>
-
-
- 
 
 </section>
 {% endblock %}
