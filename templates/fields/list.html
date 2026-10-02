@@ -1,778 +1,437 @@
 ﻿{% extends 'base.html' %}
 
-{% block title %}
-  {% if role == 'farmer' %}My Fields{% else %}All Fields{% endif %} · AgriScan+
+{% block title %}{% if role == 'farmer' %}My Fields{% else %}All Fields{% endif %} · AgriScan+{% endblock %}
+
+{% block styles %}
+<style>
+  /* Field list. Uses the global tokens from base.html only. */
+
+  .fl-panel { padding: 1rem; }
+  @media (min-width: 640px) { .fl-panel { padding: 1.5rem; } }
+
+  /* ---- Page header ---- */
+  .fl-head { display: flex; flex-direction: column; gap: 1.25rem; }
+  @media (min-width: 1024px) {
+    .fl-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+  .fl-titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
+  .fl-icon {
+    display: flex; flex: none; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; color: var(--color-brand);
+    background: var(--color-brand-light); border: 1px solid var(--color-brand-border);
+    border-radius: var(--radius-sm);
+  }
+  .fl-icon svg { width: 1.25rem; height: 1.25rem; }
+  .fl-title {
+    min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-size: var(--text-page); line-height: 1.25; font-weight: 700;
+    color: var(--color-text-primary);
+  }
+  .fl-sub {
+    max-width: 65ch; margin: 0.5rem 0 0; font-size: 0.875rem; line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+  .fl-sub strong { color: var(--color-text-primary); font-weight: 600; }
+
+  .fl-actions { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; }
+  @media (min-width: 640px)  { .fl-actions { flex-direction: row; } }
+  @media (min-width: 1024px) { .fl-actions { width: auto; flex: none; } }
+
+  .fl-count {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    min-height: var(--btn-h); padding: 0.375rem 0.875rem;
+    color: var(--color-text); background: var(--color-overlay);
+    border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm);
+    font-size: 0.875rem; font-weight: 600; white-space: nowrap;
+  }
+  .fl-count svg { width: 1rem; height: 1rem; color: var(--color-text-secondary); }
+
+  /* ---- Badges ---- */
+  .fl-badge {
+    display: inline-flex; align-items: center; gap: 0.375rem; max-width: 100%;
+    padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full);
+    font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem;
+  }
+  .fl-badge svg { width: 0.875rem; height: 0.875rem; flex: none; }
+  .fl-badge span.fl-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fl-badge--neutral { color: var(--color-text); background: var(--color-overlay); border-color: var(--color-border-strong); }
+  .fl-badge--success { color: var(--color-success-text); background: var(--color-success-soft); border-color: var(--color-success-border); }
+  .fl-badge--danger  { color: var(--color-danger-text); background: var(--color-danger-soft); border-color: var(--color-danger-border); }
+  .fl-dot { width: 0.5rem; height: 0.5rem; border-radius: var(--radius-full); background: var(--color-brand); }
+
+  /* ---- Filters (own surface, not nested in the header card) ---- */
+  .fl-filter { margin-bottom: 1.5rem; }
+  .fl-searchrow { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) { .fl-searchrow { flex-direction: row; } }
+  .fl-search { position: relative; flex: 1 1 auto; min-width: 0; }
+  .fl-search > svg {
+    position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem;
+    transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none;
+  }
+  .fl-search input { padding-left: 2.5rem; }
+  .fl-kbd { display: none; }
+  @media (min-width: 1024px) {
+    .fl-search input { padding-right: 4.5rem; }
+    .fl-kbd {
+      display: inline-block; position: absolute; right: 0.625rem; top: 50%;
+      transform: translateY(-50%); padding: 0.125rem 0.375rem;
+      color: var(--color-text-secondary); background: var(--color-overlay);
+      border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs);
+      font-size: var(--text-xs); pointer-events: none;
+    }
+  }
+  .fl-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; margin-top: 0.75rem; }
+  @media (min-width: 640px) { .fl-filters { grid-template-columns: repeat(2, minmax(0, 14rem)); } }
+
+  /* ---- Card grid ---- */
+  .fl-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  @media (min-width: 640px)  { .fl-grid { gap: 1.5rem; } }
+  @media (min-width: 768px)  { .fl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1280px) { .fl-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  .fl-card { display: flex; flex-direction: column; min-width: 0; }
+  .fl-card__body { display: flex; flex: 1; flex-direction: column; gap: 1rem; padding: 1.25rem; }
+  @media (min-width: 640px) { .fl-card__body { padding: 1.5rem; } }
+  .fl-card__foot {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem;
+    padding: 1rem 1.25rem; border-top: 1px solid var(--color-border);
+  }
+  @media (min-width: 640px) { .fl-card__foot { padding-inline: 1.5rem; } }
+  .fl-card__foot .btn svg { width: 1rem; height: 1rem; flex: none; }
+  .fl-btn-warn { color: var(--color-warning-text); border-color: var(--color-warning-border); }
+  .fl-btn-warn:hover { color: var(--color-warning-text); background: var(--color-warning-soft); border-color: #f59e0b; }
+
+  .fl-name-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.375rem; }
+  .fl-name {
+    margin: 0; font-size: var(--text-md); font-weight: 700; line-height: 1.3;
+    color: var(--color-text-primary); overflow-wrap: anywhere;
+  }
+  @media (min-width: 640px) { .fl-name { font-size: var(--text-lg); } }
+
+  .fl-meta {
+    display: flex; align-items: flex-start; gap: 0.375rem; margin: 0;
+    font-size: 0.875rem; line-height: 1.4; color: var(--color-text-secondary); overflow-wrap: anywhere;
+  }
+  .fl-meta svg { width: 1rem; height: 1rem; flex: none; margin-top: 0.125rem; color: var(--color-text-muted); }
+  .fl-meta .is-empty { color: var(--color-text-muted); font-style: italic; }
+
+  .fl-owner {
+    display: flex; align-items: flex-start; gap: 0.5rem; margin: 0;
+    font-size: 0.875rem; color: var(--color-text); overflow-wrap: anywhere;
+  }
+  .fl-owner svg { width: 1rem; height: 1rem; flex: none; margin-top: 0.125rem; color: var(--color-brand); }
+  .fl-owner strong { font-weight: 600; color: var(--color-text-primary); }
+
+  .fl-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+  /* Details list: rows separated by borders, no extra surface inside the card */
+  .fl-details { margin: 0; border-top: 1px solid var(--color-border); }
+  .fl-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 0.625rem 0; border-bottom: 1px solid var(--color-border);
+  }
+  .fl-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .fl-row dt { font-size: 0.875rem; color: var(--color-text-secondary); }
+  .fl-row dd { margin: 0; font-size: 0.875rem; font-weight: 600; color: var(--color-text-primary); text-align: right; }
+  .fl-row dd.is-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: var(--text-sm); font-weight: 400; color: var(--color-text); overflow-wrap: anywhere;
+  }
+  .fl-pill {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 1.75rem; height: 1.5rem; padding: 0 0.5rem;
+    color: var(--color-success-text); background: var(--color-success-soft);
+    border: 1px solid var(--color-success-border); border-radius: var(--radius-full);
+    font-size: var(--text-sm); font-weight: 700;
+  }
+
+  /* ---- Empty state ---- */
+  .fl-empty { padding: 2.5rem 1.5rem; text-align: center; }
+  @media (min-width: 640px) { .fl-empty { padding: 3rem 1.5rem; } }
+  .fl-empty__icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem;
+    color: var(--color-text-secondary); background: var(--color-overlay);
+    border: 1px solid var(--color-border-strong); border-radius: var(--radius-full);
+  }
+  .fl-empty__icon svg { width: 1.75rem; height: 1.75rem; }
+  .fl-empty h2 { margin: 0 0 0.5rem; font-size: var(--text-lg); }
+  .fl-empty p { max-width: 45ch; margin: 0 auto 1.5rem; font-size: 0.9375rem; color: var(--color-text-secondary); }
+</style>
 {% endblock %}
 
 {% block content %}
 <section class="page-container min-w-0">
 
-  <!-- =========================================================
-       PAGE HEADER
-       ========================================================= -->
-  <header class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
-
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-
-      <!-- Title / Description -->
-      <div class="min-w-0 flex-1">
-
-        <div class="flex flex-wrap items-center gap-2.5">
-
-          <div class="flex min-w-0 items-center gap-3">
-
-            <div
-              class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700"
-              aria-hidden="true"
-            >
-              <svg
-                class="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0z"
-                />
+  <!-- Page header -->
+  <header class="agri-card fl-panel" style="margin-bottom: 1.5rem;">
+    <div class="fl-head">
+      <div style="min-width:0; flex:1;">
+        <div class="fl-titlerow">
+          <div style="display:flex; align-items:center; gap:0.75rem; min-width:0;">
+            <div class="fl-icon" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0z"/>
               </svg>
             </div>
-
-            <div class="min-w-0">
-              <h1 class="truncate text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-                {% if role == 'farmer' %}My Fields{% else %}All Fields{% endif %}
-              </h1>
-            </div>
-
+            <h1 class="fl-title">{% if role == 'farmer' %}My Fields{% else %}All Fields{% endif %}</h1>
           </div>
 
           {% if role == 'admin' %}
-          <span class="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-semibold text-gray-700">
-            Admin
-          </span>
+          <span class="fl-badge fl-badge--neutral">Admin</span>
           {% elif role == 'technician' %}
-          <span class="inline-flex items-center rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-            Technician
-          </span>
+          <span class="fl-badge fl-badge--neutral">Technician</span>
           {% endif %}
-
         </div>
 
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-gray-500">
-          {% if role == 'farmer' %}
-            Manage your agricultural fields and locations.
-          {% else %}
-            Monitor and manage farmers' fields across the system.
-          {% endif %}
-
+        <p class="fl-sub">
+          {% if role == 'farmer' %}Manage your agricultural fields and locations.{% else %}Monitor and manage farmers' fields across the system.{% endif %}
           {% if total_area %}
             <span class="hidden sm:inline"> · </span>
-            <span class="mt-1 block font-medium text-gray-700 sm:mt-0 sm:inline">
-              {{ total_area }} ha total
-            </span>
+            <strong class="block sm:inline">{{ total_area }} ha total</strong>
           {% endif %}
         </p>
-
       </div>
 
-      <!-- Header Actions -->
-      <div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:flex-shrink-0">
-
-        <!-- Field Count -->
-        <div class="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2.5">
-          <svg
-            class="h-4 w-4 flex-shrink-0 text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M3 7.5L12 3l9 4.5v9L12 21l-9-4.5v-9zM12 21v-9M3.5 7.5L12 12l8.5-4.5"
-            />
+      <div class="fl-actions">
+        <span class="fl-count">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7.5L12 3l9 4.5v9L12 21l-9-4.5v-9zM12 21v-9M3.5 7.5L12 12l8.5-4.5"/>
           </svg>
+          {{ total_count }} Field{{ total_count|pluralize }}
+        </span>
 
-          <span class="whitespace-nowrap text-sm font-semibold text-gray-700">
-            {{ total_count }} Field{{ total_count|pluralize }}
-          </span>
-        </div>
-
-        <!-- Add Field -->
-        <a
-          href="{% url 'polls:field_create' %}"
-          class="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-        >
-          <svg
-            class="h-4 w-4 flex-shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
+        <a href="{% url 'polls:field_create' %}" class="btn btn-primary">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
           </svg>
           Add Field
         </a>
+      </div>
+    </div>
+  </header>
 
+  <!-- Search and filters -->
+  <div class="agri-card fl-panel fl-filter">
+    <form method="get" role="search" aria-label="Search and sort fields">
+
+      <div class="fl-searchrow">
+        <div class="fl-search">
+          <label for="field-search" class="sr-only-agri">Search fields</label>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 10-14 0 7 7 0 0014 0z"/>
+          </svg>
+          <input id="field-search" type="search" name="search" value="{{ search }}"
+                 placeholder="Search fields, barangay, owners" autocomplete="off">
+          <kbd class="fl-kbd" aria-hidden="true">Ctrl K</kbd>
+        </div>
+
+        <!-- Location filters have no dropdown here, so keep them across searches.
+             Sort is a select in this same form, so it needs no hidden copy. -->
+        <input type="hidden" name="barangay" value="{{ barangay_filter }}">
+        <input type="hidden" name="municipality" value="{{ municipality_filter }}">
+
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
+
+        {% if search or barangay_filter or municipality_filter %}
+        <a href="{% url 'polls:fields_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
       </div>
 
-    </div>
-
-    <!-- =======================================================
-         SEARCH / FILTER PANEL
-         ======================================================= -->
-    <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
-
-      <form method="get" class="space-y-3">
-
-        <!-- Search Row -->
-        <div class="flex flex-col gap-2 sm:flex-row">
-
-          <div class="relative min-w-0 flex-1">
-
-            
-
-            <input
-              id="field-search"
-              type="text"
-              name="search"
-              value="{{ search }}"
-              placeholder="Search fields, barangay, owners… (Ctrl+K)"
-              autocomplete="off"
-              aria-label="Search fields"
-              class="min-h-[44px] w-full rounded-lg border border-gray-300 bg-white pl-10 pr-4 text-base text-gray-900 shadow-sm transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px] sm:text-sm"
-            />
-
-          </div>
-
-          <!-- Preserve active location filters -->
-          <input
-            type="hidden"
-            name="barangay"
-            value="{{ barangay_filter }}"
-          >
-
-          <input
-            type="hidden"
-            name="municipality"
-            value="{{ municipality_filter }}"
-          >
-
-          <!-- Preserve sort across text search -->
-          <input
-            type="hidden"
-            name="sort"
-            value="{{ sort_by }}"
-          >
-
-          <button
-            type="submit"
-            data-loading
-            class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-green-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 sm:min-h-[42px] sm:min-w-[110px]"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 10-14 0 7 7 0 0014 0z"
-              />
-            </svg>
-            Search
-          </button>
-
-          {% if search or barangay_filter or municipality_filter %}
-          <a
-            href="{% url 'polls:fields_list' %}"
-            class="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 sm:min-h-[42px]"
-          >
-            Clear
-          </a>
-          {% endif %}
-
+      <div class="fl-filters">
+        <div>
+          <label for="field-sort" class="sr-only-agri">Sort fields</label>
+          <select id="field-sort" name="sort" data-autosubmit>
+            <option value="-created_at" {% if sort_by == '-created_at' or not sort_by %}selected{% endif %}>Newest First</option>
+            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Oldest First</option>
+            <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name A-Z</option>
+            <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>Name Z-A</option>
+            <option value="barangay" {% if sort_by == 'barangay' %}selected{% endif %}>Barangay A-Z</option>
+            <option value="-barangay" {% if sort_by == '-barangay' %}selected{% endif %}>Barangay Z-A</option>
+            <option value="-area_hectares" {% if sort_by == '-area_hectares' %}selected{% endif %}>Area (Largest)</option>
+            <option value="area_hectares" {% if sort_by == 'area_hectares' %}selected{% endif %}>Area (Smallest)</option>
+            <option value="pk" {% if sort_by == 'pk' %}selected{% endif %}>ID (Low to High)</option>
+            <option value="-pk" {% if sort_by == '-pk' %}selected{% endif %}>ID (High to Low)</option>
+          </select>
         </div>
 
-        <!-- Sorting / Page Size -->
-        <div class="flex flex-col gap-2 sm:flex-row">
-
-          <div class="min-w-0 flex-1 sm:flex-none">
-
-            <label for="field-sort" class="sr-only">
-              Sort fields
-            </label>
-
-            <select
-              id="field-sort"
-              name="sort"
-              onchange="this.form.submit()"
-              class="min-h-[44px] w-full min-w-[180px] appearance-none rounded-lg border border-gray-300 bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3E%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat px-3 py-2.5 pr-8 text-base text-gray-900 transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px] sm:w-auto sm:text-sm"
-            >
-              <option value="-created_at" {% if sort_by == '-created_at' or not sort_by %}selected{% endif %}>
-                Newest First
-              </option>
-
-              <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>
-                Oldest First
-              </option>
-
-              <option value="name" {% if sort_by == 'name' %}selected{% endif %}>
-                Name A-Z
-              </option>
-
-              <option value="-name" {% if sort_by == '-name' %}selected{% endif %}>
-                Name Z-A
-              </option>
-
-              <option value="barangay" {% if sort_by == 'barangay' %}selected{% endif %}>
-                Barangay A-Z
-              </option>
-
-              <option value="-barangay" {% if sort_by == '-barangay' %}selected{% endif %}>
-                Barangay Z-A
-              </option>
-
-              <option value="-area_hectares" {% if sort_by == '-area_hectares' %}selected{% endif %}>
-                Area (Largest)
-              </option>
-
-              <option value="area_hectares" {% if sort_by == 'area_hectares' %}selected{% endif %}>
-                Area (Smallest)
-              </option>
-
-              <option value="pk" {% if sort_by == 'pk' %}selected{% endif %}>
-                ID ↑
-              </option>
-
-              <option value="-pk" {% if sort_by == '-pk' %}selected{% endif %}>
-                ID ↓
-              </option>
-            </select>
-
-          </div>
-
-          <div class="min-w-0 flex-1 sm:flex-none">
-
-            <label for="field-page-size" class="sr-only">
-              Fields per page
-            </label>
-
-            <select
-              id="field-page-size"
-              name="page_size"
-              onchange="this.form.submit()"
-              class="min-h-[44px] w-full min-w-[140px] appearance-none rounded-lg border border-gray-300 bg-white bg-[url('data:image/svg+xml;charset=utf-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 fill=%22none%22 viewBox=%220 0 20 20%22%3E%3Cpath stroke=%22%236b7280%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22 stroke-width=%221.5%22 d=%22M6 8l4 4 4-4%22/%3C/svg%3E')] bg-[length:1.25rem] bg-[right_0.4rem_center] bg-no-repeat px-3 py-2.5 pr-8 text-base text-gray-900 transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px] sm:w-auto sm:text-sm"
-            >
-              {% for size in allowed_page_sizes %}
-              <option
-                value="{{ size }}"
-                {% if page_size == size %}selected{% endif %}
-              >
-                {{ size }} / page
-              </option>
-              {% endfor %}
-            </select>
-
-          </div>
-
+        <div>
+          <label for="field-page-size" class="sr-only-agri">Fields per page</label>
+          <select id="field-page-size" name="page_size" data-autosubmit>
+            {% for size in allowed_page_sizes %}
+            <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} / page</option>
+            {% endfor %}
+          </select>
         </div>
-
-      </form>
-
-    </div>
-
-  </header>
+      </div>
+    </form>
+  </div>
 
   {% if fields %}
 
-  <!-- =========================================================
-       LOADING SKELETON
-       ========================================================= -->
-  <div
-    id="fields-skeleton"
-    class="mb-6 grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3"
-    aria-hidden="true"
-  >
-
-    {% for i in "123456" %}
-
-    <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-
-      <div class="mb-5 flex items-start justify-between gap-3">
-
-        <div class="min-w-0 flex-1">
-          <div class="sk mb-2 h-6 w-32 rounded"></div>
-          <div class="sk h-4 w-28 rounded"></div>
-        </div>
-
-        <div class="sk h-6 w-20 flex-shrink-0 rounded-full"></div>
-
-      </div>
-
-      <div class="mb-5 space-y-3">
-        <div class="sk h-4 w-full rounded"></div>
-        <div class="sk h-4 w-4/5 rounded"></div>
-        <div class="sk h-4 w-3/5 rounded"></div>
-      </div>
-
-      <div class="flex gap-2 border-t border-gray-100 pt-4">
-        <div class="sk h-9 flex-1 rounded-lg"></div>
-        <div class="sk h-9 flex-1 rounded-lg"></div>
-      </div>
-
-    </div>
-
-    {% endfor %}
-
-  </div>
-
-  <!-- =========================================================
-       FIELD CARDS
-       ========================================================= -->
-  <div
-    id="fields-cards"
-    class="hidden grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3"
-  >
-
+  <!-- Field cards -->
+  <div class="fl-grid">
     {% for field in fields %}
+    <article class="agri-card agri-card-interactive fl-card">
 
-    <article
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-[border-color,box-shadow] duration-200 hover:border-gray-300 hover:shadow-md"
-    >
+      <div class="fl-card__body">
 
-      <div class="p-5 sm:p-6">
-
-        <!-- =====================================================
-             CARD HEADER
-             ===================================================== -->
-        <div class="mb-4 flex items-start gap-3">
-
-          <div class="min-w-0 flex-1">
-
-            <div class="mb-1.5 flex flex-wrap items-center gap-2">
-
-              <h2 class="break-words text-lg font-semibold tracking-tight text-gray-900 sm:text-xl">
-                {{ field.name }}
-              </h2>
-
-              {% if field.has_active_planting %}
-              <span class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-green-200 bg-green-50 px-2 py-1 text-[11px] font-semibold text-green-700 sm:text-xs">
-                <span
-                  class="h-1.5 w-1.5 rounded-full bg-green-600"
-                  aria-hidden="true"
-                ></span>
-                Active Crop
-              </span>
-              {% endif %}
-
-            </div>
-
-            <!-- Location -->
-            <div class="flex items-start gap-1.5 text-sm">
-
-              <svg
-                class="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-
-              {% if field.barangay or field.municipality or field.province %}
-
-              <span class="break-words leading-5 text-gray-500">
-
-                {% if field.barangay %}
-                  {{ field.barangay }}
-                {% endif %}
-
-                {% if field.municipality %}
-                  {% if field.barangay %} · {% endif %}
-                  {{ field.municipality }}
-                {% endif %}
-
-                {% if field.province %}
-                  {% if field.barangay or field.municipality %} · {% endif %}
-                  {{ field.province }}
-                {% endif %}
-
-              </span>
-
-              {% else %}
-
-              <span class="leading-5 text-gray-400 italic">
-                Location not specified
-              </span>
-
-              {% endif %}
-
-            </div>
-
+        <!-- Name, status, location -->
+        <div>
+          <div class="fl-name-row">
+            <h2 class="fl-name">{{ field.name }}</h2>
+            {% if field.has_active_planting %}
+            <span class="fl-badge fl-badge--success">
+              <span class="fl-dot" aria-hidden="true"></span>
+              Active Crop
+            </span>
+            {% endif %}
           </div>
 
-        </div>
-
-        <!-- =====================================================
-             OWNER
-             ===================================================== -->
-        {% if role in 'admin,technician' %}
-
-        <div class="mb-4 rounded-lg border border-green-100 bg-green-50 px-3 py-2.5">
-
-          <div class="flex items-start gap-2">
-
-            <svg
-              class="mt-0.5 h-4 w-4 flex-shrink-0 text-green-700"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
+          <p class="fl-meta">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-
-            <p class="min-w-0 break-words text-xs text-green-800 sm:text-sm">
-              <span class="font-semibold">Owner:</span>
-              {{ field.owner.user.get_full_name|default:field.owner.user.username }}
-            </p>
-
-          </div>
-
+            {% if field.barangay or field.municipality or field.province %}
+            <span>
+              {% if field.barangay %}{{ field.barangay }}{% endif %}
+              {% if field.municipality %}{% if field.barangay %} · {% endif %}{{ field.municipality }}{% endif %}
+              {% if field.province %}{% if field.barangay or field.municipality %} · {% endif %}{{ field.province }}{% endif %}
+            </span>
+            {% else %}
+            <span class="is-empty">Location not specified</span>
+            {% endif %}
+          </p>
         </div>
 
+        {% if role != 'farmer' %}
+        <p class="fl-owner">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+          <span><strong>Owner:</strong> {{ field.owner.user.get_full_name|default:field.owner.user.username }}</span>
+        </p>
         {% endif %}
 
-        <!-- =====================================================
-             FIELD INFORMATION
-             ===================================================== -->
-        <div class="space-y-3">
+        <!-- Soil, ecosystem, flood -->
+        <div class="fl-chips">
+          <span class="fl-badge fl-badge--neutral">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m0-18C8 6 5 9 5 13a7 7 0 0014 0c0-4-3-7-7-10z"/>
+            </svg>
+            <span class="fl-ellipsis">Soil: {% if field.soil_type %}{{ field.get_soil_type_display }}{% else %}Unknown{% endif %}</span>
+          </span>
 
-          <!-- Soil / Ecosystem / Flood -->
-          <div class="flex flex-wrap gap-2">
+          <span class="fl-badge fl-badge--neutral">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c4.5 2.5 7 6.2 7 10a7 7 0 11-14 0c0-3.8 2.5-7.5 7-10z"/>
+            </svg>
+            <span class="fl-ellipsis">Ecosystem: {% if field.ecosystem_type %}{{ field.get_ecosystem_type_display }}{% else %}Unknown{% endif %}</span>
+          </span>
 
-            <!-- Soil -->
-            <span class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs font-semibold text-gray-700">
-
-              <svg
-                class="h-3.5 w-3.5 flex-shrink-0 text-gray-500"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 3v18m0-18C8 6 5 9 5 13a7 7 0 0014 0c0-4-3-7-7-10z"
-                />
-              </svg>
-
-              <span class="truncate">
-                Soil:
-                {% if field.soil_type %}
-                  {{ field.get_soil_type_display }}
-                {% else %}
-                  Unknown
-                {% endif %}
-              </span>
-
-            </span>
-
-            <!-- Ecosystem -->
-            <span class="inline-flex max-w-full items-center gap-1.5 rounded-full border border-green-100 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-800">
-
-              <svg
-                class="h-3.5 w-3.5 flex-shrink-0 text-green-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke="currentColor"
-                  stroke-width="2"
-                  d="M12 3c4.5 2.5 7 6.2 7 10a7 7 0 11-14 0c0-3.8 2.5-7.5 7-10z"
-                />
-              </svg>
-
-              <span class="truncate">
-                Ecosystem:
-                {% if field.ecosystem_type %}
-                  {{ field.get_ecosystem_type_display }}
-                {% else %}
-                  Unknown
-                {% endif %}
-              </span>
-
-            </span>
-
-            <!-- Flood Prone -->
-            {% if field.flood_prone %}
-
-            <span class="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700">
-
-              <svg
-                class="h-3.5 w-3.5 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 9v4m0 4h.01M10.3 3.6L2.7 17a2 2 0 001.7 3h15.2a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z"
-                />
-              </svg>
-
-              Flood-prone
-
-            </span>
-
-            {% endif %}
-
-          </div>
-
-          <!-- Basic Field Details -->
-          <div class="overflow-hidden rounded-lg border border-gray-200 bg-gray-50 divide-y divide-gray-200">
-
-            <!-- Area -->
-            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5">
-
-              <span class="text-sm text-gray-500">
-                Area
-              </span>
-
-              <span class="text-right text-sm font-semibold text-gray-900">
-                {{ field.area_hectares }} ha
-              </span>
-
-            </div>
-
-            <!-- Plantings -->
-            <div class="flex items-center justify-between gap-4 px-3.5 py-2.5">
-
-              <span class="text-sm text-gray-500">
-                Plantings
-              </span>
-
-              <span class="inline-flex h-6 min-w-[28px] items-center justify-center rounded-full bg-green-50 px-2 text-xs font-bold text-green-700">
-                {{ field.plantings.count }}
-              </span>
-
-            </div>
-
-            <!-- GPS -->
-            {% if field.gps_lat and field.gps_lon %}
-
-            <div class="flex flex-col gap-1.5 px-3.5 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-
-              <span class="text-sm text-gray-500">
-                GPS
-              </span>
-
-              <span class="break-all font-mono text-xs text-gray-700 sm:text-right">
-                {{ field.gps_lat|floatformat:6 }},
-                {{ field.gps_lon|floatformat:6 }}
-              </span>
-
-            </div>
-
-            {% endif %}
-
-          </div>
-
+          {% if field.flood_prone %}
+          <span class="fl-badge fl-badge--danger">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 3.6L2.7 17a2 2 0 001.7 3h15.2a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z"/>
+            </svg>
+            Flood-prone
+          </span>
+          {% endif %}
         </div>
 
+        <!-- Details -->
+        <dl class="fl-details">
+          <div class="fl-row">
+            <dt>Area</dt>
+            <dd>{{ field.area_hectares }} ha</dd>
+          </div>
+          <div class="fl-row">
+            <dt>Plantings</dt>
+            <dd><span class="fl-pill">{{ field.plantings.count }}</span></dd>
+          </div>
+          {% if field.gps_lat and field.gps_lon %}
+          <div class="fl-row" style="align-items:flex-start;">
+            <dt>GPS</dt>
+            <dd class="is-mono">{{ field.gps_lat|floatformat:6 }}, {{ field.gps_lon|floatformat:6 }}</dd>
+          </div>
+          {% endif %}
+        </dl>
       </div>
 
-      <!-- =====================================================
-           CARD ACTIONS
-           ===================================================== -->
-      <div class="border-t border-gray-200 bg-gray-50 px-5 py-4 sm:px-6">
+      <div class="fl-card__foot">
+        <a href="{% url 'polls:field_edit' field.pk %}" class="btn btn-secondary" aria-label="Edit {{ field.name }}">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+          Edit
+        </a>
 
-        <div class="grid grid-cols-2 gap-2">
-
-          <a
-            href="{% url 'polls:field_edit' field.pk %}"
-            aria-label="Edit {{ field.name }}"
-            class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100"
-          >
-            
-            Edit
-          </a>
-
-          <a
-            href="{% url 'polls:field_delete' field.pk %}"
-            data-open-delete="true"
-            data-delete-label="{{ field.name }}"
-            data-delete-subtitle="{{ field.barangay|default:'' }}{% if field.barangay %} · {% endif %}{{ field.area_hectares }} ha"
-            aria-label="Delete {{ field.name }}"
-            class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
-          >
-            
-            Archive
-          </a>
-
-        </div>
-
+        <a href="{% url 'polls:field_delete' field.pk %}"
+           data-open-delete="true"
+           data-delete-label="{{ field.name }}"
+           data-delete-subtitle="{{ field.barangay|default:'' }}{% if field.barangay %} · {% endif %}{{ field.area_hectares }} ha"
+           aria-label="Archive {{ field.name }}"
+           class="btn btn-secondary fl-btn-warn">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+          </svg>
+          Archive
+        </a>
       </div>
 
     </article>
-
     {% endfor %}
-
   </div>
 
-  <!-- =========================================================
-       PAGINATION
-       ========================================================= -->
   {% if is_paginated and page_obj %}
     {% include 'partials/_pagination.html' %}
   {% endif %}
 
   {% else %}
 
-  <!-- =========================================================
-       EMPTY STATE
-       ========================================================= -->
-  <div class="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-12">
-
-    <div class="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 bg-gray-50">
-
-      <svg
-        class="h-7 w-7 text-gray-400"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001 1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-        />
+  <!-- Empty state -->
+  <div class="agri-card fl-panel fl-empty">
+    <div class="fl-empty__icon" aria-hidden="true">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001 1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
       </svg>
-
     </div>
 
     {% if search %}
-
-    <h3 class="mb-2 text-xl font-semibold tracking-tight text-gray-900">
-      No Fields Found
-    </h3>
-
-    <p class="mx-auto mb-6 max-w-md text-sm leading-6 text-gray-600 sm:text-base">
-      No fields match
-      "<strong>{{ search }}</strong>".
-      Try a different search term.
-    </p>
-
-    <a
-      href="{% url 'polls:fields_list' %}"
-      class="inline-flex min-h-[42px] items-center justify-center rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2"
-    >
-      Clear Search
-    </a>
-
+    <h2>No Fields Found</h2>
+    <p>No fields match "<strong>{{ search }}</strong>". Try a different search term.</p>
+    <a href="{% url 'polls:fields_list' %}" class="btn btn-secondary btn-lg">Clear Search</a>
     {% else %}
-
-    <h3 class="mb-2 text-xl font-semibold tracking-tight text-gray-900">
-      No Fields Yet
-    </h3>
-
-    <p class="mx-auto mb-6 max-w-md text-sm leading-6 text-gray-600 sm:text-base">
-      {% if role == 'farmer' %}
-        Start by creating your first field to begin tracking your crops.
-      {% else %}
-        No fields have been created in the system yet.
-      {% endif %}
+    <h2>No Fields Yet</h2>
+    <p>
+      {% if role == 'farmer' %}Start by creating your first field to begin tracking your crops.{% else %}No fields have been created in the system yet.{% endif %}
     </p>
-
-    <a
-      href="{% url 'polls:field_create' %}"
-      class="inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-green-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-    >
-      <svg
-        class="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 4v16m8-8H4"
-        />
+    <a href="{% url 'polls:field_create' %}" class="btn btn-primary btn-lg">
+      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
       </svg>
-
       Create Your First Field
     </a>
-
     {% endif %}
-
   </div>
 
   {% endif %}
 
 </section>
 
-<!-- =========================================================
-     SKELETON → REAL CARDS
-     ========================================================= -->
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  const skeleton = document.getElementById('fields-skeleton');
-  const cards = document.getElementById('fields-cards');
-
-  if (skeleton) {
-    skeleton.style.display = 'none';
-  }
-
-  if (cards) {
-    cards.classList.remove('hidden');
-  }
-});
-</script>
-
 {% include 'partials/_ctrlk.html' with input_id='field-search' %}
+{% endblock %}
 
+{% block extra_js %}
+<script>
+  /* Auto-submit the form when a dropdown changes */
+  document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
+    el.addEventListener("change", function () {
+      if (el.form) el.form.submit();
+    });
+  });
+</script>
 {% endblock %}

@@ -1,152 +1,219 @@
-<!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-50">
+{% load static %}<!DOCTYPE html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-
-    <meta
-      name="theme-color"
-      content="#ffffff"
-    />
-
-    <meta
-      name="color-scheme"
-      content="light"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light" />
 
     <title>{% block title %}AgriScan+{% endblock %}</title>
 
     {% block head_meta %}{% endblock %}
 
-    {% load static %}
-
-    <!-- ==========================================================
-         GLOBAL STYLES
-         ========================================================== -->
-
+    <!-- Font: one family only (policy: max 2). System stack is the fallback. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="{% static 'polls/css/tailwind.css' %}"
-    >
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
 
-    <link
-      rel="icon"
-      type="image/png"
-      href="{% static 'polls/img/logo.jpg' %}"
-    >
-
-    <link
-      rel="stylesheet"
-      href="{% static 'polls/css/agriscan-loaders.css' %}"
-    >
+    <link rel="stylesheet" href="{% static 'polls/css/tailwind.css' %}" />
+    <link rel="icon" type="image/png" href="{% static 'polls/img/logo.jpg' %}" />
+    <link rel="stylesheet" href="{% static 'polls/css/agriscan-loaders.css' %}" />
 
     {% block extra_head %}{% endblock %}
-    {% block styles %}{% endblock %}
 
-    {% block extra_styles %}
     <style>
       /* ============================================================
-         AGRISCAN+ GLOBAL DESIGN TOKENS
+         DESIGN TOKENS (edit here to restyle the whole product)
+         60% canvas, 30% surfaces, 10% brand accent
          ============================================================ */
-
       :root {
-        --agri-primary: #15803d;
-        --agri-primary-hover: #166534;
-        --agri-primary-active: #14532d;
-        --agri-primary-soft: #f0fdf4;
-        --agri-primary-soft-border: #bbf7d0;
+        /* Brand (10%) */
+        --color-brand: hsl(142, 72%, 29%);
+        --color-brand-hover: hsl(142, 64%, 24%);
+        --color-brand-active: hsl(144, 61%, 20%);
+        --color-brand-light: hsl(138, 76%, 97%);
+        --color-brand-border: hsl(142, 77%, 73%);
 
-        --agri-text: #1f2937;
-        --agri-text-strong: #111827;
-        --agri-text-muted: #6b7280;
-        --agri-text-subtle: #9ca3af;
+        /* Surfaces (60% canvas, 30% secondary) */
+        --color-canvas: hsl(40, 20%, 98%);
+        --color-surface: hsl(0, 0%, 100%);
+        --color-overlay: hsl(220, 14%, 96%);
 
-        --agri-surface: #ffffff;
-        --agri-surface-soft: #f8fafc;
-        --agri-surface-muted: #f1f5f9;
+        /* Text */
+        --color-text-primary: hsl(220, 15%, 12%);
+        --color-text: hsl(220, 14%, 20%);
+        --color-text-secondary: hsl(220, 10%, 40%);
+        --color-text-muted: hsl(220, 8%, 52%);
 
-        --agri-border: #e5e7eb;
-        --agri-border-strong: #d1d5db;
+        /* Borders (always clearly darker than the surface they sit on) */
+        --color-border: hsl(220, 13%, 86%);
+        --color-border-strong: hsl(220, 13%, 72%);
 
-        --agri-success: #15803d;
-        --agri-success-soft: #f0fdf4;
-        --agri-success-border: #bbf7d0;
+        /* Semantic (3 hues only: success is the brand, warning, danger, + info) */
+        --color-success-text: #166534;
+        --color-success-soft: #f0fdf4;
+        --color-success-border: #86efac;
+        --color-warning-text: #92400e;
+        --color-warning-soft: #fffbeb;
+        --color-warning-border: #fcd34d;
+        --color-danger: #dc2626;
+        --color-danger-hover: #b91c1c;
+        --color-danger-text: #991b1b;
+        --color-danger-soft: #fef2f2;
+        --color-danger-border: #fca5a5;
+        --color-info-text: #075985;
+        --color-info-soft: #f0f9ff;
+        --color-info-border: #7dd3fc;
 
+        /* Shadows (subtle only) */
+        --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+        --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.04);
+        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.09), 0 4px 8px rgba(0, 0, 0, 0.05);
+
+        /* Radius scale */
+        --radius-xs: 4px;
+        --radius-sm: 6px;
+        --radius-md: 10px;
+        --radius-lg: 14px;
+        --radius-xl: 18px;
+        --radius-full: 9999px;
+
+        /* Motion */
+        --transition-fast: 100ms ease;
+        --transition-base: 180ms ease;
+        --transition-slow: 320ms ease;
+
+        /* Type scale */
+        --text-xs: 11px;
+        --text-sm: 13px;
+        --text-base: 15px;
+        --text-md: 17px;
+        --text-lg: 20px;
+        --text-xl: 24px;
+        --text-2xl: 30px;
+        --text-3xl: 40px;
+
+        --text-hero: clamp(28px, 5vw, 48px);
+        --text-page: clamp(20px, 3vw, 30px);
+        --text-section: clamp(16px, 2vw, 22px);
+
+        /* Responsive control sizing (mobile-first, overridden below) */
+        --field-h: 2.75rem;      /* 44px */
+        --field-fs: 1rem;        /* 16px avoids iOS focus-zoom */
+        --btn-h: 2.75rem;
+        --btn-sm-h: 2.5rem;
+        --header-h: 4rem;
+
+        /* ---- Legacy aliases: existing templates keep working ---- */
+        --agri-primary: var(--color-brand);
+        --agri-primary-hover: var(--color-brand-hover);
+        --agri-primary-active: var(--color-brand-active);
+        --agri-primary-soft: var(--color-brand-light);
+        --agri-primary-soft-border: var(--color-brand-border);
+
+        --agri-text: var(--color-text);
+        --agri-text-strong: var(--color-text-primary);
+        --agri-text-muted: var(--color-text-secondary);
+        --agri-text-subtle: var(--color-text-muted);
+
+        --agri-surface: var(--color-surface);
+        --agri-surface-soft: var(--color-canvas);
+        --agri-surface-muted: var(--color-overlay);
+
+        --agri-border: var(--color-border);
+        --agri-border-strong: var(--color-border-strong);
+
+        --agri-success: var(--color-brand);
+        --agri-success-soft: var(--color-success-soft);
+        --agri-success-border: var(--color-success-border);
         --agri-warning: #b45309;
-        --agri-warning-soft: #fffbeb;
-        --agri-warning-border: #fde68a;
-
-        --agri-danger: #dc2626;
-        --agri-danger-soft: #fef2f2;
-        --agri-danger-border: #fecaca;
-
+        --agri-warning-soft: var(--color-warning-soft);
+        --agri-warning-border: var(--color-warning-border);
+        --agri-danger: var(--color-danger);
+        --agri-danger-soft: var(--color-danger-soft);
+        --agri-danger-border: var(--color-danger-border);
         --agri-info: #0369a1;
-        --agri-info-soft: #f0f9ff;
-        --agri-info-border: #bae6fd;
+        --agri-info-soft: var(--color-info-soft);
+        --agri-info-border: var(--color-info-border);
 
-        --agri-focus: rgba(22, 101, 52, 0.22);
+        --agri-focus: rgba(21, 128, 61, 0.28);
 
-        --agri-radius-sm: 0.375rem;
-        --agri-radius-md: 0.5rem;
-        --agri-radius-lg: 0.75rem;
-        --agri-radius-xl: 1rem;
+        --agri-radius-sm: var(--radius-sm);
+        --agri-radius-md: var(--radius-sm);
+        --agri-radius-lg: var(--radius-md);
+        --agri-radius-xl: var(--radius-lg);
 
-        --agri-shadow-sm:
-          0 1px 2px rgba(15, 23, 42, 0.05);
+        --agri-shadow-sm: var(--shadow-xs);
+        --agri-shadow-md: var(--shadow-sm);
+        --agri-shadow-lg: var(--shadow-md);
 
-        --agri-shadow-md:
-          0 4px 12px rgba(15, 23, 42, 0.07);
+        --agri-transition-fast: var(--transition-fast);
+        --agri-transition: var(--transition-base);
+      }
 
-        --agri-shadow-lg:
-          0 10px 24px rgba(15, 23, 42, 0.08);
+      @media (min-width: 640px) {
+        :root {
+          --field-h: 2.625rem;
+          --field-fs: 0.9375rem;
+          --header-h: 4.25rem;
+        }
+      }
 
-        --agri-transition-fast:
-          150ms ease;
+      @media (min-width: 1024px) {
+        :root {
+          --field-h: 2.5rem;
+          --field-fs: 0.875rem;
+          --btn-h: 2.5rem;
+          --btn-sm-h: 2.25rem;
+        }
+      }
 
-        --agri-transition:
-          200ms ease;
+      /* Touch devices always get 44px targets, whatever the width */
+      @media (hover: none) and (pointer: coarse) {
+        :root {
+          --field-h: 2.75rem;
+          --field-fs: 1rem;
+          --btn-h: 2.75rem;
+          --btn-sm-h: 2.5rem;
+        }
       }
 
       /* ============================================================
          DOCUMENT FOUNDATION
          ============================================================ */
-
-      html {
-        min-height: 100%;
-        max-width: 100%;
-        overflow-x: hidden;
-        scroll-behavior: smooth;
-        text-size-adjust: 100%;
-        -webkit-text-size-adjust: 100%;
-      }
-
-      body {
-        min-height: 100%;
-        max-width: 100%;
-        margin: 0;
-        overflow-x: hidden;
-        background: #f8fafc;
-        color: var(--agri-text);
-        font-family:
-          ui-sans-serif,
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
-        line-height: 1.5;
-        -webkit-font-smoothing: antialiased;
-        text-rendering: optimizeLegibility;
-      }
-
       *,
       *::before,
       *::after {
         box-sizing: border-box;
+      }
+
+      html {
+        max-width: 100%;
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        background: var(--color-canvas);
+      }
+
+      body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        max-width: 100%;
+        margin: 0;
+        overflow-x: hidden;
+        overflow-x: clip; /* no horizontal scroll, ever */
+        background: var(--color-canvas);
+        color: var(--color-text);
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", sans-serif;
+        font-size: var(--text-base);
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
       }
 
       img,
@@ -157,8 +224,25 @@
         max-width: 100%;
       }
 
-      img {
+      img,
+      video {
         height: auto;
+      }
+
+      iframe {
+        border: 0;
+      }
+
+      pre,
+      code,
+      kbd,
+      samp {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      pre {
+        max-width: 100%;
+        overflow-x: auto;
       }
 
       button,
@@ -173,71 +257,53 @@
       }
 
       /* ============================================================
-         TYPOGRAPHY
+         TYPOGRAPHY (low specificity so utilities still win)
          ============================================================ */
-
       :where(h1, h2, h3, h4, h5, h6) {
         margin-top: 0;
-        color: var(--agri-text-strong);
+        color: var(--color-text-primary);
         font-weight: 650;
         letter-spacing: -0.015em;
       }
-
-      :where(h1) {
-        font-size: 1.5rem;
-        line-height: 2rem;
-      }
-
-      :where(h2) {
-        font-size: 1.25rem;
-        line-height: 1.75rem;
-      }
-
-      :where(h3) {
-        font-size: 1.125rem;
-        line-height: 1.625rem;
-      }
-
-      :where(h4) {
-        font-size: 1rem;
-        line-height: 1.5rem;
-      }
-
-      :where(p) {
-        margin-top: 0;
-      }
-
-      :where(small) {
-        font-size: 0.8125rem;
-      }
+      :where(h1) { font-size: var(--text-page); line-height: 1.25; }
+      :where(h2) { font-size: var(--text-section); line-height: 1.3; }
+      :where(h3) { font-size: var(--text-md); line-height: 1.4; }
+      :where(h4) { font-size: var(--text-base); line-height: 1.5; }
+      :where(p) { margin-top: 0; }
+      :where(small) { font-size: var(--text-sm); }
 
       :where(a) {
         color: inherit;
         text-decoration-thickness: 1px;
         text-underline-offset: 2px;
       }
+      :where(a:not([class])) { color: var(--color-brand); }
+      :where(a:not([class])):hover { color: var(--color-brand-hover); }
 
-      :where(a:not([class])) {
-        color: var(--agri-primary);
-      }
-
-      :where(a:not([class])):hover {
-        color: var(--agri-primary-hover);
+      .prose-agri {
+        max-width: 65ch; /* 60-80 characters per line */
       }
 
       /* ============================================================
-         GLOBAL FOCUS / ACCESSIBILITY
+         GLOBAL MOTION BASE (policy section 10)
          ============================================================ */
+      button,
+      a,
+      [role="button"] {
+        transition:
+          color var(--transition-base),
+          background-color var(--transition-base),
+          border-color var(--transition-base),
+          box-shadow var(--transition-base),
+          transform var(--transition-base),
+          opacity var(--transition-base);
+      }
 
-      :where(
-        input,
-        textarea,
-        select,
-        button,
-        a,
-        [tabindex]
-      ):focus-visible {
-        outline: 2px solid var(--agri-focus);
+      /* ============================================================
+         FOCUS / ACCESSIBILITY
+         ============================================================ */
+      :where(input, textarea, select, button, a, [tabindex]):focus-visible {
+        outline: 2px solid var(--color-brand);
         outline-offset: 2px;
       }
 
@@ -249,121 +315,87 @@
         cursor: not-allowed;
       }
 
-      /* ============================================================
-         GLOBAL BUTTON SYSTEM
-         ============================================================ */
+      .skip-link {
+        position: fixed;
+        top: 0.5rem;
+        left: 0.5rem;
+        z-index: 200;
+        padding: 0.625rem 1rem;
+        color: #ffffff;
+        background: var(--color-brand);
+        border-radius: var(--radius-sm);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        text-decoration: none;
+        transform: translateY(-200%);
+      }
+      .skip-link:focus {
+        transform: translateY(0);
+      }
 
+      .sr-only-agri {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        padding: 0;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* ============================================================
+         BUTTONS
+         ============================================================ */
       .btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-
-        min-height: 2.5rem;
-        padding: 0.5625rem 0.875rem;
-
+        min-height: var(--btn-h);
+        padding: 0.5625rem 1rem;
         border: 1px solid transparent;
-        border-radius: var(--agri-radius-md);
-
+        border-radius: var(--radius-sm);
         font-size: 0.875rem;
         font-weight: 600;
         line-height: 1.25rem;
-
         text-align: center;
         text-decoration: none;
         white-space: nowrap;
-
         cursor: pointer;
-
+        box-shadow: none;
         transition:
-          background-color var(--agri-transition-fast),
-          border-color var(--agri-transition-fast),
-          color var(--agri-transition-fast),
-          box-shadow var(--agri-transition-fast),
-          transform var(--agri-transition-fast);
+          background-color var(--transition-fast),
+          border-color var(--transition-fast),
+          color var(--transition-fast),
+          box-shadow var(--transition-fast),
+          transform var(--transition-fast);
+      }
+      .btn:hover { text-decoration: none; box-shadow: var(--shadow-xs); }
+      .btn:active { transform: scale(0.985); }
+
+      @media (hover: hover) {
+        .btn:hover { transform: scale(1.01); }
+        .btn:active { transform: scale(0.985); }
       }
 
-      .btn:hover {
-        text-decoration: none;
-      }
+      .btn-primary { color: #ffffff; background: var(--color-brand); border-color: var(--color-brand); }
+      .btn-primary:hover { color: #ffffff; background: var(--color-brand-hover); border-color: var(--color-brand-hover); }
+      .btn-primary:active { background: var(--color-brand-active); border-color: var(--color-brand-active); }
 
-      .btn:active {
-        transform: translateY(1px);
-      }
+      .btn-secondary { color: var(--color-text); background: var(--color-surface); border-color: var(--color-border-strong); }
+      .btn-secondary:hover { color: var(--color-text-primary); background: var(--color-overlay); border-color: hsl(220, 10%, 58%); }
 
-      .btn-primary {
-        color: #ffffff;
-        background: var(--agri-primary);
-        border-color: var(--agri-primary);
-        box-shadow: var(--agri-shadow-sm);
-      }
+      .btn-danger { color: #ffffff; background: var(--color-danger); border-color: var(--color-danger); }
+      .btn-danger:hover { color: #ffffff; background: var(--color-danger-hover); border-color: var(--color-danger-hover); }
 
-      .btn-primary:hover {
-        color: #ffffff;
-        background: var(--agri-primary-hover);
-        border-color: var(--agri-primary-hover);
-        box-shadow: var(--agri-shadow-md);
-      }
+      .btn-success { color: #ffffff; background: var(--color-brand); border-color: var(--color-brand); }
+      .btn-success:hover { color: #ffffff; background: var(--color-brand-hover); border-color: var(--color-brand-hover); }
 
-      .btn-primary:active {
-        background: var(--agri-primary-active);
-        border-color: var(--agri-primary-active);
-      }
-
-      .btn-secondary {
-        color: #374151;
-        background: #ffffff;
-        border-color: var(--agri-border-strong);
-        box-shadow: var(--agri-shadow-sm);
-      }
-
-      .btn-secondary:hover {
-        color: #111827;
-        background: #f9fafb;
-        border-color: #9ca3af;
-      }
-
-      .btn-danger {
-        color: #ffffff;
-        background: var(--agri-danger);
-        border-color: var(--agri-danger);
-        box-shadow: var(--agri-shadow-sm);
-      }
-
-      .btn-danger:hover {
-        color: #ffffff;
-        background: #b91c1c;
-        border-color: #b91c1c;
-        box-shadow: var(--agri-shadow-md);
-      }
-
-      .btn-success {
-        color: #ffffff;
-        background: var(--agri-success);
-        border-color: var(--agri-success);
-      }
-
-      .btn-success:hover {
-        color: #ffffff;
-        background: var(--agri-primary-hover);
-        border-color: var(--agri-primary-hover);
-      }
-
-      .btn-sm {
-        min-height: 2.25rem;
-        padding: 0.4375rem 0.6875rem;
-        font-size: 0.8125rem;
-      }
-
-      .btn-lg {
-        min-height: 2.75rem;
-        padding: 0.6875rem 1rem;
-        font-size: 0.9375rem;
-      }
-
-      .btn-block {
-        width: 100%;
-      }
+      .btn-sm { min-height: var(--btn-sm-h); padding: 0.4375rem 0.75rem; font-size: var(--text-sm); }
+      .btn-lg { min-height: 3rem; padding: 0.6875rem 1.25rem; font-size: 0.9375rem; }
+      .btn-block { width: 100%; }
 
       .btn:disabled,
       .btn[aria-disabled="true"] {
@@ -374,125 +406,62 @@
       }
 
       /* ============================================================
-         GLOBAL FORM FOUNDATION
-
-         :where() intentionally keeps specificity very low so
-         Tailwind utility classes in existing templates can still
-         override these defaults.
+         FORM FOUNDATION
+         :where() keeps specificity at zero, so Tailwind utilities
+         in existing templates can still override.
          ============================================================ */
-
       :where(
-        input[type="text"],
-        input[type="number"],
-        input[type="email"],
-        input[type="password"],
-        input[type="date"],
-        input[type="datetime-local"],
-        input[type="month"],
-        input[type="time"],
-        input[type="week"],
-        input[type="url"],
-        input[type="tel"],
-        input[type="search"],
-        input[type="file"],
-        input:not([type]),
+        input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="range"]):not([type="color"]):not([type="image"]),
         textarea,
         select
       ) {
         width: 100%;
         max-width: 100%;
-        min-height: 2.75rem;
-
-        color: var(--agri-text);
-        background-color: #ffffff;
-
-        border: 1px solid var(--agri-border-strong);
-        border-radius: var(--agri-radius-md);
-
+        min-height: var(--field-h);
         padding: 0.625rem 0.75rem;
-
-        font-size: 1rem;
+        color: var(--color-text);
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-sm);
+        font-size: var(--field-fs);
         line-height: 1.5;
-
         transition:
-          border-color var(--agri-transition-fast),
-          box-shadow var(--agri-transition-fast),
-          background-color var(--agri-transition-fast);
+          border-color var(--transition-base),
+          box-shadow var(--transition-base),
+          background-color var(--transition-base);
       }
 
       :where(
-        input[type="text"],
-        input[type="number"],
-        input[type="email"],
-        input[type="password"],
-        input[type="date"],
-        input[type="datetime-local"],
-        input[type="month"],
-        input[type="time"],
-        input[type="week"],
-        input[type="url"],
-        input[type="tel"],
-        input[type="search"],
-        input:not([type]),
+        input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
         textarea,
         select
       ):hover:not(:disabled):not([readonly]) {
-        border-color: #9ca3af;
+        border-color: hsl(220, 10%, 58%);
       }
 
       :where(
-        input[type="text"],
-        input[type="number"],
-        input[type="email"],
-        input[type="password"],
-        input[type="date"],
-        input[type="datetime-local"],
-        input[type="month"],
-        input[type="time"],
-        input[type="week"],
-        input[type="url"],
-        input[type="tel"],
-        input[type="search"],
-        input:not([type]),
+        input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="range"]):not([type="color"]):not([type="image"]),
         textarea,
         select
       ):focus {
         outline: none;
-        border-color: var(--agri-primary);
+        border-color: var(--color-brand);
         box-shadow: 0 0 0 3px var(--agri-focus);
       }
 
-      :where(
-        input,
-        textarea,
-        select
-      )::placeholder {
-        color: #9ca3af;
+      :where(input, textarea, select)::placeholder {
+        color: var(--color-text-muted);
         opacity: 1;
       }
 
-      :where(
-        input:disabled,
-        textarea:disabled,
-        select:disabled
-      ) {
-        color: #9ca3af;
-        background-color: #f3f4f6;
-        cursor: not-allowed;
+      :where(input:disabled, textarea:disabled, select:disabled) {
+        color: var(--color-text-muted);
+        background-color: var(--color-overlay);
       }
 
-      :where(
-        input[readonly],
-        textarea[readonly]
-      ) {
-        background-color: #f8fafc;
+      :where(input[readonly], textarea[readonly]) {
+        background-color: var(--color-overlay);
       }
-
-      /* ============================================================
-         SHARED FORM CLASSES
-
-         These are the preferred classes for templates going forward.
-         ============================================================ */
 
       .form-input,
       .form-textarea,
@@ -506,407 +475,310 @@
         resize: vertical;
       }
 
-      /* ============================================================
-         SELECT SYSTEM
-         ============================================================ */
-
+      /* Select */
       :where(select),
       .form-select {
         appearance: none;
         -webkit-appearance: none;
-
-        padding-top: 0.625rem;
         padding-right: 2.5rem;
-        padding-bottom: 0.625rem;
-        padding-left: 0.75rem;
-
-        background-color: #ffffff;
-
-        background-image:
-          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
-
+        background-color: var(--color-surface);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: right 0.65rem center;
         background-size: 1.15rem 1.15rem;
-
         cursor: pointer;
       }
-
       :where(select):disabled,
       .form-select:disabled {
-        cursor: not-allowed;
-        background-image:
-          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
       }
+      .form-select-sm { min-height: 2.5rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-size: 0.875rem; }
+      .form-select-lg { min-height: 2.875rem; padding-top: 0.6875rem; padding-bottom: 0.6875rem; font-size: 0.9375rem; }
 
-      .form-select-sm {
-        min-height: 2.5rem;
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
-        font-size: 0.875rem;
-        background-size: 1rem 1rem;
-      }
-
-      .form-select-lg {
-        min-height: 2.875rem;
-        padding-top: 0.6875rem;
-        padding-bottom: 0.6875rem;
-        font-size: 0.9375rem;
-      }
-
-      /* ============================================================
-         CHECKBOX / RADIO
-         ============================================================ */
-
-      :where(
-        input[type="checkbox"],
-        input[type="radio"]
-      ) {
+      /* Checkbox / radio */
+      :where(input[type="checkbox"], input[type="radio"]) {
         appearance: none;
         -webkit-appearance: none;
-
-        width: 1.125rem;
-        height: 1.125rem;
-
         flex: 0 0 auto;
-
-        padding: 0;
+        width: 1.25rem;
+        height: 1.25rem;
         margin: 0;
-
-        background-color: #ffffff;
-        border: 1px solid var(--agri-border-strong);
-
+        padding: 0;
+        background-color: var(--color-surface);
+        border: 1px solid var(--color-border-strong);
         cursor: pointer;
-
         transition:
-          background-color var(--agri-transition-fast),
-          border-color var(--agri-transition-fast),
-          box-shadow var(--agri-transition-fast);
+          background-color var(--transition-base),
+          border-color var(--transition-base),
+          box-shadow var(--transition-base);
       }
-
-      :where(input[type="checkbox"]) {
-        border-radius: 0.3rem;
-      }
-
-      :where(input[type="radio"]) {
-        border-radius: 9999px;
-      }
-
-      :where(
-        input[type="checkbox"],
-        input[type="radio"]
-      ):hover:not(:disabled) {
-        border-color: #9ca3af;
-      }
-
-      :where(
-        input[type="checkbox"],
-        input[type="radio"]
-      ):focus {
+      :where(input[type="checkbox"]) { border-radius: var(--radius-xs); }
+      :where(input[type="radio"]) { border-radius: var(--radius-full); }
+      :where(input[type="checkbox"], input[type="radio"]):hover:not(:disabled) { border-color: hsl(220, 10%, 58%); }
+      :where(input[type="checkbox"], input[type="radio"]):focus-visible {
         outline: none;
-        border-color: var(--agri-primary);
+        border-color: var(--color-brand);
         box-shadow: 0 0 0 3px var(--agri-focus);
       }
-
       :where(input[type="checkbox"]):checked {
-        background-color: var(--agri-primary);
-        border-color: var(--agri-primary);
-
-        background-image:
-          url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
-
+        background-color: var(--color-brand);
+        border-color: var(--color-brand);
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
         background-repeat: no-repeat;
         background-position: center;
-        background-size: 0.8rem 0.8rem;
+        background-size: 0.85rem 0.85rem;
       }
-
       :where(input[type="radio"]):checked {
-        border-color: var(--agri-primary);
-
-        background-image:
-          radial-gradient(
-            circle,
-            var(--agri-primary) 0 40%,
-            transparent 43%
-          );
+        border-color: var(--color-brand);
+        background-image: radial-gradient(circle, var(--color-brand) 0 40%, transparent 43%);
       }
 
-      /* ============================================================
-         FILE INPUT
-         ============================================================ */
-
-      :where(input[type="file"]) {
+      /* Labels that wrap a checkbox/radio become full-size touch targets */
+      label:has(> input[type="checkbox"]),
+      label:has(> input[type="radio"]) {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.625rem;
         min-height: 2.75rem;
+        cursor: pointer;
+      }
+
+      /* File input */
+      :where(input[type="file"]) {
         padding: 0.35rem;
         cursor: pointer;
       }
-
       :where(input[type="file"])::file-selector-button {
+        min-height: 2.25rem;
         margin-right: 0.75rem;
         padding: 0.45rem 0.75rem;
-
-        color: #374151;
-        background: #f8fafc;
-
-        border: 1px solid #d1d5db;
-        border-radius: 0.375rem;
-
-        font-size: 0.8125rem;
+        color: var(--color-text);
+        background: var(--color-overlay);
+        border: 1px solid var(--color-border-strong);
+        border-radius: var(--radius-xs);
+        font-size: var(--text-sm);
         font-weight: 600;
-
         cursor: pointer;
-
         transition:
-          background-color var(--agri-transition-fast),
-          border-color var(--agri-transition-fast);
+          background-color var(--transition-base),
+          border-color var(--transition-base);
       }
-
       :where(input[type="file"])::file-selector-button:hover {
-        background: #f1f5f9;
-        border-color: #9ca3af;
+        background: var(--color-border);
+        border-color: hsl(220, 10%, 58%);
       }
 
-      /* ============================================================
-         VALIDATION STATES
-         ============================================================ */
-
-      :where(
-        input[aria-invalid="true"],
-        textarea[aria-invalid="true"],
-        select[aria-invalid="true"]
-      ) {
-        border-color: var(--agri-danger);
+      /* Validation */
+      :where(input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"]) {
+        border-color: var(--color-danger);
       }
-
-      :where(
-        input[aria-invalid="true"],
-        textarea[aria-invalid="true"],
-        select[aria-invalid="true"]
-      ):focus {
-        border-color: var(--agri-danger);
-        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+      :where(input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"]):focus {
+        border-color: var(--color-danger);
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.14);
       }
 
       .form-error,
       [id^="error-"] {
-        color: var(--agri-danger);
-        font-size: 0.8125rem;
+        color: var(--color-danger-text);
+        font-size: var(--text-sm);
         line-height: 1.35;
       }
-
       .form-help,
       [id^="help-"] {
-        color: var(--agri-text-muted);
-        font-size: 0.8125rem;
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
         line-height: 1.4;
       }
 
-      /* ============================================================
-         LABELS
-         ============================================================ */
-
       :where(label) {
-        color: var(--agri-text-strong);
+        color: var(--color-text-primary);
         font-size: 0.875rem;
         font-weight: 600;
       }
 
       /* ============================================================
-         PAGE CONTAINER
+         LAYOUT
          ============================================================ */
-
       .page-container {
         width: 100%;
         max-width: 1600px;
-
-        margin-left: auto;
-        margin-right: auto;
-
-        padding-top: 1.5rem;
-        padding-right: 1rem;
-        padding-bottom: 2rem;
-        padding-left: 1rem;
+        margin-inline: auto;
+        padding: 1.25rem 1rem 1.75rem;
+      }
+      @media (min-width: 640px) {
+        .page-container { padding-inline: 1.5rem; }
+      }
+      @media (min-width: 768px) {
+        .page-container { padding-block: 1.75rem 2rem; }
+      }
+      @media (min-width: 1024px) {
+        .page-container { padding: 2rem 2rem 2.5rem; }
+      }
+      @media (min-width: 1280px) {
+        .page-container { padding-inline: 3rem; }
+      }
+      @media (min-width: 1536px) {
+        .page-container { padding-inline: 4rem; }
       }
 
       /* ============================================================
-         SHARED SURFACE / CARD HELPERS
+         SURFACES
+         Nesting rule: outer radius = inner radius + padding gap.
+         Cards use radius-lg (14px); inner blocks use radius-sm/xs
+         and must have a clearly different surface.
          ============================================================ */
-
       .agri-card {
-        background: var(--agri-surface);
-        border: 1px solid var(--agri-border);
-        border-radius: var(--agri-radius-lg);
-        box-shadow: var(--agri-shadow-sm);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+      }
+      @media (min-width: 640px) {
+        .agri-card { border-radius: var(--radius-lg); }
       }
 
       .agri-card-interactive {
         transition:
-          border-color var(--agri-transition),
-          box-shadow var(--agri-transition),
-          transform var(--agri-transition);
+          border-color var(--transition-base),
+          box-shadow var(--transition-base),
+          transform var(--transition-base);
       }
-
-      .agri-card-interactive:hover {
-        border-color: #d1d5db;
-        box-shadow: var(--agri-shadow-md);
+      @media (hover: hover) {
+        .agri-card-interactive:hover {
+          border-color: var(--color-border-strong);
+          box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
+        }
       }
 
       .agri-divider {
         width: 100%;
         height: 1px;
-        background: var(--agri-border);
+        background: var(--color-border);
       }
 
       /* ============================================================
-         STATUS / ALERT HELPERS
+         ALERTS (borders always visibly darker than the fill)
          ============================================================ */
-
       .agri-alert {
         width: 100%;
-        border: 1px solid;
-        border-radius: var(--agri-radius-md);
         padding: 0.75rem 0.875rem;
+        border: 1px solid;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+      }
+      .agri-alert-success { color: var(--color-success-text); background: var(--color-success-soft); border-color: var(--color-success-border); }
+      .agri-alert-warning { color: var(--color-warning-text); background: var(--color-warning-soft); border-color: var(--color-warning-border); }
+      .agri-alert-danger  { color: var(--color-danger-text);  background: var(--color-danger-soft);  border-color: var(--color-danger-border); }
+      .agri-alert-info    { color: var(--color-info-text);    background: var(--color-info-soft);    border-color: var(--color-info-border); }
+
+      /* Badges */
+      .agri-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.125rem 0.625rem;
+        color: var(--color-success-text);
+        background: var(--color-success-soft);
+        border: 1px solid var(--color-success-border);
+        border-radius: var(--radius-full);
+        font-size: var(--text-sm);
+        font-weight: 500;
+        line-height: 1.25rem;
       }
 
-      .agri-alert-success {
-        color: #166534;
-        background: var(--agri-success-soft);
-        border-color: var(--agri-success-border);
+      /* Loading skeleton */
+      .agri-skeleton {
+        background: linear-gradient(90deg, var(--color-overlay) 0%, hsl(220, 14%, 91%) 50%, var(--color-overlay) 100%);
+        background-size: 200% 100%;
+        border-radius: var(--radius-sm);
+        animation: agri-shimmer 1.5s ease infinite;
       }
-
-      .agri-alert-warning {
-        color: #92400e;
-        background: var(--agri-warning-soft);
-        border-color: var(--agri-warning-border);
-      }
-
-      .agri-alert-danger {
-        color: #991b1b;
-        background: var(--agri-danger-soft);
-        border-color: var(--agri-danger-border);
-      }
-
-      .agri-alert-info {
-        color: #075985;
-        background: var(--agri-info-soft);
-        border-color: var(--agri-info-border);
+      @keyframes agri-shimmer {
+        0%   { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
       }
 
       /* ============================================================
-         TABLE SAFETY
+         TABLES
          ============================================================ */
-
-      :where(table) {
-        width: 100%;
-        border-collapse: collapse;
-      }
-
-      :where(th) {
-        color: var(--agri-text-strong);
-        font-weight: 600;
-      }
-
-      :where(td, th) {
-        vertical-align: middle;
-      }
+      :where(table) { width: 100%; border-collapse: collapse; }
+      :where(th) { color: var(--color-text-primary); font-weight: 600; }
+      :where(td, th) { vertical-align: middle; }
 
       .table-responsive,
       .overflow-x-auto {
         max-width: 100%;
+        overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
 
       /* ============================================================
-         MEDIA SAFETY
+         HEADER / MOBILE MENU
          ============================================================ */
-
-      :where(img) {
-        max-width: 100%;
+      .agri-header {
+        background: rgba(255, 255, 255, 0.97);
+        border-bottom: 1px solid var(--color-border);
+        box-shadow: var(--shadow-xs);
+      }
+      @supports (backdrop-filter: blur(1px)) {
+        .agri-header {
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: saturate(1.4) blur(8px);
+          -webkit-backdrop-filter: saturate(1.4) blur(8px);
+        }
       }
 
-      :where(video) {
-        max-width: 100%;
-        height: auto;
-      }
+      .agri-brand { color: var(--color-brand); text-decoration: none; }
+      .agri-brand:hover { color: var(--color-brand-hover); }
 
-      :where(iframe) {
-        max-width: 100%;
-        border: 0;
-      }
-
-      /* ============================================================
-         MOBILE MENU GLOBAL STATE
-         ============================================================ */
-
-      body.mobile-menu-open {
-        overflow: hidden;
-      }
-
+      body.mobile-menu-open { overflow: hidden; }
       body.mobile-menu-open main,
-      body.mobile-menu-open footer {
-        pointer-events: none;
-      }
+      body.mobile-menu-open footer { pointer-events: none; }
 
       #mobile-menu-backdrop {
         position: fixed;
         inset: 0;
         z-index: 40;
-
         background: rgba(15, 23, 42, 0.35);
-
         backdrop-filter: blur(2px);
         -webkit-backdrop-filter: blur(2px);
+        animation: agri-fade-in var(--transition-base) both;
+      }
+      #mobile-menu-backdrop.hidden { display: none; }
+
+      @keyframes agri-fade-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
       }
 
-      #mobile-menu-backdrop.hidden {
-        display: none;
+      @media (min-width: 1024px) {
+        #mobile-menu-backdrop { display: none !important; }
+        body.mobile-menu-open { overflow: auto; }
       }
 
-      /* ============================================================
-         HEADER
-         ============================================================ */
-
-      .agri-header {
-        background: rgba(255, 255, 255, 0.97);
-        border-bottom: 1px solid var(--agri-border);
-        box-shadow: var(--agri-shadow-sm);
-      }
-
-      .agri-brand {
-        color: var(--agri-primary);
-        text-decoration: none;
-      }
-
-      .agri-brand:hover {
-        color: var(--agri-primary-hover);
+      main#main-content {
+        padding-top: var(--header-h);
+        min-width: 0;
       }
 
       /* ============================================================
-         MODAL SAFETY
+         MODALS
          ============================================================ */
-
-      #modal-root {
-        position: relative;
-        z-index: 100;
-      }
-
+      #modal-root { position: relative; z-index: 100; }
       :where(dialog) {
         max-width: calc(100vw - 2rem);
         max-height: calc(100vh - 2rem);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
       }
 
       /* ============================================================
          REDUCED MOTION
          ============================================================ */
-
       @media (prefers-reduced-motion: reduce) {
-        html {
-          scroll-behavior: auto !important;
-        }
-
-        *,
-        *::before,
-        *::after {
+        html { scroll-behavior: auto !important; }
+        *, *::before, *::after {
           animation-duration: 0.01ms !important;
           animation-iteration-count: 1 !important;
           transition-duration: 0.01ms !important;
@@ -915,287 +787,40 @@
       }
 
       /* ============================================================
-         MOBILE
-         0px - 639px
-         ============================================================ */
-
-      @media (max-width: 639px) {
-        :where(
-          input[type="text"],
-          input[type="number"],
-          input[type="email"],
-          input[type="password"],
-          input[type="date"],
-          input[type="datetime-local"],
-          input[type="month"],
-          input[type="time"],
-          input[type="week"],
-          input[type="url"],
-          input[type="tel"],
-          input[type="search"],
-          input:not([type]),
-          textarea,
-          select
-        ) {
-          min-height: 2.75rem;
-          font-size: 1rem;
-        }
-
-        .btn {
-          min-height: 2.75rem;
-        }
-
-        .btn-sm {
-          min-height: 2.5rem;
-        }
-
-        .page-container {
-          padding-top: 1.25rem;
-          padding-right: 1rem;
-          padding-bottom: 1.75rem;
-          padding-left: 1rem;
-        }
-
-        .agri-card {
-          border-radius: var(--agri-radius-md);
-        }
-
-        .agri-card-interactive:hover {
-          transform: none;
-        }
-
-        :where(
-          input[type="file"]
-        )::file-selector-button {
-          min-height: 2.25rem;
-        }
-      }
-
-      /* ============================================================
-         SMALL TABLET
-         640px+
-         ============================================================ */
-
-      @media (min-width: 640px) {
-        :where(
-          input[type="text"],
-          input[type="number"],
-          input[type="email"],
-          input[type="password"],
-          input[type="date"],
-          input[type="datetime-local"],
-          input[type="month"],
-          input[type="time"],
-          input[type="week"],
-          input[type="url"],
-          input[type="tel"],
-          input[type="search"],
-          input:not([type]),
-          textarea,
-          select
-        ) {
-          min-height: 2.625rem;
-          font-size: 0.9375rem;
-        }
-
-        .page-container {
-          padding-right: 1.5rem;
-          padding-left: 1.5rem;
-        }
-      }
-
-      /* ============================================================
-         TABLET
-         768px+
-         ============================================================ */
-
-      @media (min-width: 768px) {
-        :where(
-          input[type="text"],
-          input[type="number"],
-          input[type="email"],
-          input[type="password"],
-          input[type="date"],
-          input[type="datetime-local"],
-          input[type="month"],
-          input[type="time"],
-          input[type="week"],
-          input[type="url"],
-          input[type="tel"],
-          input[type="search"],
-          input:not([type]),
-          textarea,
-          select
-        ) {
-          min-height: 2.625rem;
-        }
-
-        .page-container {
-          padding-top: 1.75rem;
-          padding-bottom: 2rem;
-        }
-      }
-
-      /* ============================================================
-         DESKTOP
-         1024px+
-         ============================================================ */
-
-      @media (min-width: 1024px) {
-        #mobile-menu-backdrop {
-          display: none !important;
-        }
-
-        body.mobile-menu-open {
-          overflow: auto;
-        }
-
-        .page-container {
-          padding-right: 2rem;
-          padding-left: 2rem;
-          padding-top: 2rem;
-          padding-bottom: 2.5rem;
-        }
-
-        :where(
-          input[type="text"],
-          input[type="number"],
-          input[type="email"],
-          input[type="password"],
-          input[type="date"],
-          input[type="datetime-local"],
-          input[type="month"],
-          input[type="time"],
-          input[type="week"],
-          input[type="url"],
-          input[type="tel"],
-          input[type="search"],
-          input:not([type]),
-          textarea,
-          select
-        ) {
-          min-height: 2.5rem;
-          font-size: 0.875rem;
-        }
-
-        .btn {
-          min-height: 2.5rem;
-        }
-
-        .btn-sm {
-          min-height: 2.25rem;
-        }
-      }
-
-      /* ============================================================
-         LARGE DESKTOP
-         1280px+
-         ============================================================ */
-
-      @media (min-width: 1280px) {
-        .page-container {
-          padding-right: 3rem;
-          padding-left: 3rem;
-        }
-      }
-
-      /* ============================================================
-         WIDE DESKTOP
-         1536px+
-         ============================================================ */
-
-      @media (min-width: 1536px) {
-        .page-container {
-          padding-right: 4rem;
-          padding-left: 4rem;
-        }
-      }
-
-      /* ============================================================
-         TOUCH DEVICES
-         ============================================================ */
-
-      @media (hover: none) and (pointer: coarse) {
-        .btn {
-          min-height: 2.75rem;
-        }
-
-        :where(
-          input,
-          select,
-          textarea
-        ) {
-          min-height: 2.75rem;
-        }
-      }
-
-      /* ============================================================
          PRINT
          ============================================================ */
-
       @media print {
-        html,
-        body {
+        html, body {
           background: #ffffff !important;
           color: #000000 !important;
           overflow: visible !important;
         }
-
-        header,
-        footer,
-        #mobile-menu-backdrop,
-        #modal-root,
-        .no-print {
+        header, footer, #mobile-menu-backdrop, #modal-root, .skip-link, .no-print {
           display: none !important;
         }
-
-        main {
-          padding-top: 0 !important;
-          overflow: visible !important;
-        }
-
-        .page-container {
-          max-width: none !important;
-          padding: 0 !important;
-        }
-
-        .agri-card {
-          box-shadow: none !important;
-        }
-
-        a {
-          color: inherit !important;
-          text-decoration: none !important;
-        }
+        main { padding-top: 0 !important; }
+        .page-container { max-width: none !important; padding: 0 !important; }
+        .agri-card { box-shadow: none !important; }
+        a { color: inherit !important; text-decoration: none !important; }
       }
     </style>
-    {% endblock %}
+
+    {% block styles %}{% endblock %}
+    {% block extra_styles %}{% endblock %}
   </head>
 
-  <body
-    class="h-full min-h-screen flex flex-col bg-gray-50 text-gray-800 overflow-x-hidden"
-  >
+  <body class="min-h-screen flex flex-col text-gray-800">
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- ==========================================================
-         GLOBAL HEADER / NAVIGATION
+         HEADER / NAVIGATION
          ========================================================== -->
-
-    <header
-      class="agri-header fixed inset-x-0 top-0 isolate z-50"
-      role="banner"
-    >
-      <div
-        class="w-full max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12"
-      >
-        <div
-          class="flex items-center justify-between h-16 sm:h-[4.25rem] gap-2 sm:gap-4"
-        >
-          <!-- ======================================================
-               LOGO
-               ====================================================== -->
-
+    <header class="agri-header fixed inset-x-0 top-0 isolate z-50" role="banner">
+      <div class="w-full max-w-[1600px] mx-auto px-3 sm:px-4 lg:px-8 xl:px-12">
+        <div class="flex items-center justify-between h-16 sm:h-[4.25rem] gap-2 sm:gap-4">
           <a
             href="{% url 'polls:dashboard' %}"
-            class="agri-brand flex items-center gap-2 font-bold transition-colors duration-150 flex-shrink-0 min-w-0 rounded-lg px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            class="agri-brand flex items-center gap-2 font-bold flex-shrink-0 min-w-0 rounded-lg px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
             aria-label="AgriScan+ Dashboard"
           >
             <img
@@ -1204,18 +829,11 @@
               width="36"
               height="36"
               class="h-8 w-8 sm:h-9 sm:w-9 flex-shrink-0 rounded-lg object-cover"
-            >
-
-            <span
-              class="hidden sm:inline text-lg xl:text-xl whitespace-nowrap tracking-tight"
-            >
+            />
+            <span class="hidden sm:inline text-lg xl:text-xl whitespace-nowrap tracking-tight">
               AgriScan+
             </span>
           </a>
-
-          <!-- ======================================================
-               NAVBAR
-               ====================================================== -->
 
           <div class="flex-1 min-w-0">
             {% include 'partials/_navbar.html' %}
@@ -1224,43 +842,22 @@
       </div>
     </header>
 
-    <!-- ==========================================================
-         MOBILE MENU BACKDROP
-         ========================================================== -->
-
-    <div
-      id="mobile-menu-backdrop"
-      class="hidden"
-      aria-hidden="true"
-    ></div>
+    <div id="mobile-menu-backdrop" class="hidden" aria-hidden="true"></div>
 
     <!-- ==========================================================
-         MAIN CONTENT
+         MAIN
          ========================================================== -->
-
-    <main
-      class="flex-1 min-w-0 pt-16 sm:pt-[4.25rem] overflow-x-hidden"
-      id="main-content"
-    >
+    <main id="main-content" class="flex-1 min-w-0" tabindex="-1">
       {% include 'partials/_flash_messages.html' %}
-
       {% block content %}{% endblock %}
     </main>
-
-    <!-- ==========================================================
-         FOOTER
-         ========================================================== -->
 
     {% include 'partials/_footer.html' %}
 
     <!-- ==========================================================
          GLOBAL MODALS
          ========================================================== -->
-
-    <div
-      id="modal-root"
-      aria-hidden="true"
-    ></div>
+    <div id="modal-root" aria-hidden="true"></div>
 
     {% include 'partials/_logout_modal.html' %}
     {% include 'partials/_delete_modal.html' %}
@@ -1270,1167 +867,304 @@
     <!-- ==========================================================
          GLOBAL JAVASCRIPT
          ========================================================== -->
-
     <script>
       (function () {
         "use strict";
 
-        /* ==========================================================
-           MOBILE MENU
-           ========================================================== */
+        var body = document.body;
+        var FOCUSABLE =
+          "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])";
 
-        const mobileMenuButton =
-          document.getElementById("mobile-menu-button");
+        /* ---------- MOBILE MENU ---------- */
+        var menuBtn = document.getElementById("mobile-menu-button");
+        var panel = document.getElementById("mobile-panel");
+        var iconOpen = document.getElementById("mobile-open");
+        var iconClose = document.getElementById("mobile-close");
+        var backdrop = document.getElementById("mobile-menu-backdrop");
+        var lastFocused = null;
 
-        const mobilePanel =
-          document.getElementById("mobile-panel");
-
-        const mobileOpenIcon =
-          document.getElementById("mobile-open");
-
-        const mobileCloseIcon =
-          document.getElementById("mobile-close");
-
-        const mobileBackdrop =
-          document.getElementById("mobile-menu-backdrop");
-
-        const body =
-          document.body;
-
-        let mobileMenuPreviouslyFocusedElement = null;
-
-        function isMobileMenuOpen() {
-          return (
-            mobilePanel &&
-            !mobilePanel.classList.contains("hidden")
-          );
+        function menuIsOpen() {
+          return !!panel && !panel.classList.contains("hidden");
         }
 
-        function setMobileMenuState(open, options) {
-          options = options || {};
+        function setMenu(open, opts) {
+          if (!menuBtn || !panel) return;
+          opts = opts || {};
 
-          if (
-            !mobileMenuButton ||
-            !mobilePanel
-          ) {
-            return;
+          panel.classList.toggle("hidden", !open);
+          if (backdrop) {
+            backdrop.classList.toggle("hidden", !open);
+            backdrop.setAttribute("aria-hidden", open ? "false" : "true");
           }
+          if (iconOpen) iconOpen.classList.toggle("hidden", open);
+          if (iconClose) iconClose.classList.toggle("hidden", !open);
+          menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+          menuBtn.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+          body.classList.toggle("mobile-menu-open", open);
 
           if (open) {
-            mobileMenuPreviouslyFocusedElement =
-              document.activeElement;
-
-            mobilePanel.classList.remove("hidden");
-
-            if (mobileBackdrop) {
-              mobileBackdrop.classList.remove("hidden");
-              mobileBackdrop.setAttribute(
-                "aria-hidden",
-                "false"
-              );
-            }
-
-            if (mobileOpenIcon) {
-              mobileOpenIcon.classList.add("hidden");
-            }
-
-            if (mobileCloseIcon) {
-              mobileCloseIcon.classList.remove("hidden");
-            }
-
-            mobileMenuButton.setAttribute(
-              "aria-expanded",
-              "true"
-            );
-
-            mobileMenuButton.setAttribute(
-              "aria-label",
-              "Close navigation menu"
-            );
-
-            body.classList.add(
-              "mobile-menu-open"
-            );
-
+            lastFocused = document.activeElement;
             window.requestAnimationFrame(function () {
-              const firstFocusable =
-                mobilePanel.querySelector(
-                  "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])"
-                );
-
-              if (
-                firstFocusable &&
-                window.innerWidth < 1024
-              ) {
-                firstFocusable.focus();
-              }
+              var first = panel.querySelector(FOCUSABLE);
+              if (first && window.innerWidth < 1024) first.focus();
             });
           } else {
-            mobilePanel.classList.add("hidden");
-
-            if (mobileBackdrop) {
-              mobileBackdrop.classList.add("hidden");
-              mobileBackdrop.setAttribute(
-                "aria-hidden",
-                "true"
-              );
+            if (!opts.skipFocusRestore) {
+              var target = lastFocused && typeof lastFocused.focus === "function" ? lastFocused : menuBtn;
+              try { target.focus(); } catch (e) { menuBtn.focus(); }
             }
-
-            if (mobileOpenIcon) {
-              mobileOpenIcon.classList.remove("hidden");
-            }
-
-            if (mobileCloseIcon) {
-              mobileCloseIcon.classList.add("hidden");
-            }
-
-            mobileMenuButton.setAttribute(
-              "aria-expanded",
-              "false"
-            );
-
-            mobileMenuButton.setAttribute(
-              "aria-label",
-              "Open navigation menu"
-            );
-
-            body.classList.remove(
-              "mobile-menu-open"
-            );
-
-            if (
-              !options.skipFocusRestore &&
-              mobileMenuPreviouslyFocusedElement &&
-              typeof mobileMenuPreviouslyFocusedElement.focus === "function"
-            ) {
-              try {
-                mobileMenuPreviouslyFocusedElement.focus();
-              } catch (error) {
-                mobileMenuButton.focus();
-              }
-            } else if (!options.skipFocusRestore) {
-              mobileMenuButton.focus();
-            }
-
-            mobileMenuPreviouslyFocusedElement = null;
+            lastFocused = null;
           }
         }
 
-        if (
-          mobileMenuButton &&
-          mobilePanel
-        ) {
-          mobileMenuButton.setAttribute(
-            "aria-expanded",
-            "false"
-          );
+        if (menuBtn && panel) {
+          setMenu(false, { skipFocusRestore: true });
 
-          mobileMenuButton.setAttribute(
-            "aria-label",
-            "Open navigation menu"
-          );
+          menuBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            setMenu(!menuIsOpen());
+          });
 
-          mobilePanel.classList.add("hidden");
+          if (backdrop) backdrop.addEventListener("click", function () { setMenu(false); });
 
-          if (mobileBackdrop) {
-            mobileBackdrop.classList.add("hidden");
-            mobileBackdrop.setAttribute(
-              "aria-hidden",
-              "true"
+          panel.addEventListener("click", function (e) {
+            e.stopPropagation();
+            if (e.target.closest("a[href]")) setMenu(false, { skipFocusRestore: true });
+          });
+
+          /* Focus trap */
+          panel.addEventListener("keydown", function (e) {
+            if (e.key !== "Tab" || !menuIsOpen()) return;
+            var items = Array.prototype.filter.call(
+              panel.querySelectorAll(FOCUSABLE),
+              function (el) { return el.offsetParent !== null; }
             );
-          }
+            if (!items.length) { e.preventDefault(); menuBtn.focus(); return; }
+            var first = items[0];
+            var last = items[items.length - 1];
+            if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+            else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+          });
+        }
 
-          mobileMenuButton.addEventListener(
-            "click",
-            function (event) {
-              event.preventDefault();
-              event.stopPropagation();
+        /* ---------- DROPDOWNS (user, desktop more, export) ---------- */
+        var dropdowns = [];
 
-              setMobileMenuState(
-                !isMobileMenuOpen()
-              );
+        function setDropdown(item, open) {
+          item.menu.classList.toggle("hidden", !open);
+          item.button.setAttribute("aria-expanded", open ? "true" : "false");
+        }
+
+        function closeAllDropdowns(except) {
+          dropdowns.forEach(function (item) {
+            if (item !== except) setDropdown(item, false);
+          });
+        }
+
+        [
+          ["user-menu-button", "user-menu"],
+          ["desktop-more-button", "desktop-more-menu"],
+          ["export-menu-btn", "export-menu"]
+        ].forEach(function (ids) {
+          var button = document.getElementById(ids[0]);
+          var menu = document.getElementById(ids[1]);
+          if (!button || !menu) return;
+
+          var item = {
+            button: button,
+            menu: menu,
+            root: button.closest("[data-dropdown-root]") || button.parentElement
+          };
+          dropdowns.push(item);
+          button.setAttribute("aria-haspopup", "true");
+          button.setAttribute("aria-expanded", menu.classList.contains("hidden") ? "false" : "true");
+
+          button.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var open = menu.classList.contains("hidden");
+            closeAllDropdowns(item);
+            setDropdown(item, open);
+          });
+
+          menu.addEventListener("click", function (e) {
+            if (e.target.closest("a, button")) setDropdown(item, false);
+          });
+        });
+
+        document.addEventListener("click", function (e) {
+          dropdowns.forEach(function (item) {
+            if (item.menu.classList.contains("hidden")) return;
+            if (item.root && item.root.contains(e.target)) return;
+            setDropdown(item, false);
+          });
+        });
+
+        document.addEventListener("keydown", function (e) {
+          if (e.key !== "Escape") return;
+
+          dropdowns.forEach(function (item) {
+            if (!item.menu.classList.contains("hidden")) {
+              setDropdown(item, false);
+              if (item.root && item.root.contains(document.activeElement)) item.button.focus();
             }
-          );
+          });
 
-          if (mobileBackdrop) {
-            mobileBackdrop.addEventListener(
-              "click",
-              function () {
-                setMobileMenuState(false);
-              }
-            );
+          if (menuIsOpen()) setMenu(false);
+        });
+
+        /* ---------- CLOSE MENU WHEN GOING DESKTOP ---------- */
+        var resizeTimer = null;
+        window.addEventListener("resize", function () {
+          window.clearTimeout(resizeTimer);
+          resizeTimer = window.setTimeout(function () {
+            if (window.innerWidth >= 1024 && menuIsOpen()) {
+              setMenu(false, { skipFocusRestore: true });
+            }
+          }, 100);
+        });
+
+        /* ---------- FORM FIELD ARIA WIRING (runs once) ---------- */
+        document.querySelectorAll(".form-field").forEach(function (wrapper) {
+          var input = wrapper.querySelector("input, select, textarea");
+          if (!input || !input.name) return;
+
+          var help = wrapper.querySelector("#help-" + input.name);
+          var error = wrapper.querySelector("#error-" + input.name);
+          var ids = [];
+
+          if (help) ids.push(help.id);
+          if (error) ids.push(error.id);
+          if (ids.length) input.setAttribute("aria-describedby", ids.join(" "));
+          if (error) input.setAttribute("aria-invalid", "true");
+        });
+
+        /* ---------- FILE PREVIEW ---------- */
+        var PREVIEW_PATTERNS = ["leaf_image", "new_image", "image", "image_path"];
+
+        function findPreviewTarget(input) {
+          var el = null;
+
+          if (input.dataset && input.dataset.previewTarget) {
+            el = document.getElementById(input.dataset.previewTarget);
+            if (el) return el;
           }
 
-          mobilePanel
-            .querySelectorAll("a[href]")
-            .forEach(function (link) {
-              link.addEventListener(
-                "click",
-                function () {
-                  setMobileMenuState(
-                    false,
-                    {
-                      skipFocusRestore: true
-                    }
-                  );
-                }
-              );
+          var guesses = [input.id + "-preview", "preview-" + input.id, input.name + "-preview"];
+          for (var i = 0; i < guesses.length; i++) {
+            el = document.getElementById(guesses[i]);
+            if (el) return el;
+          }
+
+          for (var p = 0; p < PREVIEW_PATTERNS.length; p++) {
+            var pattern = PREVIEW_PATTERNS[p];
+            var matches = (input.name && input.name.indexOf(pattern) !== -1) || input.id === "id_" + pattern;
+            if (!matches) continue;
+
+            var ids = [pattern + "_preview", "preview_" + pattern, "preview-" + input.id, input.id + "-preview", "leaf_preview"];
+            for (var j = 0; j < ids.length; j++) {
+              el = document.getElementById(ids[j]);
+              if (el) return el;
+            }
+          }
+          return null;
+        }
+
+        document.querySelectorAll("input[type=file]").forEach(function (input) {
+          var target = findPreviewTarget(input);
+          if (!target) return;
+
+          var objectUrl = null;
+
+          input.addEventListener("change", function () {
+            var file = input.files && input.files[0];
+            if (!file) return;
+
+            if (objectUrl) URL.revokeObjectURL(objectUrl);
+            objectUrl = URL.createObjectURL(file);
+            target.src = objectUrl;
+
+            var container = target.closest("#leaf_preview_container");
+            if (container) container.classList.remove("hidden");
+          });
+        });
+
+        /* ---------- STEPPERS ---------- */
+        document.querySelectorAll("[data-stepper]").forEach(function (container) {
+          var steps = Array.prototype.slice.call(container.querySelectorAll("[data-step]"));
+          if (!steps.length) return;
+
+          var index = 0;
+
+          function render() {
+            steps.forEach(function (step, i) {
+              var hidden = i !== index;
+              step.classList.toggle("hidden", hidden);
+              step.setAttribute("aria-hidden", hidden ? "true" : "false");
             });
-
-          mobilePanel.addEventListener(
-            "click",
-            function (event) {
-              event.stopPropagation();
-            }
-          );
-        }
-
-        /* ==========================================================
-           USER / DESKTOP DROPDOWNS
-           ========================================================== */
-
-        const dropdowns = [];
-
-        function setDropdownState(
-          item,
-          open
-        ) {
-          if (!item) {
-            return;
           }
 
-          const {
-            menu,
-            button,
-            openIcon,
-            closeIcon
-          } = item;
-
-          if (!menu || !button) {
-            return;
+          function go(delta) {
+            var next = index + delta;
+            if (next < 0 || next > steps.length - 1) return;
+            index = next;
+            render();
           }
 
-          if (open) {
-            menu.classList.remove(
-              "hidden"
-            );
+          container.querySelectorAll("[data-step-next]").forEach(function (b) {
+            b.addEventListener("click", function (e) { e.preventDefault(); go(1); });
+          });
+          container.querySelectorAll("[data-step-prev]").forEach(function (b) {
+            b.addEventListener("click", function (e) { e.preventDefault(); go(-1); });
+          });
 
-            button.setAttribute(
-              "aria-expanded",
-              "true"
-            );
+          render();
+        });
 
-            if (openIcon) {
-              openIcon.classList.add(
-                "hidden"
-              );
-            }
-
-            if (closeIcon) {
-              closeIcon.classList.remove(
-                "hidden"
-              );
-            }
-          } else {
-            menu.classList.add(
-              "hidden"
-            );
-
-            button.setAttribute(
-              "aria-expanded",
-              "false"
-            );
-
-            if (openIcon) {
-              openIcon.classList.remove(
-                "hidden"
-              );
-            }
-
-            if (closeIcon) {
-              closeIcon.classList.add(
-                "hidden"
-              );
-            }
-          }
-        }
-
-        function closeAllDropdowns() {
-          dropdowns.forEach(
-            function (item) {
-              setDropdownState(
-                item,
-                false
-              );
-            }
-          );
-        }
-
-        /* ==========================================================
-           USER DROPDOWN
-           ========================================================== */
-
-        const userButton =
-          document.getElementById(
-            "user-menu-button"
-          );
-
-        const userMenu =
-          document.getElementById(
-            "user-menu"
-          );
-
-        if (
-          userButton &&
-          userMenu
-        ) {
-          const userRoot =
-            userButton.closest(
-              "[data-dropdown-root]"
-            ) ||
-            userButton.parentElement;
-
-          const userItem = {
-            root: userRoot,
-            button: userButton,
-            menu: userMenu
-          };
-
-          dropdowns.push(
-            userItem
-          );
-
-          userButton.addEventListener(
-            "click",
-            function (event) {
-              event.preventDefault();
-              event.stopPropagation();
-
-              const shouldOpen =
-                userMenu.classList.contains(
-                  "hidden"
-                );
-
-              closeAllDropdowns();
-
-              setDropdownState(
-                userItem,
-                shouldOpen
-              );
-            }
-          );
-
-          userMenu.addEventListener(
-            "click",
-            function (event) {
-              if (
-                event.target.closest(
-                  "a, button"
-                )
-              ) {
-                setDropdownState(
-                  userItem,
-                  false
-                );
-              }
-            }
-          );
-        }
-
-        /* ==========================================================
-           DESKTOP MORE DROPDOWN
-           ========================================================== */
-
-        const desktopMoreButton =
-          document.getElementById(
-            "desktop-more-button"
-          );
-
-        const desktopMoreMenu =
-          document.getElementById(
-            "desktop-more-menu"
-          );
-
-        if (
-          desktopMoreButton &&
-          desktopMoreMenu
-        ) {
-          const desktopMoreRoot =
-            desktopMoreButton.closest(
-              "[data-dropdown-root]"
-            ) ||
-            desktopMoreButton.parentElement;
-
-          const desktopMoreItem = {
-            root: desktopMoreRoot,
-            button: desktopMoreButton,
-            menu: desktopMoreMenu
-          };
-
-          dropdowns.push(
-            desktopMoreItem
-          );
-
-          desktopMoreButton.addEventListener(
-            "click",
-            function (event) {
-              event.preventDefault();
-              event.stopPropagation();
-
-              const shouldOpen =
-                desktopMoreMenu.classList.contains(
-                  "hidden"
-                );
-
-              closeAllDropdowns();
-
-              setDropdownState(
-                desktopMoreItem,
-                shouldOpen
-              );
-            }
-          );
-
-          desktopMoreMenu.addEventListener(
-            "click",
-            function (event) {
-              if (
-                event.target.closest(
-                  "a, button"
-                )
-              ) {
-                setDropdownState(
-                  desktopMoreItem,
-                  false
-                );
-              }
-            }
-          );
-        }
-
-        /* ==========================================================
-           DOCUMENT CLICK
-           ========================================================== */
-
-        document.addEventListener(
-          "click",
-          function (event) {
-            dropdowns.forEach(
-              function (item) {
-                if (
-                  !item.root ||
-                  !item.menu ||
-                  item.menu.classList.contains(
-                    "hidden"
-                  )
-                ) {
-                  return;
-                }
-
-                if (
-                  item.root.contains(
-                    event.target
-                  )
-                ) {
-                  return;
-                }
-
-                setDropdownState(
-                  item,
-                  false
-                );
-              }
-            );
-          }
-        );
-
-        /* ==========================================================
-           ESCAPE KEY
-           ========================================================== */
-
-        document.addEventListener(
-          "keydown",
-          function (event) {
-            if (
-              event.key !== "Escape"
-            ) {
-              return;
-            }
-
-            closeAllDropdowns();
-
-            if (
-              isMobileMenuOpen()
-            ) {
-              setMobileMenuState(
-                false
-              );
-            }
-          }
-        );
-
-        /* ==========================================================
-           FOCUS TRAP FOR MOBILE MENU
-           ========================================================== */
-
-        if (
-          mobilePanel &&
-          mobileMenuButton
-        ) {
-          mobilePanel.addEventListener(
-            "keydown",
-            function (event) {
-              if (
-                event.key !== "Tab" ||
-                !isMobileMenuOpen()
-              ) {
-                return;
-              }
-
-              const focusableElements =
-                Array.from(
-                  mobilePanel.querySelectorAll(
-                    "a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex='-1'])"
-                  )
-                ).filter(
-                  function (element) {
-                    return (
-                      !element.hasAttribute(
-                        "disabled"
-                      ) &&
-                      element.offsetParent !== null
-                    );
-                  }
-                );
-
-              if (
-                !focusableElements.length
-              ) {
-                event.preventDefault();
-                mobileMenuButton.focus();
-                return;
-              }
-
-              const first =
-                focusableElements[0];
-
-              const last =
-                focusableElements[
-                  focusableElements.length - 1
-                ];
-
-              if (
-                event.shiftKey &&
-                document.activeElement === first
-              ) {
-                event.preventDefault();
-                last.focus();
-              } else if (
-                !event.shiftKey &&
-                document.activeElement === last
-              ) {
-                event.preventDefault();
-                first.focus();
-              }
-            }
-          );
-        }
-
-        /* ==========================================================
-           RESPONSIVE BREAKPOINT HANDLING
-           ========================================================== */
-
-        let resizeTimer = null;
-
-        window.addEventListener(
-          "resize",
-          function () {
-            window.clearTimeout(
-              resizeTimer
-            );
-
-            resizeTimer =
-              window.setTimeout(
-                function () {
-                  if (
-                    window.innerWidth >= 1024 &&
-                    isMobileMenuOpen()
-                  ) {
-                    setMobileMenuState(
-                      false,
-                      {
-                        skipFocusRestore: true
-                      }
-                    );
-                  }
-                },
-                100
-              );
-          }
-        );
-
-        /* ==========================================================
-           EXPORT MENU
-           ========================================================== */
-
-        const exportButton =
-          document.getElementById(
-            "export-menu-btn"
-          );
-
-        const exportMenu =
-          document.getElementById(
-            "export-menu"
-          );
-
-        if (
-          exportButton &&
-          exportMenu
-        ) {
-          exportButton.addEventListener(
-            "click",
-            function (event) {
-              event.preventDefault();
-              event.stopPropagation();
-
-              exportMenu.classList.toggle(
-                "hidden"
-              );
-            }
-          );
-
-          exportMenu.addEventListener(
-            "click",
-            function (event) {
-              event.stopPropagation();
-            }
-          );
-
-          document.addEventListener(
-            "click",
-            function () {
-              if (
-                !exportMenu.classList.contains(
-                  "hidden"
-                )
-              ) {
-                exportMenu.classList.add(
-                  "hidden"
-                );
-              }
-            }
-          );
-        }
-
-        /* ==========================================================
-           SHARED TTS HELPER
-           ========================================================== */
-
+        /* ---------- SHARED TTS HELPER ---------- */
         (function () {
-          if (
-            !(
-              "speechSynthesis" in
-              window
-            ) ||
-            !(
-              "SpeechSynthesisUtterance" in
-              window
-            )
-          ) {
-            window.agriscanTTS = {
-              speak: function () {},
-              stop: function () {},
-              isSupported: false
-            };
+          function emit(speaking) {
+            if (window.agriscanTTS) window.agriscanTTS.isSpeaking = speaking;
+            window.dispatchEvent(new CustomEvent("agriscan-tts-change", { detail: { speaking: speaking } }));
+          }
 
+          if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+            window.agriscanTTS = { speak: function () {}, stop: function () {}, isSupported: false, isSpeaking: false };
             return;
           }
 
-          const synth =
-            window.speechSynthesis;
-
-          let currentUtterance =
-            null;
+          var synth = window.speechSynthesis;
 
           window.agriscanTTS = {
             isSupported: true,
             isSpeaking: false,
 
-            speak: function (
-              text,
-              lang
-            ) {
-              if (!text) {
-                return;
-              }
-
+            speak: function (text, lang) {
+              if (!text) return;
               synth.cancel();
 
-              currentUtterance =
-                new SpeechSynthesisUtterance(
-                  text
-                );
+              var utter = new SpeechSynthesisUtterance(text);
+              utter.lang = lang || "tl-PH";
+              utter.rate = 0.9;
+              utter.pitch = 1;
+              utter.volume = 1;
+              utter.onstart = function () { emit(true); };
+              utter.onend = function () { emit(false); };
+              utter.onerror = function () { emit(false); };
 
-              currentUtterance.lang =
-                lang || "tl-PH";
-
-              currentUtterance.rate =
-                0.9;
-
-              currentUtterance.pitch =
-                1;
-
-              currentUtterance.volume =
-                1;
-
-              currentUtterance.onstart =
-                function () {
-                  window.agriscanTTS.isSpeaking =
-                    true;
-
-                  window.dispatchEvent(
-                    new CustomEvent(
-                      "agriscan-tts-change",
-                      {
-                        detail: {
-                          speaking: true
-                        }
-                      }
-                    )
-                  );
-                };
-
-              currentUtterance.onend =
-                function () {
-                  window.agriscanTTS.isSpeaking =
-                    false;
-
-                  window.dispatchEvent(
-                    new CustomEvent(
-                      "agriscan-tts-change",
-                      {
-                        detail: {
-                          speaking: false
-                        }
-                      }
-                    )
-                  );
-                };
-
-              currentUtterance.onerror =
-                function () {
-                  window.agriscanTTS.isSpeaking =
-                    false;
-
-                  window.dispatchEvent(
-                    new CustomEvent(
-                      "agriscan-tts-change",
-                      {
-                        detail: {
-                          speaking: false
-                        }
-                      }
-                    )
-                  );
-                };
-
-              synth.speak(
-                currentUtterance
-              );
+              synth.speak(utter);
             },
 
             stop: function () {
               synth.cancel();
-
-              window.agriscanTTS.isSpeaking =
-                false;
-
-              window.dispatchEvent(
-                new CustomEvent(
-                  "agriscan-tts-change",
-                  {
-                    detail: {
-                      speaking: false
-                    }
-                  }
-                )
-              );
+              emit(false);
             }
           };
+
+          /* Do not keep talking after the user leaves the page */
+          window.addEventListener("pagehide", function () { synth.cancel(); });
         })();
-
-        /* ==========================================================
-           FILE PREVIEW
-           ========================================================== */
-
-        document
-          .querySelectorAll(
-            "input[type=file]"
-          )
-          .forEach(
-            function (input) {
-              let target = null;
-
-              if (
-                input.dataset &&
-                input.dataset.previewTarget
-              ) {
-                target =
-                  document.getElementById(
-                    input.dataset.previewTarget
-                  );
-              }
-
-              if (!target) {
-                const idsToTry = [
-                  input.id +
-                    "-preview",
-
-                  "preview-" +
-                    input.id,
-
-                  input.name +
-                    "-preview"
-                ];
-
-                for (
-                  const id of idsToTry
-                ) {
-                  const element =
-                    document.getElementById(
-                      id
-                    );
-
-                  if (element) {
-                    target =
-                      element;
-                    break;
-                  }
-                }
-              }
-
-              if (!target) {
-                const patterns = [
-                  "leaf_image",
-                  "new_image",
-                  "image",
-                  "image_path"
-                ];
-
-                for (
-                  const pattern of patterns
-                ) {
-                  if (
-                    (
-                      input.name &&
-                      input.name.indexOf(
-                        pattern
-                      ) !== -1
-                    ) ||
-                    input.id ===
-                      `id_${pattern}`
-                  ) {
-                    const previewIds = [
-                      pattern +
-                        "_preview",
-
-                      "preview_" +
-                        pattern,
-
-                      "preview-" +
-                        input.id,
-
-                      input.id +
-                        "-preview",
-
-                      "leaf_preview"
-                    ];
-
-                    for (
-                      const previewId of previewIds
-                    ) {
-                      const element =
-                        document.getElementById(
-                          previewId
-                        );
-
-                      if (element) {
-                        target =
-                          element;
-                        break;
-                      }
-                    }
-
-                    if (target) {
-                      break;
-                    }
-                  }
-                }
-              }
-
-              input.addEventListener(
-                "change",
-                function () {
-                  const file =
-                    input.files &&
-                    input.files[0];
-
-                  if (!file) {
-                    return;
-                  }
-
-                  if (!target) {
-                    return;
-                  }
-
-                  const reader =
-                    new FileReader();
-
-                  reader.onload =
-                    function (event) {
-                      target.src =
-                        event.target.result;
-                    };
-
-                  reader.readAsDataURL(
-                    file
-                  );
-
-                  const container =
-                    target
-                      ? target.closest(
-                          "#leaf_preview_container"
-                        )
-                      : null;
-
-                  if (container) {
-                    container.classList.remove(
-                      "hidden"
-                    );
-                  }
-
-                  try {
-                    const helpElement =
-                      document.getElementById(
-                        `help-${input.name}`
-                      );
-
-                    const errorElement =
-                      document.getElementById(
-                        `error-${input.name}`
-                      );
-
-                    const element =
-                      document.getElementById(
-                        input.id
-                      );
-
-                    if (element) {
-                      const describedBy = [];
-
-                      if (
-                        helpElement
-                      ) {
-                        describedBy.push(
-                          helpElement.id
-                        );
-                      }
-
-                      if (
-                        errorElement
-                      ) {
-                        describedBy.push(
-                          errorElement.id
-                        );
-                      }
-
-                      if (
-                        describedBy.length
-                      ) {
-                        element.setAttribute(
-                          "aria-describedby",
-                          describedBy.join(
-                            " "
-                          )
-                        );
-                      }
-
-                      if (
-                        errorElement
-                      ) {
-                        element.setAttribute(
-                          "aria-invalid",
-                          "true"
-                        );
-                      }
-                    }
-                  } catch (error) {
-                    /* No-op. */
-                  }
-                }
-              );
-            }
-          );
-
-        /* ==========================================================
-           STEPPER HANDLING
-           ========================================================== */
-
-        document
-          .querySelectorAll(
-            "[data-stepper]"
-          )
-          .forEach(
-            function (container) {
-              document
-                .querySelectorAll(
-                  ".form-field"
-                )
-                .forEach(
-                  function (wrapper) {
-                    const input =
-                      wrapper.querySelector(
-                        "input, select, textarea"
-                      );
-
-                    if (!input) {
-                      return;
-                    }
-
-                    const help =
-                      wrapper.querySelector(
-                        "#help-" +
-                          (
-                            input.name ||
-                            ""
-                          )
-                      );
-
-                    const error =
-                      wrapper.querySelector(
-                        "#error-" +
-                          (
-                            input.name ||
-                            ""
-                          )
-                      );
-
-                    const ids = [];
-
-                    if (help) {
-                      ids.push(
-                        help.id
-                      );
-                    }
-
-                    if (error) {
-                      ids.push(
-                        error.id
-                      );
-                    }
-
-                    if (ids.length) {
-                      input.setAttribute(
-                        "aria-describedby",
-                        ids.join(" ")
-                      );
-                    }
-
-                    if (error) {
-                      input.setAttribute(
-                        "aria-invalid",
-                        "true"
-                      );
-                    }
-                  }
-                );
-
-              const steps =
-                Array.from(
-                  container.querySelectorAll(
-                    "[data-step]"
-                  )
-                );
-
-              if (!steps.length) {
-                return;
-              }
-
-              let index = 0;
-
-              function render() {
-                steps.forEach(
-                  function (
-                    step,
-                    stepIndex
-                  ) {
-                    const hidden =
-                      stepIndex !==
-                      index;
-
-                    step.classList.toggle(
-                      "hidden",
-                      hidden
-                    );
-
-                    step.setAttribute(
-                      "aria-hidden",
-                      hidden
-                        ? "true"
-                        : "false"
-                    );
-                  }
-                );
-              }
-
-              render();
-
-              container
-                .querySelectorAll(
-                  "[data-step-next]"
-                )
-                .forEach(
-                  function (button) {
-                    button.addEventListener(
-                      "click",
-                      function (event) {
-                        event.preventDefault();
-
-                        if (
-                          index <
-                          steps.length - 1
-                        ) {
-                          index++;
-                          render();
-                        }
-                      }
-                    );
-                  }
-                );
-
-              container
-                .querySelectorAll(
-                  "[data-step-prev]"
-                )
-                .forEach(
-                  function (button) {
-                    button.addEventListener(
-                      "click",
-                      function (event) {
-                        event.preventDefault();
-
-                        if (
-                          index > 0
-                        ) {
-                          index--;
-                          render();
-                        }
-                      }
-                    );
-                  }
-                );
-            }
-          );
       })();
     </script>
 
