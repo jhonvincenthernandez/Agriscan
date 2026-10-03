@@ -1,546 +1,304 @@
 {% extends 'base.html' %}
 {% block title %}Knowledge Base · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page-specific Knowledge Base styles mirroring Detection Records */
+  .kb-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .kb-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .kb-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .kb-title { margin: 0; }
+  .kb-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .kb-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .kb-chip { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: var(--btn-h); padding: 0 0.875rem; color: var(--color-text); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
+  @media (min-width: 640px) {
+    .kb-head { padding: 1.5rem; }
+    .kb-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .kb-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .kb-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .kb-filters { padding: 1.5rem; } }
+  .kb-filters form { display: grid; gap: 1rem; }
+  .kb-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .kb-search { position: relative; flex: 1; min-width: 0; }
+  .kb-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .kb-search input { padding-left: 2.5rem; }
+  .kb-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .kb-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .kb-search-row { flex-direction: row; }
+    .kb-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .kb-kbd { display: inline-block; }
+    .kb-search input { padding-right: 5rem; }
+    .kb-selects { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  .btn-warn { color: var(--color-warning-text); border-color: var(--color-warning-border); }
+  .btn-warn:hover { color: var(--color-warning-text); background: var(--color-warning-soft); border-color: #f59e0b; }
+
+  .kb-badge { display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); background: var(--color-overlay); color: var(--color-text); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; white-space: nowrap; }
+  .kb-badge--success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .kb-badge--warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .kb-badge--danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .kb-badge--info    { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+  
+  .kb-muted { color: var(--color-text-muted); font-style: italic; }
+  .kb-num { text-align: right; }
+  .kb-nowrap { white-space: nowrap; }
+  .kb-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    max-width: 24rem;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+  }
+  .kb-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+
+  .kb-sort { display: inline-flex; align-items: center; gap: 0.375rem; color: inherit; text-decoration: none; }
+  .kb-sort:hover { color: var(--color-text-primary); }
+  .kb-sort svg { width: 0.75rem; height: 0.75rem; opacity: 0; }
+  .kb-sort:hover svg { opacity: 0.5; }
+  .kb-sort.is-active { color: var(--color-text-primary); }
+  .kb-sort.is-active svg { opacity: 1; color: var(--color-brand); }
+
+  .kb-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .kb-empty { padding: 3rem; } }
+  .kb-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .kb-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container">
 
-  <!-- =========================================================
-       PAGE HEADER
-       ========================================================= -->
-  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+<section class="page-container min-w-0">
 
-      <!-- Title / description -->
+  <!-- PAGE HEADER -->
+  <header class="agri-card kb-head">
+    <div class="kb-head-main">
+      <span class="kb-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+      </span>
       <div class="min-w-0">
-        <div class="flex items-start gap-3">
-          <div
-            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-50 text-green-700"
-            aria-hidden="true"
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-              />
-            </svg>
-          </div>
-
-          <div class="min-w-0">
-            <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-              Knowledge Base
-            </h1>
-
-            <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-              Browse trusted guidance on farming, crop health, and best practices.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Page actions -->
-      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-
-        <!-- Record count -->
-        <div
-          class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 text-sm font-medium text-gray-700"
-          aria-label="{{ total_count }} entr{{ total_count|pluralize:'y,ies' }}"
-        >
-          <svg
-            class="h-4 w-4 shrink-0 text-gray-500"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-9.618 5.04A12.02 12.02 0 0012 21.5a12.02 12.02 0 009.618-13.516z"
-            />
-          </svg>
-
-          <span>
-            {{ total_count }} entr{{ total_count|pluralize:"y,ies" }}
-          </span>
-        </div>
-
-        {% if is_admin_or_technician %}
-          <a
-            href="{% url 'polls:knowledge_admin_list' %}"
-            class="btn btn-secondary w-full sm:w-auto"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-            </svg>
-            <span>Manage</span>
-          </a>
-        {% endif %}
+        <h1 class="kb-title">Knowledge Base</h1>
+        <p class="kb-lead">Browse trusted guidance on farming, crop health, and best practices.</p>
       </div>
     </div>
 
-    <!-- =======================================================
-         SEARCH / FILTERS
-         ======================================================= -->
-    <div class="mt-6 border-t border-gray-100 pt-5">
-      <form method="get" class="space-y-3">
+    <div class="kb-head-actions">
+      <span class="kb-chip">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-9.618 5.04A12.02 12.02 0 0012 21.5a12.02 12.02 0 009.618-13.516z"/>
+        </svg>
+        {{ total_count }} entr{{ total_count|pluralize:"y,ies" }}
+      </span>
 
-        <!-- Search -->
-        <div class="flex flex-col gap-2 sm:flex-row">
-          <div class="min-w-0 flex-1">
-            <label for="knowledge-search" class="sr-only">
-              Search knowledge entries
-            </label>
+      {% if is_admin_or_technician %}
+      <a href="{% url 'polls:knowledge_admin_list' %}" class="btn btn-primary no-print">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <span>Manage</span>
+      </a>
+      {% endif %}
+    </div>
+  </header>
 
-            <input
-              id="knowledge-search"
-              type="text"
-              name="search"
-              value="{{ search_query }}"
-              placeholder="Search name, description, symptoms…"
-              autocomplete="off"
-              class="form-input"
-            />
-          </div>
+  <!-- SEARCH AND FILTERS -->
+  <div class="agri-card kb-filters no-print">
+    <form method="get" role="search" aria-label="Search and filter knowledge entries">
 
-          <!-- Preserve filter state during text search -->
-          <input
-            type="hidden"
-            name="category"
-            value="{{ category_filter }}"
-          >
-
-          <input
-            type="hidden"
-            name="sort"
-            value="{{ sort }}"
-          >
-
-          <input
-            type="hidden"
-            name="page_size"
-            value="{{ page_size }}"
-          >
-
-          <button
-            type="submit"
-            data-loading
-            class="btn btn-primary w-full sm:w-auto"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-
-            <span>Search</span>
-          </button>
-
-          {% if search_query or category_filter %}
-            <a
-              href="{% url 'polls:knowledge_list' %}"
-              class="btn btn-secondary w-full sm:w-auto"
-            >
-              Clear
-            </a>
-          {% endif %}
+      <div class="kb-search-row">
+        <div class="kb-search">
+          <label for="knowledge-search" class="sr-only-agri">Search knowledge entries</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="knowledge-search" type="search" name="search" value="{{ search_query }}" placeholder="Search name, description, symptoms" autocomplete="off">
+          <kbd class="kb-kbd" aria-hidden="true">Ctrl K</kbd>
         </div>
 
-        <!-- Filters -->
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <input type="hidden" name="category" value="{{ category_filter }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        <input type="hidden" name="page_size" value="{{ page_size }}">
 
-          <!-- Category -->
-          <div class="min-w-0">
-            <label for="knowledge-category-filter" class="sr-only">
-              Filter by category
-            </label>
-
-            <select
-              id="knowledge-category-filter"
-              name="category"
-              onchange="this.form.submit()"
-              class="form-select form-select-sm"
-            >
-              <option value="">All categories</option>
-
-              <option
-                value="disease"
-                {% if category_filter == 'disease' %}selected{% endif %}
-              >
-                Disease
-              </option>
-
-              <option
-                value="pest"
-                {% if category_filter == 'pest' %}selected{% endif %}
-              >
-                Pest
-              </option>
-
-              <option
-                value="crop_nutrition"
-                {% if category_filter == 'crop_nutrition' %}selected{% endif %}
-              >
-                Crop Nutrition &amp; Fertilizer
-              </option>
-
-              <option
-                value="irrigation"
-                {% if category_filter == 'irrigation' %}selected{% endif %}
-              >
-                Irrigation &amp; Water Management
-              </option>
-
-              <option
-                value="soil"
-                {% if category_filter == 'soil' %}selected{% endif %}
-              >
-                Soil Management
-              </option>
-
-              <option
-                value="post_harvest"
-                {% if category_filter == 'post_harvest' %}selected{% endif %}
-              >
-                Post-Harvest &amp; Storage
-              </option>
-            </select>
-          </div>
-
-          <!-- Sort -->
-          <div class="min-w-0">
-            <label for="knowledge-sort-filter" class="sr-only">
-              Sort knowledge entries
-            </label>
-
-            <select
-              id="knowledge-sort-filter"
-              name="sort"
-              onchange="this.form.submit()"
-              class="form-select form-select-sm"
-            >
-              <option
-                value="name"
-                {% if sort == 'name' %}selected{% endif %}
-              >
-                Name A-Z
-              </option>
-
-              <option
-                value="-name"
-                {% if sort == '-name' %}selected{% endif %}
-              >
-                Name Z-A
-              </option>
-
-              <option
-                value="updated_at"
-                {% if sort == 'updated_at' %}selected{% endif %}
-              >
-                Newest updated
-              </option>
-            </select>
-          </div>
-
-          <!-- Page size -->
-          <div class="min-w-0">
-            <label for="knowledge-page-size" class="sr-only">
-              Entries per page
-            </label>
-
-            <select
-              id="knowledge-page-size"
-              name="page_size"
-              onchange="this.form.submit()"
-              class="form-select form-select-sm"
-            >
-              <option
-                value="12"
-                {% if page_size == 12 %}selected{% endif %}
-              >
-                12 / page
-              </option>
-
-              <option
-                value="25"
-                {% if page_size == 25 %}selected{% endif %}
-              >
-                25 / page
-              </option>
-
-              <option
-                value="50"
-                {% if page_size == 50 %}selected{% endif %}
-              >
-                50 / page
-              </option>
-
-              <option
-                value="100"
-                {% if page_size == 100 %}selected{% endif %}
-              >
-                100 / page
-              </option>
-            </select>
-          </div>
-        </div>
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
 
         {% if search_query or category_filter %}
-          <div class="flex items-center gap-2 text-xs text-gray-500">
-            <svg
-              class="h-3.5 w-3.5 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 14.414V19l-2 2v-6.586a1 1 0 00-.293-.707L4.293 7.293A1 1 0 014 6.586V4z"
-              />
-            </svg>
-
-            <span>
-              Filters are applied to the current knowledge view.
-            </span>
-          </div>
+        <a href="{% url 'polls:knowledge_list' %}" class="btn btn-secondary">Clear</a>
         {% endif %}
-      </form>
-    </div>
+      </div>
+
+      <div class="kb-selects">
+        <div>
+          <label for="knowledge-category-filter" class="sr-only-agri">Filter by category</label>
+          <select id="knowledge-category-filter" name="category" data-autosubmit class="form-select">
+            <option value="">All categories</option>
+            <option value="disease" {% if category_filter == 'disease' %}selected{% endif %}>Disease</option>
+            <option value="pest" {% if category_filter == 'pest' %}selected{% endif %}>Pest</option>
+            <option value="crop_nutrition" {% if category_filter == 'crop_nutrition' %}selected{% endif %}>Crop Nutrition &amp; Fertilizer</option>
+            <option value="irrigation" {% if category_filter == 'irrigation' %}selected{% endif %}>Irrigation &amp; Water Management</option>
+            <option value="soil" {% if category_filter == 'soil' %}selected{% endif %}>Soil Management</option>
+            <option value="post_harvest" {% if category_filter == 'post_harvest' %}selected{% endif %}>Post-Harvest &amp; Storage</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="knowledge-sort-filter" class="sr-only-agri">Sort knowledge entries</label>
+          <select id="knowledge-sort-filter" name="sort" data-autosubmit class="form-select">
+            <option value="name" {% if sort == 'name' or not sort %}selected{% endif %}>Name A-Z</option>
+            <option value="-name" {% if sort == '-name' %}selected{% endif %}>Name Z-A</option>
+            <option value="updated_at" {% if sort == 'updated_at' %}selected{% endif %}>Newest updated</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="knowledge-page-size" class="sr-only-agri">Entries per page</label>
+          <select id="knowledge-page-size" name="page_size" data-autosubmit class="form-select">
+            <option value="12" {% if page_size == 12 %}selected{% endif %}>12 / page</option>
+            <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
+          </select>
+        </div>
+      </div>
+
+      {% if search_query or category_filter %}
+      <div class="flex items-center gap-2 text-[var(--text-xs)] text-[var(--color-text-muted)]">
+        <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 14.414V19l-2 2v-6.586a1 1 0 00-.293-.707L4.293 7.293A1 1 0 014 6.586V4z"/>
+        </svg>
+        <span>Filters are applied to the current knowledge view.</span>
+      </div>
+      {% endif %}
+
+    </form>
   </div>
 
-  <!-- =========================================================
-       KNOWLEDGE ENTRIES
-       ========================================================= -->
   {% if entries %}
 
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+  <!-- TABLE -->
+  <div class="data-table-wrap">
+    <table class="data-table" aria-label="Knowledge entries">
+      <thead>
+        <tr>
+          <th scope="col" aria-sort="{% if sort == 'name' %}ascending{% elif sort == '-name' %}descending{% else %}none{% endif %}">
+            <a class="kb-sort{% if sort == 'name' or sort == '-name' %} is-active{% endif %}" href="?sort={% if sort == 'name' %}-name{% else %}name{% endif %}{% if search_query %}&amp;search={{ search_query|urlencode }}{% endif %}{% if category_filter %}&amp;category={{ category_filter|urlencode }}{% endif %}{% if page_size %}&amp;page_size={{ page_size }}{% endif %}">
+              Name
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort == '-name' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col">Category</th>
+          <th scope="col">Description</th>
+          <th scope="col" aria-sort="{% if sort == 'updated_at' %}ascending{% elif sort == '-updated_at' %}descending{% else %}none{% endif %}">
+            <a class="kb-sort{% if sort == 'updated_at' or sort == '-updated_at' %} is-active{% endif %}" href="?sort={% if sort == 'updated_at' %}-updated_at{% else %}updated_at{% endif %}{% if search_query %}&amp;search={{ search_query|urlencode }}{% endif %}{% if category_filter %}&amp;category={{ category_filter|urlencode }}{% endif %}{% if page_size %}&amp;page_size={{ page_size }}{% endif %}">
+              Updated
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort == 'updated_at' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col" class="kb-num no-print">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr class="kb-row">
+          <td data-label="Name" class="td-primary">
+            <span class="font-semibold text-[var(--color-text-primary)]">{{ entry.name }}</span>
+          </td>
 
-      {% for entry in entries %}
+          <td data-label="Category">
+            {% if entry.category == 'disease' %}
+              <span class="kb-badge kb-badge--danger">Disease</span>
+            {% elif entry.category == 'pest' %}
+              <span class="kb-badge kb-badge--warning">Pest</span>
+            {% elif entry.category == 'crop_nutrition' %}
+              <span class="kb-badge kb-badge--success">Crop Nutrition</span>
+            {% elif entry.category == 'irrigation' %}
+              <span class="kb-badge kb-badge--info">Irrigation</span>
+            {% elif entry.category == 'soil' %}
+              <span class="kb-badge">Soil Management</span>
+            {% elif entry.category == 'post_harvest' %}
+              <span class="kb-badge kb-badge--warning">Post-Harvest</span>
+            {% else %}
+              <span class="kb-badge">{{ entry.get_category_display }}</span>
+            {% endif %}
+          </td>
 
-        <article class="agri-card flex h-full min-w-0 flex-col overflow-hidden">
+          <td data-label="Description">
+            {% if entry.description %}
+            <span class="kb-desc">{{ entry.description|truncatechars:140 }}</span>
+            {% else %}
+            <span class="kb-muted">None</span>
+            {% endif %}
+          </td>
 
-          <!-- Optional image -->
-          {% if entry.image_url %}
-            <div class="aspect-[16/9] w-full overflow-hidden border-b border-gray-100 bg-gray-50">
-              <img
-                src="{{ entry.image_url }}"
-                alt="{{ entry.name }}"
-                class="h-full w-full object-cover"
-                loading="lazy"
-              />
-            </div>
-          {% endif %}
+          <td data-label="Updated" class="kb-nowrap">
+            {{ entry.updated_at|date:'M d, Y' }}
+          </td>
 
-          <div class="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
-
-            <!-- Entry heading -->
-            <div class="flex min-w-0 items-start justify-between gap-3">
-
-              <h2 class="min-w-0 flex-1 text-base font-semibold leading-6 text-gray-900 sm:text-lg">
-                {{ entry.name }}
-              </h2>
-
-              <!-- Category -->
-              <div class="shrink-0">
-                {% if entry.category == 'disease' %}
-                  <span class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-semibold leading-4 text-red-700">
-                    Disease
-                  </span>
-
-                {% elif entry.category == 'pest' %}
-                  <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-semibold leading-4 text-amber-700">
-                    Pest
-                  </span>
-
-                {% elif entry.category == 'crop_nutrition' %}
-                  <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-1 text-[11px] font-semibold leading-4 text-green-700">
-                    Crop Nutrition
-                  </span>
-
-                {% elif entry.category == 'irrigation' %}
-                  <span class="inline-flex items-center rounded-md border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-semibold leading-4 text-cyan-700">
-                    Irrigation
-                  </span>
-
-                {% elif entry.category == 'soil' %}
-                  <span class="inline-flex items-center rounded-md border border-lime-200 bg-lime-50 px-2 py-1 text-[11px] font-semibold leading-4 text-lime-700">
-                    Soil Management
-                  </span>
-
-                {% elif entry.category == 'post_harvest' %}
-                  <span class="inline-flex items-center rounded-md border border-orange-200 bg-orange-50 px-2 py-1 text-[11px] font-semibold leading-4 text-orange-700">
-                    Post-Harvest
-                  </span>
-
-                {% else %}
-                  <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-[11px] font-semibold leading-4 text-gray-600">
-                    {{ entry.get_category_display }}
-                  </span>
-                {% endif %}
-              </div>
-            </div>
-
-            <!-- Description -->
-            <p class="mt-3 text-sm leading-6 text-gray-600">
-              {{ entry.description|truncatechars:140 }}
-            </p>
-
-            <!-- Entry footer -->
-            <div class="mt-auto pt-5">
-
-              <div class="flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-
-                <a
-                  href="{% url 'polls:knowledge_detail' entry.pk %}"
-                  class="inline-flex min-h-10 items-center font-medium text-sm text-green-700 transition-colors hover:text-green-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-600 focus-visible:ring-offset-2"
-                >
-                  <span>Read more</span>
-                  <svg
-                    class="ml-1.5 h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </a>
-
-                <time
-                  datetime="{{ entry.updated_at|date:'c' }}"
-                  class="text-xs text-gray-500"
-                >
-                  Updated {{ entry.updated_at|date:'M d, Y' }}
-                </time>
-              </div>
-
+          <td data-label="Actions" class="td-actions no-print">
+            <span class="kb-actions">
+              <a href="{% url 'polls:knowledge_detail' entry.pk %}" class="btn btn-secondary btn-sm" aria-label="Read more about {{ entry.name }}">View</a>
               {% if is_admin_or_technician %}
-                <div class="mt-3 flex flex-col gap-2 border-t border-gray-100 pt-3 sm:flex-row">
-
-                  <a
-                    href="{% url 'polls:knowledge_edit' entry.pk %}"
-                    class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100"
-                  >
-                    
-                    <span>Edit</span>
-                  </a>
-
-                  <a
-                    href="{% url 'polls:knowledge_archive' entry.pk %}"
-                    data-open-delete="true"
-                    data-delete-label="Knowledge entry: {{ entry.name }}"
-                    data-delete-subtitle="This will archive the entry and move it to Trash & Archive."
-                    class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
-                  >
-                    
-                    <span>Archive</span>
-                  </a>
-
-                </div>
+                <a href="{% url 'polls:knowledge_edit' entry.pk %}" class="btn btn-secondary btn-sm" aria-label="Edit {{ entry.name }}">Edit</a>
+                <a href="{% url 'polls:knowledge_archive' entry.pk %}"
+                   data-open-delete="true"
+                   data-delete-label="Knowledge entry: {{ entry.name }}"
+                   data-delete-subtitle="This will archive the entry and move it to Trash & Archive."
+                   aria-label="Archive {{ entry.name }}"
+                   class="btn btn-secondary btn-sm btn-warn">Archive</a>
               {% endif %}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-            </div>
-          </div>
-        </article>
-
-      {% endfor %}
+  {% if page_obj and is_paginated %}
+    <div class="mt-6">
+      {% include 'partials/_pagination.html' %}
     </div>
-
-    <!-- Pagination -->
-    {% if page_obj and is_paginated %}
-      <div class="mt-6">
-        {% include 'partials/_pagination.html' %}
-      </div>
-    {% endif %}
+  {% endif %}
 
   {% else %}
 
-    <!-- Empty state -->
-    <div class="agri-card p-6 sm:p-8">
-      <div class="mx-auto flex max-w-md flex-col items-center text-center">
-
-        <div
-          class="flex h-10 w-10 items-center justify-center rounded-md bg-gray-50 text-gray-500"
-          aria-hidden="true"
-        >
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-            />
-          </svg>
-        </div>
-
-        <h2 class="mt-4 text-base font-semibold text-gray-900">
-          No knowledge entries found
-        </h2>
-
-        <p class="mt-1 text-sm leading-6 text-gray-500">
-          Try adjusting your search or category filter.
-        </p>
-
-        {% if search_query or category_filter %}
-          <a
-            href="{% url 'polls:knowledge_list' %}"
-            class="btn btn-secondary mt-4"
-          >
-            Clear filters
-          </a>
-        {% endif %}
-      </div>
-    </div>
+  <!-- EMPTY STATE -->
+  <div class="agri-card kb-empty">
+    <span class="kb-empty-icon" aria-hidden="true">
+      <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+      </svg>
+    </span>
+    <h2>No knowledge entries found</h2>
+    <p>Try adjusting your search or category filter.</p>
+    {% if search_query or category_filter %}
+      <a href="{% url 'polls:knowledge_list' %}" class="btn btn-secondary btn-lg no-print">Clear filters</a>
+    {% endif %}
+  </div>
 
   {% endif %}
+
 </section>
 
 {% include 'partials/_ctrlk.html' with input_id='knowledge-search' %}
+{% endblock %}
 
+{% block extra_js %}
+<script>
+  /* Auto-submit the form when a dropdown changes */
+  document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
+    el.addEventListener("change", function () {
+      if (el.form) el.form.submit();
+    });
+  });
+</script>
 {% endblock %}

@@ -1,168 +1,184 @@
 ﻿{% extends "base.html" %}
 {% block title %}User Management · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header & Filters */
+  .um-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .um-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .um-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .um-title { margin: 0; }
+  .um-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .um-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .um-head { padding: 1.5rem; }
+    .um-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .um-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  /* Stats Grid */
+  .um-stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .um-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1024px) { .um-stats-grid { grid-template-columns: repeat(6, 1fr); } }
+  
+  .um-stat-card { padding: 1rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-xs); }
+  .um-stat-label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin: 0; }
+  .um-stat-value { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0.25rem 0 0; line-height: 1.2; }
+  .um-stat-sub { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 0; }
+
+  /* Filters */
+  .um-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .um-filters { padding: 1.5rem; } }
+  .um-filters form { display: grid; gap: 1rem; }
+  .um-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .um-search { position: relative; flex: 1; min-width: 0; }
+  .um-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .um-search input { padding-left: 2.5rem; }
+  .um-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .um-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .um-search-row { flex-direction: row; }
+    .um-selects { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .um-kbd { display: inline-block; }
+    .um-search input { padding-right: 5rem; }
+  }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .badge-danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .badge-info    { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+
+  /* Table specifics */
+  .um-avatar {
+    width: 2.5rem; height: 2.5rem; border-radius: var(--radius-full);
+    background: var(--color-brand); color: #ffffff; font-weight: 700; font-size: var(--text-sm);
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .um-avatar-status {
+    position: absolute; bottom: 0; right: 0; width: 0.625rem; height: 0.625rem;
+    background: var(--color-success-text); border-radius: var(--radius-full);
+    border: 2px solid var(--color-surface);
+  }
+  
+  /* Responsive Text Wrapping for Long Names/Emails */
+  .um-name { font-weight: 600; color: var(--color-text-primary); overflow-wrap: anywhere; }
+  .um-username { font-size: var(--text-xs); color: var(--color-text-muted); overflow-wrap: anywhere; }
+  .um-contact { font-size: var(--text-sm); color: var(--color-text-secondary); overflow-wrap: anywhere; }
+  .um-activity { font-size: var(--text-xs); color: var(--color-text-secondary); }
+
+  /* Sort Links */
+  .um-sort { display: inline-flex; align-items: center; gap: 0.375rem; color: inherit; text-decoration: none; }
+  .um-sort:hover { color: var(--color-text-primary); }
+  .um-sort svg { width: 0.75rem; height: 0.75rem; opacity: 0; }
+  .um-sort:hover svg { opacity: 0.5; }
+  .um-sort.is-active { color: var(--color-text-primary); }
+  .um-sort.is-active svg { opacity: 1; color: var(--color-brand); }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" aria-labelledby="users-title">
-  <!-- Header Card -->
-  <header class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-      
-      <div class="flex items-start gap-4 min-w-0">
-        <!-- Consistent Green Icon Wrapper -->
-        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 border border-emerald-200" aria-hidden="true">
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-          </svg>
-        </div>
+<section class="page-container min-w-0" aria-labelledby="users-title">
 
-        <div class="min-w-0">
-          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-            <h1 id="users-title" class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-              User Management
-            </h1>
-            {% if pending_count > 0 %}
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-              {{ pending_count }} Pending
-            </span>
-            {% endif %}
-          </div>
-
-          <p class="mt-1.5 max-w-2xl text-sm leading-relaxed text-gray-600">
-            Manage, approve, and direct farmer and technician accounts across AgriScan+.
-          </p>
-        </div>
-      </div>
-
-      <!-- Action Buttons -->
-      <div class="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:flex-wrap lg:shrink-0">
-        <a href="{% url 'polls:admin_user_create' %}" class="btn btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-          </svg>
-          <span>Create User</span>
-        </a>
-        <a href="{% url 'polls:dashboard' %}" class="btn btn-secondary w-full sm:w-auto inline-flex items-center justify-center gap-2">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-          </svg>
-          <span>Dashboard</span>
-        </a>
-      </div>
-
-    </div>
-    
-    <!-- Responsive Stats Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mt-6">
-      <!-- Total Users -->
-      <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 sm:p-4 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Total</span>
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"></path>
-          </svg>
-        </div>
-        <div class="text-xl sm:text-2xl font-extrabold text-slate-900">{{ total_users }}</div>
-        <div class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Accounts</div>
-      </div>
-
-      <!-- Admins -->
-      <div class="bg-red-50/50 border border-red-200 rounded-xl p-3 sm:p-4 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-red-700 uppercase tracking-wider">Admins</span>
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <div class="text-xl sm:text-2xl font-extrabold text-red-900">{{ admin_count }}</div>
-        <div class="text-[11px] sm:text-xs text-red-700 mt-0.5">Full Access</div>
-      </div>
-
-      <!-- Technicians -->
-      <div class="bg-purple-50/50 border border-purple-200 rounded-xl p-3 sm:p-4 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-purple-700 uppercase tracking-wider">Techs</span>
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <div class="text-xl sm:text-2xl font-extrabold text-purple-900">{{ technician_count }}</div>
-        <div class="text-[11px] sm:text-xs text-purple-700 mt-0.5">Field Support</div>
-      </div>
-
-      <!-- Farmers -->
-      <div class="bg-emerald-50/50 border border-emerald-200 rounded-xl p-3 sm:p-4 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Farmers</span>
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"></path>
-          </svg>
-        </div>
-        <div class="text-xl sm:text-2xl font-extrabold text-emerald-900">{{ farmer_count }}</div>
-        <div class="text-[11px] sm:text-xs text-emerald-700 mt-0.5">Standard</div>
-      </div>
-
-      <!-- Pending -->
-      <div class="bg-amber-50/50 border border-amber-200 rounded-xl p-3 sm:p-4 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-amber-700 uppercase tracking-wider">Pending</span>
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <div class="text-xl sm:text-2xl font-extrabold text-amber-900">{{ pending_count }}</div>
-        <div class="text-[11px] sm:text-xs text-amber-700 mt-0.5">Awaiting Action</div>
-      </div>
-
-      <!-- Inactive -->
-      <div class="bg-slate-100/80 border border-slate-200 rounded-xl p-3 sm:p-4 shadow-sm">
-        <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-slate-600 uppercase tracking-wider">Inactive</span>
-          <svg class="w-4 h-4 sm:w-5 sm:h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367z" clip-rule="evenodd"></path>
-          </svg>
-        </div>
-        <div class="text-xl sm:text-2xl font-extrabold text-slate-800">{{ inactive_count }}</div>
-        <div class="text-[11px] sm:text-xs text-slate-500 mt-0.5">Disabled</div>
-      </div>
-    </div>
-
-    <!-- Search & Filters Section -->
-    <form method="GET" class="mt-6 space-y-3">
-      <div class="flex flex-col gap-2 sm:flex-row">
-        <div class="flex-1 min-w-0">
-          <input
-            id="user-search"
-            type="search"
-            name="q"
-            value="{{ search_query }}"
-            placeholder="Search username, name, email… (Ctrl+K)"
-            autocomplete="off"
-            class="form-input text-sm w-full"
-          />
-        </div>
-        
-        <div class="flex gap-2">
-          <button type="submit" class="btn btn-primary flex-1 sm:flex-initial">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-            </svg>
-            Search
-          </button>
-
-          {% if search_query or role_filter or status_filter %}
-          <a href="{% url 'polls:admin_users_list' %}" class="btn btn-secondary flex-1 sm:flex-initial">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-            Clear
-          </a>
+  <!-- =========================================================
+       PAGE HEADER
+       ========================================================= -->
+  <header class="agri-card um-head">
+    <div class="um-head-main">
+      <span class="um-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 id="users-title" class="um-title">User Management</h1>
+          {% if pending_count > 0 %}
+          <span class="badge-base badge-warning">{{ pending_count }} Pending</span>
           {% endif %}
         </div>
+        <p class="um-lead">Manage, approve, and direct farmer and technician accounts across AgriScan+.</p>
+      </div>
+    </div>
+
+    <div class="um-head-actions">
+      <a href="{% url 'polls:admin_user_create' %}" class="btn btn-primary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        <span>Create User</span>
+      </a>
+      <a href="{% url 'polls:dashboard' %}" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Dashboard</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       STATS GRID
+       ========================================================= -->
+  <div class="um-stats-grid">
+    <div class="um-stat-card">
+      <p class="um-stat-label">Total</p>
+      <p class="um-stat-value">{{ total_users }}</p>
+      <p class="um-stat-sub">Accounts</p>
+    </div>
+    <div class="um-stat-card">
+      <p class="um-stat-label">Admins</p>
+      <p class="um-stat-value">{{ admin_count }}</p>
+      <p class="um-stat-sub">Full Access</p>
+    </div>
+    <div class="um-stat-card">
+      <p class="um-stat-label">Techs</p>
+      <p class="um-stat-value">{{ technician_count }}</p>
+      <p class="um-stat-sub">Field Support</p>
+    </div>
+    <div class="um-stat-card">
+      <p class="um-stat-label">Farmers</p>
+      <p class="um-stat-value">{{ farmer_count }}</p>
+      <p class="um-stat-sub">Standard</p>
+    </div>
+    <div class="um-stat-card">
+      <p class="um-stat-label">Pending</p>
+      <p class="um-stat-value">{{ pending_count }}</p>
+      <p class="um-stat-sub">Awaiting Action</p>
+    </div>
+    <div class="um-stat-card">
+      <p class="um-stat-label">Inactive</p>
+      <p class="um-stat-value">{{ inactive_count }}</p>
+      <p class="um-stat-sub">Disabled</p>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       SEARCH & FILTERS
+       ========================================================= -->
+  <div class="agri-card um-filters no-print">
+    <form method="GET" role="search" aria-label="Filter users">
+      <div class="um-search-row">
+        <div class="um-search">
+          <label for="user-search" class="sr-only-agri">Search users</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="user-search" type="search" name="q" value="{{ search_query }}" placeholder="Search username, name, email..." autocomplete="off">
+          <kbd class="um-kbd" aria-hidden="true">Ctrl K</kbd>
+        </div>
+
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
+
+        {% if search_query or role_filter or status_filter %}
+        <a href="{% url 'polls:admin_users_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      <div class="um-selects">
         <div>
-          <select name="role" onchange="this.form.submit()" class="form-select form-select-sm w-full">
+          <label for="um-role-filter" class="sr-only-agri">Role filter</label>
+          <select id="um-role-filter" name="role" onchange="this.form.submit()" class="form-select">
             <option value="">All Roles</option>
             <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
             <option value="technician" {% if role_filter == 'technician' %}selected{% endif %}>Technician</option>
@@ -171,7 +187,8 @@
         </div>
 
         <div>
-          <select name="status" onchange="this.form.submit()" class="form-select form-select-sm w-full">
+          <label for="um-status-filter" class="sr-only-agri">Status filter</label>
+          <select id="um-status-filter" name="status" onchange="this.form.submit()" class="form-select">
             <option value="">All Statuses</option>
             <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
             <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending Approval</option>
@@ -180,7 +197,8 @@
         </div>
 
         <div>
-          <select name="page_size" onchange="this.form.submit()" class="form-select form-select-sm w-full">
+          <label for="um-page-size" class="sr-only-agri">Records per page</label>
+          <select id="um-page-size" name="page_size" onchange="this.form.submit()" class="form-select">
             {% for size in allowed_page_sizes %}
             <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} / page</option>
             {% endfor %}
@@ -188,320 +206,196 @@
         </div>
       </div>
     </form>
-  </header>
-
-  <!-- Users Data Container -->
-  <div class="agri-card overflow-hidden">
-    <div class="px-4 sm:px-6 py-3.5 border-b border-gray-200 bg-slate-50/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-      <div>
-        <h2 class="text-base font-semibold text-gray-900">Registered Accounts</h2>
-        <p class="text-xs text-gray-500">
-          {% if search_query or role_filter or status_filter %}
-            Found {{ users|length }} record{{ users|length|pluralize }} matching criteria
-          {% else %}
-            Showing {{ users|length }} active record{{ users|length|pluralize }}
-          {% endif %}
-        </p>
-      </div>
-      <span class="text-xs text-gray-500 font-medium">Page {{ users.number }} of {{ users.paginator.num_pages }}</span>
-    </div>
-
-    <!-- Desktop Table View -->
-    <div class="hidden lg:block overflow-x-auto">
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-slate-100/70 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-            <th scope="col" class="px-6 py-3.5">
-              <a href="?sort={% if sort_by == 'username' %}-username{% else %}username{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="inline-flex items-center gap-1.5 hover:text-emerald-700 transition">
-                User
-                {% if sort_by == 'username' %}↑{% elif sort_by == '-username' %}↓{% endif %}
-              </a>
-            </th>
-            <th scope="col" class="px-6 py-3.5">
-              <a href="?sort={% if sort_by == 'role' %}-role{% else %}role{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="inline-flex items-center gap-1.5 hover:text-emerald-700 transition">
-                Role
-                {% if sort_by == 'role' %}↑{% elif sort_by == '-role' %}↓{% endif %}
-              </a>
-            </th>
-            <th scope="col" class="px-6 py-3.5">
-              <a href="?sort={% if sort_by == 'status' %}-status{% else %}status{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="inline-flex items-center gap-1.5 hover:text-emerald-700 transition">
-                Status
-                {% if sort_by == 'status' %}↑{% elif sort_by == '-status' %}↓{% endif %}
-              </a>
-            </th>
-            <th scope="col" class="px-6 py-3.5">Contact Details</th>
-            <th scope="col" class="px-6 py-3.5">
-              <a href="?sort={% if sort_by == 'date_joined' %}-date_joined{% else %}date_joined{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="inline-flex items-center gap-1.5 hover:text-emerald-700 transition">
-                Activity
-                {% if sort_by == 'date_joined' %}↑{% elif sort_by == '-date_joined' %}↓{% endif %}
-              </a>
-            </th>
-            <th scope="col" class="px-6 py-3.5 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 text-sm">
-          {% for user in users %}
-          <tr class="hover:bg-slate-50/80 transition-colors">
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-3">
-                <div class="relative flex-shrink-0">
-                  <div class="w-10 h-10 rounded-full bg-emerald-700 text-white font-bold text-sm flex items-center justify-center shadow-sm">
-                    {{ user.username|slice:":2"|upper }}
-                  </div>
-                  {% if user.last_login %}
-                  <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white" title="Active Account"></span>
-                  {% endif %}
-                </div>
-                <div class="min-w-0">
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-gray-900 truncate">{{ user.get_full_name|default:user.username }}</span>
-                    {% if user == request.user %}
-                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase">You</span>
-                    {% endif %}
-                  </div>
-                  <div class="text-xs text-gray-500 truncate">@{{ user.username }}</div>
-                </div>
-              </div>
-            </td>
-
-            <td class="px-6 py-4 whitespace-nowrap">
-              {% if user.profile.role == 'admin' %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-800 border border-red-200">
-                Admin
-              </span>
-              {% elif user.profile.role == 'technician' %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 border border-purple-200">
-                Technician
-              </span>
-              {% else %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                Farmer
-              </span>
-              {% endif %}
-            </td>
-
-            <td class="px-6 py-4 whitespace-nowrap">
-              {% if not user.profile.is_approved %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
-                Pending
-              </span>
-              {% elif not user.is_active %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-300">
-                Inactive
-              </span>
-              {% else %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                Active
-              </span>
-              {% endif %}
-            </td>
-
-            <td class="px-6 py-4">
-              <div class="text-xs text-gray-900 truncate max-w-xs">{{ user.email|default:"—" }}</div>
-              <div class="text-xs text-gray-500 truncate max-w-xs">{{ user.profile.location|default:"—" }}</div>
-            </td>
-
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-xs text-gray-700">Joined {{ user.date_joined|date:"M d, Y" }}</div>
-              <div class="text-xs text-gray-500">
-                {% if user.last_login %}
-                  Seen {{ user.last_login|date:"M d, Y" }}
-                {% else %}
-                  Never logged in
-                {% endif %}
-              </div>
-            </td>
-
-            <td class="px-6 py-4 text-right whitespace-nowrap">
-              <div class="inline-flex items-center justify-end gap-1.5">
-                {% if user != request.user %}
-                  {% if not user.profile.is_approved %}
-                  <button onclick="window.location.href='{% url 'polls:admin_user_approve' user.pk %}'" class="btn btn-sm btn-success" title="Approve User">
-                    Approve
-                  </button>
-                  {% endif %}
-
-                  <button onclick="window.location.href='{% url 'polls:admin_user_edit' user.pk %}'" class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100" title="Edit User">
-                    Edit
-                  </button>
-
-                  <button onclick="window.location.href='{% url 'polls:admin_user_toggle_active' user.pk %}'" class="btn btn-sm btn-secondary" title="Toggle Status">
-                    {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
-                  </button>
-
-                  <!-- Trigger para sa Permanent Delete Modal -->
-                  <button type="button"
-                          onclick="openDeleteModal('{{ user.pk }}', '{% url 'polls:user_delete_perm' user.pk %}', '{{ user.get_full_name|default:user.username|escapejs }}', '@{{ user.username|escapejs }}')"
-                          class="btn btn-sm btn-danger inline-flex items-center gap-1"
-                          title="Permanently Delete User">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                    Delete
-                  </button>
-                {% else %}
-                  <span class="px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold border border-slate-200">
-                    Your Account
-                  </span>
-                {% endif %}
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="px-6 py-12 text-center bg-slate-50/50">
-              <div class="max-w-sm mx-auto space-y-3">
-                <p class="text-base font-bold text-gray-800">No Users Found</p>
-                <p class="text-xs text-gray-500">No registered account matches your search query or filter criteria.</p>
-                {% if search_query or role_filter or status_filter %}
-                <a href="{% url 'polls:admin_users_list' %}" class="btn btn-secondary btn-sm inline-flex">Reset Filters</a>
-                {% endif %}
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Mobile Responsive Card View -->
-    <div class="lg:hidden divide-y divide-gray-200">
-      {% for user in users %}
-      <div class="p-4 space-y-3 bg-white">
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-10 h-10 rounded-full bg-emerald-700 text-white font-bold text-sm flex items-center justify-center shadow-sm flex-shrink-0">
-              {{ user.username|slice:":2"|upper }}
-            </div>
-            <div class="min-w-0">
-              <div class="font-bold text-gray-900 text-sm flex items-center gap-1.5 truncate">
-                <span class="truncate">{{ user.get_full_name|default:user.username }}</span>
-                {% if user == request.user %}
-                <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 flex-shrink-0">YOU</span>
-                {% endif %}
-              </div>
-              <div class="text-xs text-gray-500 truncate">@{{ user.username }}</div>
-            </div>
-          </div>
-          
-          <div class="flex-shrink-0">
-            {% if user.profile.role == 'admin' %}
-            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-red-100 text-red-800 border border-red-200">Admin</span>
-            {% elif user.profile.role == 'technician' %}
-            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-purple-100 text-purple-800 border border-purple-200">Tech</span>
-            {% else %}
-            <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">Farmer</span>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 bg-slate-50 p-3 rounded-lg border border-slate-200/80">
-          <div class="min-w-0">
-            <span class="font-semibold block text-gray-400 text-[10px] uppercase tracking-wider">Email</span>
-            <span class="truncate block text-gray-800">{{ user.email|default:"—" }}</span>
-          </div>
-          <div class="min-w-0">
-            <span class="font-semibold block text-gray-400 text-[10px] uppercase tracking-wider">Location</span>
-            <span class="truncate block text-gray-800">{{ user.profile.location|default:"—" }}</span>
-          </div>
-          <div>
-            <span class="font-semibold block text-gray-400 text-[10px] uppercase tracking-wider">Joined</span>
-            <span class="text-gray-800">{{ user.date_joined|date:"M d, Y" }}</span>
-          </div>
-          <div>
-            <span class="font-semibold block text-gray-400 text-[10px] uppercase tracking-wider">Status</span>
-            {% if not user.profile.is_approved %}
-              <span class="text-amber-700 font-semibold">Pending</span>
-            {% elif not user.is_active %}
-              <span class="text-gray-500 font-semibold">Inactive</span>
-            {% else %}
-              <span class="text-emerald-700 font-semibold">Active</span>
-            {% endif %}
-          </div>
-        </div>
-
-        <div class="flex flex-wrap gap-2 pt-1">
-          {% if user != request.user %}
-            {% if not user.profile.is_approved %}
-            <button onclick="window.location.href='{% url 'polls:admin_user_approve' user.pk %}'" class="btn btn-sm btn-success flex-1">
-              Approve
-            </button>
-            {% endif %}
-
-            <button onclick="window.location.href='{% url 'polls:admin_user_edit' user.pk %}'" class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 flex-1">
-              Edit
-            </button>
-
-            <button onclick="window.location.href='{% url 'polls:admin_user_toggle_active' user.pk %}'" class="btn btn-sm btn-secondary flex-1">
-              {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
-            </button>
-
-            <!-- Trigger para sa Permanent Delete Modal (Mobile) -->
-            <button type="button"
-                    onclick="openDeleteModal('{{ user.pk }}', '{% url 'polls:user_delete_perm' user.pk %}', '{{ user.get_full_name|default:user.username|escapejs }}', '@{{ user.username|escapejs }}')"
-                    class="btn btn-sm btn-danger flex-1 inline-flex items-center justify-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              Delete
-            </button>
-          {% else %}
-            <div class="w-full text-center py-2 bg-slate-100 text-slate-600 rounded-md text-xs font-semibold border border-slate-200">
-              Current User Account
-            </div>
-          {% endif %}
-        </div>
-      </div>
-      {% empty %}
-      <div class="p-8 text-center text-xs text-gray-500">
-        No users match your selection criteria.
-      </div>
-      {% endfor %}
-    </div>
-
-    {% if users.has_other_pages %}
-      {% include 'partials/_pagination.html' with page_obj=users query_string=query_string %}
-    {% endif %}
   </div>
+
+  <!-- =========================================================
+       USERS DATA TABLE
+       ========================================================= -->
+  <div class="data-table-wrap">
+    <table class="data-table" aria-label="Registered accounts">
+      <thead>
+        <tr>
+          <th scope="col">
+            <a href="?sort={% if sort_by == 'username' %}-username{% else %}username{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'username' or sort_by == '-username' %}is-active{% endif %}">
+              Full Name
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-username' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col">Username</th>
+          <th scope="col">
+            <a href="?sort={% if sort_by == 'role' %}-role{% else %}role{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'role' or sort_by == '-role' %}is-active{% endif %}">
+              Role
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-role' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col">
+            <a href="?sort={% if sort_by == 'status' %}-status{% else %}status{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'status' or sort_by == '-status' %}is-active{% endif %}">
+              Status
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-status' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col">Email</th>
+          <th scope="col">Location</th>
+          <th scope="col">
+            <a href="?sort={% if sort_by == 'date_joined' %}-date_joined{% else %}date_joined{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'date_joined' or sort_by == '-date_joined' %}is-active{% endif %}">
+              Activity
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-date_joined' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col" class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users %}
+        <tr>
+          <td data-label="Full Name" class="td-primary">
+            <div class="flex items-center gap-3">
+              <div class="relative flex-shrink-0">
+                <div class="um-avatar">{{ user.username|slice:":2"|upper }}</div>
+                {% if user.last_login %}
+                <span class="um-avatar-status" title="Active Account"></span>
+                {% endif %}
+              </div>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="um-name">{{ user.get_full_name|default:user.username }}</span>
+                  {% if user == request.user %}
+                  <span class="badge-base badge-success" style="font-size: 10px; padding: 0 0.375rem;">You</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+
+          <td data-label="Username">
+            <span class="um-username">@{{ user.username }}</span>
+          </td>
+
+          <td data-label="Role">
+            {% if user.profile.role == 'admin' %}
+            <span class="badge-base badge-danger">Admin</span>
+            {% elif user.profile.role == 'technician' %}
+            <span class="badge-base badge-info">Technician</span>
+            {% else %}
+            <span class="badge-base badge-success">Farmer</span>
+            {% endif %}
+          </td>
+
+          <td data-label="Status">
+            {% if not user.profile.is_approved %}
+            <span class="badge-base badge-warning">Pending</span>
+            {% elif not user.is_active %}
+            <span class="badge-base badge-neutral">Inactive</span>
+            {% else %}
+            <span class="badge-base badge-success">Active</span>
+            {% endif %}
+          </td>
+
+          <td data-label="Email">
+            <span class="um-contact">{{ user.email|default:"—" }}</span>
+          </td>
+
+          <td data-label="Location">
+            <span class="um-contact">{{ user.profile.location|default:"—" }}</span>
+          </td>
+
+          <td data-label="Activity">
+            <div class="um-activity">Joined {{ user.date_joined|date:"M d, Y" }}</div>
+            <div class="um-activity">
+              {% if user.last_login %}
+                Seen {{ user.last_login|date:"M d, Y" }}
+              {% else %}
+                Never logged in
+              {% endif %}
+            </div>
+          </td>
+
+          <td data-label="Actions" class="td-actions">
+            <div class="flex flex-wrap items-center gap-2 justify-end">
+              {% if user != request.user %}
+                {% if not user.profile.is_approved %}
+                <a href="{% url 'polls:admin_user_approve' user.pk %}" class="btn btn-sm btn-success" title="Approve User">Approve</a>
+                {% endif %}
+
+                <a href="{% url 'polls:admin_user_edit' user.pk %}" class="btn btn-sm btn-secondary" title="Edit User">Edit</a>
+
+                <a href="{% url 'polls:admin_user_toggle_active' user.pk %}" class="btn btn-sm btn-secondary" title="Toggle Status">
+                  {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
+                </a>
+
+                <button type="button"
+                        onclick="openDeleteModal('{{ user.pk }}', '{% url 'polls:user_delete_perm' user.pk %}', '{{ user.get_full_name|default:user.username|escapejs }}', '@{{ user.username|escapejs }}')"
+                        class="btn btn-sm btn-danger"
+                        title="Permanently Delete User">
+                  Delete
+                </button>
+              {% else %}
+                <span class="badge-base badge-neutral">Your Account</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-12">
+            <div class="flex flex-col items-center">
+              <span class="inline-flex items-center justify-center w-12 h-12 mb-3 text-[var(--color-text-muted)] bg-[var(--color-overlay)] border border-[var(--color-border-strong)] rounded-full" aria-hidden="true">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+              </span>
+              <h3 class="text-base font-bold text-[var(--color-text-primary)] mb-1">No Users Found</h3>
+              <p class="text-sm text-[var(--color-text-secondary)] mb-4 max-w-xs">No registered account matches your search query or filter criteria.</p>
+              {% if search_query or role_filter or status_filter %}
+              <a href="{% url 'polls:admin_users_list' %}" class="btn btn-secondary btn-sm">Reset Filters</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if users.has_other_pages %}
+    <div class="mt-6">
+      {% include 'partials/_pagination.html' with page_obj=users query_string=query_string %}
+    </div>
+  {% endif %}
+
 </section>
 {% endblock %}
 
 {% block modals %}
 <!-- Optimal Scan-Style Non-Scrollable Centered Modal for Permanent User Deletion -->
-<div id="deleteUserModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm overflow-hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-  <div class="relative w-full max-w-lg transform overflow-hidden rounded-xl bg-white text-left shadow-2xl transition-all border border-red-100 my-auto">
+<div id="deleteUserModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="relative w-full max-w-lg transform overflow-hidden rounded-[var(--radius-lg)] bg-[var(--color-surface)] text-left shadow-[var(--shadow-lg)] border border-[var(--color-border)] my-auto">
     
-    <!-- Modal Header -->
-    <div class="bg-red-50 p-4 sm:p-5 border-b border-red-100 flex items-start gap-4">
-      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-100 text-red-600 sm:h-11 sm:w-11">
+    <div class="p-5 border-b border-[var(--color-border)] flex items-start gap-4">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-danger-soft)] text-[var(--color-danger-text)]">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
         </svg>
       </div>
       <div class="min-w-0 flex-1">
-        <h3 class="text-base sm:text-lg font-bold text-red-900" id="modal-title">Confirm Permanent User Deletion</h3>
-        <p class="text-xs text-red-700 mt-0.5">This action cannot be undone. The account and its associated data will be permanently deleted.</p>
+        <h3 class="text-lg font-bold text-[var(--color-text-primary)]" id="modal-title">Confirm Permanent User Deletion</h3>
+        <p class="text-sm text-[var(--color-text-secondary)] mt-0.5">This action cannot be undone. The account and its associated data will be permanently deleted.</p>
       </div>
     </div>
 
-    <!-- Form Body -->
-    <form id="deleteUserForm" method="POST" action="" class="p-4 sm:p-6 space-y-4">
+    <form id="deleteUserForm" method="POST" action="" class="p-5 space-y-4">
       {% csrf_token %}
-      
-      <!-- Hidden input for user_id matching AdminDeleteUserForm -->
       <input type="hidden" name="user_id" id="modalUserIdInput" value="" />
 
-      <!-- Target User Card Info -->
-      <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-        <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-500 block">Target Account</span>
-        <div id="modalTargetName" class="font-bold text-gray-900 text-sm mt-0.5 truncate"></div>
-        <div id="modalTargetUsername" class="text-xs text-gray-500 truncate"></div>
+      <div class="p-3 bg-[var(--color-overlay)] border border-[var(--color-border)] rounded-[var(--radius-sm)]">
+        <span class="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-muted)] block">Target Account</span>
+        <div id="modalTargetName" class="font-bold text-[var(--color-text-primary)] text-sm mt-0.5 truncate"></div>
+        <div id="modalTargetUsername" class="text-xs text-[var(--color-text-muted)] truncate"></div>
       </div>
 
-      <!-- Password Verification Input -->
       <div class="space-y-1.5">
-        <label for="admin_password" class="block text-xs font-semibold text-gray-700">
-          Confirm your Admin Password:
+        <label for="admin_password" class="block text-sm font-semibold text-[var(--color-text-primary)]">
+          Confirm your Admin Password
         </label>
         <input 
           type="password" 
@@ -510,17 +404,14 @@
           required 
           autocomplete="current-password"
           placeholder="Enter your password"
-          class="form-input text-sm w-full focus:ring-red-500 focus:border-red-500"
+          class="form-input w-full"
         />
-        <p class="text-[11px] text-gray-500">Security check: Your password is required to verify your administrator privileges.</p>
+        <p class="text-xs text-[var(--color-text-muted)]">Security check: Your password is required to verify your administrator privileges.</p>
       </div>
 
-      <!-- Modal Actions -->
-      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 border-t border-gray-100">
-        <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary w-full sm:w-auto">
-          Cancel
-        </button>
-        <button type="submit" class="btn btn-danger w-full sm:w-auto inline-flex items-center justify-center gap-1.5">
+      <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2 border-t border-[var(--color-border)]">
+        <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary w-full sm:w-auto">Cancel</button>
+        <button type="submit" class="btn btn-danger w-full sm:w-auto">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
           </svg>
@@ -528,7 +419,6 @@
         </button>
       </div>
     </form>
-
   </div>
 </div>
 
@@ -547,7 +437,6 @@
     targetUsername.textContent = username;
     passwordInput.value = '';
 
-    // Show modal and lock background scrolling completely (Scan-style optimal setup)
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     setTimeout(() => passwordInput.focus(), 100);
@@ -556,11 +445,9 @@
   function closeDeleteModal() {
     const modal = document.getElementById('deleteUserModal');
     modal.classList.add('hidden');
-    // Restore background scrolling
     document.body.style.overflow = '';
   }
 
-  // Close modal when pressing the Escape key
   document.addEventListener('keydown', function(event) {
     if (event.key === 'Escape') {
       closeDeleteModal();

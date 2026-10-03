@@ -1,964 +1,456 @@
 ﻿{% extends "base.html" %}
 {% load static %}
 
-{% block title %}Announcements - AgriScan+{% endblock %}
+{% block title %}Announcements · AgriScan+{% endblock %}
+
+{% block styles %}
+<style>
+  /* Page Header & Filters */
+  .an-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .an-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .an-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .an-title { margin: 0; }
+  .an-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .an-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .an-head { padding: 1.5rem; }
+    .an-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .an-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .an-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .an-filters { padding: 1.5rem; } }
+  .an-filters form { display: grid; gap: 1rem; }
+  .an-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .an-search { position: relative; flex: 1; min-width: 0; }
+  .an-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .an-search input { padding-left: 2.5rem; }
+  .an-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .an-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .an-search-row { flex-direction: row; }
+    .an-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .an-kbd { display: inline-block; }
+    .an-search input { padding-right: 5rem; }
+    .an-selects { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  .an-filter-chip { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.25rem 0.625rem; border: 1px solid var(--color-border-strong); background: var(--color-surface); border-radius: var(--radius-sm); font-size: var(--text-xs); font-weight: 500; color: var(--color-text); }
+
+  /* Stats Grid */
+  .an-stats-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .an-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+  .an-stat-card { padding: 1.25rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .an-stat-label { font-size: var(--text-sm); font-weight: 500; color: var(--color-text-secondary); margin: 0; }
+  .an-stat-value { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0.25rem 0 0; line-height: 1.2; }
+  .an-stat-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.25rem; height: 2.25rem; border-radius: var(--radius-sm); background: var(--color-brand-light); color: var(--color-brand); }
+
+  /* Announcements List */
+  .an-list { display: flex; flex-direction: column; gap: 1rem; }
+  .an-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); overflow: hidden; transition: border-color var(--transition-base), box-shadow var(--transition-base); }
+  .an-card:hover { border-color: var(--color-border-strong); box-shadow: var(--shadow-md); }
+  .an-card-body { padding: 1.25rem; }
+  @media (min-width: 640px) { .an-card-body { padding: 1.5rem; } }
+  .an-card-unread { background: var(--color-brand-light); border-color: var(--color-brand-border); }
+  .an-card-unread .an-card-title { font-weight: 700; }
+
+  .an-priority-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: var(--radius-sm); }
+  .an-priority-icon--urgent { background: var(--color-danger-soft); color: var(--color-danger-text); border: 1px solid var(--color-danger-border); }
+  .an-priority-icon--warning { background: var(--color-warning-soft); color: var(--color-warning-text); border: 1px solid var(--color-warning-border); }
+  .an-priority-icon--advisory { background: var(--color-success-soft); color: var(--color-success-text); border: 1px solid var(--color-success-border); }
+  .an-priority-icon--info { background: var(--color-info-soft); color: var(--color-info-text); border: 1px solid var(--color-info-border); }
+
+  .an-card-title { font-size: var(--text-lg); font-weight: 600; color: var(--color-text-primary); margin: 0; line-height: 1.3; }
+  .an-card-date { font-size: var(--text-xs); color: var(--color-text-muted); white-space: nowrap; }
+  @media (min-width: 640px) { .an-card-date { font-size: var(--text-sm); } }
+
+  .an-card-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 0.75rem; }
+  .an-card-content { margin-top: 0.75rem; font-size: var(--text-sm); color: var(--color-text-secondary); line-height: 1.6; }
+  .an-card-actions { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--color-border); }
+  @media (min-width: 640px) {
+    .an-card-actions { flex-direction: row; align-items: center; justify-content: space-between; }
+  }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .badge-danger { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .badge-info { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+
+  .btn-warn { color: var(--color-warning-text) !important; border-color: var(--color-warning-border) !important; }
+  .btn-warn:hover { background: var(--color-warning-soft) !important; border-color: #f59e0b !important; }
+
+  /* Empty State */
+  .an-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .an-empty { padding: 3rem; } }
+  .an-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .an-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="page-container">
+<section class="page-container min-w-0">
 
-    <!-- ================================================================
+    <!-- =========================================================
          PAGE HEADER
-    ================================================================= -->
-    <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-
-        <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-
-            <!-- ========================================================
-                 TITLE + DESCRIPTION
-            ========================================================= -->
-            <div class="min-w-0 flex-1">
-
-                <div class="flex min-w-0 items-start gap-3">
-
-                    <!-- Page Icon -->
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 sm:h-11 sm:w-11">
-                        <svg class="h-5 w-5 sm:h-6 sm:w-6"
-                             fill="none"
-                             stroke="currentColor"
-                             viewBox="0 0 24 24"
-                             aria-hidden="true">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
-                    </div>
-
-                    <div class="min-w-0">
-                        <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-                            Announcements &amp; Advisories
-                        </h1>
-
-                        <p class="mt-1 text-sm leading-6 text-gray-500">
-                            Stay updated with important information and crop advisories.
-                        </p>
-                    </div>
-
-                </div>
-
+         ========================================================= -->
+    <header class="agri-card an-head">
+        <div class="an-head-main">
+            <span class="an-icon" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+            </span>
+            <div class="min-w-0">
+                <h1 class="an-title">Announcements & Advisories</h1>
+                <p class="an-lead">Stay updated with important information and crop advisories.</p>
             </div>
-
-
-            <!-- ========================================================
-                 HEADER ACTIONS
-            ========================================================= -->
-            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
-
-                <!-- Read Status -->
-                {% if unread_count > 0 %}
-
-                <div class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2">
-
-                    <svg class="h-4 w-4 shrink-0 text-amber-600"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                    </svg>
-
-                    <span class="whitespace-nowrap text-sm font-semibold text-red-700">
-                        {{ unread_count }} Unread
-                    </span>
-
-                </div>
-
-                {% else %}
-
-                <div class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2">
-
-                    <svg class="h-4 w-4 shrink-0 text-green-700"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2.5"
-                              d="M5 13l4 4L19 7"/>
-                    </svg>
-
-                    <span class="whitespace-nowrap text-sm font-semibold text-green-700">
-                        All Read
-                    </span>
-
-                </div>
-
-                {% endif %}
-
-
-                <!-- Mark All as Read -->
-                {% if unread_count > 0 %}
-
-                <form method="post"
-                      action="{% url 'polls:announcements_list' %}"
-                      class="w-full sm:w-auto">
-
-                    {% csrf_token %}
-
-                    <input type="hidden"
-                           name="action"
-                           value="mark_all_read">
-
-                    <button type="submit"
-                            data-loading
-                            class="btn btn-secondary btn-sm w-full sm:w-auto">
-
-                        <svg class="h-4 w-4 shrink-0 text-green-700"
-                             fill="none"
-                             stroke="currentColor"
-                             viewBox="0 0 24 24"
-                             aria-hidden="true">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2.5"
-                                  d="M5 13l4 4L19 7"/>
-                        </svg>
-
-                        <span class="hidden sm:inline">
-                            Mark All as Read
-                        </span>
-
-                        <span class="sm:hidden">
-                            Mark All
-                        </span>
-
-                        <span class="inline-flex min-w-6 items-center justify-center rounded-md bg-red-50 px-1.5 py-0.5 text-xs font-bold text-green-700">
-                            {{ unread_count }}
-                        </span>
-
-                    </button>
-
-                </form>
-
-                {% endif %}
-
-
-                <!-- Administrative Actions -->
-                {% if is_admin or is_technician %}
-
-                    <!-- Create Announcement -->
-                    <a href="{% url 'polls:announcement_create' %}"
-                       class="btn btn-primary btn-sm w-full sm:w-auto">
-
-                        <svg class="h-4 w-4 shrink-0"
-                             fill="none"
-                             stroke="currentColor"
-                             viewBox="0 0 24 24"
-                             aria-hidden="true">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M12 4v16m8-8H4"/>
-                        </svg>
-
-                        <span class="hidden sm:inline">
-                            Create Announcement
-                        </span>
-
-                        <span class="sm:hidden">
-                            Create
-                        </span>
-
-                    </a>
-
-
-                    <!-- Draft Count -->
-                    {% if draft_count %}
-
-                    <a href="?status=draft"
-                       class="btn btn-secondary btn-sm w-full sm:w-auto">
-
-                        <svg class="h-4 w-4 shrink-0 text-amber-600"
-                             fill="none"
-                             stroke="currentColor"
-                             viewBox="0 0 24 24"
-                             aria-hidden="true">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M15.232 5.232l3.536 3.536M9 13l6-6m-3.536 9.536A9 9 0 1120.536 7.464"/>
-                        </svg>
-
-                        <span class="whitespace-nowrap">
-                            {{ draft_count }} Draft{{ draft_count|pluralize }}
-                        </span>
-
-                    </a>
-
-                    {% endif %}
-
-                {% endif %}
-
-            </div>
-
         </div>
 
-
-        <!-- ============================================================
-             SEARCH + FILTERS
-        ============================================================= -->
-        <div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
-
-            <form method="get"
-                  id="ann-filter-form"
-                  class="space-y-4">
-
-                <!-- Search -->
-                <div class="flex flex-col gap-2 sm:flex-row">
-
-                    <div class="min-w-0 flex-1">
-
-                        <label for="ann-search-input"
-                               class="sr-only">
-                            Search announcements
-                        </label>
-
-                        <input type="search"
-                               name="search"
-                               id="ann-search-input"
-                               value="{{ current_search }}"
-                               placeholder="Search title, content, or author..."
-                               autocomplete="off"
-                               class="form-input w-full">
-
-                    </div>
-
-
-                    <!-- Preserve Current Sort -->
-                    <input type="hidden"
-                           name="sort"
-                           value="{{ request.GET.sort }}">
-
-
-                    <!-- Search -->
-                    <button type="submit"
-                            data-loading
-                            class="btn btn-primary w-full sm:w-auto">
-
-                        <svg class="h-4 w-4 shrink-0"
-                             fill="none"
-                             stroke="currentColor"
-                             viewBox="0 0 24 24"
-                             aria-hidden="true">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                        </svg>
-
-                        Search
-
-                    </button>
-
-
-                    <!-- Clear -->
-                    {% if current_search or current_category or current_status %}
-
-                    <a href="{% url 'polls:announcements_list' %}"
-                       class="btn btn-secondary w-full sm:w-auto">
-
-                        <svg class="h-4 w-4 shrink-0"
-                             fill="none"
-                             stroke="currentColor"
-                             viewBox="0 0 24 24"
-                             aria-hidden="true">
-                            <path stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                  stroke-width="2"
-                                  d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-
-                        Clear
-
-                    </a>
-
-                    {% endif %}
-
-                </div>
-
-
-                <!-- Filter Controls -->
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-
-                    <!-- Category -->
-                    <div>
-
-                        <label for="ann-category"
-                               class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            Category
-                        </label>
-
-                        <select name="category"
-                                id="ann-category"
-                                onchange="this.form.submit()"
-                                class="form-select form-select-sm w-full">
-
-                            <option value="">
-                                All Categories
-                            </option>
-
-                            {% for value, label in categories %}
-
-                            <option value="{{ value }}"
-                                    {% if current_category == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- Status -->
-                    <div>
-
-                        <label for="ann-status"
-                               class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            Status
-                        </label>
-
-                        <select name="status"
-                                id="ann-status"
-                                onchange="this.form.submit()"
-                                class="form-select form-select-sm w-full">
-
-                            <option value="">
-                                All
-                            </option>
-
-                            <option value="unread"
-                                    {% if current_status == 'unread' %}selected{% endif %}>
-                                Unread Only
-                            </option>
-
-                            <option value="read"
-                                    {% if current_status == 'read' %}selected{% endif %}>
-                                Read Only
-                            </option>
-
-                            {% if is_admin or is_technician %}
-
-                            <option value="active"
-                                    {% if current_status == 'active' %}selected{% endif %}>
-                                Active
-                            </option>
-
-                            <option value="draft"
-                                    {% if current_status == 'draft' %}selected{% endif %}>
-                                Draft
-                            </option>
-
-                            {% endif %}
-
-                        </select>
-
-                    </div>
-
-
-                    <!-- Page Size -->
-                    <div>
-
-                        <label for="ann-page-size"
-                               class="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-gray-500">
-                            Results per page
-                        </label>
-
-                        <select name="page_size"
-                                id="ann-page-size"
-                                onchange="this.form.submit()"
-                                class="form-select form-select-sm w-full">
-
-                            {% for size in allowed_page_sizes %}
-
-                            <option value="{{ size }}"
-                                    {% if page_size == size %}selected{% endif %}>
-                                {{ size }} per page
-                            </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-                </div>
-
-
-                <!-- Active Filters + Result Count -->
-                <div class="flex flex-col gap-3 border-t border-gray-200 pt-3 sm:flex-row sm:items-center sm:justify-between">
-
-                    <div class="flex flex-wrap items-center gap-2">
-
-                        {% if current_search %}
-
-                        <span class="inline-flex max-w-full items-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700">
-
-                            <svg class="h-3.5 w-3.5 shrink-0 text-gray-500"
-                                 fill="none"
-                                 stroke="currentColor"
-                                 viewBox="0 0 24 24"
-                                 aria-hidden="true">
-                                <path stroke-linecap="round"
-                                      stroke-linejoin="round"
-                                      stroke-width="2"
-                                      d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-
-                            <span class="break-all">
-                                "{{ current_search }}"
-                            </span>
-
-                        </span>
-
-                        {% endif %}
-
-
-                        {% if current_category %}
-
-                        <span class="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600">
-                            Category: {{ current_category }}
-                        </span>
-
-                        {% endif %}
-
-
-                        {% if current_status %}
-
-                        <span class="inline-flex items-center rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600">
-                            Status: {{ current_status|title }}
-                        </span>
-
-                        {% endif %}
-
-                    </div>
-
-
-                    <p class="shrink-0 text-xs font-medium text-gray-500">
-                        {{ announcements.paginator.count }}
-                        result{{ announcements.paginator.count|pluralize }}
-                        found
-                    </p>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-    <!-- ================================================================
-         SUMMARY
-    ================================================================= -->
-    <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-
-        <!-- Unread -->
-        <div class="agri-card p-4 sm:p-5">
-
-            <div class="flex items-center justify-between gap-4">
-
-                <div class="min-w-0">
-
-                    <p class="text-sm font-medium text-gray-500">
-                        Unread
-                    </p>
-
-                    <p class="mt-1 text-2xl font-semibold tracking-tight text-gray-900"
-                       data-stat="unread">
+        <div class="an-head-actions">
+            {% if unread_count > 0 %}
+            <span class="badge-base badge-warning">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+                {{ unread_count }} Unread
+            </span>
+            {% else %}
+            <span class="badge-base badge-success">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                </svg>
+                All Read
+            </span>
+            {% endif %}
+
+            {% if unread_count > 0 %}
+            <form method="post" action="{% url 'polls:announcements_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="mark_all_read">
+                <button type="submit" data-loading class="btn btn-secondary btn-sm">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="hidden sm:inline">Mark All as Read</span>
+                    <span class="sm:hidden">Mark All</span>
+                    <span class="inline-flex min-w-6 items-center justify-center rounded-md bg-[var(--color-danger-soft)] px-1.5 py-0.5 text-xs font-bold text-[var(--color-danger-text)]">
                         {{ unread_count }}
-                    </p>
+                    </span>
+                </button>
+            </form>
+            {% endif %}
 
-                </div>
+            {% if is_admin or is_technician %}
+            <a href="{% url 'polls:announcement_create' %}" class="btn btn-primary btn-sm">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                <span class="hidden sm:inline">Create Announcement</span>
+                <span class="sm:hidden">Create</span>
+            </a>
 
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-50 text-green-700"
-                     aria-hidden="true">
+            {% if draft_count %}
+            <a href="?status=draft" class="btn btn-secondary btn-sm">
+                <svg class="h-4 w-4 text-[var(--color-warning-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m-3.536 9.536A9 9 0 1120.536 7.464"/>
+                </svg>
+                <span>{{ draft_count }} Draft{{ draft_count|pluralize }}</span>
+            </a>
+            {% endif %}
+            {% endif %}
+        </div>
+    </header>
 
-                    <svg class="h-5 w-5"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+    <!-- =========================================================
+         SEARCH & FILTERS
+         ========================================================= -->
+    <div class="agri-card an-filters no-print">
+        <form method="get" id="ann-filter-form">
+            <div class="an-search-row">
+                <div class="an-search">
+                    <label for="ann-search-input" class="sr-only-agri">Search announcements</label>
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-
+                    <input type="search" name="search" id="ann-search-input" value="{{ current_search }}" placeholder="Search title, content, or author..." autocomplete="off">
+                    <kbd class="an-kbd" aria-hidden="true">Ctrl K</kbd>
                 </div>
 
+                <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+
+                <button type="submit" data-loading class="btn btn-primary">Search</button>
+
+                {% if current_search or current_category or current_status %}
+                <a href="{% url 'polls:announcements_list' %}" class="btn btn-secondary">Clear</a>
+                {% endif %}
             </div>
 
-        </div>
-
-
-        <!-- Total Results -->
-        <div class="agri-card p-4 sm:p-5">
-
-            <div class="flex items-center justify-between gap-4">
-
-                <div class="min-w-0">
-
-                    <p class="text-sm font-medium text-gray-500">
-                        Total Results
-                    </p>
-
-                    <p class="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
-                        {{ announcements.paginator.count }}
-                    </p>
-
+            <div class="an-selects">
+                <div>
+                    <label for="ann-category" class="sr-only-agri">Category</label>
+                    <select name="category" id="ann-category" onchange="this.form.submit()" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for value, label in categories %}
+                        <option value="{{ value }}" {% if current_category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-50 text-green-700"
-                     aria-hidden="true">
-
-                    <svg class="h-5 w-5"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-
+                <div>
+                    <label for="ann-status" class="sr-only-agri">Status</label>
+                    <select name="status" id="ann-status" onchange="this.form.submit()" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="unread" {% if current_status == 'unread' %}selected{% endif %}>Unread Only</option>
+                        <option value="read" {% if current_status == 'read' %}selected{% endif %}>Read Only</option>
+                        {% if is_admin or is_technician %}
+                        <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                        <option value="draft" {% if current_status == 'draft' %}selected{% endif %}>Draft</option>
+                        {% endif %}
+                    </select>
                 </div>
 
+                <div>
+                    <label for="ann-page-size" class="sr-only-agri">Results per page</label>
+                    <select name="page_size" id="ann-page-size" onchange="this.form.submit()" class="form-select">
+                        {% for size in allowed_page_sizes %}
+                        <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} per page</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
 
-        </div>
-
-
-        <!-- Current Page -->
-        <div class="agri-card p-4 sm:p-5">
-
-            <div class="flex items-center justify-between gap-4">
-
-                <div class="min-w-0">
-
-                    <p class="text-sm font-medium text-gray-500">
-                        This Page
-                    </p>
-
-                    <p class="mt-1 text-2xl font-semibold tracking-tight text-gray-900">
-                        {{ announcements|length }}
-                    </p>
-
-                </div>
-
-                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-gray-100 text-gray-600"
-                     aria-hidden="true">
-
-                    <svg class="h-5 w-5"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M4 6h16M4 12h16M4 18h16"/>
+            {% if current_search or current_category or current_status %}
+            <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-[var(--color-border)] mt-3">
+                {% if current_search %}
+                <span class="an-filter-chip">
+                    <svg class="h-3.5 w-3.5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.35-5.65a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
-
-                </div>
-
+                    "{{ current_search }}"
+                </span>
+                {% endif %}
+                {% if current_category %}
+                <span class="an-filter-chip">Category: {{ current_category }}</span>
+                {% endif %}
+                {% if current_status %}
+                <span class="an-filter-chip">Status: {{ current_status|title }}</span>
+                {% endif %}
+                <span class="text-xs font-medium text-[var(--color-text-muted)] ml-auto">
+                    {{ announcements.paginator.count }} result{{ announcements.paginator.count|pluralize }} found
+                </span>
             </div>
-
-        </div>
-
+            {% endif %}
+        </form>
     </div>
 
+    <!-- =========================================================
+         SUMMARY STATS
+         ========================================================= -->
+    <div class="an-stats-grid">
+        <div class="agri-card an-stat-card">
+            <div class="min-w-0">
+                <p class="an-stat-label">Unread</p>
+                <p class="an-stat-value" data-stat="unread">{{ unread_count }}</p>
+            </div>
+            <div class="an-stat-icon" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                </svg>
+            </div>
+        </div>
 
-    <!-- ================================================================
+        <div class="agri-card an-stat-card">
+            <div class="min-w-0">
+                <p class="an-stat-label">Total Results</p>
+                <p class="an-stat-value">{{ announcements.paginator.count }}</p>
+            </div>
+            <div class="an-stat-icon" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="agri-card an-stat-card">
+            <div class="min-w-0">
+                <p class="an-stat-label">This Page</p>
+                <p class="an-stat-value">{{ announcements|length }}</p>
+            </div>
+            <div class="an-stat-icon" aria-hidden="true">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
          ANNOUNCEMENTS LIST
-    ================================================================= -->
-    <div class="space-y-4">
-
+         ========================================================= -->
+    <div class="an-list">
         {% if announcements %}
-
             {% for announcement in announcements %}
-
-                {% with is_read=announcement.is_read %}
-
-                <article id="announcement-{{ announcement.pk }}"
-                         class="overflow-hidden rounded-lg border shadow-sm transition-shadow duration-200
-                         {% if not is_read %}
-                             border-green-200 bg-green-50/60 ring-1 ring-green-100
-                         {% else %}
-                             border-gray-200 bg-white
-                         {% endif %}">
-
-                    <div class="p-4 sm:p-5 lg:p-6">
-
-                        <div class="flex items-start gap-3 sm:gap-4">
-
-                            <!-- ====================================================
-                                 PRIORITY INDICATOR
-                            ===================================================== -->
-                            <div class="shrink-0">
-
-                                {% if announcement.priority == 'urgent' %}
-
-                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-red-200 bg-red-50 text-red-700 sm:h-11 sm:w-11"
-                                     title="Urgent priority"
-                                     aria-label="Urgent priority">
-
-                                    <svg class="h-5 w-5"
-                                         fill="none"
-                                         stroke="currentColor"
-                                         viewBox="0 0 24 24"
-                                         aria-hidden="true">
-                                        <path stroke-linecap="round"
-                                              stroke-linejoin="round"
-                                              stroke-width="2"
-                                              d="M12 9v4m0 4h.01M10.29 3.86L2.82 17a2 2 0 001.74 3h14.88a2 2 0 001.74-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                                    </svg>
-
-                                </div>
-
-                                {% elif announcement.priority == 'warning' %}
-
-                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-700 sm:h-11 sm:w-11"
-                                     title="Warning priority"
-                                     aria-label="Warning priority">
-
-                                    <svg class="h-5 w-5"
-                                         fill="none"
-                                         stroke="currentColor"
-                                         viewBox="0 0 24 24"
-                                         aria-hidden="true">
-                                        <path stroke-linecap="round"
-                                              stroke-linejoin="round"
-                                              stroke-width="2"
-                                              d="M12 9v4m0 4h.01M10.29 3.86L2.82 17a2 2 0 001.74 3h14.88a2 2 0 001.74-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                                    </svg>
-
-                                </div>
-
-                                {% elif announcement.priority == 'advisory' %}
-
-                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-green-200 bg-green-50 text-green-700 sm:h-11 sm:w-11"
-                                     title="Advisory priority"
-                                     aria-label="Advisory priority">
-
-                                    <svg class="h-5 w-5"
-                                         fill="none"
-                                         stroke="currentColor"
-                                         viewBox="0 0 24 24"
-                                         aria-hidden="true">
-                                        <path stroke-linecap="round"
-                                              stroke-linejoin="round"
-                                              stroke-width="2"
-                                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                    </svg>
-
-                                </div>
-
-                                {% else %}
-
-                                <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-blue-200 bg-blue-50 text-blue-700 sm:h-11 sm:w-11"
-                                     title="Information priority"
-                                     aria-label="Information priority">
-
-                                    <svg class="h-5 w-5"
-                                         fill="none"
-                                         stroke="currentColor"
-                                         viewBox="0 0 24 24"
-                                         aria-hidden="true">
-                                        <path stroke-linecap="round"
-                                              stroke-linejoin="round"
-                                              stroke-width="2"
-                                              d="M13 16h-1v-4h-1m1-4h.01M12 21a9 9 0 100-18 9 9 0 000 18z"/>
-                                    </svg>
-
-                                </div>
-
-                                {% endif %}
-
+            {% with is_read=announcement.is_read %}
+            <article id="announcement-{{ announcement.pk }}" class="an-card {% if not is_read %}an-card-unread{% endif %}">
+                <div class="an-card-body">
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        
+                        <!-- Priority Indicator -->
+                        <div class="shrink-0">
+                            {% if announcement.priority == 'urgent' %}
+                            <div class="an-priority-icon an-priority-icon--urgent" title="Urgent priority" aria-label="Urgent priority">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L2.82 17a2 2 0 001.74 3h14.88a2 2 0 001.74-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
                             </div>
-
-
-                            <!-- ====================================================
-                                 ANNOUNCEMENT CONTENT
-                            ===================================================== -->
-                            <div class="min-w-0 flex-1">
-
-                                <!-- Title + Date -->
-                                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-
-                                    <h2 class="min-w-0 break-words text-lg leading-7 sm:text-xl
-                                               {% if not is_read %}
-                                                   font-extrabold text-gray-900
-                                               {% else %}
-                                                   font-semibold text-gray-800
-                                               {% endif %}">
-                                        {{ announcement.title }}
-                                    </h2>
-
-                                    {% if announcement.published_at %}
-
-                                    <time datetime="{{ announcement.published_at|date:'c' }}"
-                                          class="shrink-0 text-xs font-medium text-gray-500 sm:ml-4 sm:text-sm">
-                                        {{ announcement.published_at|date:"M d, Y · g:i A" }}
-                                    </time>
-
-                                    {% endif %}
-
-                                </div>
-
-
-                                <!-- ==================================================
-                                     STATUS / CATEGORY
-                                =================================================== -->
-                                <div class="mt-3 flex flex-wrap items-center gap-2">
-
-                                    <!-- Category -->
-                                    <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700">
-                                        {{ announcement.get_category_display }}
-                                    </span>
-
-
-                                    <!-- Priority -->
-                                    <span class="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-semibold
-                                        {% if announcement.priority == 'urgent' %}
-                                            border-red-200 bg-red-50 text-red-700
-                                        {% elif announcement.priority == 'warning' %}
-                                            border-amber-200 bg-amber-50 text-amber-700
-                                        {% elif announcement.priority == 'advisory' %}
-                                            border-green-200 bg-green-50 text-green-700
-                                        {% else %}
-                                            border-blue-200 bg-blue-50 text-blue-700
-                                        {% endif %}">
-                                        {{ announcement.get_priority_display }}
-                                    </span>
-
-
-                                    <!-- Administrative Status -->
-                                    {% if is_admin or is_technician %}
-
-                                        {% if announcement.is_active %}
-
-                                        <span class="inline-flex items-center gap-1.5 rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-
-                                            <span class="h-1.5 w-1.5 rounded-full bg-green-600"
-                                                  aria-hidden="true"></span>
-
-                                            Active
-
-                                        </span>
-
-                                        {% else %}
-
-                                        <span class="inline-flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
-
-                                            <span class="h-1.5 w-1.5 rounded-full bg-amber-600"
-                                                  aria-hidden="true"></span>
-
-                                            Draft
-
-                                        </span>
-
-                                        {% endif %}
-
-                                    {% endif %}
-
-                                </div>
-
-
-                                <!-- ==================================================
-                                     PREVIEW
-                                =================================================== -->
-                                <div class="mt-3 text-sm leading-6 text-gray-600 sm:text-base">
-                                    {{ announcement.content|truncatewords:30|safe }}
-                                </div>
-
-
-                                <!-- ==================================================
-                                     ACTIONS
-                                =================================================== -->
-                                <div class="mt-5 flex flex-col gap-3 border-t border-gray-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-
-                                    <!-- Read -->
-                                    <div>
-
-                                        <a href="{% url 'polls:announcement_detail' announcement.pk %}"
-                                           {% if not is_read %}
-                                           data-ann-id="{{ announcement.pk }}"
-                                           data-mark-read-url="{% url 'polls:announcement_mark_read' announcement.pk %}"
-                                           onclick="handleReadClick(event, this)"
-                                           {% endif %}
-                                           class="inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-green-700 transition-colors hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
-
-                                            Read Full Announcement
-
-                                            <svg class="h-4 w-4 transition-transform"
-                                                 fill="none"
-                                                 stroke="currentColor"
-                                                 viewBox="0 0 24 24"
-                                                 aria-hidden="true">
-                                                <path stroke-linecap="round"
-                                                      stroke-linejoin="round"
-                                                      stroke-width="2"
-                                                      d="M9 5l7 7-7 7"/>
-                                            </svg>
-
-                                        </a>
-
-                                    </div>
-
-
-                                    <!-- Management Actions -->
-                                    {% if is_admin or is_technician %}
-
-                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-
-                                        <!-- Edit -->
-                                        <a href="{% url 'polls:announcement_edit' announcement.pk %}"
-                                           class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100">
-
-                                            
-                                            Edit
-
-                                        </a>
-
-
-                                        <!-- Delete -->
-                                        {% if is_admin %}
-
-                                        <a href="{% url 'polls:announcement_delete' announcement.pk %}"
-                                           data-open-delete="true"
-                                           data-delete-label="{{ announcement.title }}"
-                                           data-delete-subtitle="{{ announcement.get_priority_display }} · {{ announcement.get_category_display }}"
-                                           class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100">
-
-                                            
-
-                                            Archive
-
-                                        </a>
-
-                                        {% endif %}
-
-                                    </div>
-
-                                    {% endif %}
-
-                                </div>
-
+                            {% elif announcement.priority == 'warning' %}
+                            <div class="an-priority-icon an-priority-icon--warning" title="Warning priority" aria-label="Warning priority">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.29 3.86L2.82 17a2 2 0 001.74 3h14.88a2 2 0 001.74-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
                             </div>
-
+                            {% elif announcement.priority == 'advisory' %}
+                            <div class="an-priority-icon an-priority-icon--advisory" title="Advisory priority" aria-label="Advisory priority">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            {% else %}
+                            <div class="an-priority-icon an-priority-icon--info" title="Information priority" aria-label="Information priority">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 21a9 9 0 100-18 9 9 0 000 18z"/>
+                                </svg>
+                            </div>
+                            {% endif %}
                         </div>
 
+                        <!-- Content -->
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                <h2 class="an-card-title break-words">{{ announcement.title }}</h2>
+                                {% if announcement.published_at %}
+                                <time datetime="{{ announcement.published_at|date:'c' }}" class="an-card-date shrink-0 sm:ml-4">
+                                    {{ announcement.published_at|date:"M d, Y · g:i A" }}
+                                </time>
+                                {% endif %}
+                            </div>
+
+                            <div class="an-card-meta">
+                                <span class="badge-base badge-neutral">{{ announcement.get_category_display }}</span>
+                                
+                                {% if announcement.priority == 'urgent' %}
+                                <span class="badge-base badge-danger">{{ announcement.get_priority_display }}</span>
+                                {% elif announcement.priority == 'warning' %}
+                                <span class="badge-base badge-warning">{{ announcement.get_priority_display }}</span>
+                                {% elif announcement.priority == 'advisory' %}
+                                <span class="badge-base badge-success">{{ announcement.get_priority_display }}</span>
+                                {% else %}
+                                <span class="badge-base badge-info">{{ announcement.get_priority_display }}</span>
+                                {% endif %}
+
+                                {% if is_admin or is_technician %}
+                                    {% if announcement.is_active %}
+                                    <span class="badge-base badge-success">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-[var(--color-success-text)]" aria-hidden="true"></span>
+                                        Active
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-base badge-warning">
+                                        <span class="h-1.5 w-1.5 rounded-full bg-[var(--color-warning-text)]" aria-hidden="true"></span>
+                                        Draft
+                                    </span>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+
+                            <div class="an-card-content">
+                                {{ announcement.content|truncatewords:30|safe }}
+                            </div>
+
+                            <div class="an-card-actions">
+                                <div>
+                                    <a href="{% url 'polls:announcement_detail' announcement.pk %}"
+                                       {% if not is_read %}
+                                       data-ann-id="{{ announcement.pk }}"
+                                       data-mark-read-url="{% url 'polls:announcement_mark_read' announcement.pk %}"
+                                       onclick="handleReadClick(event, this)"
+                                       {% endif %}
+                                       class="btn btn-secondary btn-sm">
+                                        Read Full Announcement
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </a>
+                                </div>
+
+                                {% if is_admin or is_technician %}
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                    <a href="{% url 'polls:announcement_edit' announcement.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                                    
+                                    {% if is_admin %}
+                                    <a href="{% url 'polls:announcement_delete' announcement.pk %}"
+                                       data-open-delete="true"
+                                       data-delete-label="{{ announcement.title }}"
+                                       data-delete-subtitle="{{ announcement.get_priority_display }} · {{ announcement.get_category_display }}"
+                                       class="btn btn-secondary btn-sm btn-warn">
+                                        Archive
+                                    </a>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-
-                </article>
-
-                {% endwith %}
-
+                </div>
+            </article>
+            {% endwith %}
             {% endfor %}
 
-
-            <!-- ============================================================
-                 PAGINATION
-            ============================================================= -->
             {% if page_obj and is_paginated %}
                 {% include 'partials/_pagination.html' %}
             {% endif %}
 
-
         {% else %}
-
-            <!-- ============================================================
-                 EMPTY STATE
-            ============================================================= -->
-            <div class="agri-card px-5 py-12 text-center sm:px-8 sm:py-14">
-
-                <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
-
-                    <svg class="h-7 w-7"
-                         fill="none"
-                         stroke="currentColor"
-                         viewBox="0 0 24 24"
-                         aria-hidden="true">
-                        <path stroke-linecap="round"
-                              stroke-linejoin="round"
-                              stroke-width="2"
-                              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a2 2 0 00-1.414.586l-1.414 1.414a2 2 0 01-1.414.586h-3.172a2 2 0 01-1.414-.586l-1.414-1.414A2 2 0 006.586 13H4"/>
+            <!-- Empty State -->
+            <div class="agri-card an-empty">
+                <span class="an-empty-icon" aria-hidden="true">
+                    <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a2 2 0 00-1.414.586l-1.414 1.414a2 2 0 01-1.414.586h-3.172a2 2 0 01-1.414-.586l-1.414-1.414A2 2 0 006.586 13H4"/>
                     </svg>
-
-                </div>
-
-                <h2 class="mt-4 text-xl font-semibold tracking-tight text-gray-900">
-                    No announcements found
-                </h2>
-
-                <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-600">
-
+                </span>
+                <h2 class="text-xl font-semibold tracking-tight text-[var(--color-text-primary)] mb-2">No announcements found</h2>
+                <p>
                     {% if current_search or current_category or current_status %}
-
-                        No announcements match your current search or filters.
-                        Try adjusting your filters.
-
+                        No announcements match your current search or filters. Try adjusting your filters.
                     {% else %}
-
                         There are currently no announcements available.
-
                     {% endif %}
-
                 </p>
-
-
                 {% if current_search or current_category or current_status %}
-
-                <a href="{% url 'polls:announcements_list' %}"
-                   class="btn btn-secondary btn-sm mt-5">
-
-                    Clear Filters
-
-                </a>
-
+                <a href="{% url 'polls:announcements_list' %}" class="btn btn-secondary">Clear Filters</a>
                 {% endif %}
-
             </div>
-
         {% endif %}
-
     </div>
 
 </section>
 {% endblock %}
 
-
 {% block extra_js %}
-
 <script>
 (function () {
     'use strict';
 
     const CSRF_TOKEN = '{{ csrf_token }}';
 
-
-    /*
-     * ---------------------------------------------------------------
-     * Update Unread Count
-     * ---------------------------------------------------------------
-     */
     function updateUnreadCount(unreadCount) {
-
         const navBadge = document.getElementById('unreadBadge');
         const statUnread = document.querySelector('[data-stat="unread"]');
 
@@ -967,44 +459,26 @@
         }
 
         if (navBadge) {
-
             if (unreadCount > 0) {
                 navBadge.textContent = unreadCount;
             } else {
                 navBadge.remove();
             }
-
         }
     }
 
-
-    /*
-     * ---------------------------------------------------------------
-     * Browser Back/Forward Cache
-     * ---------------------------------------------------------------
-     */
     window.addEventListener('pageshow', function (event) {
-
         if (event.persisted) {
             window.location.reload();
         }
-
     });
 
-
-    /*
-     * ---------------------------------------------------------------
-     * Mark Announcement as Read
-     * ---------------------------------------------------------------
-     */
     window.handleReadClick = function (event, link) {
-
         if (!link || link.dataset.readRequestSent === 'true') {
             return;
         }
 
         const url = link.dataset.markReadUrl;
-
         if (!url) {
             return;
         }
@@ -1012,154 +486,76 @@
         link.dataset.readRequestSent = 'true';
 
         fetch(url, {
-
             method: 'POST',
-
             headers: {
                 'X-CSRFToken': CSRF_TOKEN,
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-
             credentials: 'same-origin',
-
             keepalive: true
-
         })
         .then(function (response) {
-
             if (!response.ok) {
                 throw new Error('Unable to mark announcement as read.');
             }
-
             return response.json();
-
         })
         .then(function (data) {
-
-            if (
-                data.success &&
-                typeof data.unread_count !== 'undefined'
-            ) {
+            if (data.success && typeof data.unread_count !== 'undefined') {
                 updateUnreadCount(data.unread_count);
             }
-
         })
         .catch(function () {
-            /*
-             * Navigation continues even if the background
-             * read request fails.
-             */
+            // Navigation continues even if the background read request fails.
         });
-
     };
 
-
-    /*
-     * ---------------------------------------------------------------
-     * Reusable Mark-Read Function
-     * ---------------------------------------------------------------
-     */
     window.markAnnouncementRead = function (annId, url, callback) {
-
         if (!annId || !url) {
             return;
         }
 
         fetch(url, {
-
             method: 'POST',
-
             headers: {
                 'X-CSRFToken': CSRF_TOKEN,
                 'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             },
-
             credentials: 'same-origin'
-
         })
         .then(function (response) {
-
             if (!response.ok) {
                 throw new Error('Unable to mark announcement as read.');
             }
-
             return response.json();
-
         })
         .then(function (data) {
-
             if (!data.success) {
                 return;
             }
 
-            const card = document.getElementById(
-                'announcement-' + annId
-            );
-
+            const card = document.getElementById('announcement-' + annId);
             if (card) {
-
-                /*
-                 * Remove ONLY the persistent unread
-                 * AgriScan+ green indicator.
-                 */
-                card.classList.remove(
-                    'bg-green-50/60',
-                    'border-green-200',
-                    'ring-1',
-                    'ring-green-100'
-                );
-
-                card.classList.add(
-                    'bg-white',
-                    'border-gray-200'
-                );
-
-
-                /*
-                 * Update title emphasis.
-                 */
-                const title = card.querySelector('h2');
-
-                if (title) {
-
-                    title.classList.remove(
-                        'font-extrabold',
-                        'text-gray-900'
-                    );
-
-                    title.classList.add(
-                        'font-semibold',
-                        'text-gray-800'
-                    );
-
-                }
-
+                card.classList.remove('an-card-unread');
             }
-
 
             if (typeof data.unread_count !== 'undefined') {
                 updateUnreadCount(data.unread_count);
             }
 
-
             if (typeof callback === 'function') {
                 callback(data);
             }
-
         })
         .catch(function () {
-            /*
-             * Keep background requests silent.
-             */
+            // Keep background requests silent.
         });
-
     };
 
 })();
 </script>
 
 {% include 'partials/_ctrlk.html' with input_id='ann-search-input' %}
-
 {% endblock %}

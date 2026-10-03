@@ -1738,18 +1738,18 @@ class SeasonLog(SoftDeleteModel, TimeStampedModel):
     """
 
     SEASON_CHOICES = [
-        ('dry',   '☀️ Dry Season / 1st Crop (Enero–Mayo)'),
-        ('wet',   '🌧️ Wet Season / 2nd Crop (Hunyo–Oktubre)'),
-        ('3rd',   '🌾 3rd Crop (Nobyembre–Disyembre)'),
+        ('dry',   'Dry Season / 1st Crop (Enero–Mayo)'),
+        ('wet',   'Wet Season / 2nd Crop (Hunyo–Oktubre)'),
+        ('3rd',   '3rd Crop (Nobyembre–Disyembre)'),
     ]
 
     STAGE_CHOICES = [
-        ('planning',     '📋 Planning'),
-        ('land_prep',    '🚜 Land Preparation'),
-        ('planting',     '🌱 Planting'),
-        ('growing',      '🌾 Growing / Maintenance'),
-        ('harvest_ready','✅ Harvest Ready'),
-        ('harvested',    '🎉 Harvested'),
+        ('planning',     'Planning'),
+        ('land_prep',    'Land Preparation'),
+        ('planting',     'Planting'),
+        ('growing',      'Growing / Maintenance'),
+        ('harvest_ready','Harvest Ready'),
+        ('harvested',    'Harvested'),
     ]
 
     # ── Core links ─────────────────────────────────────────────────────────
@@ -1897,38 +1897,38 @@ class FarmActivity(TimeStampedModel):
     """
 
     ACTIVITY_CHOICES = [
-        ('🌱 Crop Establishment', [
-            ('land_prep',     '🚜 Land Preparation (Plowing/Harrowing)'),
-            ('seedbed',       '🌱 Seedbed / Nursery Preparation'),
-            ('transplanting', '🌾 Transplanting / Direct Seeding'),
+        (' Crop Establishment', [
+            ('land_prep',     'Land Preparation (Plowing/Harrowing)'),
+            ('seedbed',       'Seedbed / Nursery Preparation'),
+            ('transplanting', 'Transplanting / Direct Seeding'),
         ]),
-        ('💧 Water Management', [
-            ('irrigation',    '💧 Irrigation'),
-            ('drainage',      '🏔️ Drainage'),
+        ('Water Management', [
+            ('irrigation',    'Irrigation'),
+            ('drainage',      'Drainage'),
         ]),
-        ('🌿 Crop Nutrition', [
-            ('fertilizer',    '🌿 Fertilizer Application'),
-            ('foliar',        '🍃 Foliar / Micronutrient Spray'),
+        ('Crop Nutrition', [
+            ('fertilizer',    'Fertilizer Application'),
+            ('foliar',        'Foliar / Micronutrient Spray'),
         ]),
-        ('🐛 Crop Protection', [
-            ('pesticide',     '🐛 Pesticide / Insecticide Application'),
-            ('fungicide',     '🍄 Fungicide Application'),
-            ('herbicide',     '🌿 Herbicide / Weeding'),
+        ('Crop Protection', [
+            ('pesticide',     'Pesticide / Insecticide Application'),
+            ('fungicide',     'Fungicide Application'),
+            ('herbicide',     'Herbicide / Weeding'),
         ]),
-        ('🔍 Monitoring', [
-            ('scouting',      '🔍 Field Scouting / Crop Inspection'),
-            ('disease_obs',   '🦠 Disease / Pest Observation'),
+        ('Monitoring', [
+            ('scouting',      'Field Scouting / Crop Inspection'),
+            ('disease_obs',   'Disease / Pest Observation'),
         ]),
-        ('🎉 Harvest & Post-Harvest', [
-            ('harvest',       '🎉 Harvest'),
-            ('drying',        '☀️ Drying'),
-            ('milling',       '⚙️ Milling'),
-            ('selling',       '💰 Selling / Marketing'),
+        ('Harvest & Post-Harvest', [
+            ('harvest',       'Harvest'),
+            ('drying',        'Drying'),
+            ('milling',       'Milling'),
+            ('selling',       'Selling / Marketing'),
         ]),
-        ('👷 General', [
-            ('labor',         '👷 Labor / Hired Help'),
-            ('equipment',     '🔧 Equipment Use / Repair'),
-            ('other',         '📝 Other'),
+        ('General', [
+            ('labor',         'Labor / Hired Help'),
+            ('equipment',     'Equipment Use / Repair'),
+            ('other',         'Other'),
         ]),
     ]
 

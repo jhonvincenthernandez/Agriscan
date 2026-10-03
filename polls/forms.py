@@ -2410,8 +2410,8 @@ class SeasonLogForm(forms.ModelForm):
         self.fields['field'].empty_label = 'Select Field / Farm'
         self.fields['variety'].empty_label = 'Select Rice Variety'
         self.fields['season_type'].choices = [
-            ('dry', '☀️ Dry Season'),
-            ('wet', '🌧️ Wet Season'),
+            ('dry', 'Dry Season'),
+            ('wet', 'Wet Season'),
         ]
         if owner_profile:
             self.fields['field'].queryset = Field.objects.filter(

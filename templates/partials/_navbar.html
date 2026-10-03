@@ -1,1683 +1,532 @@
 {% with url_name=request.resolver_match.url_name %}
 
+<style>
+  /* ================================================================
+     AGRISCAN+ NAVBAR (prefix nv-)
+     Uses only the tokens declared in base.html :root.
+     Visibility toggles stay on the .hidden class so base.html JS works.
+     ================================================================ */
+  .nv-bar { display: flex; width: 100%; min-width: 0; align-items: center; justify-content: space-between; gap: .5rem; }
+  .nv-primary { display: none; min-width: 0; flex: 1 1 auto; align-items: center; }
+  .nv-primary-list { display: flex; min-width: 0; align-items: center; gap: .125rem; }
+  .nv-actions { display: flex; flex: none; align-items: center; gap: .125rem; margin-left: auto; }
+
+  /* Desktop links and triggers */
+  .nv-link {
+    display: inline-flex; align-items: center; gap: .5rem; min-height: 2.5rem; padding: 0 .625rem;
+    border: 1px solid transparent; border-radius: var(--radius-md); background: transparent;
+    color: var(--color-text-secondary); font: inherit; font-size: var(--text-sm); font-weight: 500;
+    line-height: 1.2; white-space: nowrap; text-decoration: none; cursor: pointer;
+    transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base);
+  }
+  .nv-link:hover { background: var(--color-overlay); color: var(--color-text-primary); }
+  .nv-link[aria-current="page"], .nv-link[data-active="true"] {
+    background: var(--color-brand-light); border-color: var(--color-brand-border); color: var(--color-brand-hover);
+  }
+  .nv-icon { width: 1rem; height: 1rem; flex: none; color: var(--color-text-muted); }
+  .nv-link[aria-current="page"] .nv-icon, .nv-link[data-active="true"] .nv-icon,
+  .nv-item[aria-current="page"] .nv-icon, .nv-mitem[aria-current="page"] .nv-micon { color: var(--color-brand); }
+  .nv-chev { transition: transform var(--transition-base); }
+  [aria-expanded="true"] > .nv-chev { transform: rotate(180deg); }
+
+  /* Icon buttons (announcements, notifications, help, menu) */
+  .nv-iconbtn {
+    position: relative; display: inline-flex; width: 2.75rem; height: 2.75rem; flex: none; align-items: center; justify-content: center;
+    border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text-secondary); cursor: pointer;
+    transition: background-color var(--transition-base), color var(--transition-base);
+  }
+  .nv-iconbtn:hover { background: var(--color-overlay); color: var(--color-text-primary); }
+  .nv-iconbtn svg { width: 1.25rem; height: 1.25rem; }
+  .nv-help { display: none; }
+  .nv-badge {
+    position: absolute; top: .125rem; right: .125rem; display: inline-flex; min-width: 1.125rem; height: 1.125rem;
+    align-items: center; justify-content: center; padding: 0 .25rem; border: 2px solid var(--color-surface);
+    border-radius: var(--radius-full); color: #fff; font-size: 10px; font-weight: 700; line-height: 1;
+  }
+  .nv-badge-danger { background: var(--color-danger); }
+  .nv-badge-warning { background: var(--color-warning-text); }
+
+  /* Account trigger */
+  .nv-account {
+    display: inline-flex; align-items: center; gap: .375rem; min-height: 2.75rem; padding: .125rem .25rem;
+    border: 0; border-radius: var(--radius-md); background: transparent; color: var(--color-text); font: inherit; cursor: pointer;
+    transition: background-color var(--transition-base);
+  }
+  .nv-account:hover { background: var(--color-overlay); }
+  .nv-avatar {
+    display: flex; width: 2rem; height: 2rem; flex: none; align-items: center; justify-content: center;
+    border-radius: var(--radius-full); background: var(--color-brand); color: #fff; font-size: var(--text-sm); font-weight: 600;
+  }
+  .nv-name { display: none; max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); font-weight: 500; color: var(--color-text); }
+
+  /* Dropdown surface (desktop More, user menu) */
+  .nv-menu {
+    position: absolute; right: 0; top: 100%; z-index: 50; margin-top: .5rem; width: 16rem; max-width: calc(100vw - 1rem);
+    max-height: calc(100dvh - var(--header-h) - 1rem); overflow-y: auto; overscroll-behavior: contain;
+    padding: .25rem 0; background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  }
+  .nv-item {
+    display: flex; width: 100%; min-height: 2.5rem; align-items: center; gap: .625rem; padding: .5rem 1rem; border: 0;
+    background: transparent; color: var(--color-text); font: inherit; font-size: var(--text-sm); text-align: left; text-decoration: none; cursor: pointer;
+    transition: background-color var(--transition-base), color var(--transition-base);
+  }
+  .nv-item:hover { background: var(--color-overlay); color: var(--color-text-primary); }
+  .nv-item[aria-current="page"] { background: var(--color-brand-light); color: var(--color-brand-hover); font-weight: 500; }
+  .nv-item-admin:hover { background: var(--color-brand-light); color: var(--color-brand-hover); }
+  .nv-danger, .nv-danger .nv-icon, .nv-danger .nv-micon { color: var(--color-danger-text); }
+  .nv-danger:hover { background: var(--color-danger-soft); color: var(--color-danger-text); }
+  .nv-danger .nv-icon, .nv-danger .nv-micon { color: var(--color-danger); }
+  .nv-head { display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem; border-bottom: 1px solid var(--color-border); }
+  .nv-head-text { min-width: 0; }
+  .nv-head-name { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
+  .nv-head-mail { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--text-xs); color: var(--color-text-secondary); }
+  .nv-group { margin: 0; padding: .625rem 1rem .25rem; font-size: var(--text-xs); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-muted); }
+  .nv-sep { border-top: 1px solid var(--color-border); margin-top: .25rem; padding-top: .125rem; }
+
+  /* Mobile panel */
+  .nv-panel {
+    position: absolute; left: 0; right: 0; top: 100%; z-index: 50; margin: .5rem .5rem 0;
+    max-height: calc(100dvh - var(--header-h) - 1rem); overflow-y: auto; overscroll-behavior: contain;
+    background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  }
+  .nv-panel-nav { padding: .5rem; }
+  .nv-mitem {
+    display: flex; width: 100%; min-height: 2.75rem; align-items: center; gap: .75rem; padding: .5rem .75rem; border: 0;
+    border-radius: var(--radius-md); background: transparent; color: var(--color-text); font: inherit; font-size: var(--text-base); font-weight: 500;
+    text-align: left; text-decoration: none; cursor: pointer;
+    transition: background-color var(--transition-base), color var(--transition-base);
+  }
+  .nv-mitem:hover { background: var(--color-overlay); color: var(--color-text-primary); }
+  .nv-mitem[aria-current="page"] { background: var(--color-brand-light); color: var(--color-brand-hover); }
+  .nv-micon { width: 1.25rem; height: 1.25rem; flex: none; color: var(--color-text-muted); }
+  .nv-mgroup { margin: .5rem 0 0; padding: .75rem .75rem .25rem; border-top: 1px solid var(--color-border); font-size: var(--text-xs); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--color-text-muted); }
+  .nv-mgroup:first-child { margin-top: 0; border-top: 0; }
+
+  /* Focus (keyboard only) */
+  .nv-link:focus-visible, .nv-iconbtn:focus-visible, .nv-account:focus-visible, .nv-item:focus-visible, .nv-mitem:focus-visible {
+    outline: 2px solid var(--color-brand); outline-offset: 2px;
+  }
+  .nv-item:focus-visible, .nv-mitem:focus-visible { outline-offset: -2px; }
+  .nv-danger:focus-visible { outline-color: var(--color-danger); }
+
+  @media (min-width: 640px) {
+    .nv-bar { gap: .75rem; }
+    .nv-help { display: inline-flex; }
+    .nv-iconbtn { width: 2.5rem; height: 2.5rem; }
+    .nv-avatar { width: 2.25rem; height: 2.25rem; }
+    .nv-account { padding-right: .5rem; }
+    .nv-panel { margin-left: .75rem; margin-right: .75rem; }
+  }
+  @media (min-width: 1024px) {
+    .nv-primary { display: flex; }
+    .nv-burger { display: none; }
+    .nv-panel { display: none !important; }
+    .nv-actions { margin-left: .5rem; padding-left: .75rem; border-left: 1px solid var(--color-border); }
+    .nv-menu-wrap-desktop { position: relative; }
+  }
+  @media (min-width: 1280px) {
+    .nv-link { padding: 0 .75rem; }
+    .nv-name { display: block; }
+    .nv-primary-list { gap: .25rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nv-bar *, .nv-panel * { transition: none !important; }
+  }
+  @media print { .nv-bar, .nv-panel { display: none !important; } }
+</style>
+
 <!-- ================================================================
      AGRISCAN+ NAVBAR
-     Visual-only modernization.
-     Existing URLs, variables, role conditions, IDs and JS hooks
-     are intentionally preserved.
+     Styled with base.html tokens. URLs, role conditions, IDs and JS
+     hooks are unchanged.
      ================================================================ -->
+<div class="nv-bar">
 
-<div class="flex w-full min-w-0 items-center justify-between gap-2 sm:gap-3">
-
-  <!-- ==============================================================
-       DESKTOP PRIMARY NAVIGATION
-       ============================================================== -->
-
-  <nav
-    class="hidden min-w-0 flex-1 items-center lg:flex"
-    role="navigation"
-    aria-label="Main navigation"
-  >
-    <div class="flex min-w-0 items-center gap-0.5 xl:gap-1">
-
-      <!-- ==========================================================
-           DASHBOARD
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:dashboard' %}"
-        aria-current="{% if url_name == 'dashboard' %}page{% endif %}"
-        class="inline-flex min-h-10 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        xl:px-3
-        {% if url_name == 'dashboard' %}
-          bg-green-50 text-green-700
-        {% else %}
-          text-gray-600 hover:bg-gray-50 hover:text-gray-900
-        {% endif %}"
-      >
-        <svg
-          class="h-4 w-4 flex-shrink-0 {% if url_name == 'dashboard' %}text-green-600{% else %}text-gray-400{% endif %}"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
-        </svg>
-
+  <!-- DESKTOP PRIMARY NAVIGATION -->
+  <nav class="nv-primary" aria-label="Main navigation">
+    <div class="nv-primary-list">
+      <a href="{% url 'polls:dashboard' %}" class="nv-link"{% if url_name == 'dashboard' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
         <span>Dashboard</span>
       </a>
-
-
-      <!-- ==========================================================
-           FIELDS
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:fields_list' %}"
-        aria-current="{% if url_name in 'fields_list,field_create,field_detail,field_edit' %}page{% endif %}"
-        class="inline-flex min-h-10 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        xl:px-3
-        {% if url_name in 'fields_list,field_create,field_detail,field_edit' %}
-          bg-green-50 text-green-700
-        {% else %}
-          text-gray-600 hover:bg-gray-50 hover:text-gray-900
-        {% endif %}"
-      >
-        <svg
-          class="h-4 w-4 flex-shrink-0 {% if url_name in 'fields_list,field_create,field_detail,field_edit' %}text-green-600{% else %}text-gray-400{% endif %}"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A2 2 0 0021 18.382V7.618a2 2 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-          />
-        </svg>
-
+      <a href="{% url 'polls:fields_list' %}" class="nv-link"{% if url_name in 'fields_list,field_create,field_detail,field_edit' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A2 2 0 0021 18.382V7.618a2 2 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+  </svg>
         <span>Fields</span>
       </a>
-
-
-      <!-- ==========================================================
-           PLANTINGS
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:plantings_list' %}"
-        aria-current="{% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %}page{% endif %}"
-        class="inline-flex min-h-10 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        xl:px-3
-        {% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %}
-          bg-green-50 text-green-700
-        {% else %}
-          text-gray-600 hover:bg-gray-50 hover:text-gray-900
-        {% endif %}"
-      >
-        <svg
-          class="h-4 w-4 flex-shrink-0 {% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %}text-green-600{% else %}text-gray-400{% endif %}"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-
+      <a href="{% url 'polls:plantings_list' %}" class="nv-link"{% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
         <span>Plantings</span>
       </a>
-
-
-      <!-- ==========================================================
-           SCAN
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:scan' %}"
-        aria-current="{% if url_name == 'scan' %}page{% endif %}"
-        class="inline-flex min-h-10 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        xl:px-3
-        {% if url_name == 'scan' %}
-          bg-green-50 text-green-700
-        {% else %}
-          text-gray-600 hover:bg-gray-50 hover:text-gray-900
-        {% endif %}"
-      >
-        <svg
-          class="h-4 w-4 flex-shrink-0 {% if url_name == 'scan' %}text-green-600{% else %}text-gray-400{% endif %}"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-          />
-
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-          />
-        </svg>
-
+      <a href="{% url 'polls:scan' %}" class="nv-link"{% if url_name == 'scan' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
         <span>Scan</span>
       </a>
-
-
-      <!-- ==========================================================
-           YIELD
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:yield_prediction' %}"
-        aria-current="{% if url_name == 'yield_prediction' %}page{% endif %}"
-        class="inline-flex min-h-10 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        xl:px-3
-        {% if url_name == 'yield_prediction' %}
-          bg-green-50 text-green-700
-        {% else %}
-          text-gray-600 hover:bg-gray-50 hover:text-gray-900
-        {% endif %}"
-      >
-        <svg
-          class="h-4 w-4 flex-shrink-0 {% if url_name == 'yield_prediction' %}text-green-600{% else %}text-gray-400{% endif %}"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-          />
-        </svg>
-
+      <a href="{% url 'polls:yield_prediction' %}" class="nv-link"{% if url_name == 'yield_prediction' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+  </svg>
         <span>Yield</span>
       </a>
 
-
-      <!-- ==========================================================
-           MORE DROPDOWN
-           ========================================================== -->
-
-      <div
-        class="relative"
-        data-dropdown-root
-      >
-        <button
-          id="desktop-more-button"
-          type="button"
-          class="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium whitespace-nowrap text-gray-600 transition-colors duration-150
-          hover:bg-gray-50 hover:text-gray-900
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-          xl:px-3"
-          aria-haspopup="menu"
-          aria-expanded="false"
-          aria-controls="desktop-more-menu"
-        >
+      <!-- MORE DROPDOWN -->
+      <div class="relative" data-dropdown-root>
+        <button id="desktop-more-button" type="button" class="nv-link"{% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' or 'season_log' in url_name or url_name in 'detections_list,detection_detail' or url_name in 'yield_records_list,yield_record_detail' or url_name in 'harvests_list' or url_name in 'knowledge_list,knowledge_detail' %} data-active="true"{% endif %}
+          aria-haspopup="menu" aria-expanded="false" aria-controls="desktop-more-menu">
           <span>More</span>
-
-          <svg
-            class="h-4 w-4 flex-shrink-0 text-gray-400 transition-transform duration-150"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+          <svg class="nv-icon nv-chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+  </svg>
         </button>
-
-
-        <div
-          id="desktop-more-menu"
-          class="hidden absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5"
-          role="menu"
-          aria-labelledby="desktop-more-button"
-        >
-
-          <!-- Varieties -->
-          <a
-            href="{% url 'polls:varieties_list' %}"
-            role="menuitem"
-            aria-current="{% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %}page{% endif %}"
-            class="flex min-h-10 items-center gap-2.5 px-3.5 py-2 text-sm transition-colors duration-150
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-            {% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %}
-              bg-green-50 text-green-700
-            {% else %}
-              text-gray-700 hover:bg-gray-50 hover:text-gray-900
-            {% endif %}"
-          >
-            <svg
-              class="h-4 w-4 flex-shrink-0 {% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %}text-green-600{% else %}text-gray-400{% endif %}"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
-
-            <span>Varieties</span>
-          </a>
-
-
-          <!-- Season Log -->
-          <a
-            href="{% url 'polls:season_log_list' %}"
-            role="menuitem"
-            aria-current="{% if 'season_log' in url_name %}page{% endif %}"
-            class="flex min-h-10 items-center gap-2.5 px-3.5 py-2 text-sm transition-colors duration-150
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-            {% if 'season_log' in url_name %}
-              bg-green-50 text-green-700
-            {% else %}
-              text-gray-700 hover:bg-gray-50 hover:text-gray-900
-            {% endif %}"
-          >
-            <svg
-              class="h-4 w-4 flex-shrink-0 {% if 'season_log' in url_name %}text-green-600{% else %}text-gray-400{% endif %}"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-              />
-            </svg>
-
-            <span>Season Log</span>
-          </a>
-
-
-          <!-- Detection Records -->
-          <a
-            href="{% url 'polls:detections_list' %}"
-            role="menuitem"
-            aria-current="{% if url_name in 'detections_list,detection_detail' %}page{% endif %}"
-            class="flex min-h-10 items-center gap-2.5 px-3.5 py-2 text-sm transition-colors duration-150
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-            {% if url_name in 'detections_list,detection_detail' %}
-              bg-green-50 text-green-700
-            {% else %}
-              text-gray-700 hover:bg-gray-50 hover:text-gray-900
-            {% endif %}"
-          >
-            <svg
-              class="h-4 w-4 flex-shrink-0 {% if url_name in 'detections_list,detection_detail' %}text-green-600{% else %}text-gray-400{% endif %}"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-
-            <span>Detection Records</span>
-          </a>
-
-
-          <!-- Yield Records -->
-          <a
-            href="{% url 'polls:yield_records_list' %}"
-            role="menuitem"
-            aria-current="{% if url_name in 'yield_records_list,yield_record_detail' %}page{% endif %}"
-            class="flex min-h-10 items-center gap-2.5 px-3.5 py-2 text-sm transition-colors duration-150
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-            {% if url_name in 'yield_records_list,yield_record_detail' %}
-              bg-green-50 text-green-700
-            {% else %}
-              text-gray-700 hover:bg-gray-50 hover:text-gray-900
-            {% endif %}"
-          >
-            <svg
-              class="h-4 w-4 flex-shrink-0 {% if url_name in 'yield_records_list,yield_record_detail' %}text-green-600{% else %}text-gray-400{% endif %}"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-
-            <span>Yield Records</span>
-          </a>
-
-
-          <!-- Harvest Records -->
-          <a
-            href="{% url 'polls:harvests_list' %}"
-            role="menuitem"
-            aria-current="{% if url_name in 'harvests_list' %}page{% endif %}"
-            class="flex min-h-10 items-center gap-2.5 px-3.5 py-2 text-sm transition-colors duration-150
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-            {% if url_name in 'harvests_list' %}
-              bg-green-50 text-green-700
-            {% else %}
-              text-gray-700 hover:bg-gray-50 hover:text-gray-900
-            {% endif %}"
-          >
-            <svg
-              class="h-4 w-4 flex-shrink-0 {% if url_name in 'harvests_list' %}text-green-600{% else %}text-gray-400{% endif %}"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 7h18M3 12h18M3 17h18"
-              />
-            </svg>
-
-            <span>Harvest Records</span>
-          </a>
-
-
-          <!-- Knowledge -->
-          <a
-            href="{% url 'polls:knowledge_list' %}"
-            role="menuitem"
-            aria-current="{% if url_name in 'knowledge_list,knowledge_detail' %}page{% endif %}"
-            class="flex min-h-10 items-center gap-2.5 px-3.5 py-2 text-sm transition-colors duration-150
-            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-            {% if url_name in 'knowledge_list,knowledge_detail' %}
-              bg-green-50 text-green-700
-            {% else %}
-              text-gray-700 hover:bg-gray-50 hover:text-gray-900
-            {% endif %}"
-          >
-            <svg
-              class="h-4 w-4 flex-shrink-0 {% if url_name in 'knowledge_list,knowledge_detail' %}text-green-600{% else %}text-gray-400{% endif %}"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"
-              />
-
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 18h16"
-              />
-            </svg>
-
-            <span>Knowledge</span>
-          </a>
-
+        <div id="desktop-more-menu" class="hidden nv-menu" role="menu" aria-labelledby="desktop-more-button">
+      <a href="{% url 'polls:varieties_list' %}" role="menuitem" class="nv-item"{% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+  </svg>
+        <span>Varieties</span>
+      </a>
+      <a href="{% url 'polls:season_log_list' %}" role="menuitem" class="nv-item"{% if 'season_log' in url_name %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+  </svg>
+        <span>Season Log</span>
+      </a>
+      <a href="{% url 'polls:detections_list' %}" role="menuitem" class="nv-item"{% if url_name in 'detections_list,detection_detail' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+        <span>Detection Records</span>
+      </a>
+      <a href="{% url 'polls:yield_records_list' %}" role="menuitem" class="nv-item"{% if url_name in 'yield_records_list,yield_record_detail' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+        <span>Yield Records</span>
+      </a>
+      <a href="{% url 'polls:harvests_list' %}" role="menuitem" class="nv-item"{% if url_name in 'harvests_list' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
+  </svg>
+        <span>Harvest Records</span>
+      </a>
+      <a href="{% url 'polls:knowledge_list' %}" role="menuitem" class="nv-item"{% if url_name in 'knowledge_list,knowledge_detail' %} aria-current="page"{% endif %}>
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 18h16" />
+  </svg>
+        <span>Knowledge</span>
+      </a>
         </div>
       </div>
 
     </div>
   </nav>
 
-
-  <!-- ==============================================================
-       RIGHT-SIDE ACTIONS
-       ============================================================== -->
-
-  <div
-    class="ml-auto flex flex-shrink-0 items-center gap-0.5 sm:gap-1 lg:ml-2 lg:border-l lg:border-gray-200 lg:pl-3"
-  >
+  <!-- RIGHT-SIDE ACTIONS -->
+  <div class="nv-actions">
 
     {% if user.is_authenticated %}
 
-      <!-- ==========================================================
-           ANNOUNCEMENTS
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:announcements_list' %}"
-        class="relative inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-gray-500 transition-colors duration-150
-        hover:bg-gray-50 hover:text-gray-900
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        sm:min-h-9 sm:min-w-9"
-        aria-label="Announcements"
-        title="Announcements"
-      >
-        <svg
-          class="h-4.5 w-4.5 sm:h-5 sm:w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
-
+      <a href="{% url 'polls:announcements_list' %}" class="nv-iconbtn" aria-label="Announcements" title="Announcements">
+        <svg class="" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
         {% if unread_announcements_count > 0 %}
-          <span
-            id="unreadBadge"
-            aria-label="{{ unread_announcements_count }} unread announcements"
-            class="absolute -right-0.5 -top-0.5 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[9px] font-bold leading-none text-white sm:-right-1 sm:-top-1 sm:text-[10px]"
-          >
-            {{ unread_announcements_count }}
-          </span>
+          <span id="unreadBadge" class="nv-badge nv-badge-danger" aria-label="{{ unread_announcements_count }} unread announcements">{% if unread_announcements_count > 99 %}99+{% else %}{{ unread_announcements_count }}{% endif %}</span>
         {% endif %}
       </a>
 
-
-      <!-- ==========================================================
-           SYSTEM NOTIFICATIONS
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:notifications_list' %}"
-        class="relative inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-gray-500 transition-colors duration-150
-        hover:bg-gray-50 hover:text-gray-900
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        sm:min-h-9 sm:min-w-9"
-        aria-label="System notifications"
-        title="Disease, yield, and announcement alerts"
-      >
-        <svg
-          class="h-4.5 w-4.5 sm:h-5 sm:w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-          />
-        </svg>
-
+      <a href="{% url 'polls:notifications_list' %}" class="nv-iconbtn" aria-label="System notifications" title="Disease, yield, and announcement alerts">
+        <svg class="" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+  </svg>
         {% if unread_notifications_count > 0 %}
-          <span
-            id="sysNotifBadge"
-            aria-label="{{ unread_notifications_count }} unread notifications"
-            class="absolute -right-0.5 -top-0.5 inline-flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-white bg-amber-500 px-1 text-[9px] font-bold leading-none text-white sm:-right-1 sm:-top-1 sm:text-[10px]"
-          >
-            {{ unread_notifications_count }}
-          </span>
+          <span id="sysNotifBadge" class="nv-badge nv-badge-warning" aria-label="{{ unread_notifications_count }} unread notifications">{% if unread_notifications_count > 99 %}99+{% else %}{{ unread_notifications_count }}{% endif %}</span>
         {% endif %}
       </a>
 
-
-      <!-- ==========================================================
-           HELP
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:help_guide' %}"
-        class="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-gray-500 transition-colors duration-150
-        hover:bg-gray-50 hover:text-gray-900
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        sm:min-h-9 sm:min-w-9"
-        aria-label="Help and User Guide"
-        title="Help and User Guide"
-      >
-        <svg
-          class="h-4.5 w-4.5 sm:h-5 sm:w-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+      <a href="{% url 'polls:help_guide' %}" class="nv-iconbtn nv-help" aria-label="Help and User Guide" title="Help and User Guide">
+        <svg class="" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
       </a>
 
-
-      <!-- ==========================================================
-           USER MENU
-           ========================================================== -->
-
-      <div
-        class="relative"
-        data-dropdown-root
-      >
-        <button
-          id="user-menu-button"
-          type="button"
-          class="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-1.5 py-1 transition-colors duration-150
-          hover:bg-gray-50
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-          sm:pr-2"
-          aria-expanded="false"
-          aria-haspopup="menu"
-          aria-controls="user-menu"
-          aria-label="Open account menu"
-        >
-          <span
-            class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white sm:h-9 sm:w-9"
-            aria-hidden="true"
-          >
-            {{ user.first_name|default:user.username|slice:":1"|upper }}
-          </span>
-
-          <span
-            class="hidden max-w-[110px] truncate text-sm font-medium text-gray-700 xl:block"
-          >
-            {{ user.first_name|default:user.username }}
-          </span>
-
-          <svg
-            class="hidden h-3.5 w-3.5 flex-shrink-0 text-gray-400 xl:block"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
+      <!-- USER MENU -->
+      <div class="relative" data-dropdown-root>
+        <button id="user-menu-button" type="button" class="nv-account"
+          aria-expanded="false" aria-haspopup="menu" aria-controls="user-menu" aria-label="Open account menu">
+          <span class="nv-avatar" aria-hidden="true">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
+          <span class="nv-name">{{ user.first_name|default:user.username }}</span>
+          <svg class="nv-icon nv-chev" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+  </svg>
         </button>
 
+        <div id="user-menu" class="hidden nv-menu" role="menu" aria-labelledby="user-menu-button">
 
-        <!-- ========================================================
-             USER DROPDOWN
-             ======================================================== -->
-
-        <div
-          id="user-menu"
-          class="hidden absolute right-0 top-full z-50 mt-2 w-64 max-w-[calc(100vw-1rem)] max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5"
-          role="menu"
-          aria-labelledby="user-menu-button"
-        >
-
-          <!-- Account Header -->
-          <div class="border-b border-gray-100 px-4 py-3">
-            <div class="flex items-center gap-3">
-
-              <div
-                class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-green-600 text-sm font-semibold text-white"
-                aria-hidden="true"
-              >
-                {{ user.first_name|default:user.username|slice:":1"|upper }}
-              </div>
-
-              <div class="min-w-0">
-                <p class="truncate text-sm font-semibold text-gray-900">
-                  {{ user.first_name|default:user.username }}
-                </p>
-
-                <p class="truncate text-xs text-gray-500">
-                  {{ user.email }}
-                </p>
-              </div>
-
+          <div class="nv-head">
+            <span class="nv-avatar" aria-hidden="true">{{ user.first_name|default:user.username|slice:":1"|upper }}</span>
+            <div class="nv-head-text">
+              <p class="nv-head-name">{{ user.first_name|default:user.username }}</p>
+              <p class="nv-head-mail">{{ user.email }}</p>
             </div>
           </div>
 
-
-          <!-- ======================================================
-               PERSONAL
-               ====================================================== -->
-
-          <div class="py-1">
-
-            <!-- Profile -->
-            <a
-              href="{% url 'polls:profile' %}"
-              role="menuitem"
-              class="flex min-h-10 items-center gap-2.5 px-4 py-2 text-sm text-gray-700 transition-colors duration-150
-              hover:bg-gray-50 hover:text-gray-900
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-
-              <span>Profile</span>
-            </a>
-
-
-            <!-- Change Password -->
-            <a
-              href="{% url 'polls:change_password' %}"
-              role="menuitem"
-              class="flex min-h-10 items-center gap-2.5 px-4 py-2 text-sm text-gray-700 transition-colors duration-150
-              hover:bg-gray-50 hover:text-gray-900
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                />
-              </svg>
-
-              <span>Change Password</span>
-            </a>
-
-
-            <!-- My Reports -->
-            <a
-              href="{% url 'polls:reports' %}"
-              role="menuitem"
-              class="flex min-h-10 items-center gap-2.5 px-4 py-2 text-sm text-gray-700 transition-colors duration-150
-              hover:bg-gray-50 hover:text-gray-900
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-
-              <span>My Reports</span>
-            </a>
-
+          <div>
+      <a href="{% url 'polls:profile' %}" role="menuitem" class="nv-item">
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+        <span>Profile</span>
+      </a>
+      <a href="{% url 'polls:change_password' %}" role="menuitem" class="nv-item">
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+  </svg>
+        <span>Change Password</span>
+      </a>
+      <a href="{% url 'polls:reports' %}" role="menuitem" class="nv-item">
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+  </svg>
+        <span>My Reports</span>
+      </a>
           </div>
-
-
-          <!-- ======================================================
-               ADMIN
-               ====================================================== -->
 
           {% if is_admin %}
-
-          <div class="border-t border-gray-100 py-1">
-
-            <p
-              class="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400"
-            >
-              Admin
-            </p>
-
-
-            <!-- User Management -->
-            <a
-              href="{% url 'polls:admin_users_list' %}"
-              role="menuitem"
-              class="flex min-h-10 items-center gap-2.5 px-4 py-2 text-sm text-gray-700 transition-colors duration-150
-              hover:bg-green-50 hover:text-green-700
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-                />
-              </svg>
-
-              <span>User Management</span>
-            </a>
-
-
-            <!-- System Settings -->
-            <a
-              href="{% url 'polls:system_settings' %}"
-              role="menuitem"
-              class="flex min-h-10 items-center gap-2.5 px-4 py-2 text-sm text-gray-700 transition-colors duration-150
-              hover:bg-green-50 hover:text-green-700
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.573-1.066z"
-                />
-
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-
-              <span>System Settings</span>
-            </a>
-
+          <div class="nv-sep">
+            <p class="nv-group">Admin</p>
+      <a href="{% url 'polls:admin_users_list' %}" role="menuitem" class="nv-item nv-item-admin">
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+        <span>User Management</span>
+      </a>
+      <a href="{% url 'polls:system_settings' %}" role="menuitem" class="nv-item nv-item-admin">
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.573-1.066z" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+        <span>System Settings</span>
+      </a>
           </div>
-
           {% endif %}
-
-
-          <!-- ======================================================
-               MANAGEMENT
-               ====================================================== -->
 
           {% if is_admin or is_technician %}
-
-          <div class="border-t border-gray-100 py-1">
-
-            <p
-              class="px-4 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400"
-            >
-              Management
-            </p>
-
-
-            <!-- Treatment Management -->
-            <a
-              href="{% url 'polls:treatments_list' %}"
-              role="menuitem"
-              class="flex min-h-10 items-center gap-2.5 px-4 py-2 text-sm text-gray-700 transition-colors duration-150
-              hover:bg-green-50 hover:text-green-700
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                />
-              </svg>
-
-              <span>Treatment Management</span>
-            </a>
-
-
-            <!-- Trash -->
-            <a
-              href="{% url 'polls:trash_management' %}"
-              role="menuitem"
-              class="flex min-h-10 items-center gap-2.5 px-4 py-2 text-sm text-red-600 transition-colors duration-150
-              hover:bg-red-50
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
-
-              <span>Trash &amp; Archive</span>
-            </a>
-
+          <div class="nv-sep">
+            <p class="nv-group">Management</p>
+      <a href="{% url 'polls:treatments_list' %}" role="menuitem" class="nv-item nv-item-admin">
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+  </svg>
+        <span>Treatment Management</span>
+      </a>
+      <a href="{% url 'polls:trash_management' %}" role="menuitem" class="nv-item nv-danger">
+        <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+        <span>Trash &amp; Archive</span>
+      </a>
           </div>
-
           {% endif %}
 
-
-          <!-- ======================================================
-               LOGOUT
-               ====================================================== -->
-
-          <div class="border-t border-gray-100 py-1">
-
-            <button
-              type="button"
-              data-open-logout="true"
-              role="menuitem"
-              class="flex min-h-10 w-full items-center gap-2.5 px-4 py-2 text-sm text-red-600 transition-colors duration-150
-              hover:bg-red-50
-              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-inset"
-            >
-              <svg
-                class="h-4 w-4 flex-shrink-0 text-red-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                />
-              </svg>
-
+          <div class="nv-sep">
+            <button type="button" data-open-logout="true" role="menuitem" class="nv-item nv-danger">
+              <svg class="nv-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
               <span>Logout</span>
             </button>
-
           </div>
 
         </div>
       </div>
 
-
     {% else %}
 
-      <!-- ==========================================================
-           GUEST SIGN IN
-           ========================================================== -->
-
-      <a
-        href="{% url 'polls:login' %}"
-        class="inline-flex min-h-10 items-center justify-center rounded-lg border border-green-700 bg-green-700 px-3.5 py-2 text-sm font-medium text-white shadow-sm transition-colors duration-150
-        hover:border-green-800 hover:bg-green-800
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-        sm:px-4"
-      >
-        Sign in
-      </a>
+      <a href="{% url 'polls:login' %}" class="btn btn-primary btn-sm">Sign in</a>
 
     {% endif %}
 
-
-    <!-- ==========================================================
-         MOBILE MENU BUTTON
-         Existing IDs intentionally preserved for base.html JS.
-         ========================================================== -->
-
-    <button
-      id="mobile-menu-button"
-      type="button"
-      class="inline-flex min-h-10 min-w-10 flex-shrink-0 items-center justify-center rounded-lg text-gray-600 transition-colors duration-150
-      hover:bg-gray-50 hover:text-gray-900
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white
-      lg:hidden"
-      aria-expanded="false"
-      aria-controls="mobile-panel"
-      aria-label="Open navigation menu"
-    >
-      <!-- Hamburger -->
-      <svg
-        id="mobile-open"
-        class="h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 6h16M4 12h16M4 18h16"
-        />
+    <!-- MOBILE MENU BUTTON (IDs used by base.html JS) -->
+    <button id="mobile-menu-button" type="button" class="nv-iconbtn nv-burger"
+      aria-expanded="false" aria-controls="mobile-panel" aria-label="Open navigation menu">
+      <svg id="mobile-open" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
       </svg>
-
-      <!-- Close -->
-      <svg
-        id="mobile-close"
-        class="hidden h-5 w-5"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M6 18L18 6M6 6l12 12"
-        />
+      <svg id="mobile-close" class="hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
 
   </div>
 </div>
 
+<!-- MOBILE NAVIGATION PANEL (ID used by base.html JS) -->
+<div id="mobile-panel" class="hidden nv-panel">
+  <nav class="nv-panel-nav" aria-label="Mobile navigation">
 
-<!-- ================================================================
-     MOBILE NAVIGATION PANEL
-     Existing ID preserved for base.html JS.
-     ================================================================ -->
-
-<div
-  id="mobile-panel"
-  class="hidden absolute left-0 right-0 top-full z-50 mx-2 mt-2 max-h-[calc(100dvh-4.75rem)] overflow-y-auto overscroll-contain rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 sm:mx-3 lg:hidden"
-  aria-hidden="true"
->
-  <nav
-    class="p-2 sm:p-2.5"
-    role="navigation"
-    aria-label="Mobile navigation"
-  >
-
-    <!-- ==========================================================
-         FARM
-         ========================================================== -->
-
-    <div class="px-3 pb-1 pt-2">
-      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-        Farm
-      </p>
-    </div>
-
-
-    <!-- Dashboard -->
-    <a
-      href="{% url 'polls:dashboard' %}"
-      aria-current="{% if url_name == 'dashboard' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name == 'dashboard' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name == 'dashboard' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-        />
-      </svg>
-
+    <p class="nv-mgroup">Farm</p>
+    <a href="{% url 'polls:dashboard' %}" class="nv-mitem"{% if url_name == 'dashboard' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+  </svg>
       <span>Dashboard</span>
     </a>
 
-
-    <!-- Fields -->
-    <a
-      href="{% url 'polls:fields_list' %}"
-      aria-current="{% if url_name in 'fields_list,field_create,field_detail,field_edit' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name in 'fields_list,field_create,field_detail,field_edit' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name in 'fields_list,field_create,field_detail,field_edit' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A2 2 0 0021 18.382V7.618a2 2 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
-        />
-      </svg>
-
+    <a href="{% url 'polls:fields_list' %}" class="nv-mitem"{% if url_name in 'fields_list,field_create,field_detail,field_edit' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A2 2 0 0021 18.382V7.618a2 2 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+  </svg>
       <span>Fields</span>
     </a>
 
-
-    <!-- Plantings -->
-    <a
-      href="{% url 'polls:plantings_list' %}"
-      aria-current="{% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-
+    <a href="{% url 'polls:plantings_list' %}" class="nv-mitem"{% if url_name in 'plantings_list,planting_create,planting_detail,planting_edit' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
       <span>Plantings</span>
     </a>
 
-
-    <!-- Varieties -->
-    <a
-      href="{% url 'polls:varieties_list' %}"
-      aria-current="{% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-        />
-      </svg>
-
+    <a href="{% url 'polls:varieties_list' %}" class="nv-mitem"{% if url_name in 'varieties_list,variety_create,variety_detail,variety_edit' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+  </svg>
       <span>Varieties</span>
     </a>
 
-
-    <!-- Season Log -->
-    <a
-      href="{% url 'polls:season_log_list' %}"
-      aria-current="{% if 'season_log' in url_name %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if 'season_log' in url_name %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if 'season_log' in url_name %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
-        />
-      </svg>
-
+    <a href="{% url 'polls:season_log_list' %}" class="nv-mitem"{% if 'season_log' in url_name %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+  </svg>
       <span>Season Log</span>
     </a>
 
+    <p class="nv-mgroup">Disease &amp; Yield</p>
 
-    <!-- ==========================================================
-         DISEASE & YIELD
-         ========================================================== -->
-
-    <div class="mt-2 border-t border-gray-100 px-3 pb-1 pt-3">
-      <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-        Disease &amp; Yield
-      </p>
-    </div>
-
-
-    <!-- Scan Leaf -->
-    <a
-      href="{% url 'polls:scan' %}"
-      aria-current="{% if url_name == 'scan' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name == 'scan' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name == 'scan' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-        />
-
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-        />
-      </svg>
-
+    <a href="{% url 'polls:scan' %}" class="nv-mitem"{% if url_name == 'scan' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0118.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
       <span>Scan Leaf</span>
     </a>
 
-
-    <!-- Yield Prediction -->
-    <a
-      href="{% url 'polls:yield_prediction' %}"
-      aria-current="{% if url_name == 'yield_prediction' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name == 'yield_prediction' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name == 'yield_prediction' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-        />
-      </svg>
-
+    <a href="{% url 'polls:yield_prediction' %}" class="nv-mitem"{% if url_name == 'yield_prediction' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+  </svg>
       <span>Yield Prediction</span>
     </a>
 
-
-    <!-- Detection Records -->
-    <a
-      href="{% url 'polls:detections_list' %}"
-      aria-current="{% if url_name in 'detections_list,detection_detail' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name in 'detections_list,detection_detail' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name in 'detections_list,detection_detail' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
-
+    <a href="{% url 'polls:detections_list' %}" class="nv-mitem"{% if url_name in 'detections_list,detection_detail' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
       <span>Detection Records</span>
     </a>
 
-
-    <!-- Yield Records -->
-    <a
-      href="{% url 'polls:yield_records_list' %}"
-      aria-current="{% if url_name in 'yield_records_list,yield_record_detail' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name in 'yield_records_list,yield_record_detail' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name in 'yield_records_list,yield_record_detail' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-        />
-      </svg>
-
+    <a href="{% url 'polls:yield_records_list' %}" class="nv-mitem"{% if url_name in 'yield_records_list,yield_record_detail' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
       <span>Yield Records</span>
     </a>
 
-
-    <!-- Harvest Records -->
-    <a
-      href="{% url 'polls:harvests_list' %}"
-      aria-current="{% if url_name in 'harvests_list' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name in 'harvests_list' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name in 'harvests_list' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M3 7h18M3 12h18M3 17h18"
-        />
-      </svg>
-
+    <a href="{% url 'polls:harvests_list' %}" class="nv-mitem"{% if url_name in 'harvests_list' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18" />
+  </svg>
       <span>Harvest Records</span>
     </a>
 
-
-    <!-- Knowledge -->
-    <a
-      href="{% url 'polls:knowledge_list' %}"
-      aria-current="{% if url_name in 'knowledge_list,knowledge_detail' %}page{% endif %}"
-      class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150
-      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset
-      {% if url_name in 'knowledge_list,knowledge_detail' %}
-        bg-green-50 text-green-700
-      {% else %}
-        text-gray-700 hover:bg-gray-50 hover:text-gray-900
-      {% endif %}"
-    >
-      <svg
-        class="h-5 w-5 flex-shrink-0 {% if url_name in 'knowledge_list,knowledge_detail' %}text-green-600{% else %}text-gray-400{% endif %}"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M8 10h.01M12 10h.01M16 10h.01M9 16h6"
-        />
-
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M4 6h16M4 18h16"
-        />
-      </svg>
-
+    <a href="{% url 'polls:knowledge_list' %}" class="nv-mitem"{% if url_name in 'knowledge_list,knowledge_detail' %} aria-current="page"{% endif %}>
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16h6" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 18h16" />
+  </svg>
       <span>Knowledge</span>
     </a>
 
-
-    <!-- ==========================================================
-         MANAGEMENT
-         ========================================================== -->
-
     {% if is_admin or is_technician %}
+    <p class="nv-mgroup">Management</p>
+    <a href="{% url 'polls:treatments_list' %}" class="nv-mitem">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+  </svg>
+      <span>Treatment Recommendations</span>
+    </a>
 
-      <div class="mt-2 border-t border-gray-100 px-3 pb-1 pt-3">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-          Management
-        </p>
-      </div>
-
-
-      <!-- Treatment Management -->
-      <a
-        href="{% url 'polls:treatments_list' %}"
-        class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150
-        hover:bg-green-50 hover:text-green-700
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-      >
-        <svg
-          class="h-5 w-5 flex-shrink-0 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-          />
-        </svg>
-
-        <span>Treatment Recommendations</span>
-      </a>
-
-
-      <!-- Trash -->
-      <a
-        href="{% url 'polls:trash_management' %}"
-        class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors duration-150
-        hover:bg-red-50
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-inset"
-      >
-        <svg
-          class="h-5 w-5 flex-shrink-0 text-red-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 01-1 1v3M4 7h16"
-          />
-        </svg>
-
-        <span>Trash &amp; Archive</span>
-      </a>
-
+    <a href="{% url 'polls:trash_management' %}" class="nv-mitem nv-danger">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+  </svg>
+      <span>Trash &amp; Archive</span>
+    </a>
     {% endif %}
 
-
-    <!-- ==========================================================
-         ACCOUNT
-         ========================================================== -->
-
     {% if user.is_authenticated %}
+    <p class="nv-mgroup">Account</p>
+    <a href="{% url 'polls:profile' %}" class="nv-mitem">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+      <span>Profile</span>
+    </a>
 
-      <div class="mt-2 border-t border-gray-100 px-3 pb-1 pt-3">
-        <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-gray-400">
-          Account
-        </p>
-      </div>
+    <a href="{% url 'polls:change_password' %}" class="nv-mitem">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+  </svg>
+      <span>Change Password</span>
+    </a>
 
+    <a href="{% url 'polls:reports' %}" class="nv-mitem">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+  </svg>
+      <span>My Reports</span>
+    </a>
 
-      <!-- Profile -->
-      <a
-        href="{% url 'polls:profile' %}"
-        class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150
-        hover:bg-gray-50 hover:text-gray-900
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-      >
-        <svg
-          class="h-5 w-5 flex-shrink-0 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-          />
-        </svg>
+    <a href="{% url 'polls:help_guide' %}" class="nv-mitem">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+      <span>Help &amp; User Guide</span>
+    </a>
 
-        <span>Profile</span>
-      </a>
+    {% if is_admin %}
+    <a href="{% url 'polls:admin_users_list' %}" class="nv-mitem">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+      <span>User Management</span>
+    </a>
 
+    <a href="{% url 'polls:system_settings' %}" class="nv-mitem">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37a1.724 1.724 0 002.573-1.066z" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+      <span>System Settings</span>
+    </a>
+    {% endif %}
 
-      <!-- Change Password -->
-      <a
-        href="{% url 'polls:change_password' %}"
-        class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150
-        hover:bg-gray-50 hover:text-gray-900
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-      >
-        <svg
-          class="h-5 w-5 flex-shrink-0 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-          />
-        </svg>
-
-        <span>Change Password</span>
-      </a>
-
-
-      <!-- My Reports -->
-      <a
-        href="{% url 'polls:reports' %}"
-        class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150
-        hover:bg-gray-50 hover:text-gray-900
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-      >
-        <svg
-          class="h-5 w-5 flex-shrink-0 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
-        </svg>
-
-        <span>My Reports</span>
-      </a>
-
-
-      <!-- Help -->
-      <a
-        href="{% url 'polls:help_guide' %}"
-        class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150
-        hover:bg-gray-50 hover:text-gray-900
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-      >
-        <svg
-          class="h-5 w-5 flex-shrink-0 text-gray-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
-
-        <span>Help &amp; User Guide</span>
-      </a>
-
-
-      {% if is_admin %}
-
-        <!-- User Management -->
-        <a
-          href="{% url 'polls:admin_users_list' %}"
-          class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150
-          hover:bg-green-50 hover:text-green-700
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-        >
-          <svg
-            class="h-5 w-5 flex-shrink-0 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
-            />
-          </svg>
-
-          <span>User Management</span>
-        </a>
-
-
-        <!-- System Settings -->
-        <a
-          href="{% url 'polls:system_settings' %}"
-          class="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 transition-colors duration-150
-          hover:bg-green-50 hover:text-green-700
-          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40 focus-visible:ring-inset"
-        >
-          <svg
-            class="h-5 w-5 flex-shrink-0 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756.426-1.756 2.924 0 3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31-2.37-2.37a1.724 1.724 0 002.573-1.066z"
-            />
-
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-
-          <span>System Settings</span>
-        </a>
-
-      {% endif %}
-
-
-      <!-- Logout -->
-      <button
-        type="button"
-        data-open-logout="true"
-        class="mt-1 flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-red-600 transition-colors duration-150
-        hover:bg-red-50
-        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40 focus-visible:ring-inset"
-      >
-        <svg
-          class="h-5 w-5 flex-shrink-0 text-red-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-          />
-        </svg>
-
-        <span>Logout</span>
-      </button>
-
+    <button type="button" data-open-logout="true" class="nv-mitem nv-danger">
+      <svg class="nv-micon" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
+      <span>Logout</span>
+    </button>
     {% endif %}
 
   </nav>

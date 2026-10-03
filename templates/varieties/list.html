@@ -1,1205 +1,512 @@
 {% extends 'base.html' %}
 {% comment %}
   varieties/list.html
-  ─────────────────────────────────────────────────────────────────────────────
-  Rice Variety list page:
-  - Search, filter, sort, pagination
-  - Bulk archive (checkbox + toolbar)
-  - Resistance badges per row
-  - Edit / Archive actions
-  - Database PK remains available for internal actions but is not displayed
+  Rice Variety list: search, filters, sort, pagination, bulk archive.
+  Desktop and laptop (1024px+): table. Mobile and tablet: one card per variety (base .data-table).
+  The database PK is used for actions but is not displayed.
 {% endcomment %}
 
-{% block title %}Rice Varieties - AgriScan{% endblock %}
+{% block title %}Rice Varieties · AgriScan+{% endblock %}
+
+{% block styles %}
+<style>
+  .vr-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .vr-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .vr-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .vr-title { margin: 0; }
+  .vr-lead { margin: 0.375rem 0 0; max-width: 42rem; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .vr-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .vr-chip { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: var(--btn-h); padding: 0 0.875rem; color: var(--color-text); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
+  @media (min-width: 640px) {
+    .vr-head { padding: 1.5rem; }
+    .vr-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .vr-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .vr-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .vr-filters { padding: 1.5rem; } }
+  .vr-filters form { display: grid; gap: 1rem; }
+  .vr-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .vr-search { position: relative; flex: 1; min-width: 0; }
+  .vr-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .vr-search input { padding-left: 2.5rem; }
+  .vr-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .vr-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .vr-search-row { flex-direction: row; }
+    .vr-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .vr-kbd { display: inline-block; }
+    .vr-search input { padding-right: 5rem; }
+    .vr-selects { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  .btn-warn { color: var(--color-warning-text) !important; border-color: var(--color-warning-border) !important; }
+  .btn-warn:hover { color: var(--color-warning-text) !important; background: var(--color-warning-soft) !important; border-color: #f59e0b !important; }
+
+  /* Bulk toolbar */
+  .vr-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .vr-bulk[hidden] { display: none; }
+  .vr-bulk-count { font-weight: 600; margin-right: auto; }
+
+  /* Badges */
+  .vr-badge { display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); background: var(--color-overlay); color: var(--color-text); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; white-space: nowrap; }
+  .vr-badge--success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .vr-badge--warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .vr-code { display: inline-flex; padding: 0.125rem 0.5rem; color: var(--color-success-text); background: var(--color-success-soft); border: 1px solid var(--color-success-border); border-radius: var(--radius-xs); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-sm); font-weight: 600; }
+  .vr-muted { color: var(--color-text-muted); font-style: italic; }
+  .vr-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .vr-name { color: var(--color-text-primary); font-weight: 600; }
+  .vr-nowrap { white-space: nowrap; }
+  .vr-count { font-weight: 700; color: var(--color-success-text); }
+  .vr-count--zero { font-weight: 400; color: var(--color-text-muted); }
+  .vr-actions { display: inline-flex; gap: 0.5rem; }
+
+  /* Select checkbox gets a 44px target */
+  .vr-check { justify-content: center; min-width: 2.75rem; }
+  .data-table th.vr-th-check { width: 3.5rem; padding-inline: 0.5rem; text-align: center; }
+  .data-table td.vr-td-check { padding-inline: 0.5rem; text-align: center; }
+
+  /* Sortable headers */
+  .vr-sort { display: inline-flex; align-items: center; gap: 0.375rem; color: inherit; text-decoration: none; }
+  .vr-sort:hover { color: var(--color-text-primary); }
+  .vr-sort svg { width: 0.75rem; height: 0.75rem; opacity: 0; }
+  .vr-sort:hover svg { opacity: 0.5; }
+  .vr-sort.is-active { color: var(--color-text-primary); }
+  .vr-sort.is-active svg { opacity: 1; color: var(--color-brand); }
+
+  /* Resistance badges */
+  .vr-resgroup { display: flex; flex-wrap: wrap; gap: 0.25rem; max-width: 15rem; }
+  .vr-res { position: relative; display: inline-flex; padding: 0 0.375rem; border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); background: var(--color-surface); color: var(--color-text-muted); font-size: var(--text-sm); font-weight: 700; line-height: 1.25rem; cursor: default; }
+  .vr-res--R  { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .vr-res--MR { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .vr-res--S  { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .vr-res--HS { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  @media (max-width: 1023.98px) {
+    .data-table td .vr-resgroup { justify-content: flex-end; max-width: none; }
+  }
+
+  /* Resistance key */
+  .vr-key { margin-top: 1rem; }
+  .vr-key summary { display: flex; align-items: center; min-height: 2.75rem; padding: 0 1.25rem; cursor: pointer; color: var(--color-text-primary); font-size: 0.875rem; font-weight: 600; }
+  .vr-key-body { padding: 0 1.25rem 1.25rem; border-top: 1px solid var(--color-border); }
+  .vr-key h3 { margin: 1rem 0 0.5rem; font-size: var(--text-base); }
+  .vr-key dl { display: grid; gap: 0.5rem 1.5rem; margin: 0; grid-template-columns: minmax(0, 1fr); }
+  .vr-key dl > div { display: flex; gap: 0.75rem; font-size: var(--text-sm); }
+  .vr-key dt { flex: 0 0 2.5rem; font-weight: 700; color: var(--color-text-primary); }
+  .vr-key dd { margin: 0; color: var(--color-text-secondary); }
+  @media (min-width: 640px) { .vr-key dl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .vr-key dl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  .vr-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .vr-empty { padding: 3rem; } }
+  .vr-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .vr-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="page-container">
+<section class="page-container min-w-0">
 
-  {# ── Page Header ──────────────────────────────────────────────────────── #}
-  <div class="mb-6 rounded-xl border border-gray-200 bg-white shadow-sm">
-    <div class="p-5 sm:p-6">
-
-      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-
-        <div class="min-w-0">
-          <div class="flex items-start gap-3">
-
-            <div class="mt-0.5 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
-              <svg class="h-5 w-5"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24"
-                   aria-hidden="true">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-            </div>
-
-            <div class="min-w-0">
-              <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-                Rice Varieties
-              </h1>
-
-              <p class="mt-1 max-w-2xl text-sm leading-5 text-gray-500">
-                Manage rice variety codes, names, agronomic traits, and management information.
-              </p>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-
-          {# Variety count #}
-          <div class="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3.5 py-2">
-            <svg class="h-4 w-4 flex-shrink-0 text-gray-500"
-                 fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24"
-                 aria-hidden="true">
-              <path stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-
-            <span class="text-sm font-semibold text-gray-700">
-              {{ total_count }} variet{{ total_count|pluralize:"y,ies" }}
-            </span>
-          </div>
-
-          {% if can_manage %}
-          <a href="{% url 'polls:variety_create' %}"
-             class="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-            <svg class="h-4 w-4"
-                 fill="none"
-                 stroke="currentColor"
-                 viewBox="0 0 24 24"
-                 aria-hidden="true">
-              <path stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 4v16m8-8H4"/>
-            </svg>
-            Add Variety
-          </a>
-          {% endif %}
-
-        </div>
-
+  <!-- PAGE HEADER -->
+  <header class="agri-card vr-head">
+    <div class="vr-head-main">
+      <span class="vr-icon" aria-hidden="true"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+      <div class="min-w-0">
+        <h1 class="vr-title">Rice Varieties</h1>
+        <p class="vr-lead">Manage rice variety codes, names, agronomic traits, and management information.</p>
       </div>
-
-      {# ── Search / Filters ─────────────────────────────────────────────── #}
-      <div class="mt-5 rounded-lg border border-gray-200 bg-gray-50 p-3 sm:p-4">
-
-        <form method="get"
-              action="{% url 'polls:varieties_list' %}"
-              class="space-y-3">
-
-          {# Search #}
-          <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-
-            <div class="relative min-w-0 flex-1">
-
-              <label for="variety-search" class="sr-only">
-                Search rice varieties
-              </label>
-
-              
-
-              <input id="variety-search"
-                     type="text"
-                     name="search"
-                     value="{{ search_query }}"
-                     placeholder="Search code, name, developer… (Ctrl+K)"
-                     autocomplete="off"
-                     aria-label="Search rice varieties"
-                     class="block min-h-[44px] w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px]"/>
-
-            </div>
-
-            {# Preserve filter state when submitting search #}
-            <input type="hidden" name="type" value="{{ filter_type }}">
-            <input type="hidden" name="climate" value="{{ filter_climate }}">
-            <input type="hidden" name="sort" value="{{ sort }}">
-            <input type="hidden" name="page_size" value="{{ page_size }}">
-
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
-
-              <button type="submit"
-                      data-loading
-                      class="inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-lg bg-green-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:min-h-[42px]">
-                <svg class="h-4 w-4"
-                     fill="none"
-                     stroke="currentColor"
-                     viewBox="0 0 24 24"
-                     aria-hidden="true">
-                  <path stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                Search
-              </button>
-
-              {% if filters_active %}
-              <a href="{% url 'polls:varieties_list' %}"
-                 class="inline-flex min-h-[44px] items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:min-h-[42px]">
-                Clear
-              </a>
-              {% endif %}
-
-            </div>
-
-          </div>
-
-          {# Filters #}
-          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-4">
-
-            {# Variety Type #}
-            <div class="relative min-w-0">
-
-              <label for="variety-type-filter" class="sr-only">
-                Variety type
-              </label>
-
-              <select id="variety-type-filter"
-                      name="type"
-                      onchange="this.form.submit()"
-                      class="block min-h-[44px] w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-9 text-sm text-gray-700 shadow-sm transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px]">
-                <option value="">All Types</option>
-
-                {% for val, label in variety_type_choices %}
-                <option value="{{ val }}" {% if filter_type == val %}selected{% endif %}>
-                  {{ label }}
-                </option>
-                {% endfor %}
-              </select>
-
-              <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24"
-                   aria-hidden="true">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"/>
-              </svg>
-
-            </div>
-
-            {# Climate Type #}
-            <div class="relative min-w-0">
-
-              <label for="climate-filter" class="sr-only">
-                Climate type
-              </label>
-
-              <select id="climate-filter"
-                      name="climate"
-                      onchange="this.form.submit()"
-                      class="block min-h-[44px] w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-9 text-sm text-gray-700 shadow-sm transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px]">
-                <option value="">All Climates</option>
-
-                {% for val, label in climate_type_choices %}
-                <option value="{{ val }}" {% if filter_climate == val %}selected{% endif %}>
-                  {{ label }}
-                </option>
-                {% endfor %}
-              </select>
-
-              <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24"
-                   aria-hidden="true">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"/>
-              </svg>
-
-            </div>
-
-            {# Sort #}
-            <div class="relative min-w-0">
-
-              <label for="sort-filter" class="sr-only">
-                Sort varieties
-              </label>
-
-              <select id="sort-filter"
-                      name="sort"
-                      onchange="this.form.submit()"
-                      class="block min-h-[44px] w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-9 text-sm text-gray-700 shadow-sm transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px]">
-
-                <option value="code"
-                        {% if sort == 'code' or not sort %}selected{% endif %}>
-                  Code A → Z
-                </option>
-
-                <option value="-code"
-                        {% if sort == '-code' %}selected{% endif %}>
-                  Code Z → A
-                </option>
-
-                <option value="name"
-                        {% if sort == 'name' %}selected{% endif %}>
-                  Name A → Z
-                </option>
-
-                <option value="-name"
-                        {% if sort == '-name' %}selected{% endif %}>
-                  Name Z → A
-                </option>
-
-                <option value="average_growth_days"
-                        {% if sort == 'average_growth_days' %}selected{% endif %}>
-                  Growth Days ↑
-                </option>
-
-                <option value="-average_growth_days"
-                        {% if sort == '-average_growth_days' %}selected{% endif %}>
-                  Growth Days ↓
-                </option>
-
-                <option value="average_yield_t_ha"
-                        {% if sort == 'average_yield_t_ha' %}selected{% endif %}>
-                  Avg Yield ↑
-                </option>
-
-                <option value="-average_yield_t_ha"
-                        {% if sort == '-average_yield_t_ha' %}selected{% endif %}>
-                  Avg Yield ↓
-                </option>
-
-                <option value="release_year"
-                        {% if sort == 'release_year' %}selected{% endif %}>
-                  Release Year ↑
-                </option>
-
-                <option value="-release_year"
-                        {% if sort == '-release_year' %}selected{% endif %}>
-                  Release Year ↓
-                </option>
-
-                <option value="-planting_count"
-                        {% if sort == '-planting_count' %}selected{% endif %}>
-                  Most Planted ↓
-                </option>
-
-                <option value="planting_count"
-                        {% if sort == 'planting_count' %}selected{% endif %}>
-                  Least Planted ↑
-                </option>
-
-              </select>
-
-              <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24"
-                   aria-hidden="true">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"/>
-              </svg>
-
-            </div>
-
-            {# Page size #}
-            <div class="relative min-w-0">
-
-              <label for="page-size-filter" class="sr-only">
-                Items per page
-              </label>
-
-              <select id="page-size-filter"
-                      name="page_size"
-                      onchange="this.form.submit()"
-                      class="block min-h-[44px] w-full appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-9 text-sm text-gray-700 shadow-sm transition focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-100 sm:min-h-[42px]">
-
-                <option value="10" {% if page_size == 10 %}selected{% endif %}>
-                  10 / page
-                </option>
-
-                <option value="25" {% if page_size == 25 %}selected{% endif %}>
-                  25 / page
-                </option>
-
-                <option value="50" {% if page_size == 50 %}selected{% endif %}>
-                  50 / page
-                </option>
-
-                <option value="100" {% if page_size == 100 %}selected{% endif %}>
-                  100 / page
-                </option>
-
-              </select>
-
-              <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                   fill="none"
-                   stroke="currentColor"
-                   viewBox="0 0 24 24"
-                   aria-hidden="true">
-                <path stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"/>
-              </svg>
-
-            </div>
-
-          </div>
-
-        </form>
-      </div>
-
     </div>
+
+    <div class="vr-head-actions">
+      <span class="vr-chip"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{{ total_count }} variet{{ total_count|pluralize:"y,ies" }}</span>
+      {% if can_manage %}
+      <a href="{% url 'polls:variety_create' %}" class="btn btn-primary"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg><span>Add Variety</span></a>
+      {% endif %}
+    </div>
+  </header>
+
+  <!-- SEARCH AND FILTERS -->
+  <div class="agri-card vr-filters">
+    <form method="get" action="{% url 'polls:varieties_list' %}" role="search" aria-label="Search and filter rice varieties">
+
+      <div class="vr-search-row">
+        <div class="vr-search">
+          <label for="variety-search" class="sr-only-agri">Search rice varieties</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="variety-search" type="search" name="search" value="{{ search_query }}" placeholder="Search code, name, developer" autocomplete="off">
+          <kbd class="vr-kbd" aria-hidden="true">Ctrl K</kbd>
+        </div>
+
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
+
+        {% if filters_active %}
+        <a href="{% url 'polls:varieties_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+      </div>
+
+      <div class="vr-selects">
+        <div>
+          <label for="variety-type-filter" class="sr-only-agri">Variety type</label>
+          <select id="variety-type-filter" name="type" data-autosubmit class="form-select">
+            <option value="">All Types</option>
+            {% for val, label in variety_type_choices %}
+            <option value="{{ val }}" {% if filter_type == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="climate-filter" class="sr-only-agri">Climate type</label>
+          <select id="climate-filter" name="climate" data-autosubmit class="form-select">
+            <option value="">All Climates</option>
+            {% for val, label in climate_type_choices %}
+            <option value="{{ val }}" {% if filter_climate == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="sort-filter" class="sr-only-agri">Sort varieties</label>
+          <select id="sort-filter" name="sort" data-autosubmit class="form-select">
+            <option value="code" {% if sort == 'code' or not sort %}selected{% endif %}>Code A-Z</option>
+            <option value="-code" {% if sort == '-code' %}selected{% endif %}>Code Z-A</option>
+            <option value="name" {% if sort == 'name' %}selected{% endif %}>Name A-Z</option>
+            <option value="-name" {% if sort == '-name' %}selected{% endif %}>Name Z-A</option>
+            <option value="average_growth_days" {% if sort == 'average_growth_days' %}selected{% endif %}>Growth Days (Shortest)</option>
+            <option value="-average_growth_days" {% if sort == '-average_growth_days' %}selected{% endif %}>Growth Days (Longest)</option>
+            <option value="average_yield_t_ha" {% if sort == 'average_yield_t_ha' %}selected{% endif %}>Avg Yield (Lowest)</option>
+            <option value="-average_yield_t_ha" {% if sort == '-average_yield_t_ha' %}selected{% endif %}>Avg Yield (Highest)</option>
+            <option value="release_year" {% if sort == 'release_year' %}selected{% endif %}>Release Year (Oldest)</option>
+            <option value="-release_year" {% if sort == '-release_year' %}selected{% endif %}>Release Year (Newest)</option>
+            <option value="-planting_count" {% if sort == '-planting_count' %}selected{% endif %}>Most Planted</option>
+            <option value="planting_count" {% if sort == 'planting_count' %}selected{% endif %}>Least Planted</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="page-size-filter" class="sr-only-agri">Items per page</label>
+          <select id="page-size-filter" name="page_size" data-autosubmit class="form-select">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
+            <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
+          </select>
+        </div>
+      </div>
+
+    </form>
   </div>
 
   {% if varieties %}
 
-  {# ── Bulk Archive Form ────────────────────────────────────────────────── #}
-  <form method="post"
-        action="{% url 'polls:varieties_list' %}"
-        id="bulk-form">
+  {% if can_manage %}
+  <!-- BULK TOOLBAR -->
+  <div id="bulk-toolbar" class="agri-alert agri-alert-warning vr-bulk no-print" role="region" aria-label="Bulk actions" hidden>
+    <span class="vr-bulk-count"><span id="selected-count">0</span> selected</span>
 
-    {% csrf_token %}
+    <button type="button"
+            data-open-bulk-archive="true"
+            data-bulk-action-url="{% url 'polls:varieties_list' %}"
+            data-bulk-label-singular="variety"
+            data-bulk-label-plural="varieties"
+            data-bulk-title="Archive Rice Varieties?"
+            data-bulk-subtitle="They will be archived and can be restored from Trash."
+            data-bulk-confirm="Yes, Archive"
+            class="btn btn-sm btn-secondary btn-warn">Archive Selected</button>
 
-    <input type="hidden"
-           name="bulk_action"
-           value="archive">
+    <button type="button" id="clear-selection" class="btn btn-sm btn-secondary">Clear selection</button>
+  </div>
+  {% endif %}
 
-    {# Bulk toolbar #}
-    {% if can_manage %}
-    <div id="bulk-toolbar"
-         class="mb-4 hidden flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 no-print">
+  <!-- TABLE (desktop and laptop) / CARDS (mobile and tablet) -->
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <caption class="sr-only-agri">Rice varieties</caption>
+      <thead>
+        <tr>
+          {% if can_manage %}
+          <th scope="col" class="vr-th-check no-print">Select</th>
+          {% endif %}
+          <th scope="col" aria-sort="{% if sort == 'code' %}ascending{% elif sort == '-code' %}descending{% else %}none{% endif %}">
+            <a class="vr-sort{% if sort == 'code' or sort == '-code' %} is-active{% endif %}" href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&amp;search={{ search_query|urlencode }}&amp;page_size={{ page_size }}&amp;type={{ filter_type }}&amp;climate={{ filter_climate }}">
+              Code
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort == '-code' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col" aria-sort="{% if sort == 'name' %}ascending{% elif sort == '-name' %}descending{% else %}none{% endif %}">
+            <a class="vr-sort{% if sort == 'name' or sort == '-name' %} is-active{% endif %}" href="?sort={% if sort == 'name' %}-name{% else %}name{% endif %}&amp;search={{ search_query|urlencode }}&amp;page_size={{ page_size }}&amp;type={{ filter_type }}&amp;climate={{ filter_climate }}">
+              Name
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort == '-name' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col">Type</th>
+          <th scope="col" aria-sort="{% if sort == 'average_growth_days' %}ascending{% elif sort == '-average_growth_days' %}descending{% else %}none{% endif %}">
+            <a class="vr-sort{% if sort == 'average_growth_days' or sort == '-average_growth_days' %} is-active{% endif %}" href="?sort={% if sort == 'average_growth_days' %}-average_growth_days{% else %}average_growth_days{% endif %}&amp;search={{ search_query|urlencode }}&amp;page_size={{ page_size }}&amp;type={{ filter_type }}&amp;climate={{ filter_climate }}">
+              Growth
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort == '-average_growth_days' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col">Climate</th>
+          <th scope="col" aria-sort="{% if sort == 'average_yield_t_ha' %}ascending{% elif sort == '-average_yield_t_ha' %}descending{% else %}none{% endif %}">
+            <a class="vr-sort{% if sort == 'average_yield_t_ha' or sort == '-average_yield_t_ha' %} is-active{% endif %}" href="?sort={% if sort == '-average_yield_t_ha' %}average_yield_t_ha{% else %}-average_yield_t_ha{% endif %}&amp;search={{ search_query|urlencode }}&amp;page_size={{ page_size }}&amp;type={{ filter_type }}&amp;climate={{ filter_climate }}">
+              Avg Yield
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort == 'average_yield_t_ha' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          <th scope="col">Resistance</th>
+          <th scope="col" aria-sort="{% if sort == 'planting_count' %}ascending{% elif sort == '-planting_count' %}descending{% else %}none{% endif %}">
+            <a class="vr-sort{% if sort == 'planting_count' or sort == '-planting_count' %} is-active{% endif %}" href="?sort={% if sort == '-planting_count' %}planting_count{% else %}-planting_count{% endif %}&amp;search={{ search_query|urlencode }}&amp;page_size={{ page_size }}&amp;type={{ filter_type }}&amp;climate={{ filter_climate }}">
+              Plantings
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort == 'planting_count' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+            </a>
+          </th>
+          {% if can_manage %}<th scope="col" class="vr-num no-print">Actions</th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for variety in varieties %}
+        <tr data-pk="{{ variety.pk }}">
+          {% if can_manage %}
+          <td class="vr-td-check no-print" data-label="Select">
+            <label class="vr-check"><input type="checkbox" name="selected_ids" value="{{ variety.pk }}" class="row-cb"><span class="sr-only-agri">Select {{ variety.code }}</span></label>
+          </td>
+          {% endif %}
 
-      <div class="flex items-center gap-2">
-        <span class="text-sm font-semibold text-amber-900">
-          <span id="selected-count">0</span> selected
-        </span>
-      </div>
+          <td data-label="Code"><span class="vr-code">{{ variety.code }}</span></td>
+          <td data-label="Name" class="td-primary">{{ variety.name }}</td>
 
+          <td data-label="Type">
+            {% if variety.variety_type == 'hybrid' %}<span class="vr-badge vr-badge--success">Hybrid</span>
+            {% elif variety.variety_type == 'traditional' %}<span class="vr-badge">Traditional</span>
+            {% elif variety.variety_type == 'specialty' %}<span class="vr-badge">Specialty</span>
+            {% elif variety.variety_type == 'stress' %}<span class="vr-badge vr-badge--warning">Stress-Tolerant</span>
+            {% else %}<span class="vr-badge">Inbred</span>{% endif %}
+          </td>
 
-        <button type="button"
-                data-open-bulk-archive="true"
-                data-bulk-form-id="bulk-form"
-                data-bulk-action-url="{% url 'polls:varieties_list' %}"
-                data-bulk-label-singular="variety"
-                data-bulk-label-plural="varieties"
-                data-bulk-title="Archive Rice Varieties?"
-                data-bulk-subtitle="They will be archived and can be restored from Trash."
-                data-bulk-confirm="Yes, Archive"
-                data-bulk-action="archive"
-                class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1">
+          <td data-label="Growth" class="vr-nowrap">{{ variety.average_growth_days }} days</td>
 
-          <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
+          <td data-label="Climate">
+            {% if variety.climate_type == 'irrigated' %}<span class="vr-badge vr-badge--success">{{ variety.get_climate_type_display }}</span>
+            {% elif variety.climate_type == 'rainfed' %}<span class="vr-badge">{{ variety.get_climate_type_display }}</span>
+            {% else %}<span class="vr-badge vr-badge--warning">{{ variety.get_climate_type_display }}</span>{% endif %}
+          </td>
 
-          Archive Selected
-        </button>
+          <td data-label="Avg Yield" class="vr-nowrap">
+            {% if variety.average_yield_t_ha %}{{ variety.average_yield_t_ha }} t/ha{% else %}<span class="vr-muted">Not set</span>{% endif %}
+          </td>
 
-        <button type="button"
-                onclick="clearSelection()"
-                class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500">
-          Clear selection
-        </button>
+          <td data-label="Resistance">
+            <div class="vr-resgroup">
+                {% with v=variety.blast_resistance %}<span class="vr-res vr-res--{{ v }}" title="Leaf Blast: {{ variety.get_blast_resistance_display }}"><span aria-hidden="true">B</span><span class="sr-only-agri">Leaf Blast: {{ variety.get_blast_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.neck_blast_resistance %}<span class="vr-res vr-res--{{ v }}" title="Neck Blast: {{ variety.get_neck_blast_resistance_display }}"><span aria-hidden="true">NB</span><span class="sr-only-agri">Neck Blast: {{ variety.get_neck_blast_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.blight_resistance %}<span class="vr-res vr-res--{{ v }}" title="Bacterial Leaf Blight: {{ variety.get_blight_resistance_display }}"><span aria-hidden="true">BLB</span><span class="sr-only-agri">Bacterial Leaf Blight: {{ variety.get_blight_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.brown_spot_resistance %}<span class="vr-res vr-res--{{ v }}" title="Brown Spot: {{ variety.get_brown_spot_resistance_display }}"><span aria-hidden="true">BS</span><span class="sr-only-agri">Brown Spot: {{ variety.get_brown_spot_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.false_smut_resistance %}<span class="vr-res vr-res--{{ v }}" title="False Smut: {{ variety.get_false_smut_resistance_display }}"><span aria-hidden="true">FS</span><span class="sr-only-agri">False Smut: {{ variety.get_false_smut_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.leaf_scald_resistance %}<span class="vr-res vr-res--{{ v }}" title="Leaf Scald: {{ variety.get_leaf_scald_resistance_display }}"><span aria-hidden="true">LS</span><span class="sr-only-agri">Leaf Scald: {{ variety.get_leaf_scald_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.leaf_smut_resistance %}<span class="vr-res vr-res--{{ v }}" title="Leaf Smut: {{ variety.get_leaf_smut_resistance_display }}"><span aria-hidden="true">LSm</span><span class="sr-only-agri">Leaf Smut: {{ variety.get_leaf_smut_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.narrow_brown_spot_resistance %}<span class="vr-res vr-res--{{ v }}" title="Narrow Brown Spot: {{ variety.get_narrow_brown_spot_resistance_display }}"><span aria-hidden="true">NBS</span><span class="sr-only-agri">Narrow Brown Spot: {{ variety.get_narrow_brown_spot_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.rice_hispa_resistance %}<span class="vr-res vr-res--{{ v }}" title="Rice Hispa: {{ variety.get_rice_hispa_resistance_display }}"><span aria-hidden="true">RH</span><span class="sr-only-agri">Rice Hispa: {{ variety.get_rice_hispa_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.sheath_blight_resistance %}<span class="vr-res vr-res--{{ v }}" title="Sheath Blight: {{ variety.get_sheath_blight_resistance_display }}"><span aria-hidden="true">SB</span><span class="sr-only-agri">Sheath Blight: {{ variety.get_sheath_blight_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.tungro_resistance %}<span class="vr-res vr-res--{{ v }}" title="Tungro: {{ variety.get_tungro_resistance_display }}"><span aria-hidden="true">TG</span><span class="sr-only-agri">Tungro: {{ variety.get_tungro_resistance_display }}</span></span>{% endwith %}
+                {% with v=variety.unhealthy_flowers_resistance %}<span class="vr-res vr-res--{{ v }}" title="Unhealthy Flowers: {{ variety.get_unhealthy_flowers_resistance_display }}"><span aria-hidden="true">UF</span><span class="sr-only-agri">Unhealthy Flowers: {{ variety.get_unhealthy_flowers_resistance_display }}</span></span>{% endwith %}
+            </div>
+          </td>
 
+          <td data-label="Plantings">
+            {% with cnt=variety.planting_count %}<span class="{% if cnt > 0 %}vr-count{% else %}vr-count--zero{% endif %}">{{ cnt }}</span>{% endwith %}
+          </td>
 
+          {% if can_manage %}
+          <td data-label="Actions" class="td-actions">
+            <span class="vr-actions">
+              <a href="{% url 'polls:variety_edit' variety.pk %}" class="btn btn-secondary btn-sm" aria-label="Edit {{ variety.code }}">Edit</a>
+              <a href="{% url 'polls:variety_delete' variety.pk %}"
+                 data-open-delete="true"
+                 data-delete-label="{{ variety.code }} · {{ variety.name }}"
+                 data-delete-subtitle="{{ variety.average_growth_days }} days growth"
+                 aria-label="Archive {{ variety.code }}"
+                 class="btn btn-secondary btn-sm btn-warn">Archive</a>
+            </span>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RESISTANCE KEY -->
+  <details class="agri-card vr-key">
+    <summary>Resistance key (12 CNN diseases)</summary>
+    <div class="vr-key-body">
+      <h3>Rating</h3>
+      <dl>
+        <div><dt>R</dt><dd>Resistant</dd></div>
+        <div><dt>MR</dt><dd>Moderately Resistant</dd></div>
+        <div><dt>S</dt><dd>Susceptible</dd></div>
+        <div><dt>HS</dt><dd>Highly Susceptible</dd></div>
+      </dl>
+      <h3>Diseases</h3>
+      <dl>
+          <div><dt>B</dt><dd>Leaf Blast</dd></div>
+          <div><dt>NB</dt><dd>Neck Blast</dd></div>
+          <div><dt>BLB</dt><dd>Bacterial Leaf Blight</dd></div>
+          <div><dt>BS</dt><dd>Brown Spot</dd></div>
+          <div><dt>FS</dt><dd>False Smut</dd></div>
+          <div><dt>LS</dt><dd>Leaf Scald</dd></div>
+          <div><dt>LSm</dt><dd>Leaf Smut</dd></div>
+          <div><dt>NBS</dt><dd>Narrow Brown Spot</dd></div>
+          <div><dt>RH</dt><dd>Rice Hispa</dd></div>
+          <div><dt>SB</dt><dd>Sheath Blight</dd></div>
+          <div><dt>TG</dt><dd>Tungro</dd></div>
+          <div><dt>UF</dt><dd>Unhealthy Flowers</dd></div>
+          </dl>
     </div>
-    {% endif %}
+  </details>
 
-    {# ── Table ────────────────────────────────────────────────────────── #}
-    <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-
-      <div class="overflow-x-auto">
-
-        <table class="min-w-full text-sm">
-
-          <thead>
-            <tr class="border-b border-gray-200 bg-gray-50 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500">
-
-              {# Checkbox column #}
-              {% if can_manage %}
-              <th scope="col"
-                  class="w-10 px-4 py-3.5 no-print">
-                <input type="checkbox"
-                       id="select-all"
-                       title="Select all"
-                       aria-label="Select all varieties"
-                       class="h-4 w-4 cursor-pointer rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500">
-              </th>
-              {% endif %}
-
-              {# Code #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-
-                <a href="?sort={% if sort == 'code' %}-code{% else %}code{% endif %}&search={{ search_query }}&page_size={{ page_size }}&type={{ filter_type }}&climate={{ filter_climate }}"
-                   class="group inline-flex items-center gap-1.5 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-
-                  Code
-
-                  <svg class="h-3 w-3 flex-shrink-0 {% if sort == 'code' or sort == '-code' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %}"
-                       viewBox="0 0 10 10"
-                       fill="currentColor"
-                       aria-hidden="true">
-                    {% if sort == '-code' %}
-                    <path d="M5 7L1 3h8L5 7z"/>
-                    {% else %}
-                    <path d="M5 3l4 4H1l4-4z"/>
-                    {% endif %}
-                  </svg>
-
-                </a>
-              </th>
-
-              {# Name #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-
-                <a href="?sort={% if sort == 'name' %}-name{% else %}name{% endif %}&search={{ search_query }}&page_size={{ page_size }}&type={{ filter_type }}&climate={{ filter_climate }}"
-                   class="group inline-flex items-center gap-1.5 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-
-                  Name
-
-                  <svg class="h-3 w-3 flex-shrink-0 {% if sort == 'name' or sort == '-name' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %}"
-                       viewBox="0 0 10 10"
-                       fill="currentColor"
-                       aria-hidden="true">
-                    {% if sort == '-name' %}
-                    <path d="M5 7L1 3h8L5 7z"/>
-                    {% else %}
-                    <path d="M5 3l4 4H1l4-4z"/>
-                    {% endif %}
-                  </svg>
-
-                </a>
-              </th>
-
-              {# Type #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-                Type
-              </th>
-
-              {# Growth Days #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-
-                <a href="?sort={% if sort == 'average_growth_days' %}-average_growth_days{% else %}average_growth_days{% endif %}&search={{ search_query }}&page_size={{ page_size }}&type={{ filter_type }}&climate={{ filter_climate }}"
-                   class="group inline-flex items-center gap-1.5 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-
-                  Growth
-
-                  <svg class="h-3 w-3 flex-shrink-0 {% if sort == 'average_growth_days' or sort == '-average_growth_days' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %}"
-                       viewBox="0 0 10 10"
-                       fill="currentColor"
-                       aria-hidden="true">
-                    {% if sort == '-average_growth_days' %}
-                    <path d="M5 7L1 3h8L5 7z"/>
-                    {% else %}
-                    <path d="M5 3l4 4H1l4-4z"/>
-                    {% endif %}
-                  </svg>
-
-                </a>
-              </th>
-
-              {# Climate #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-                Climate
-              </th>
-
-              {# Average Yield #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-
-                <a href="?sort={% if sort == '-average_yield_t_ha' %}average_yield_t_ha{% else %}-average_yield_t_ha{% endif %}&search={{ search_query }}&page_size={{ page_size }}&type={{ filter_type }}&climate={{ filter_climate }}"
-                   class="group inline-flex items-center gap-1.5 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-
-                  Avg Yield
-
-                  <svg class="h-3 w-3 flex-shrink-0 {% if sort == 'average_yield_t_ha' or sort == '-average_yield_t_ha' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %}"
-                       viewBox="0 0 10 10"
-                       fill="currentColor"
-                       aria-hidden="true">
-                    {% if sort == 'average_yield_t_ha' %}
-                    <path d="M5 7L1 3h8L5 7z"/>
-                    {% else %}
-                    <path d="M5 3l4 4H1l4-4z"/>
-                    {% endif %}
-                  </svg>
-
-                </a>
-              </th>
-
-              {# Disease Resistance #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-
-                <span>Resistance</span>
-
-                <span class="mt-0.5 block text-[10px] font-normal normal-case tracking-normal text-gray-400">
-                  12 CNN diseases
-                </span>
-
-              </th>
-
-              {# Plantings #}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5">
-
-                <a href="?sort={% if sort == '-planting_count' %}planting_count{% else %}-planting_count{% endif %}&search={{ search_query }}&page_size={{ page_size }}&type={{ filter_type }}&climate={{ filter_climate }}"
-                   class="group inline-flex items-center gap-1.5 rounded focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-
-                  Plantings
-
-                  <svg class="h-3 w-3 flex-shrink-0 {% if sort == 'planting_count' or sort == '-planting_count' %}text-green-600{% else %}opacity-0 group-hover:opacity-40{% endif %}"
-                       viewBox="0 0 10 10"
-                       fill="currentColor"
-                       aria-hidden="true">
-                    {% if sort == 'planting_count' %}
-                    <path d="M5 7L1 3h8L5 7z"/>
-                    {% else %}
-                    <path d="M5 3l4 4H1l4-4z"/>
-                    {% endif %}
-                  </svg>
-
-                </a>
-              </th>
-
-              {% if can_manage %}
-              <th scope="col"
-                  class="whitespace-nowrap px-4 py-3.5 text-right">
-                Actions
-              </th>
-              {% endif %}
-
-            </tr>
-          </thead>
-
-          {# ── Skeleton rows ──────────────────────────────────────────── #}
-          <tbody id="varieties-skeleton"
-                 aria-hidden="true"
-                 class="divide-y divide-gray-100">
-
-            {% for i in "12345" %}
-            <tr>
-
-              {% if can_manage %}
-              <td class="px-4 py-3.5 no-print">
-                <div class="sk h-4 w-4 rounded"></div>
-              </td>
-              {% endif %}
-
-              {# Code #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-5 w-16 rounded-md"></div>
-              </td>
-
-              {# Name #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-4 w-36 rounded"></div>
-              </td>
-
-              {# Type #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-5 w-14 rounded-md"></div>
-              </td>
-
-              {# Growth #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-5 w-16 rounded-md"></div>
-              </td>
-
-              {# Climate #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-5 w-16 rounded-md"></div>
-              </td>
-
-              {# Yield #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-4 w-16 rounded"></div>
-              </td>
-
-              {# Resistance #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-5 w-32 rounded-md"></div>
-              </td>
-
-              {# Plantings #}
-              <td class="px-4 py-3.5">
-                <div class="sk h-4 w-10 rounded"></div>
-              </td>
-
-              {% if can_manage %}
-              {# Actions #}
-              <td class="px-4 py-3.5">
-                <div class="sk ml-auto h-7 w-28 rounded-lg"></div>
-              </td>
-              {% endif %}
-
-            </tr>
-            {% endfor %}
-
-          </tbody>
-
-          {# ── Real rows ──────────────────────────────────────────────── #}
-          <tbody id="varieties-rows"
-                 class="hidden divide-y divide-gray-100">
-
-            {% for variety in varieties %}
-
-            <tr class="transition-colors hover:bg-gray-50"
-                data-pk="{{ variety.pk }}">
-
-              {# Checkbox — bulk select #}
-              {% if can_manage %}
-              <td class="px-4 py-3.5 no-print">
-
-                <input type="checkbox"
-                       name="selected_ids"
-                       value="{{ variety.pk }}"
-                       class="row-cb h-4 w-4 cursor-pointer rounded border-gray-300 text-green-600 focus:ring-2 focus:ring-green-500">
-
-              </td>
-              {% endif %}
-
-              {# Code #}
-              <td class="px-4 py-3.5">
-
-                <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-1 font-mono text-xs font-semibold text-green-800">
-                  {{ variety.code }}
-                </span>
-
-              </td>
-
-              {# Name #}
-              <td class="px-4 py-3.5">
-
-                <span class="font-medium text-gray-900">
-                  {{ variety.name }}
-                </span>
-
-              </td>
-
-              {# Variety Type #}
-              <td class="px-4 py-3.5">
-
-                {% if variety.variety_type == 'hybrid' %}
-
-                <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
-                  Hybrid
-                </span>
-
-                {% elif variety.variety_type == 'traditional' %}
-
-                <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700">
-                  Traditional
-                </span>
-
-                {% elif variety.variety_type == 'specialty' %}
-
-                <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700">
-                  Specialty
-                </span>
-
-                {% elif variety.variety_type == 'stress' %}
-
-                <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800">
-                  Stress-Tolerant
-                </span>
-
-                {% else %}
-
-                <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700">
-                  Inbred
-                </span>
-
-                {% endif %}
-
-              </td>
-
-              {# Growth Days #}
-              <td class="px-4 py-3.5">
-
-                <div class="flex items-center gap-1.5 whitespace-nowrap text-sm text-gray-700">
-
-                  <svg class="h-4 w-4 flex-shrink-0 text-gray-400"
-                       fill="none"
-                       stroke="currentColor"
-                       viewBox="0 0 24 24"
-                       aria-hidden="true">
-                    <path stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                  </svg>
-
-                  <span class="font-semibold text-gray-800">
-                    {{ variety.average_growth_days }}
-                  </span>
-
-                  <span class="text-xs text-gray-400">
-                    d
-                  </span>
-
-                </div>
-
-              </td>
-
-              {# Climate Type #}
-              <td class="px-4 py-3.5">
-
-                {% if variety.climate_type == 'irrigated' %}
-
-                <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
-                  {{ variety.get_climate_type_display }}
-                </span>
-
-                {% elif variety.climate_type == 'rainfed' %}
-
-                <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-medium text-gray-700">
-                  {{ variety.get_climate_type_display }}
-                </span>
-
-                {% else %}
-
-                <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-800">
-                  {{ variety.get_climate_type_display }}
-                </span>
-
-                {% endif %}
-
-              </td>
-
-              {# Average Yield t/ha #}
-              <td class="px-4 py-3.5 text-sm text-gray-700">
-
-                {% if variety.average_yield_t_ha %}
-
-                <div class="whitespace-nowrap">
-                  <span class="font-semibold text-gray-900">
-                    {{ variety.average_yield_t_ha }}
-                  </span>
-
-                  <span class="ml-0.5 text-xs text-gray-400">
-                    t/ha
-                  </span>
-                </div>
-
-                {% else %}
-
-                <span class="text-gray-300">
-                  —
-                </span>
-
-                {% endif %}
-
-              </td>
-
-              {# ── Disease Resistance ─────────────────────────────────── #}
-              {# R=green, MR=neutral, S=amber, HS=red, blank/U=gray #}
-              <td class="px-4 py-3.5">
-
-                <div class="flex max-w-[180px] flex-wrap items-center gap-1">
-
-                  {# Blast #}
-                  {% with v=variety.blast_resistance %}
-                  <span title="Leaf Blast: {{ variety.get_blast_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    B
-                  </span>
-                  {% endwith %}
-
-                  {# Neck Blast #}
-                  {% with v=variety.neck_blast_resistance %}
-                  <span title="Neck Blast: {{ variety.get_neck_blast_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    NB
-                  </span>
-                  {% endwith %}
-
-                  {# Bacterial Leaf Blight #}
-                  {% with v=variety.blight_resistance %}
-                  <span title="Bacterial Leaf Blight: {{ variety.get_blight_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    BLB
-                  </span>
-                  {% endwith %}
-
-                  {# Brown Spot #}
-                  {% with v=variety.brown_spot_resistance %}
-                  <span title="Brown Spot: {{ variety.get_brown_spot_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    BS
-                  </span>
-                  {% endwith %}
-
-                  {# False Smut #}
-                  {% with v=variety.false_smut_resistance %}
-                  <span title="False Smut: {{ variety.get_false_smut_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    FS
-                  </span>
-                  {% endwith %}
-
-                  {# Leaf Scald #}
-                  {% with v=variety.leaf_scald_resistance %}
-                  <span title="Leaf Scald: {{ variety.get_leaf_scald_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    LS
-                  </span>
-                  {% endwith %}
-
-                  {# Leaf Smut #}
-                  {% with v=variety.leaf_smut_resistance %}
-                  <span title="Leaf Smut: {{ variety.get_leaf_smut_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    LSm
-                  </span>
-                  {% endwith %}
-
-                  {# Narrow Brown Spot #}
-                  {% with v=variety.narrow_brown_spot_resistance %}
-                  <span title="Narrow Brown Spot: {{ variety.get_narrow_brown_spot_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    NBS
-                  </span>
-                  {% endwith %}
-
-                  {# Rice Hispa #}
-                  {% with v=variety.rice_hispa_resistance %}
-                  <span title="Rice Hispa: {{ variety.get_rice_hispa_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    RH
-                  </span>
-                  {% endwith %}
-
-                  {# Sheath Blight #}
-                  {% with v=variety.sheath_blight_resistance %}
-                  <span title="Sheath Blight: {{ variety.get_sheath_blight_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    SB
-                  </span>
-                  {% endwith %}
-
-                  {# Tungro #}
-                  {% with v=variety.tungro_resistance %}
-                  <span title="Tungro: {{ variety.get_tungro_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    TG
-                  </span>
-                  {% endwith %}
-
-                  {# Unhealthy Flowers #}
-                  {% with v=variety.unhealthy_flowers_resistance %}
-                  <span title="Unhealthy Flowers: {{ variety.get_unhealthy_flowers_resistance_display }}"
-                        class="cursor-default rounded border px-1.5 py-0.5 text-[10px] font-bold leading-4
-                        {% if v == 'R' %}border-green-200 bg-green-50 text-green-700
-                        {% elif v == 'MR' %}border-gray-300 bg-gray-50 text-gray-600
-                        {% elif v == 'S' %}border-amber-200 bg-amber-50 text-amber-700
-                        {% elif v == 'HS' %}border-red-200 bg-red-50 text-red-700
-                        {% else %}border-gray-200 bg-gray-50 text-gray-400{% endif %}">
-                    UF
-                  </span>
-                  {% endwith %}
-
-                </div>
-
-              </td>
-
-              {# Plantings count #}
-              <td class="px-4 py-3.5">
-
-                {% with cnt=variety.planting_count %}
-
-                <span class="text-sm {% if cnt > 0 %}font-semibold text-green-700{% else %}text-gray-400{% endif %}">
-                  {{ cnt }}
-                </span>
-
-                {% endwith %}
-
-              </td>
-
-              {# Actions #}
-              {% if can_manage %}
-              <td class="px-4 py-3.5 text-right">
-
-                <div class="inline-flex items-center gap-1.5">
-
-                  {# Edit #}
-                  <a href="{% url 'polls:variety_edit' variety.pk %}"
-                     class="relative z-10 inline-flex min-h-[34px] items-center rounded-md border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-
-                    
-
-                    Edit
-                  </a>
-
-                  {# Archive #}
-                  <a href="{% url 'polls:variety_delete' variety.pk %}"
-                     data-open-delete="true"
-                     data-delete-label="{{ variety.code }} — {{ variety.name }}"
-                     data-delete-subtitle="{{ variety.average_growth_days }} days growth"
-                     class="inline-flex min-h-[34px] items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-medium text-amber-800 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1">
-
-                    
-
-                    Archive
-                  </a>
-
-                </div>
-
-              </td>
-              {% endif %}
-
-            </tr>
-
-            {% endfor %}
-
-          </tbody>
-
-        </table>
-
-      </div>
-    </div>
-
-  </form>
-
-  {# ── Pagination ───────────────────────────────────────────────────────── #}
   {% if page_obj and is_paginated %}
     {% include 'partials/_pagination.html' %}
   {% endif %}
 
   {% else %}
 
-  {# ── Empty State ──────────────────────────────────────────────────────── #}
-  <div class="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm sm:p-12">
-
-    <div class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-green-50 text-green-600">
-      <svg class="h-6 w-6"
-           fill="none"
-           stroke="currentColor"
-           viewBox="0 0 24 24"
-           aria-hidden="true">
-        <path stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-      </svg>
-    </div>
+  <!-- EMPTY STATE -->
+  <div class="agri-card vr-empty">
+    <span class="vr-empty-icon" aria-hidden="true"><svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
 
     {% if filters_active %}
-
-    <h3 class="mb-2 text-lg font-semibold text-gray-900">
-      No varieties match your filters
-    </h3>
-
-    <p class="mx-auto mb-5 max-w-md text-sm leading-6 text-gray-500">
-      Try adjusting your search term or removing a filter.
-    </p>
-
-    <a href="{% url 'polls:varieties_list' %}"
-       class="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-
-      <svg class="h-4 w-4"
-           fill="none"
-           stroke="currentColor"
-           viewBox="0 0 24 24"
-           aria-hidden="true">
-        <path stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"/>
-      </svg>
-
-      Clear All Filters
-    </a>
-
+    <h2>No varieties match your filters</h2>
+    <p>Try adjusting your search term or removing a filter.</p>
+    <a href="{% url 'polls:varieties_list' %}" class="btn btn-secondary btn-lg">Clear All Filters</a>
     {% else %}
-
-    <h3 class="mb-2 text-lg font-semibold text-gray-900">
-      No Varieties Yet
-    </h3>
-
-    <p class="mx-auto mb-5 max-w-md text-sm leading-6 text-gray-500">
-      Add the first rice variety to start tracking plantings and yield predictions.
-    </p>
-
+    <h2>No Varieties Yet</h2>
+    <p>Add the first rice variety to start tracking plantings and yield predictions.</p>
     {% if can_manage %}
-    <a href="{% url 'polls:variety_create' %}"
-       class="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-lg bg-green-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-
-      <svg class="h-4 w-4"
-           fill="none"
-           stroke="currentColor"
-           viewBox="0 0 24 24"
-           aria-hidden="true">
-        <path stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"/>
-      </svg>
-
-      Add First Variety
-    </a>
+    <a href="{% url 'polls:variety_create' %}" class="btn btn-primary btn-lg"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg><span>Add First Variety</span></a>
     {% endif %}
-
     {% endif %}
-
   </div>
 
   {% endif %}
 
 </section>
 
+{% include 'partials/_ctrlk.html' with input_id='variety-search' %}
+{% endblock %}
+
+{% block extra_js %}
 <script>
-// ── Skeleton → real rows reveal on load ───────────────────────────────
-document.addEventListener('DOMContentLoaded', function () {
-  var sk   = document.getElementById('varieties-skeleton');
-  var rows = document.getElementById('varieties-rows');
+  /* Auto-submit the form when a dropdown changes */
+  document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
+    el.addEventListener("change", function () {
+      if (el.form) el.form.submit();
+    });
+  });
 
-  if (sk) {
-    sk.style.display = 'none';
-  }
+  /* Bulk selection */
+  var selectAll  = document.getElementById("select-all");
+  var toolbar    = document.getElementById("bulk-toolbar");
+  var countLabel = document.getElementById("selected-count");
 
-  if (rows) {
-    rows.classList.remove('hidden');
-  }
-});
+  function updateToolbar() {
+    var all = document.querySelectorAll(".row-cb");
+    var checked = document.querySelectorAll(".row-cb:checked").length;
 
-// ── Ctrl+K / Cmd+K → focus search input ──────────────────────────────
-// (handled by partials/_ctrlk.html below)
+    if (toolbar) toolbar.hidden = checked === 0;
+    if (countLabel) countLabel.textContent = checked;
 
-// ── Bulk checkbox logic ────────────────────────────────────────────────
-var selectAll  = document.getElementById('select-all');
-var toolbar    = document.getElementById('bulk-toolbar');
-var countLabel = document.getElementById('selected-count');
-
-function updateToolbar() {
-  var checked = document.querySelectorAll('.row-cb:checked').length;
-
-  if (toolbar) {
-    if (checked > 0) {
-      toolbar.classList.remove('hidden');
-    } else {
-      toolbar.classList.add('hidden');
+    if (selectAll) {
+      selectAll.checked = checked === all.length && all.length > 0;
+      selectAll.indeterminate = checked > 0 && checked < all.length;
     }
   }
 
-  if (countLabel) {
-    countLabel.textContent = checked;
-  }
-
-  var all = document.querySelectorAll('.row-cb');
-
-  if (selectAll) {
-    selectAll.checked = checked === all.length && all.length > 0;
-    selectAll.indeterminate = checked > 0 && checked < all.length;
-  }
-}
-
-// Select-all toggle
-if (selectAll) {
-  selectAll.addEventListener('change', function () {
-    document.querySelectorAll('.row-cb').forEach(function (cb) {
-      cb.checked = selectAll.checked;
-    });
-
+  function clearSelection() {
+    document.querySelectorAll(".row-cb").forEach(function (cb) { cb.checked = false; });
     updateToolbar();
-  });
-}
-
-// Individual checkbox change
-document.querySelectorAll('.row-cb').forEach(function (cb) {
-  cb.addEventListener('change', updateToolbar);
-});
-
-// Clear selection button
-function clearSelection() {
-  document.querySelectorAll('.row-cb').forEach(function (cb) {
-    cb.checked = false;
-  });
-
-  if (selectAll) {
-    selectAll.checked = false;
-    selectAll.indeterminate = false;
   }
 
-  updateToolbar();
-}
+  if (selectAll) {
+    selectAll.addEventListener("change", function () {
+      document.querySelectorAll(".row-cb").forEach(function (cb) { cb.checked = selectAll.checked; });
+      updateToolbar();
+    });
+  }
+
+  document.querySelectorAll(".row-cb").forEach(function (cb) {
+    cb.addEventListener("change", updateToolbar);
+  });
+
+  var clearBtn = document.getElementById("clear-selection");
+  if (clearBtn) clearBtn.addEventListener("click", clearSelection);
+
+  /* Bulk archive modal trigger */
+  document.querySelectorAll('[data-open-bulk-archive]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var checked = document.querySelectorAll('.row-cb:checked');
+      var count = checked.length;
+      if (count === 0) return;
+
+      var modal = document.getElementById('confirm-delete-modal');
+      var form = document.getElementById('delete-post-form');
+      if (!modal || !form) return;
+
+      var labelPlural = btn.getAttribute('data-bulk-label-plural') || 'items';
+      var labelSingular = btn.getAttribute('data-bulk-label-singular') || 'item';
+      var title = btn.getAttribute('data-bulk-title') || 'Archive Selected?';
+      var subtitle = btn.getAttribute('data-bulk-subtitle') || '';
+      var confirmText = btn.getAttribute('data-bulk-confirm') || 'Yes, Archive';
+      var actionUrl = btn.getAttribute('data-bulk-action-url');
+
+      var titleEl = document.getElementById('delete-modal-title');
+      var textEl = document.getElementById('confirm-delete-text');
+      var subEl = document.getElementById('confirm-delete-subtitle');
+      var noticeA = document.getElementById('delete-modal-notice-archive');
+      var noticeP = document.getElementById('delete-modal-notice-permanent');
+      var confirmBtn = document.getElementById('delete-modal-confirm');
+
+      if (titleEl) titleEl.textContent = title;
+      if (textEl) textEl.textContent = count + ' ' + (count === 1 ? labelSingular : labelPlural) + ' selected';
+      if (subEl) subEl.textContent = subtitle;
+
+      if (noticeA) noticeA.style.display = 'block';
+      if (noticeP) noticeP.style.display = 'none';
+
+      if (confirmBtn) {
+        confirmBtn.className = "btn btn-danger w-full sm:w-auto";
+        confirmBtn.textContent = confirmText;
+      }
+
+      form.action = actionUrl;
+      form.querySelectorAll('.injected-bulk').forEach(function(el) { el.remove(); });
+      
+      var actionInput = document.createElement('input');
+      actionInput.type = 'hidden';
+      actionInput.name = 'bulk_action';
+      actionInput.value = 'archive';
+      actionInput.className = 'injected-bulk';
+      form.appendChild(actionInput);
+
+      checked.forEach(function(cb) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = 'selected_ids';
+        inp.value = cb.value;
+        inp.className = 'injected-bulk';
+        form.appendChild(inp);
+      });
+
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+      setTimeout(function() { if (confirmBtn) confirmBtn.focus(); }, 50);
+    });
+  });
+
+  /* Restore state after Back (browser may keep checked boxes) */
+  window.addEventListener("pageshow", updateToolbar);
 </script>
-
-{% include 'partials/_ctrlk.html' with input_id='variety-search' %}
-
 {% endblock %}

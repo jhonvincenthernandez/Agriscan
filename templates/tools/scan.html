@@ -2,84 +2,78 @@
 
 {% block title %}Scan Leaf Disease · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header (mirroring Detection Records structure) */
+  .sl-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .sl-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .sl-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .sl-title { margin: 0; }
+  .sl-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .sl-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .sl-head { padding: 1.5rem; }
+    .sl-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .sl-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .sl-section-header { padding: 1.25rem; border-bottom: 1px solid var(--color-border); }
+  @media (min-width: 640px) { .sl-section-header { padding: 1.5rem; } }
+  .sl-section-title { margin: 0; font-size: var(--text-lg); font-weight: 600; }
+  .sl-section-lead { margin: 0.25rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); }
+
+  .sl-form-body { padding: 1.25rem; }
+  @media (min-width: 640px) { .sl-form-body { padding: 1.5rem; } }
+
+  .sl-result-detail { border: 1px solid var(--color-border); background: var(--color-overlay); border-radius: var(--radius-md); padding: 1rem; }
+  .sl-result-detail-label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin: 0; }
+  .sl-result-detail-value { font-size: var(--text-lg); font-weight: 600; margin: 0.25rem 0 0 0; }
+
+  .sl-info-card { border: 1px solid var(--color-brand-border); background: var(--color-brand-light); border-radius: var(--radius-lg); padding: 1.25rem; }
+  @media (min-width: 640px) { .sl-info-card { padding: 1.5rem; } }
+  .sl-info-item { border: 1px solid var(--color-brand-border); background: var(--color-surface); border-radius: var(--radius-sm); padding: 0.75rem; }
+  .sl-info-item-title { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-brand); margin: 0; }
+  .sl-info-item-text { font-size: var(--text-xs); line-height: 1.5; margin: 0.25rem 0 0 0; }
+
+  .sl-severity-item { display: flex; align-items: flex-start; gap: 0.75rem; font-size: var(--text-sm); }
+  .sl-severity-dot { margin-top: 0.375rem; width: 0.625rem; height: 0.625rem; border-radius: var(--radius-full); flex-shrink: 0; }
+
+  .sl-tip-item { display: flex; align-items: flex-start; gap: 0.625rem; font-size: var(--text-sm); }
+  .sl-tip-icon { flex-shrink: 0; width: 1rem; height: 1rem; margin-top: 0.125rem; color: var(--color-brand); }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container">
+<section class="page-container min-w-0">
 
   <!-- =========================================================
        PAGE HEADER
        ========================================================= -->
-  <header class="mb-6">
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm">
-      <div class="flex flex-col gap-4 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
-
-        <div class="min-w-0">
-          <div class="flex items-start gap-3">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 sm:h-11 sm:w-11">
-              <svg
-                class="h-5 w-5 sm:h-6 sm:w-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.8"
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.8"
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-                />
-              </svg>
-            </div>
-
-            <div class="min-w-0">
-              <h1 class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
-                Disease Detection Scanner
-              </h1>
-
-              <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-                Upload or capture a rice leaf image for AI-powered disease analysis.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <a
-          href="{% url 'polls:detections_list' %}"
-          class="btn btn-secondary w-full sm:w-auto"
-        >
-          <svg
-            class="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          <span>Detection Records</span>
-        </a>
-
+  <header class="agri-card sl-head">
+    <div class="sl-head-main">
+      <span class="sl-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <h1 class="sl-title">Disease Detection Scanner</h1>
+        <p class="sl-lead">Upload or capture a rice leaf image for AI-powered disease analysis.</p>
       </div>
     </div>
+
+    <div class="sl-head-actions">
+      <a href="{% url 'polls:detections_list' %}" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 19l-7-7 7-7"/>
+        </svg>
+        <span>Detection Records</span>
+      </a>
+    </div>
   </header>
-
-
-  <!-- =========================================================
-       SCAN GUIDE
-       ========================================================= -->
-  {% include 'partials/_scan_guide.html' %}
-
 
   <!-- =========================================================
        MAIN SCANNER
@@ -89,253 +83,99 @@
     <!-- =======================================================
          UPLOAD / ANALYSIS PANEL
          ======================================================= -->
-    <section
-      class="bg-white border border-gray-200 rounded-xl shadow-sm"
-      aria-labelledby="upload-panel-title"
-    >
-
-      <div class="border-b border-gray-100 px-5 py-4 sm:px-6 sm:py-5">
+    <section class="agri-card" aria-labelledby="upload-panel-title">
+      <div class="sl-section-header">
         <div class="flex items-start gap-3">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 3v11m0-11l-4 4m4-4l4 4"
-              />
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-overlay)] text-[var(--color-text-secondary)]">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M12 3v11m0-11l-4 4m4-4l4 4"/>
             </svg>
           </div>
-
           <div>
-            <h2
-              id="upload-panel-title"
-              class="text-lg font-semibold text-gray-900"
-            >
-              Upload Image
-            </h2>
-
-            <p class="mt-0.5 text-sm text-gray-500">
-              Select a planting cycle and provide a clear rice leaf image.
-            </p>
+            <h2 id="upload-panel-title" class="sl-section-title">Upload Image</h2>
+            <p class="sl-section-lead">Select a planting cycle and provide a clear rice leaf image.</p>
           </div>
         </div>
       </div>
 
-
-      <div class="p-5 sm:p-6">
+      <div class="sl-form-body">
 
         <!-- REQUIRED FIELDS NOTICE -->
-        <div
-          class="mb-5 flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3"
-          role="note"
-        >
-          <svg
-            class="mt-0.5 h-5 w-5 shrink-0 text-blue-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M12 9v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"
-            />
+        <div class="agri-alert agri-alert-info mb-5 flex items-start gap-3" role="note">
+          <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"/>
           </svg>
-
-          <p class="text-sm leading-5 text-blue-800">
+          <p class="text-sm leading-5">
             <span class="font-semibold">Required fields:</span>
             select a planting cycle and upload a valid leaf image before analysis.
           </p>
         </div>
 
-
         <!-- PLANTING VALIDATION ALERT -->
-        <div
-          id="planting-validation-error"
-          class="hidden mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3"
-          role="alert"
-          aria-live="polite"
-        >
-          <svg
-            class="mt-0.5 h-5 w-5 shrink-0 text-red-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14z"
-            />
+        <div id="planting-validation-error" class="agri-alert agri-alert-danger hidden mb-4 flex items-start gap-3" role="alert" aria-live="polite">
+          <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"/>
           </svg>
-
-          <p class="text-sm font-medium leading-5 text-red-800">
-            Please select a planting cycle before analyzing the image.
-          </p>
+          <p class="text-sm font-medium leading-5">Please select a planting cycle before analyzing the image.</p>
         </div>
-
 
         <!-- IMAGE VALIDATION ALERT -->
-        <div
-          id="image-validation-error"
-          class="hidden mb-4 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3"
-          role="alert"
-          aria-live="polite"
-        >
-          <svg
-            class="mt-0.5 h-5 w-5 shrink-0 text-red-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"
-            />
+        <div id="image-validation-error" class="agri-alert agri-alert-danger hidden mb-4 flex items-start gap-3" role="alert" aria-live="polite">
+          <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"/>
           </svg>
-
-          <p class="text-sm font-medium leading-5 text-red-800">
-            Please select a valid leaf image before analyzing.
-          </p>
+          <p class="text-sm font-medium leading-5">Please select a valid leaf image before analyzing.</p>
         </div>
 
-
         <!-- FORM -->
-        <form
-          id="scan-form"
-          method="post"
-          enctype="multipart/form-data"
-          class="space-y-5"
-          novalidate
-        >
-
+        <form id="scan-form" method="post" enctype="multipart/form-data" class="space-y-5" novalidate>
           {% csrf_token %}
-
           {% include 'partials/forms/_errors.html' %}
 
-
           {% if error %}
-          <div
-            class="rounded-lg border border-red-200 bg-red-50 px-4 py-3"
-            role="alert"
-          >
+          <div class="agri-alert agri-alert-danger" role="alert">
             <div class="flex items-start gap-3">
-              <svg
-                class="mt-0.5 h-5 w-5 shrink-0 text-red-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.8"
-                  d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"
-                />
+              <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"/>
               </svg>
-
-              <p class="text-sm font-medium text-red-800">
-                {{ error }}
-              </p>
+              <p class="text-sm font-medium">{{ error }}</p>
             </div>
           </div>
           {% endif %}
 
-
-          <!-- =================================================
-               PLANTING CYCLE
-               ================================================= -->
+          <!-- PLANTING CYCLE -->
           <div>
-            <label
-              for="id_planting"
-              class="block text-sm font-medium text-gray-800"
-            >
+            <label for="id_planting" class="block">
               {{ form.planting.label }}
-              <span class="text-red-600" aria-hidden="true">*</span>
+              <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
             </label>
-
             <div id="planting-field-wrapper" class="mt-1.5">
               {{ form.planting }}
             </div>
-
             {% if form.planting.errors %}
-            <div
-              class="mt-1.5 text-sm text-red-600"
-              role="alert"
-            >
+            <div class="form-error mt-1.5" role="alert">
               {% for err in form.planting.errors %}
                 <p>{{ err }}</p>
               {% endfor %}
             </div>
             {% endif %}
-
             {% if form.planting.help_text %}
-            <p class="mt-1.5 text-xs leading-5 text-gray-500">
-              {{ form.planting.help_text }}
-            </p>
+            <p class="form-help mt-1.5">{{ form.planting.help_text }}</p>
             {% endif %}
 
-
             {% if not form.planting.field.queryset %}
-            <div class="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div class="agri-alert agri-alert-warning mt-3">
               <div class="flex items-start gap-3">
-                <svg
-                  class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                    d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"
-                  />
+                <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"/>
                 </svg>
-
                 <div>
-                  <p class="text-sm font-semibold text-amber-900">
-                    No planting cycles found.
-                  </p>
-
-                  <p class="mt-1 text-sm text-amber-800">
-                    Create a planting cycle before running disease detection.
-                  </p>
-
-                  <a
-                    href="{% url 'polls:planting_create' %}"
-                    class="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-amber-800 underline underline-offset-2 hover:text-amber-950 focus:outline-none"
-                  >
+                  <p class="text-sm font-semibold">No planting cycles found.</p>
+                  <p class="mt-1 text-sm">Create a planting cycle before running disease detection.</p>
+                  <a href="{% url 'polls:planting_create' %}" class="mt-2 inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-2 hover:opacity-80 focus:outline-none">
                     Create a planting cycle
-                    <svg
-                      class="h-3.5 w-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.8"
-                        d="M9 5l7 7-7 7"
-                      />
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7"/>
                     </svg>
                   </a>
                 </div>
@@ -344,39 +184,18 @@
             {% endif %}
           </div>
 
-
-          <!-- =================================================
-               IMAGE INPUT
-               ================================================= -->
+          <!-- IMAGE INPUT -->
           <div>
-            <label
-              for="id_leaf_image"
-              class="block text-sm font-medium text-gray-800"
-            >
+            <label for="id_leaf_image" class="block">
               {{ form.leaf_image.label }}
-              <span class="text-red-600" aria-hidden="true">*</span>
+              <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
             </label>
-
             <div class="mt-1.5">
-              <input
-                id="id_leaf_image"
-                name="{{ form.leaf_image.html_name }}"
-                type="file"
-                accept="image/*"
-                data-preview-target="leaf_preview"
-                class="block min-h-11 w-full cursor-pointer rounded-lg border border-gray-300 bg-white text-sm text-gray-700 file:mr-4 file:min-h-11 file:border-0 file:border-r file:border-gray-300 file:bg-gray-50 file:px-4 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-gray-100 focus:border-green-600 focus:outline-none focus:ring-2 focus:ring-green-600/20"
-              >
+              <input id="id_leaf_image" name="{{ form.leaf_image.html_name }}" type="file" accept="image/*" data-preview-target="leaf_preview" class="form-input">
             </div>
-
-            <p class="mt-1.5 text-xs leading-5 text-gray-500">
-              Use a clear JPG or PNG image with good lighting and visible leaf details.
-            </p>
-
+            <p class="form-help mt-1.5">Use a clear JPG or PNG image with good lighting and visible leaf details.</p>
             {% if form.leaf_image.errors %}
-            <div
-              class="mt-1.5 text-sm text-red-600"
-              role="alert"
-            >
+            <div class="form-error mt-1.5" role="alert">
               {% for err in form.leaf_image.errors %}
                 <p>{{ err }}</p>
               {% endfor %}
@@ -384,629 +203,281 @@
             {% endif %}
           </div>
 
-
-          <!-- =================================================
-               IMAGE PREVIEW
-               ================================================= -->
-          <div
-            id="leaf_preview_container"
-            class="{% if result_image_url %}block{% else %}hidden{% endif %}"
-          >
-            <div class="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-              <div class="border-b border-gray-200 bg-gray-50 px-3 py-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Image Preview
-                </p>
+          <!-- IMAGE PREVIEW -->
+          <div id="leaf_preview_container" class="{% if result_image_url %}block{% else %}hidden{% endif %}">
+            <div class="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-overlay)]">
+              <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2">
+                <p class="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Image Preview</p>
               </div>
-
               <div class="p-2 sm:p-3">
-                <img
-                  id="leaf_preview"
-                  class="h-56 w-full rounded-md object-cover sm:h-64"
-                  src="{% if result_image_url %}{{ result_image_url }}{% endif %}"
-                  alt="Rice leaf image preview"
-                >
+                <img id="leaf_preview" class="h-56 w-full rounded-[var(--radius-sm)] object-cover sm:h-64" src="{% if result_image_url %}{{ result_image_url }}{% endif %}" alt="Rice leaf image preview">
               </div>
             </div>
           </div>
 
-
-          <!-- =================================================
-               PRIMARY ACTION
-               ================================================= -->
-          <button
-            id="scan-submit-btn"
-            type="submit"
-            class="btn btn-primary w-full justify-center py-3 text-sm font-semibold sm:text-base"
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+          <!-- PRIMARY ACTION -->
+          <button id="scan-submit-btn" type="submit" class="btn btn-primary btn-block">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-
             <span>Analyze Image</span>
           </button>
 
-
-          <!-- =================================================
-               CAMERA ACTION
-               ================================================= -->
-          <a
-            href="{% url 'polls:camera_capture' %}"
-            class="btn btn-secondary w-full justify-center py-3 text-sm font-semibold sm:text-base"
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+          <!-- CAMERA ACTION -->
+          <a href="{% url 'polls:camera_capture' %}" class="btn btn-secondary btn-block">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
-
             <span>Open Camera Capture</span>
           </a>
-
         </form>
       </div>
     </section>
 
-
     <!-- =======================================================
          DETECTION RESULT PANEL
          ======================================================= -->
-    <section
-      class="bg-white border border-gray-200 rounded-xl shadow-sm"
-      aria-labelledby="detection-result-title"
-    >
-
-      <div class="border-b border-gray-100 px-5 py-4 sm:px-6 sm:py-5">
+    <section class="agri-card" aria-labelledby="detection-result-title">
+      <div class="sl-section-header">
         <div class="flex items-start gap-3">
-          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700">
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.041-.133-2.051-.382-3.016z"
-              />
+          <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-brand-light)] text-[var(--color-brand)]">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.041-.133-2.051-.382-3.016z"/>
             </svg>
           </div>
-
           <div>
-            <h2
-              id="detection-result-title"
-              class="text-lg font-semibold text-gray-900"
-            >
-              Detection Result
-            </h2>
-
-            <p class="mt-0.5 text-sm text-gray-500">
-              AI analysis and available treatment information.
-            </p>
+            <h2 id="detection-result-title" class="sl-section-title">Detection Result</h2>
+            <p class="sl-section-lead">AI analysis and available treatment information.</p>
           </div>
         </div>
       </div>
 
-
-      <div class="p-5 sm:p-6">
-
+      <div class="sl-form-body">
         {% if result %}
-
         <div class="space-y-5">
 
           <!-- RESULT IMAGE -->
           {% if result_image_url %}
-          <div class="overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-            <img
-              src="{{ result_image_url }}"
-              alt="Scanned rice leaf"
-              class="h-56 w-full object-cover sm:h-64"
-            >
+          <div class="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)]">
+            <img src="{{ result_image_url }}" alt="Scanned rice leaf" class="h-56 w-full object-cover sm:h-64">
           </div>
           {% endif %}
 
-
           <!-- PRIMARY RESULT -->
           <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-
-            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                {% if result.disease == 'Healthy' or result.disease == UNKNOWN_LABEL %}
-                Status
-                {% else %}
-                Disease
-                {% endif %}
+            <div class="sl-result-detail">
+              <p class="sl-result-detail-label">
+                {% if result.disease == 'Healthy' or result.disease == UNKNOWN_LABEL %}Status{% else %}Disease{% endif %}
               </p>
-
-              <p class="mt-1.5 break-words text-lg font-bold text-gray-900">
-                {{ result.disease }}
-              </p>
+              <p class="sl-result-detail-value break-words">{{ result.disease }}</p>
             </div>
 
-
-            <div class="rounded-lg border border-gray-200 bg-green-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-green-700">
-                Confidence
-              </p>
-
-              <p class="mt-1.5 text-lg font-bold text-gray-900">
-                {{ result.confidence }}%
-              </p>
+            <div class="rounded-[var(--radius-md)] border border-[var(--color-success-border)] bg-[var(--color-success-soft)] p-4">
+              <p class="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-success-text)]">Confidence</p>
+              <p class="mt-1.5 text-[var(--text-lg)] font-bold text-[var(--color-text-primary)]">{{ result.confidence }}%</p>
             </div>
-
           </div>
-
 
           <!-- SEVERITY -->
-          <div class="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div class="rounded-[var(--radius-md)] border border-[var(--color-warning-border)] bg-[var(--color-warning-soft)] p-4">
             <div class="flex items-start gap-3">
               <div class="mt-0.5 shrink-0">
-                <svg
-                  class="h-5 w-5 text-amber-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                    d="M12 9v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"
-                  />
+                <svg class="h-5 w-5 text-[var(--color-warning-text)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"/>
                 </svg>
               </div>
-
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-amber-700">
-                  Severity Level
-                </p>
-
-                <p class="mt-1 text-sm font-semibold text-gray-900">
-                  {{ result.severity }}
-                </p>
+                <p class="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-warning-text)]">Severity Level</p>
+                <p class="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">{{ result.severity }}</p>
               </div>
             </div>
           </div>
-
 
           <!-- TREATMENT -->
-          <div class="rounded-lg border border-gray-200 bg-white">
-            <div class="border-b border-gray-100 px-4 py-3">
+          <div class="rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)]">
+            <div class="border-b border-[var(--color-border)] px-4 py-3">
               <div class="flex items-center gap-2">
-                <svg
-                  class="h-4 w-4 text-green-700"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="1.8"
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.041-.133-2.051-.382-3.016z"
-                  />
+                <svg class="h-4 w-4 text-[var(--color-brand)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.041-.133-2.051-.382-3.016z"/>
                 </svg>
-
-                <h3 class="text-sm font-semibold text-gray-900">
-                  Recommended Treatment
-                </h3>
+                <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">Recommended Treatment</h3>
               </div>
             </div>
-
             <div class="p-4">
-              <p class="text-sm leading-6 text-gray-700">
-                {{ result.treatment }}
-              </p>
+              <p class="text-sm leading-6 text-[var(--color-text)]">{{ result.treatment }}</p>
             </div>
           </div>
-
 
           <!-- COMPLETE TREATMENT GUIDE -->
           {% if detailed_treatment and detection_record %}
-          <a
-            href="{% url 'polls:detections_detail' detection_record.pk %}"
-            class="btn btn-primary w-full justify-center"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M13 3v5h5"
-              />
+          <a href="{% url 'polls:detections_detail' detection_record.pk %}" class="btn btn-primary btn-block">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 3v5h5"/>
             </svg>
-
             <span>View Complete Treatment Guide</span>
           </a>
           {% endif %}
 
-
           <!-- SAVED RECORD -->
           {% if detection_record %}
-          <div class="rounded-lg border border-green-200 bg-green-50 p-3.5">
+          <div class="agri-alert agri-alert-success">
             <div class="flex items-start gap-3">
-              <svg
-                class="mt-0.5 h-5 w-5 shrink-0 text-green-700"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.8"
-                  d="M5 13l4 4L19 7"
-                />
+              <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7"/>
               </svg>
-
               <div class="min-w-0">
-                <p class="text-sm font-medium text-green-900">
-                  Detection saved successfully.
-                </p>
-
-                <a
-                  href="{% url 'polls:detections_list' %}?search={{ detection_record.pk }}"
-                  class="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-green-800 underline underline-offset-2 hover:text-green-950"
-                >
+                <p class="text-sm font-medium text-[var(--color-success-text)]">Detection saved successfully.</p>
+                <a href="{% url 'polls:detections_list' %}?search={{ detection_record.pk }}" class="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-[var(--color-success-text)] underline underline-offset-2 hover:opacity-80">
                   View Detection #{{ detection_record.pk }}
-
-                  <svg
-                    class="h-3.5 w-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="1.8"
-                      d="M9 5l7 7-7 7"
-                    />
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7"/>
                   </svg>
                 </a>
               </div>
             </div>
           </div>
 
-
           <!-- YIELD ACTION -->
           {% if result.disease != UNKNOWN_LABEL %}
-          <a
-            href="{% url 'polls:yield_prediction' %}?detection_id={{ detection_record.pk }}"
-            class="btn btn-secondary w-full justify-center"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M3 17h18M8 17V9m4 8V5m4 12v-6"
-              />
+          <a href="{% url 'polls:yield_prediction' %}?detection_id={{ detection_record.pk }}" class="btn btn-secondary btn-block">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17h18M8 17V9m4 8V5m4 12v-6"/>
             </svg>
-
             <span>Open Yield Prediction</span>
           </a>
           {% endif %}
-
           {% endif %}
-
         </div>
-
 
         {% else %}
-
         <!-- EMPTY RESULT STATE -->
         <div class="flex min-h-[24rem] flex-col items-center justify-center px-4 py-12 text-center">
-
-          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-green-50 text-green-700">
-            <svg
-              class="h-8 w-8"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.7"
-                d="M9 3a2 2 0 00-2 2v2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-2V5a2 2 0 00-2-2H9z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.7"
-                d="M9 13h6m-3-3v6"
-              />
+          <div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-brand-light)] text-[var(--color-brand)]">
+            <svg class="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 3a2 2 0 00-2 2v2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-2V5a2 2 0 00-2-2H9z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" d="M9 13h6m-3-3v6"/>
             </svg>
           </div>
-
-          <h3 class="mt-4 text-base font-semibold text-gray-900">
-            No detection result yet
-          </h3>
-
-          <p class="mt-1 max-w-sm text-sm leading-6 text-gray-500">
-            Upload a rice leaf image and select a planting cycle to begin disease analysis.
-          </p>
-
-          <p class="mt-3 text-xs text-gray-400">
-            Supported formats: JPG, PNG
-          </p>
-
+          <h3 class="mt-4 text-base font-semibold">No detection result yet</h3>
+          <p class="mt-1 max-w-sm text-sm leading-6 text-[var(--color-text-secondary)]">Upload a rice leaf image and select a planting cycle to begin disease analysis.</p>
+          <p class="mt-3 text-[var(--text-xs)] text-[var(--color-text-muted)]">Supported formats: JPG, PNG</p>
         </div>
-
         {% endif %}
-
       </div>
     </section>
-
   </div>
-
 
   <!-- =========================================================
        INFORMATION SECTION
        ========================================================= -->
-  <section
-    class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3"
-    aria-label="Disease detection information"
-  >
+  <section class="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3" aria-label="Disease detection information">
 
     <!-- SEVERITY SCALE -->
-    <article class="bg-white border border-gray-200 rounded-xl shadow-sm p-5 sm:p-6">
+    <article class="agri-card p-5 sm:p-6">
       <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M4 19V5m0 14h16M8 16v-4m4 4V8m4 8v-6"
-            />
+        <div class="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-overlay)] text-[var(--color-text-secondary)]">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V5m0 14h16M8 16v-4m4 4V8m4 8v-6"/>
           </svg>
         </div>
-
-        <h3 class="text-base font-semibold text-gray-900">
-          Severity Scale
-        </h3>
+        <h3 class="text-base font-semibold">Severity Scale</h3>
       </div>
 
       <div class="mt-5 space-y-3 text-sm">
-
-        <div class="flex items-start gap-3">
-          <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-green-500"></span>
-          <p class="text-gray-700">
-            <strong class="font-semibold text-gray-900">Minimal:</strong>
+        <div class="sl-severity-item">
+          <span class="sl-severity-dot bg-[var(--color-brand)]"></span>
+          <p class="text-[var(--color-text)]">
+            <strong class="font-semibold text-[var(--color-text-primary)]">Minimal:</strong>
             Few spots or discoloration
           </p>
         </div>
-
-        <div class="flex items-start gap-3">
-          <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-yellow-500"></span>
-          <p class="text-gray-700">
-            <strong class="font-semibold text-gray-900">Mild:</strong>
+        <div class="sl-severity-item">
+          <span class="sl-severity-dot bg-[var(--color-warning-border)]"></span>
+          <p class="text-[var(--color-text)]">
+            <strong class="font-semibold text-[var(--color-text-primary)]">Mild:</strong>
             Noticeable spread
           </p>
         </div>
-
-        <div class="flex items-start gap-3">
-          <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-orange-500"></span>
-          <p class="text-gray-700">
-            <strong class="font-semibold text-gray-900">Moderate:</strong>
+        <div class="sl-severity-item">
+          <span class="sl-severity-dot bg-[#f97316]"></span>
+          <p class="text-[var(--color-text)]">
+            <strong class="font-semibold text-[var(--color-text-primary)]">Moderate:</strong>
             Widespread lesions
           </p>
         </div>
-
-        <div class="flex items-start gap-3">
-          <span class="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-red-500"></span>
-          <p class="text-gray-700">
-            <strong class="font-semibold text-gray-900">Severe:</strong>
+        <div class="sl-severity-item">
+          <span class="sl-severity-dot bg-[var(--color-danger)]"></span>
+          <p class="text-[var(--color-text)]">
+            <strong class="font-semibold text-[var(--color-text-primary)]">Severe:</strong>
             Extensive damage
           </p>
         </div>
-
       </div>
     </article>
 
-
     <!-- BEST PRACTICES -->
-    <article class="bg-white border border-gray-200 rounded-xl shadow-sm p-5 sm:p-6">
+    <article class="agri-card p-5 sm:p-6">
       <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M9 11l3 3L22 4"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
-            />
+        <div class="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-overlay)] text-[var(--color-text-secondary)]">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 11l3 3L22 4"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
           </svg>
         </div>
-
-        <h3 class="text-base font-semibold text-gray-900">
-          Tips for Best Results
-        </h3>
+        <h3 class="text-base font-semibold">Tips for Best Results</h3>
       </div>
 
-      <ul class="mt-5 space-y-3 text-sm text-gray-700">
-
-        <li class="flex items-start gap-2.5">
-          <svg
-            class="mt-0.5 h-4 w-4 shrink-0 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
+      <ul class="mt-5 space-y-3 text-sm text-[var(--color-text)]">
+        <li class="sl-tip-item">
+          <svg class="sl-tip-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
-
           <span>Use natural daylight.</span>
         </li>
-
-        <li class="flex items-start gap-2.5">
-          <svg
-            class="mt-0.5 h-4 w-4 shrink-0 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
+        <li class="sl-tip-item">
+          <svg class="sl-tip-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
-
           <span>Focus on affected leaf areas.</span>
         </li>
-
-        <li class="flex items-start gap-2.5">
-          <svg
-            class="mt-0.5 h-4 w-4 shrink-0 text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
+        <li class="sl-tip-item">
+          <svg class="sl-tip-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
-
           <span>Avoid blurry or dark images.</span>
         </li>
-
       </ul>
     </article>
 
-
     <!-- HOW IT WORKS -->
-    <article class="bg-green-50 border border-green-200 rounded-xl p-5 sm:p-6">
+    <article class="sl-info-card">
       <div class="flex items-center gap-3">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-green-100 text-green-700">
-          <svg
-            class="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-            />
+        <div class="flex h-9 w-9 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface)] text-[var(--color-brand)]">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
           </svg>
         </div>
-
-        <h3 class="text-base font-semibold text-green-950">
-          How It Works
-        </h3>
+        <h3 class="text-base font-semibold text-[var(--color-text-primary)]">How It Works</h3>
       </div>
 
-      <p class="mt-4 text-sm leading-6 text-green-900">
+      <p class="mt-4 text-sm leading-6 text-[var(--color-text)]">
         The CNN model analyzes rice leaf images to detect possible diseases.
         Clear images with proper lighting can provide better input for analysis.
       </p>
 
-      <div class="mt-4 rounded-lg border border-green-200 bg-white/70 p-3">
-        <p class="text-xs leading-5 text-green-800">
+      <div class="mt-4 sl-info-item">
+        <p class="sl-info-item-text">
           <span class="font-semibold">Workflow:</span>
           Image → AI detection → confidence & severity → treatment information
         </p>
       </div>
     </article>
-
   </section>
 
 </section>
-
 
 <!-- =============================================================
      EXISTING SCAN LOGIC
@@ -1156,12 +627,6 @@
       const searchInput = getSearchInput();
 
       if (searchInput) {
-        searchInput.classList.add(
-          'border-red-500',
-          'ring-1',
-          'ring-red-500'
-        );
-
         searchInput.setAttribute('aria-invalid', 'true');
         searchInput.focus();
       } else if (plantingSelect) {
@@ -1181,12 +646,6 @@
       const searchInput = getSearchInput();
 
       if (searchInput) {
-        searchInput.classList.remove(
-          'border-red-500',
-          'ring-1',
-          'ring-red-500'
-        );
-
         searchInput.removeAttribute('aria-invalid');
       }
     }
@@ -1263,7 +722,7 @@
 
       dropdown.id = 'planting-options-dropdown';
       dropdown.className =
-        'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg hidden';
+        'absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-surface)] [box-shadow:var(--shadow-md)] hidden';
 
       dropdown.setAttribute('role', 'listbox');
 
@@ -1292,7 +751,7 @@
           const emptyMessage = document.createElement('div');
 
           emptyMessage.className =
-            'px-4 py-3 text-sm text-gray-500';
+            'px-4 py-3 text-sm text-[var(--color-text-muted)]';
 
           emptyMessage.textContent =
             'No planting cycles found.';
@@ -1306,7 +765,7 @@
             const item = document.createElement('div');
 
             item.className =
-              'cursor-pointer border-b border-gray-100 px-4 py-3 text-sm text-gray-700 last:border-b-0 hover:bg-green-50 hover:text-green-900 focus:bg-green-50';
+              'cursor-pointer border-b border-[var(--color-border)] px-4 py-3 text-sm text-[var(--color-text)] last:border-b-0 hover:bg-[var(--color-brand-light)] hover:text-[var(--color-brand-active)] focus:bg-[var(--color-brand-light)]';
 
             item.textContent = option.textContent.trim();
 
@@ -1485,7 +944,7 @@
         const message = document.createElement('p');
 
         message.className =
-          'mb-4 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800';
+          'agri-alert agri-alert-success mb-4';
 
         message.textContent =
           'Image from camera loaded successfully. Select a planting cycle and analyze.';
@@ -1558,7 +1017,6 @@
 </script>
 
 {% endblock %}
-
 
 {% block modals %}
   {% include 'partials/_ai_loader.html' %}

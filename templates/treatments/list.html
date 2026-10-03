@@ -3,277 +3,359 @@
 
 {% block title %}Treatment Management · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header & Filters */
+  .tr-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .tr-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .tr-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .tr-title { margin: 0; }
+  .tr-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .tr-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .tr-head { padding: 1.5rem; }
+    .tr-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .tr-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .tr-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .tr-filters { padding: 1.5rem; } }
+  .tr-filters form { display: grid; gap: 1rem; }
+  .tr-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .tr-search { position: relative; flex: 1; min-width: 0; }
+  .tr-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .tr-search input { padding-left: 2.5rem; }
+  .tr-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .tr-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .tr-search-row { flex-direction: row; }
+    .tr-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .tr-kbd { display: inline-block; }
+    .tr-search input { padding-right: 5rem; }
+    .tr-selects { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .badge-danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .badge-info    { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+
+  .btn-warn { color: var(--color-warning-text) !important; border-color: var(--color-warning-border) !important; }
+  .btn-warn:hover { background: var(--color-warning-soft) !important; border-color: #f59e0b !important; }
+
+  /* Table specifics */
+  .tr-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+  }
+  .tr-coverage-chips { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.5rem; }
+  .tr-coverage-bar { display: flex; gap: 0.25rem; align-items: center; width: 100%; }
+  
+  /* Coverage Bar Segments - Defined in CSS to avoid Tailwind JIT purging issues with Django template tags */
+  .tr-bar-segment { 
+    height: 0.5rem; 
+    flex: 1; 
+    border-radius: var(--radius-full); 
+    min-width: 0; 
+    background-color: var(--color-border); 
+    transition: background-color var(--transition-base); 
+  }
+  .tr-bar-segment.is-filled-warning { background-color: var(--color-warning-border); }
+  .tr-bar-segment.is-filled-success { background-color: var(--color-success-text); }
+  .tr-bar-segment.is-filled-danger { background-color: var(--color-danger-text); }
+  
+  .tr-meta { display: flex; flex-direction: column; gap: 0.25rem; }
+  .tr-priority { font-weight: 600; display: inline-flex; align-items: center; gap: 0.25rem; }
+  .tr-priority--red { color: var(--color-danger-text); }
+  .tr-priority--amber { color: var(--color-warning-text); }
+  .tr-priority--blue { color: var(--color-info-text); }
+
+  /* Mobile optimizations for table cells */
+  @media (max-width: 1023px) {
+    .data-table td.td-coverage {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .data-table td.td-severity {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .tr-meta {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      align-items: center;
+    }
+  }
+
+  /* Empty State */
+  .tr-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .tr-empty { padding: 3rem; } }
+  .tr-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .tr-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    
-    <!-- Header & Filters Card -->
-    <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="min-w-0">
-          <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-3">
-            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700" aria-hidden="true">
-            <svg class="h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            </div>
-            <span>Treatment Recommendations</span>
-          </h1>
-          <p class="mt-2 text-sm text-gray-600 leading-relaxed">Manage disease treatment guidelines and recommendations.</p>
-        </div>
+<section class="page-container min-w-0">
 
-        <div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:flex-shrink-0 ">
-          <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-            <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            {{ total_count }} Record{{ total_count|pluralize }}
-          </span>
-          <a href="{% url 'polls:treatments_create' %}" class="btn btn-primary">
-            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add Treatment
-          </a>
-        </div>
-      </div>
-
-      <!-- Filter Form -->
-      <div class="mt-6 pt-6 border-t border-gray-100">
-        <form method="get" class="space-y-4">
-          <!-- Row 1: Search + Actions (Stacks on mobile, side-by-side on sm+) -->
-          <div class="flex flex-col gap-2 sm:flex-row">
-            <div class="relative flex-1">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-              </div>
-              <input
-                id="treatment-search"
-                type="text"
-                name="q"
-                value="{{ search_query }}"
-                placeholder="Search disease or treatment… (Ctrl+K)"
-                autocomplete="off"
-                class="form-input pl-9"
-              />
-              <!-- Preserve dropdown values across text search -->
-              <input type="hidden" name="disease" value="{{ disease_filter }}">
-              <input type="hidden" name="status" value="{{ status_filter }}">
-              <input type="hidden" name="sort" value="{{ sort_by }}">
-            </div>
-            
-              <button type="submit" data-loading class="btn btn-primary">
-                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-                Search
-              </button>
-              {% if search_query or disease_filter or status_filter != 'all' %}
-              <a href="{% url 'polls:treatments_list' %}" class="btn btn-secondary">Clear</a>
-              {% endif %}
-          </div>
-
-          <!-- Row 2: Dropdowns (Responsive Grid: 1 col mobile → 2 cols tablet → 4 cols desktop) -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <!-- Disease filter -->
-            <select name="disease" onchange="this.form.submit()" class="form-select">
-              <option value="">All Diseases</option>
-              {% for disease in diseases %}
-              <option value="{{ disease.id }}" {% if disease_filter == disease.id|stringformat:"s" %}selected{% endif %}>
-                {{ disease.name }}
-              </option>
-              {% endfor %}
-            </select>
-
-            <!-- Status filter -->
-            <select name="status" onchange="this.form.submit()" class="form-select">
-              <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
-              <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
-              <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
-            </select>
-
-            <!-- Sort -->
-            <select name="sort" onchange="this.form.submit()" class="form-select">
-              <option value="-priority" {% if sort_by == '-priority' or not sort_by %}selected{% endif %}>Priority (High First)</option>
-              <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>Priority (Low First)</option>
-              <option value="disease__name" {% if sort_by == 'disease__name' %}selected{% endif %}>Disease A-Z</option>
-              <option value="-disease__name" {% if sort_by == '-disease__name' %}selected{% endif %}>Disease Z-A</option>
-              <option value="severity_min" {% if sort_by == 'severity_min' %}selected{% endif %}>Severity ↑</option>
-              <option value="-severity_min" {% if sort_by == '-severity_min' %}selected{% endif %}>Severity ↓</option>
-              <option value="pk" {% if sort_by == 'pk' %}selected{% endif %}>ID ↑</option>
-              <option value="-pk" {% if sort_by == '-pk' %}selected{% endif %}>ID ↓</option>
-            </select>
-
-            <!-- Page Size -->
-            <select name="page_size" onchange="this.form.submit()" class="form-select">
-              {% for size in allowed_page_sizes %}
-              <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} / page</option>
-              {% endfor %}
-            </select>
-          </div>
-        </form>
+  <!-- =========================================================
+       PAGE HEADER
+       ========================================================= -->
+  <header class="agri-card tr-head">
+    <div class="tr-head-main">
+      <span class="tr-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <h1 class="tr-title">Treatment Recommendations</h1>
+        <p class="tr-lead">Manage disease treatment guidelines and recommendations.</p>
       </div>
     </div>
 
-    <!-- Treatments List -->
-    <!-- Card skeleton (shown immediately, hidden after JS runs) -->
-    <div id="treatments-skeleton" class="space-y-4" aria-hidden="true">
-      {% for i in "12345" %}
-      <div class="agri-card p-4 sm:p-6">
-        <div class="flex items-start justify-between">
-          <div class="flex-1">
-            <div class="flex items-center gap-3 mb-3">
-              <div class="h-6 w-40 bg-gray-200 rounded animate-pulse"></div>
-              <div class="h-5 w-16 bg-gray-200 rounded-full animate-pulse"></div>
-              <div class="h-5 w-20 bg-gray-200 rounded-full animate-pulse"></div>
-            </div>
-            <div class="h-4 w-full bg-gray-200 rounded animate-pulse mb-2"></div>
-            <div class="h-4 w-3/4 bg-gray-200 rounded animate-pulse mb-3"></div>
-            <div class="grid grid-cols-3 gap-4">
-              <div class="h-8 bg-gray-200 rounded animate-pulse"></div>
-              <div class="h-8 bg-gray-200 rounded animate-pulse"></div>
-              <div class="h-8 bg-gray-200 rounded animate-pulse"></div>
-            </div>
-          </div>
-          <div class="flex gap-2 ml-4">
-            <div class="h-9 w-16 bg-gray-200 rounded-lg animate-pulse"></div>
-            <div class="h-9 w-16 bg-gray-200 rounded-lg animate-pulse"></div>
-          </div>
+    <div class="tr-head-actions">
+      <span class="inline-flex items-center justify-center gap-2 min-h-[var(--btn-h)] px-3.5 text-[var(--color-text)] bg-[var(--color-overlay)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] text-sm font-semibold whitespace-nowrap">
+        <svg class="h-4 w-4 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        {{ total_count }} Record{{ total_count|pluralize }}
+      </span>
+
+      <a href="{% url 'polls:treatments_create' %}" class="btn btn-primary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Add Treatment</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       SEARCH & FILTERS
+       ========================================================= -->
+  <div class="agri-card tr-filters no-print">
+    <form method="get" role="search" aria-label="Search and filter treatments">
+      <div class="tr-search-row">
+        <div class="tr-search">
+          <label for="treatment-search" class="sr-only-agri">Search treatments</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="treatment-search" type="search" name="q" value="{{ search_query }}" placeholder="Search disease or treatment..." autocomplete="off">
+          <kbd class="tr-kbd" aria-hidden="true">Ctrl K</kbd>
+          
+          <input type="hidden" name="disease" value="{{ disease_filter }}">
+          <input type="hidden" name="status" value="{{ status_filter }}">
+          <input type="hidden" name="sort" value="{{ sort_by }}">
+        </div>
+
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
+
+        {% if search_query or disease_filter or status_filter != 'all' %}
+        <a href="{% url 'polls:treatments_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+      </div>
+
+      <div class="tr-selects">
+        <div>
+          <label for="tr-disease-filter" class="sr-only-agri">Disease filter</label>
+          <select id="tr-disease-filter" name="disease" onchange="this.form.submit()" class="form-select">
+            <option value="">All Diseases</option>
+            {% for disease in diseases %}
+            <option value="{{ disease.id }}" {% if disease_filter == disease.id|stringformat:"s" %}selected{% endif %}>{{ disease.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="tr-status-filter" class="sr-only-agri">Status filter</label>
+          <select id="tr-status-filter" name="status" onchange="this.form.submit()" class="form-select">
+            <option value="all" {% if status_filter == 'all' %}selected{% endif %}>All Status</option>
+            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+            <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="tr-sort-filter" class="sr-only-agri">Sort treatments</label>
+          <select id="tr-sort-filter" name="sort" onchange="this.form.submit()" class="form-select">
+            <option value="-priority" {% if sort_by == '-priority' or not sort_by %}selected{% endif %}>Priority (High First)</option>
+            <option value="priority" {% if sort_by == 'priority' %}selected{% endif %}>Priority (Low First)</option>
+            <option value="disease__name" {% if sort_by == 'disease__name' %}selected{% endif %}>Disease A-Z</option>
+            <option value="-disease__name" {% if sort_by == '-disease__name' %}selected{% endif %}>Disease Z-A</option>
+            <option value="severity_min" {% if sort_by == 'severity_min' %}selected{% endif %}>Severity ↑</option>
+            <option value="-severity_min" {% if sort_by == '-severity_min' %}selected{% endif %}>Severity ↓</option>
+            <option value="pk" {% if sort_by == 'pk' %}selected{% endif %}>ID ↑</option>
+            <option value="-pk" {% if sort_by == '-pk' %}selected{% endif %}>ID ↓</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="tr-page-size" class="sr-only-agri">Records per page</label>
+          <select id="tr-page-size" name="page_size" onchange="this.form.submit()" class="form-select">
+            {% for size in allowed_page_sizes %}
+            <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} / page</option>
+            {% endfor %}
+          </select>
         </div>
       </div>
-      {% endfor %}
-    </div>
+    </form>
+  </div>
 
-    <!-- Real cards (hidden until JS reveals) -->
-    <div id="treatments-cards" class="hidden space-y-4">
-      {% for treatment in treatments %}
-      {% with s=treatment.get_section_status %}
-      <div class="agri-card agri-card-interactive p-4 sm:p-6">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-          <div class="flex-1 min-w-0">
+  <!-- =========================================================
+       TREATMENTS TABLE
+       ========================================================= -->
+       
+  <!-- Skeleton -->
+  <div id="treatments-skeleton" class="data-table-wrap" aria-hidden="true">
+    <table class="data-table">
+      <tbody>
+        {% for i in "12345" %}
+        <tr>
+          <td><div class="agri-skeleton h-5 w-32"></div></td>
+          <td><div class="agri-skeleton h-4 w-48"></div></td>
+          <td><div class="agri-skeleton h-8 w-24"></div></td>
+          <td><div class="agri-skeleton h-6 w-32"></div></td>
+          <td><div class="agri-skeleton h-5 w-16 rounded-full"></div></td>
+          <td><div class="agri-skeleton h-8 w-20"></div></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-            <!-- Title + status badges -->
-            <div class="flex items-center flex-wrap gap-2 mb-2">
-              <h3 class="text-lg font-semibold text-gray-900">{{ treatment.disease.name }}</h3>
-              {% if treatment.is_active %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">Active</span>
-              {% else %}
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">Inactive</span>
-              {% endif %}
-            </div>
+  <!-- Real Table -->
+  <div id="treatments-cards" class="hidden">
+    {% if treatments %}
+    <div class="data-table-wrap">
+      <table class="data-table" aria-label="Treatment recommendations">
+        <thead>
+          <tr>
+            <th scope="col">Disease</th>
+            <th scope="col">Summary</th>
+            <th scope="col">Severity & Priority</th>
+            <th scope="col">Coverage</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for treatment in treatments %}
+          {% with s=treatment.get_section_status %}
+          <tr class="tr-row">
+            <td data-label="Disease" class="td-primary">
+              <span class="font-semibold text-[var(--color-text-primary)]">{{ treatment.disease.name }}</span>
+            </td>
 
-            <!-- Meta row: severity + priority -->
-            <div class="flex flex-wrap items-center gap-3 mb-3 text-xs text-gray-500">
-              <span class="flex items-center gap-1.5">
-                <svg class="h-3.5 w-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                Severity {{ treatment.severity_min }}%–{{ treatment.severity_max }}%
-              </span>
-              <span class="flex items-center gap-1.5">
-                <svg class="h-3.5 w-3.5
-                  {% if s.priority_color == 'red' %}text-red-500
-                  {% elif s.priority_color == 'amber' %}text-amber-500
-                  {% else %}text-blue-500{% endif %}"
-                  fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
-                </svg>
-                <span class="
-                  {% if s.priority_color == 'red' %}text-red-700 font-semibold
-                  {% elif s.priority_color == 'amber' %}text-amber-700 font-semibold
-                  {% else %}text-blue-700 font-semibold{% endif %}">
+            <td data-label="Summary">
+              <span class="tr-desc">{{ treatment.short_text|truncatewords:15 }}</span>
+            </td>
+
+            <td data-label="Severity & Priority" class="td-severity">
+              <div class="tr-meta">
+                <span class="text-[var(--text-sm)] text-[var(--color-text-secondary)] flex items-center gap-1.5">
+                  <svg class="h-3.5 w-3.5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  {{ treatment.severity_min }}%–{{ treatment.severity_max }}%
+                </span>
+                <span class="text-[var(--text-sm)] tr-priority 
+                  {% if s.priority_color == 'red' %}tr-priority--red
+                  {% elif s.priority_color == 'amber' %}tr-priority--amber
+                  {% else %}tr-priority--blue{% endif %}">
+                  <svg class="inline h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
                   P{{ treatment.priority }} {{ s.priority_level }}
                 </span>
-              </span>
-            </div>
-
-            <!-- Quick summary -->
-            <p class="text-sm text-gray-700 mb-4 line-clamp-2">{{ treatment.short_text|truncatewords:30 }}</p>
-
-            <!-- Section coverage chips -->
-            <div class="flex flex-wrap gap-2 mb-4">
-              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
-                {% if s.factors %}bg-amber-50 text-amber-700 border border-amber-200{% else %}bg-gray-50 text-gray-400 border border-gray-200{% endif %}">
-                {% if s.factors %}✓{% else %}–{% endif %} Factors
-              </span>
-              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
-                {% if s.cultural %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-gray-50 text-gray-400 border border-gray-200{% endif %}">
-                {% if s.cultural %}✓{% else %}–{% endif %} Cultural IPM
-              </span>
-              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
-                {% if s.chemical %}bg-red-50 text-red-700 border border-red-200{% else %}bg-gray-50 text-gray-400 border border-gray-200{% endif %}">
-                {% if s.chemical %}✓{% else %}–{% endif %} Chemical
-              </span>
-              <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
-                {% if treatment.severity_high_msg %}bg-orange-50 text-orange-700 border border-orange-200{% else %}bg-gray-50 text-gray-400 border border-gray-200{% endif %}">
-                {% if treatment.severity_high_msg %}✓{% else %}–{% endif %} Escalation
-              </span>
-            </div>
-
-            <!-- Completeness mini-bar -->
-            <div class="flex items-center gap-3">
-              <div class="flex gap-1">
-                <div class="h-1.5 w-8 rounded-full {% if s.factors %}bg-amber-400{% else %}bg-gray-200{% endif %}"></div>
-                <div class="h-1.5 w-8 rounded-full {% if s.cultural %}bg-emerald-500{% else %}bg-gray-200{% endif %}"></div>
-                <div class="h-1.5 w-8 rounded-full {% if s.chemical %}bg-red-400{% else %}bg-gray-200{% endif %}"></div>
-                <div class="h-1.5 w-8 rounded-full {% if treatment.severity_high_msg %}bg-orange-400{% else %}bg-gray-200{% endif %}"></div>
               </div>
-              <span class="text-xs text-gray-500">{{ s.filled }}/{{ s.total }} sections</span>
-              {% if s.pct == 100 %}
-              <span class="text-xs text-emerald-700 font-medium flex items-center gap-1">
-                <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                Complete
-              </span>
+            </td>
+
+            <td data-label="Coverage" class="td-coverage">
+              <div class="tr-coverage-chips">
+                <span class="badge-base {% if s.factors %}badge-warning{% else %}badge-neutral{% endif %}">
+                  {% if s.factors %}✓{% else %}–{% endif %} Factors
+                </span>
+                <span class="badge-base {% if s.cultural %}badge-success{% else %}badge-neutral{% endif %}">
+                  {% if s.cultural %}✓{% else %}–{% endif %} Cultural
+                </span>
+                <span class="badge-base {% if s.chemical %}badge-danger{% else %}badge-neutral{% endif %}">
+                  {% if s.chemical %}✓{% else %}–{% endif %} Chemical
+                </span>
+                <span class="badge-base {% if treatment.severity_high_msg %}badge-warning{% else %}badge-neutral{% endif %}">
+                  {% if treatment.severity_high_msg %}✓{% else %}–{% endif %} Escalation
+                </span>
+              </div>
+              <div class="tr-coverage-bar">
+                <div class="tr-bar-segment {% if s.factors %}is-filled-warning{% endif %}"></div>
+                <div class="tr-bar-segment {% if s.cultural %}is-filled-success{% endif %}"></div>
+                <div class="tr-bar-segment {% if s.chemical %}is-filled-danger{% endif %}"></div>
+                <div class="tr-bar-segment {% if treatment.severity_high_msg %}is-filled-warning{% endif %}"></div>
+                <span class="text-[var(--text-xs)] text-[var(--color-text-muted)] ml-1 whitespace-nowrap">{{ s.filled }}/{{ s.total }}</span>
+                {% if s.pct == 100 %}
+                <svg class="h-3.5 w-3.5 text-[var(--color-success-text)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                {% endif %}
+              </div>
+            </td>
+
+            <td data-label="Status">
+              {% if treatment.is_active %}
+              <span class="badge-base badge-success">Active</span>
+              {% else %}
+              <span class="badge-base badge-neutral">Inactive</span>
               {% endif %}
-            </div>
+            </td>
 
-          </div><!-- /info col -->
-
-          <!-- Actions (Stacks on mobile, side-by-side on sm+) -->
-          <div class="flex w-full flex-row gap-2 lg:w-28 lg:flex-col lg:flex-shrink-0">
-            <a href="{% url 'polls:treatments_edit' treatment.id %}" class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100">
-              
-              Edit
-            </a>
-            {% if is_admin %}
-            <a href="{% url 'polls:treatments_delete' treatment.id %}"
-               data-open-delete="true"
-               data-delete-label="{{ treatment.disease.name }}"
-               data-delete-subtitle="Severity {{ treatment.severity_min }}%–{{ treatment.severity_max }}%"
-               class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100">
-             
-              Delete
-            </a>
-            {% endif %}
-          </div>
-
-        </div>
-      </div>
-      {% endwith %}
-
-      {% empty %}
-      <div class="agri-card p-12 text-center">
-        <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        <h3 class="mt-4 text-sm font-semibold text-gray-900">No treatments found</h3>
-        <p class="mt-1 text-sm text-gray-500">Get started by creating a new treatment recommendation.</p>
-        <div class="mt-6">
-          <a href="{% url 'polls:treatments_create' %}" class="btn btn-primary">
-            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add Treatment
-          </a>
-        </div>
-      </div>
-      {% endfor %}
-    </div><!-- /#treatments-cards -->
+            <td data-label="Actions" class="td-actions">
+              <div class="flex flex-wrap items-center gap-2 justify-end">
+                <a href="{% url 'polls:treatments_edit' treatment.id %}" class="btn btn-secondary btn-sm">Edit</a>
+                {% if is_admin %}
+                <a href="{% url 'polls:treatments_delete' treatment.id %}"
+                   data-open-delete="true"
+                   data-delete-label="{{ treatment.disease.name }}"
+                   data-delete-subtitle="Severity {{ treatment.severity_min }}%–{{ treatment.severity_max }}%"
+                   class="btn btn-secondary btn-sm btn-warn">
+                  Archive
+                </a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
     {% if page_obj and is_paginated %}
-      {% include 'partials/_pagination.html' %}
+      <div class="mt-6">
+        {% include 'partials/_pagination.html' %}
+      </div>
     {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="agri-card tr-empty">
+      <span class="tr-empty-icon" aria-hidden="true">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </span>
+      <h2>No treatments found</h2>
+      <p>Get started by creating a new treatment recommendation.</p>
+      <a href="{% url 'polls:treatments_create' %}" class="btn btn-primary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Add Treatment</span>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
 </section>
 
 <script>

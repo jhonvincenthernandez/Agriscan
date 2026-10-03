@@ -1,178 +1,189 @@
 ﻿{% extends 'base.html' %}
 {% block title %}{{ log.season_label }} — {{ log.field.name }} · AgriScan+{% endblock %}
+
+{% block styles %}
+<style>
+  .sl-head { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .sl-head { padding: 1.5rem; } }
+  
+  .sl-head__inner { display: flex; flex-direction: column; gap: 1.25rem; }
+  @media (min-width: 1024px) {
+    .sl-head__inner { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+  
+  .sl-head__lead { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .sl-head__text { min-width: 0; }
+  
+  .sl-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  
+  .sl-title { margin: 0; font-size: var(--text-2xl); font-weight: 700; color: var(--color-text-primary); display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+  .sl-title-sub { font-size: var(--text-base); font-weight: 400; color: var(--color-text-muted); }
+  
+  .sl-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+  .sl-lead-item { display: inline-flex; align-items: center; gap: 0.375rem; }
+  
+  .sl-head__actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .sl-head__actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+
+  .sl-breadcrumb { display: flex; align-items: center; gap: 0.5rem; font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: 0.5rem; }
+  .sl-breadcrumb a { color: var(--color-text-muted); text-decoration: none; transition: color var(--transition-fast); }
+  .sl-breadcrumb a:hover { color: var(--color-brand); }
+  .sl-breadcrumb-sep { color: var(--color-border-strong); }
+
+  .sl-card { padding: 1.25rem; }
+  @media (min-width: 640px) { .sl-card { padding: 1.5rem; } }
+  
+  .sl-section-title { font-size: var(--text-sm); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-primary); margin: 0 0 1rem 0; padding-bottom: 0.5rem; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; gap: 0.5rem; }
+  .sl-section-title svg { width: 1rem; height: 1rem; color: var(--color-brand); }
+  
+  .sl-dl { display: flex; flex-direction: column; gap: 0.625rem; }
+  .sl-dl-row { display: flex; justify-content: space-between; align-items: center; font-size: var(--text-sm); }
+  .sl-dl-dt { color: var(--color-text-muted); }
+  .sl-dl-dd { font-weight: 600; color: var(--color-text-primary); text-align: right; }
+  .sl-dl-dd--success { color: var(--color-success-text); }
+  .sl-dl-dd--danger { color: var(--color-danger-text); }
+  .sl-dl-dd--lg { font-size: var(--text-lg); font-weight: 700; }
+  .sl-dl-divider { border-top: 1px solid var(--color-border); padding-top: 0.5rem; }
+
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-xs); font-weight: 600; line-height: 1.25rem; }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .badge-danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .badge-info    { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+  
+  .btn-warn { color: var(--color-warning-text) !important; border-color: var(--color-warning-border) !important; }
+  .btn-warn:hover { background: var(--color-warning-soft) !important; border-color: #f59e0b !important; }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container">
+<section class="page-container min-w-0">
 
   <!-- ── Page Header ─────────────────────────────────────────────────── -->
-  <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2 flex-wrap mb-1">
-          <a href="{% url 'polls:season_log_list' %}"
-             class="text-sm text-gray-500 hover:text-green-600 transition">← Season Logs</a>
-          <span class="text-gray-300">/</span>
-          <span class="text-sm text-gray-500">
-            <span class="font-medium text-gray-700">{{ log.field.name }}</span>
-          </span>
-        </div>
-        <h1 class="text-2xl font-bold text-gray-900 flex items-center gap-2 flex-wrap">
-          <svg class="h-7 w-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/>
-          </svg>
-          {{ log.season_label }}
-          <span class="text-base font-normal text-gray-500">@ {{ log.field.name }}</span>
-          <!-- Stage badge -->
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
-            {% if log.current_stage == 'harvested' %}bg-green-100 text-green-800
-            {% elif log.current_stage == 'harvest_ready' %}bg-yellow-100 text-yellow-800
-            {% elif log.current_stage == 'growing' %}bg-lime-100 text-lime-800
-            {% else %}bg-gray-100 text-gray-700{% endif %}">
-            {{ log.get_current_stage_display }}
-          </span>
-        </h1>
-        <div class="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-gray-500">
-          <span>📍 {{ log.field.barangay|default:"—" }}</span>
-          <span>📐 {{ log.field.area_hectares }} ha</span>
-          {% if log.variety %}<span>🌾 {{ log.variety.code }} — {{ log.variety.name }}</span>{% endif %}
-          {% if role != 'farmer' %}
-          <span>👤 {{ log.farmer.user.get_full_name|default:log.farmer.user.username }}</span>
-          {% endif %}
+  <header class="agri-card sl-head">
+    <div class="sl-head__inner">
+      <div class="sl-head__lead">
+        <span class="sl-icon" aria-hidden="true">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        </span>
+        <div class="sl-head__text">
+          <div class="sl-breadcrumb">
+            <a href="{% url 'polls:season_log_list' %}">Season Logs</a>
+            <span class="sl-breadcrumb-sep">/</span>
+            <span class="font-medium text-[var(--color-text)]">{{ log.field.name }}</span>
+          </div>
+          <h1 class="sl-title">
+            {{ log.season_label }}
+            <span class="sl-title-sub">@ {{ log.field.name }}</span>
+            <span class="badge-base {% if log.current_stage == 'harvested' %}badge-success{% elif log.current_stage == 'harvest_ready' %}badge-warning{% elif log.current_stage == 'growing' %}badge-success{% else %}badge-neutral{% endif %}">
+              {{ log.get_current_stage_display }}
+            </span>
+          </h1>
+          <div class="sl-lead">
+            <span class="sl-lead-item">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              {{ log.field.barangay|default:"—" }}
+            </span>
+            <span class="sl-lead-item">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 0111 18.382V3.882a1 1 0 01.553-.894L18.447 3.106A1 1 0 0119 3.882V15.382a1 1 0 01-.553.894L15 18M9 20l5.447 2.724A1 1 0 0019 21.382V8.618a1 1 0 01.553-.894L15 8M9 20l-5.447-2.724"/></svg>
+              {{ log.field.area_hectares }} ha
+            </span>
+            {% if log.variety %}
+            <span class="sl-lead-item">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L15 21l-2.286-6.857L10 12l-5.714 2.143L8 21"/></svg>
+              {{ log.variety.code }} — {{ log.variety.name }}
+            </span>
+            {% endif %}
+            {% if role != 'farmer' %}
+            <span class="sl-lead-item">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              {{ log.farmer.user.get_full_name|default:log.farmer.user.username }}
+            </span>
+            {% endif %}
+          </div>
         </div>
       </div>
-      <div class="flex items-center gap-2 flex-wrap shrink-0">
-        <a href="{% url 'polls:activity_create' log.pk %}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Log Activity
+      
+      <div class="sl-head__actions">
+        <a href="{% url 'polls:activity_create' log.pk %}" class="btn btn-primary">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <span>Log Activity</span>
         </a>
-        <a href="{% url 'polls:season_log_edit' log.pk %}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-          </svg>
-          Edit Season
+        <a href="{% url 'polls:season_log_edit' log.pk %}" class="btn btn-secondary">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          <span>Edit Season</span>
         </a>
         <a href="{% url 'polls:season_log_delete' log.pk %}"
            data-open-delete="true"
            data-delete-label="{{ log.season_label }}"
            data-delete-subtitle="{{ log.field.name }} · {{ log.activities.count }} activit{{ log.activities.count|pluralize:'y,ies' }}"
-           class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 transition">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-          </svg>
-          Delete
+           class="btn btn-secondary btn-warn">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span>Archive</span>
         </a>
       </div>
     </div>
-  </div>
+  </header>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <!-- ── Left column: Summary cards ──────────────────────────────── -->
     <div class="space-y-5">
 
       <!-- Season Overview -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <span class="text-green-500">📊</span> Season Overview
+      <div class="agri-card sl-card">
+        <h2 class="sl-section-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Season Overview
         </h2>
-        <dl class="space-y-2.5">
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Season</dt>
-            <dd class="font-semibold text-gray-800">{{ log.season_label }}</dd>
-          </div>
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Field Area</dt>
-            <dd class="font-semibold text-gray-800">{{ log.field.area_hectares }} ha</dd>
-          </div>
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Variety</dt>
-            <dd class="font-semibold text-gray-800">{{ log.variety.code|default:"—" }}</dd>
-          </div>
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Started</dt>
-            <dd class="font-semibold text-gray-800">{{ log.date_started|date:"M d, Y" }}</dd>
-          </div>
+        <dl class="sl-dl">
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Season</dt><dd class="sl-dl-dd">{{ log.season_label }}</dd></div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Field Area</dt><dd class="sl-dl-dd">{{ log.field.area_hectares }} ha</dd></div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Variety</dt><dd class="sl-dl-dd">{{ log.variety.code|default:"—" }}</dd></div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Started</dt><dd class="sl-dl-dd">{{ log.date_started|date:"M d, Y" }}</dd></div>
           {% if log.date_planted %}
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Planted</dt>
-            <dd class="font-semibold text-gray-800">{{ log.date_planted|date:"M d, Y" }}</dd>
-          </div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Planted</dt><dd class="sl-dl-dd">{{ log.date_planted|date:"M d, Y" }}</dd></div>
           {% endif %}
           {% if log.date_harvested %}
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Harvested</dt>
-            <dd class="font-semibold text-gray-800">{{ log.date_harvested|date:"M d, Y" }}</dd>
-          </div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Harvested</dt><dd class="sl-dl-dd">{{ log.date_harvested|date:"M d, Y" }}</dd></div>
           {% endif %}
         </dl>
       </div>
 
       <!-- Harvest Results -->
       {% if log.actual_yield_sacks %}
-      <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl shadow-sm border border-green-200 p-5">
-        <h2 class="text-sm font-bold text-green-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-          🎉 Harvest Results
+      <div class="agri-card sl-card" style="background: var(--color-success-soft); border-color: var(--color-success-border);">
+        <h2 class="sl-section-title" style="color: var(--color-success-text); border-color: var(--color-success-border);">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Harvest Results
         </h2>
-        <dl class="space-y-2.5">
-          <div class="flex justify-between text-sm">
-            <dt class="text-green-700">Total Sacks</dt>
-            <dd class="font-bold text-green-900 text-lg">{{ log.actual_yield_sacks|floatformat:"0" }}</dd>
-          </div>
+        <dl class="sl-dl">
+          <div class="sl-dl-row"><dt class="sl-dl-dt" style="color: var(--color-success-text);">Total Sacks</dt><dd class="sl-dl-dd sl-dl-dd--lg" style="color: var(--color-success-text);">{{ log.actual_yield_sacks|floatformat:"0" }}</dd></div>
           {% if log.yield_per_ha %}
-          <div class="flex justify-between text-sm">
-            <dt class="text-green-700">Sacks / ha</dt>
-            <dd class="font-bold text-green-900">{{ log.yield_per_ha }}</dd>
-          </div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt" style="color: var(--color-success-text);">Sacks / ha</dt><dd class="sl-dl-dd" style="color: var(--color-success-text);">{{ log.yield_per_ha }}</dd></div>
           {% endif %}
           {% if log.actual_yield_tons %}
-          <div class="flex justify-between text-sm">
-            <dt class="text-green-700">Tons</dt>
-            <dd class="font-semibold text-green-800">{{ log.actual_yield_tons|floatformat:"2" }} t</dd>
-          </div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt" style="color: var(--color-success-text);">Tons</dt><dd class="sl-dl-dd" style="color: var(--color-success-text);">{{ log.actual_yield_tons|floatformat:"2" }} t</dd></div>
           {% endif %}
           {% if log.price_per_sack %}
-          <div class="flex justify-between text-sm">
-            <dt class="text-green-700">Price / Sack</dt>
-            <dd class="font-semibold text-green-800">₱{{ log.price_per_sack|floatformat:"2" }}</dd>
-          </div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt" style="color: var(--color-success-text);">Price / Sack</dt><dd class="sl-dl-dd" style="color: var(--color-success-text);">₱{{ log.price_per_sack|floatformat:"2" }}</dd></div>
           {% endif %}
           {% if log.cost_per_sack %}
-          <div class="flex justify-between text-sm">
-            <dt class="text-green-700">Cost / Sack</dt>
-            <dd class="font-semibold text-red-700">₱{{ log.cost_per_sack|floatformat:"2" }}</dd>
-          </div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt" style="color: var(--color-success-text);">Cost / Sack</dt><dd class="sl-dl-dd sl-dl-dd--danger">₱{{ log.cost_per_sack|floatformat:"2" }}</dd></div>
           {% endif %}
           {% if log.gross_income %}
-          <div class="flex justify-between text-sm border-t border-green-200 pt-2">
-            <dt class="text-green-700 font-semibold">Gross Income</dt>
-            <dd class="font-bold text-green-900">₱{{ log.gross_income|floatformat:"0" }}</dd>
-          </div>
+          <div class="sl-dl-row sl-dl-divider" style="border-color: var(--color-success-border);"><dt class="sl-dl-dt font-semibold" style="color: var(--color-success-text);">Gross Income</dt><dd class="sl-dl-dd font-bold" style="color: var(--color-success-text);">₱{{ log.gross_income|floatformat:"0" }}</dd></div>
           {% endif %}
           {% if log.total_expenses %}
-          <div class="flex justify-between text-sm">
-            <dt class="text-green-700">Expenses</dt>
-            <dd class="font-semibold text-red-700">-₱{{ log.total_expenses|floatformat:"0" }}</dd>
-          </div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt" style="color: var(--color-success-text);">Expenses</dt><dd class="sl-dl-dd sl-dl-dd--danger">-₱{{ log.total_expenses|floatformat:"0" }}</dd></div>
           {% endif %}
           {% if log.net_income %}
-          <div class="flex justify-between text-sm border-t border-green-200 pt-2">
-            <dt class="text-green-700 font-bold">Net Income</dt>
-            <dd class="font-bold text-2xl {% if log.net_income >= 0 %}text-green-700{% else %}text-red-700{% endif %}">
-              ₱{{ log.net_income|floatformat:"0" }}
-            </dd>
-          </div>
+          <div class="sl-dl-row sl-dl-divider" style="border-color: var(--color-success-border);"><dt class="sl-dl-dt font-bold" style="color: var(--color-success-text);">Net Income</dt><dd class="sl-dl-dd sl-dl-dd--lg {% if log.net_income >= 0 %}sl-dl-dd--success{% else %}sl-dl-dd--danger{% endif %}">₱{{ log.net_income|floatformat:"0" }}</dd></div>
           {% endif %}
           {% if log.net_per_sack %}
-          <div class="flex justify-between text-sm border-t border-green-200 pt-2">
-            <dt class="text-green-700 font-semibold">Net / Sack</dt>
-            <dd class="font-bold text-lg {% if log.net_per_sack >= 0 %}text-green-700{% else %}text-red-700{% endif %}">
-              ₱{{ log.net_per_sack|floatformat:"2" }}
-            </dd>
-          </div>
+          <div class="sl-dl-row sl-dl-divider" style="border-color: var(--color-success-border);"><dt class="sl-dl-dt font-semibold" style="color: var(--color-success-text);">Net / Sack</dt><dd class="sl-dl-dd sl-dl-dd--lg {% if log.net_per_sack >= 0 %}sl-dl-dd--success{% else %}sl-dl-dd--danger{% endif %}">₱{{ log.net_per_sack|floatformat:"2" }}</dd></div>
           {% endif %}
         </dl>
       </div>
@@ -180,40 +191,31 @@
 
       <!-- Cost Summary -->
       {% if total_cost %}
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <span class="text-amber-500">💸</span> Season Expenses
+      <div class="agri-card sl-card">
+        <h2 class="sl-section-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+          Season Expenses
         </h2>
-        <dl class="space-y-2">
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Input / Materials</dt>
-            <dd class="font-semibold text-gray-800">₱{{ cost_summary.total_input|default:"0"|floatformat:"0" }}</dd>
-          </div>
-          <div class="flex justify-between text-sm">
-            <dt class="text-gray-500">Labor</dt>
-            <dd class="font-semibold text-gray-800">₱{{ cost_summary.total_labor|default:"0"|floatformat:"0" }}</dd>
-          </div>
-          <div class="flex justify-between text-sm border-t border-gray-100 pt-2">
-            <dt class="text-gray-700 font-semibold">Total (from activities)</dt>
-            <dd class="font-bold text-gray-900">₱{{ total_cost|floatformat:"0" }}</dd>
-          </div>
+        <dl class="sl-dl">
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Input / Materials</dt><dd class="sl-dl-dd">₱{{ cost_summary.total_input|default:"0"|floatformat:"0" }}</dd></div>
+          <div class="sl-dl-row"><dt class="sl-dl-dt">Labor</dt><dd class="sl-dl-dd">₱{{ cost_summary.total_labor|default:"0"|floatformat:"0" }}</dd></div>
+          <div class="sl-dl-row sl-dl-divider"><dt class="sl-dl-dt font-semibold text-[var(--color-text-primary)]">Total (from activities)</dt><dd class="sl-dl-dd font-bold text-[var(--color-text-primary)]">₱{{ total_cost|floatformat:"0" }}</dd></div>
         </dl>
       </div>
       {% endif %}
 
       <!-- Activity Breakdown -->
       {% if activity_breakdown %}
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-3 flex items-center gap-2">
-          <span class="text-blue-500">📋</span> Activities by Type
+      <div class="agri-card sl-card">
+        <h2 class="sl-section-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          Activities by Type
         </h2>
         <div class="space-y-1.5">
           {% for row in activity_breakdown %}
-          <div class="flex justify-between text-sm">
-            <span class="text-gray-600">{{ row.activity_type|title }}</span>
-            <span class="font-semibold text-gray-800 bg-gray-100 px-2 py-0.5 rounded-full text-xs">
-              {{ row.cnt }}
-            </span>
+          <div class="sl-dl-row">
+            <span class="sl-dl-dt">{{ row.activity_type|title }}</span>
+            <span class="badge-base badge-neutral">{{ row.cnt }}</span>
           </div>
           {% endfor %}
         </div>
@@ -222,12 +224,13 @@
 
       <!-- Barangay variety adoption (same variety, same barangay) -->
       {% if same_variety_count is not None and log.variety %}
-      <div class="bg-purple-50 rounded-xl border border-purple-200 p-5">
-        <h2 class="text-sm font-bold text-purple-800 uppercase tracking-wider mb-2 flex items-center gap-2">
-          🏘️ Barangay Adoption
+      <div class="agri-card sl-card" style="background: var(--color-info-soft); border-color: var(--color-info-border);">
+        <h2 class="sl-section-title" style="color: var(--color-info-text); border-color: var(--color-info-border);">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001 1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Barangay Adoption
         </h2>
-        <p class="text-sm text-purple-700">
-          <strong class="text-2xl text-purple-900">{{ same_variety_count }}</strong> farmer{{ same_variety_count|pluralize }}
+        <p class="text-sm text-[var(--color-info-text)]">
+          <strong class="text-2xl">{{ same_variety_count }}</strong> farmer{{ same_variety_count|pluralize }}
           in <strong>{{ log.field.barangay|default:"this barangay" }}</strong>
           planted <strong>{{ log.variety.code }}</strong> in {{ log.season_year }}.
         </p>
@@ -236,11 +239,12 @@
 
       <!-- Summary Notes -->
       {% if log.summary_notes %}
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-sm font-bold text-gray-700 uppercase tracking-wider mb-2 flex items-center gap-2">
-          <span class="text-gray-400">📝</span> Season Notes
+      <div class="agri-card sl-card">
+        <h2 class="sl-section-title">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          Season Notes
         </h2>
-        <p class="text-sm text-gray-600 whitespace-pre-line">{{ log.summary_notes }}</p>
+        <p class="text-sm text-[var(--color-text)] whitespace-pre-line">{{ log.summary_notes }}</p>
       </div>
       {% endif %}
 
@@ -251,32 +255,29 @@
 
       <!-- Problems Alert -->
       {% if problems %}
-      <div class="bg-red-50 border border-red-200 rounded-xl p-4">
-        <h3 class="text-sm font-bold text-red-800 mb-2 flex items-center gap-2">
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          {{ problems.count }} Problem{{ problems.count|pluralize }} Encountered This Season
-        </h3>
+      <div class="agri-alert agri-alert-danger">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <h3 class="text-sm font-bold">{{ problems.count }} Problem{{ problems.count|pluralize }} Encountered This Season</h3>
+        </div>
         <div class="space-y-2">
           {% for p in problems %}
-          <div class="flex items-start gap-3 bg-white rounded-lg p-3 border border-red-100">
-            <span class="text-xs font-semibold px-2 py-0.5 rounded-full mt-0.5
-              {% if p.problem_severity == 'severe' %}bg-red-100 text-red-700
-              {% elif p.problem_severity == 'moderate' %}bg-orange-100 text-orange-700
-              {% else %}bg-yellow-100 text-yellow-700{% endif %}">
+          <div class="flex items-start gap-3 bg-[var(--color-surface)] rounded-[var(--radius-sm)] p-3 border border-[var(--color-danger-border)]">
+            <span class="badge-base {% if p.problem_severity == 'severe' %}badge-danger{% elif p.problem_severity == 'moderate' %}badge-warning{% else %}badge-warning{% endif %} mt-0.5">
               {{ p.get_problem_severity_display }}
             </span>
             <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-800">{{ p.problem_observed }}</p>
+              <p class="text-sm font-medium text-[var(--color-text-primary)]">{{ p.problem_observed }}</p>
               {% if p.action_taken %}
-              <p class="text-xs text-gray-500 mt-0.5">✅ Action: {{ p.action_taken }}</p>
+              <p class="text-xs text-[var(--color-success-text)] mt-0.5 flex items-center gap-1">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Action: {{ p.action_taken }}
+              </p>
               {% endif %}
-              <p class="text-xs text-gray-400 mt-0.5">{{ p.activity_date|date:"M d, Y" }}</p>
+              <p class="text-xs text-[var(--color-text-muted)] mt-0.5">{{ p.activity_date|date:"M d, Y" }}</p>
             </div>
             {% if p.detection_record %}
-            <a href="{% url 'polls:detections_detail' p.detection_record.pk %}"
-               class="text-xs text-blue-600 hover:text-blue-800 shrink-0">AI Scan →</a>
+            <a href="{% url 'polls:detections_detail' p.detection_record.pk %}" class="text-xs text-[var(--color-brand)] hover:underline shrink-0 font-medium">AI Scan →</a>
             {% endif %}
           </div>
           {% endfor %}
@@ -284,154 +285,126 @@
       </div>
       {% endif %}
 
-      <!-- Timeline -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 class="font-bold text-gray-800 flex items-center gap-2">
-            <svg class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
+      <!-- Timeline Table -->
+      <div class="agri-card overflow-hidden">
+        <div class="px-5 py-4 border-b border-[var(--color-border)] flex items-center justify-between flex-wrap gap-3">
+          <h2 class="sl-section-title" style="margin: 0; border: none; padding: 0;">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             Activity Timeline
-            <span class="text-sm font-normal text-gray-400 ml-1">({{ activities.count }} entries)</span>
+            <span class="text-sm font-normal text-[var(--color-text-muted)] ml-1">({{ activities.count }} entries)</span>
           </h2>
-          <a href="{% url 'polls:activity_create' log.pk %}"
-             class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 text-xs font-semibold rounded-lg hover:bg-green-100 transition border border-green-200">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Add Activity
+          <a href="{% url 'polls:activity_create' log.pk %}" class="btn btn-primary btn-sm">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Add Activity</span>
           </a>
         </div>
 
         {% if activities %}
-        <div class="p-6">
-          <!-- Timeline vertical line -->
-          <div class="relative">
-            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-            <div class="space-y-6">
+        <div class="data-table-wrap" style="border: none; box-shadow: none; border-radius: 0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Activity</th>
+                <th scope="col">Details</th>
+                <th scope="col">Cost / Workers</th>
+                <th scope="col" class="text-right no-print">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
               {% for act in activities %}
-              <!-- Timeline item -->
-              <div class="relative pl-12">
-                <!-- Timeline dot -->
-                <div class="absolute left-0 top-1.5 w-8 h-8 rounded-full flex items-center justify-center text-base
-                  {% if act.activity_type == 'harvest' %}bg-green-100 border-2 border-green-400
-                  {% elif act.activity_type == 'fertilizer' or act.activity_type == 'foliar' %}bg-lime-100 border-2 border-lime-400
-                  {% elif act.activity_type == 'pesticide' or act.activity_type == 'fungicide' %}bg-red-100 border-2 border-red-300
-                  {% elif act.activity_type == 'disease_obs' or act.activity_type == 'scouting' %}bg-amber-100 border-2 border-amber-400
-                  {% elif act.activity_type == 'land_prep' %}bg-orange-100 border-2 border-orange-300
-                  {% elif act.activity_type == 'transplanting' %}bg-teal-100 border-2 border-teal-300
-                  {% else %}bg-blue-100 border-2 border-blue-300{% endif %}">
-                  {% if act.activity_type == 'harvest' %}🎉
-                  {% elif act.activity_type == 'fertilizer' %}🌿
-                  {% elif act.activity_type == 'pesticide' or act.activity_type == 'fungicide' %}🐛
-                  {% elif act.activity_type == 'disease_obs' %}🦠
-                  {% elif act.activity_type == 'scouting' %}🔍
-                  {% elif act.activity_type == 'land_prep' %}🚜
-                  {% elif act.activity_type == 'transplanting' %}🌾
-                  {% elif act.activity_type == 'irrigation' %}💧
-                  {% elif act.activity_type == 'herbicide' %}🌿
-                  {% elif act.activity_type == 'selling' %}💰
-                  {% else %}📝{% endif %}
-                </div>
-
-                <!-- Activity card -->
-                <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 hover:border-green-300 transition-colors">
-                  <div class="flex items-start justify-between gap-3">
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center gap-2 flex-wrap mb-1">
-                        <span class="text-xs text-gray-400 font-medium">{{ act.activity_date|date:"M d, Y" }}</span>
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-white border border-gray-200 text-gray-600 font-medium">
-                          {{ act.get_activity_type_display }}
-                        </span>
-                        {% if act.problem_severity != 'none' and act.problem_observed %}
-                        <span class="text-xs px-2 py-0.5 rounded-full font-medium
-                          {% if act.problem_severity == 'severe' %}bg-red-100 text-red-700
-                          {% elif act.problem_severity == 'moderate' %}bg-orange-100 text-orange-700
-                          {% else %}bg-yellow-100 text-yellow-700{% endif %}">
-                          ⚠️ {{ act.get_problem_severity_display }}
-                        </span>
-                        {% endif %}
+              <tr>
+                <td data-label="Date" class="whitespace-nowrap">
+                  <span class="font-semibold text-[var(--color-text-primary)]">{{ act.activity_date|date:"M d, Y" }}</span>
+                </td>
+                <td data-label="Activity">
+                  <span class="badge-base {% if act.activity_type == 'harvest' %}badge-success{% elif act.activity_type == 'fertilizer' or act.activity_type == 'foliar' or act.activity_type == 'herbicide' %}badge-success{% elif act.activity_type == 'pesticide' or act.activity_type == 'fungicide' %}badge-danger{% elif act.activity_type == 'disease_obs' or act.activity_type == 'scouting' %}badge-warning{% elif act.activity_type == 'land_prep' %}badge-warning{% elif act.activity_type == 'transplanting' %}badge-info{% elif act.activity_type == 'irrigation' %}badge-info{% elif act.activity_type == 'selling' %}badge-success{% else %}badge-neutral{% endif %}">
+                    {{ act.get_activity_type_display }}
+                  </span>
+                  {% if act.problem_severity != 'none' and act.problem_observed %}
+                  <span class="badge-base {% if act.problem_severity == 'severe' %}badge-danger{% elif act.problem_severity == 'moderate' %}badge-warning{% else %}badge-warning{% endif %} ml-1">
+                    {{ act.get_problem_severity_display }}
+                  </span>
+                  {% endif %}
+                </td>
+                <td data-label="Details">
+                  <div class="flex flex-col gap-1">
+                    <span class="font-semibold text-[var(--color-text-primary)]">{{ act.title }}</span>
+                    {% if act.description %}
+                    <span class="text-[var(--text-xs)] text-[var(--color-text-secondary)]">{{ act.description }}</span>
+                    {% endif %}
+                    {% if act.problem_observed %}
+                    <div class="agri-alert agri-alert-danger mt-1" style="padding: 0.5rem 0.75rem; font-size: var(--text-xs);">
+                      <div class="flex items-center gap-1.5">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span class="font-semibold">{{ act.problem_observed }}</span>
                       </div>
-                      <h4 class="font-semibold text-gray-900 text-sm">{{ act.title }}</h4>
-                      {% if act.description %}
-                      <p class="text-xs text-gray-500 mt-1 leading-relaxed">{{ act.description }}</p>
-                      {% endif %}
-
-                      <!-- Problem details -->
-                      {% if act.problem_observed %}
-                      <div class="mt-2 bg-red-50 rounded-lg p-2.5 border border-red-100">
-                        <p class="text-xs text-red-700 font-medium">🔴 Problem: {{ act.problem_observed }}</p>
-                        {% if act.action_taken %}
-                        <p class="text-xs text-green-700 mt-1">✅ Action taken: {{ act.action_taken }}</p>
-                        {% endif %}
-                        {% if act.detection_record %}
-                        <a href="{% url 'polls:detections_detail' act.detection_record.pk %}"
-                           class="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 mt-1 font-medium">
-                          🤖 View AI Scan →
-                        </a>
-                        {% endif %}
+                      {% if act.action_taken %}
+                      <div class="flex items-center gap-1.5 mt-1 text-[var(--color-success-text)]">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>Action: {{ act.action_taken }}</span>
                       </div>
                       {% endif %}
-
-                      <!-- Cost & workers row -->
-                      {% if act.total_cost or act.workers_count %}
-                      <div class="flex gap-4 mt-2 text-xs text-gray-500">
-                        {% if act.total_cost %}
-                        <span class="flex items-center gap-1">
-                          💸 ₱{{ act.total_cost|floatformat:"0" }}
-                          {% if act.input_cost and act.labor_cost %}
-                          <span class="text-gray-400">(inputs ₱{{ act.input_cost|floatformat:"0" }} + labor ₱{{ act.labor_cost|floatformat:"0" }})</span>
-                          {% elif act.input_cost %}(inputs){% elif act.labor_cost %}(labor){% endif %}
-                        </span>
-                        {% endif %}
-                        {% if act.workers_count %}
-                        <span>👷 {{ act.workers_count }} worker{{ act.workers_count|pluralize }}</span>
-                        {% endif %}
-                      </div>
+                      {% if act.detection_record %}
+                      <a href="{% url 'polls:detections_detail' act.detection_record.pk %}" class="inline-flex items-center gap-1 text-[var(--color-brand)] hover:underline mt-1 font-medium">
+                        View AI Scan
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+                      </a>
                       {% endif %}
                     </div>
-
-                    <!-- Actions -->
-                    <div class="flex items-center gap-1 shrink-0">
-                      <a href="{% url 'polls:activity_edit' act.pk %}"
-                         class="p-1.5 text-gray-400 hover:text-blue-600 rounded-lg hover:bg-blue-50 transition"
-                         title="Edit">
-                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                        </svg>
-                      </a>
-                      <a href="{% url 'polls:activity_delete' act.pk %}"
-                         data-open-delete="true"
-                         data-delete-type="permanent"
-                         data-delete-label="{{ act.title }}"
-                         data-delete-subtitle="{{ act.activity_date|date:'M d, Y' }} · {{ act.get_activity_type_display }}"
-                         class="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition"
-                         title="Delete">
-                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </a>
-                    </div>
+                    {% endif %}
                   </div>
-                </div>
-              </div>
+                </td>
+                <td data-label="Cost / Workers">
+                  <div class="flex gap-3 text-[var(--text-xs)] text-[var(--color-text-muted)] flex-wrap">
+                    {% if act.total_cost %}
+                    <span class="flex items-center gap-1">
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+                      ₱{{ act.total_cost|floatformat:"0" }}
+                      {% if act.input_cost and act.labor_cost %}
+                      <span class="text-[var(--color-text-muted)]">(inputs ₱{{ act.input_cost|floatformat:"0" }} + labor ₱{{ act.labor_cost|floatformat:"0" }})</span>
+                      {% elif act.input_cost %}<span class="text-[var(--color-text-muted)]">(inputs)</span>{% elif act.labor_cost %}<span class="text-[var(--color-text-muted)]">(labor)</span>{% endif %}
+                    </span>
+                    {% endif %}
+                    {% if act.workers_count %}
+                    <span class="flex items-center gap-1">
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                      {{ act.workers_count }} worker{{ act.workers_count|pluralize }}
+                    </span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td data-label="Actions" class="td-actions no-print">
+                  <span class="inline-flex gap-2">
+                    <a href="{% url 'polls:activity_edit' act.pk %}" class="btn btn-secondary btn-sm" aria-label="Edit {{ act.title }}">Edit</a>
+                    <a href="{% url 'polls:activity_delete' act.pk %}"
+                       data-open-delete="true"
+                       data-delete-type="permanent"
+                       data-delete-label="{{ act.title }}"
+                       data-delete-subtitle="{{ act.activity_date|date:'M d, Y' }} · {{ act.get_activity_type_display }}"
+                       class="btn btn-secondary btn-sm btn-danger"
+                       aria-label="Delete {{ act.title }}">
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      <span>Delete</span>
+                    </a>
+                  </span>
+                </td>
+              </tr>
               {% endfor %}
-            </div>
-          </div>
+            </tbody>
+          </table>
         </div>
         {% else %}
         <!-- Empty timeline -->
         <div class="p-12 text-center">
-          <div class="text-5xl mb-3">📋</div>
-          <h3 class="text-base font-semibold text-gray-600 mb-1">No activities logged yet</h3>
-          <p class="text-sm text-gray-400 mb-5">Start recording farm activities for this season.</p>
-          <a href="{% url 'polls:activity_create' log.pk %}"
-             class="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-semibold rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-sm">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-            </svg>
-            Log First Activity
+          <div class="flex items-center justify-center w-14 h-14 mb-4 mx-auto text-[var(--color-text-secondary)] bg-[var(--color-overlay)] border border-[var(--color-border-strong)] rounded-full" aria-hidden="true">
+            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+          </div>
+          <h3 class="text-base font-semibold text-[var(--color-text-primary)] mb-1">No activities logged yet</h3>
+          <p class="text-sm text-[var(--color-text-secondary)] mb-5">Start recording farm activities for this season.</p>
+          <a href="{% url 'polls:activity_create' log.pk %}" class="btn btn-primary">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span>Log First Activity</span>
           </a>
         </div>
         {% endif %}
@@ -443,4 +416,3 @@
 </section>
 
 {% endblock %}
-

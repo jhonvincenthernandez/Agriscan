@@ -2,353 +2,219 @@
 
 {% block title %}Profile · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header & Sections (mirroring Detection Records structure) */
+  .pf-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .pf-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .pf-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .pf-title { margin: 0; }
+  .pf-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  @media (min-width: 640px) {
+    .pf-head { padding: 1.5rem; }
+  }
+  @media (min-width: 1024px) {
+    .pf-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .pf-section-header { padding: 1.25rem; border-bottom: 1px solid var(--color-border); }
+  @media (min-width: 640px) { .pf-section-header { padding: 1.5rem; } }
+  .pf-section-title { margin: 0; font-size: var(--text-lg); font-weight: 600; color: var(--color-text-primary); }
+  .pf-section-lead { margin: 0.25rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.5; }
+
+  .pf-form-body { padding: 1.25rem; }
+  @media (min-width: 640px) { .pf-form-body { padding: 1.5rem; } }
+
+  .pf-form-actions { border-top: 1px solid var(--color-border); padding-top: 1.25rem; }
+  @media (min-width: 640px) { .pf-form-actions { padding-top: 1.5rem; } }
+
+  .pf-farm-stat { border: 1px solid var(--color-brand-border); background: var(--color-brand-light); border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .pf-farm-stat { padding: 1.25rem; } }
+  .pf-farm-stat-label { font-size: var(--text-sm); font-weight: 600; color: var(--color-brand); margin: 0; }
+  .pf-farm-stat-value { font-size: 1.875rem; font-weight: 700; color: var(--color-text-primary); margin: 0.25rem 0 0; line-height: 1.2; }
+  @media (min-width: 640px) { .pf-farm-stat-value { font-size: 2.25rem; } }
+  .pf-farm-stat-unit { font-size: var(--text-base); font-weight: 500; color: var(--color-text-secondary); }
+  .pf-farm-stat-sub { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 0.375rem 0 0; }
+
+  .pf-stat-card { border: 1px solid var(--color-border); background: var(--color-overlay); border-radius: var(--radius-md); padding: 1rem; }
+  @media (min-width: 640px) { .pf-stat-card { padding: 1.25rem; } }
+  .pf-stat-label { font-size: var(--text-sm); font-weight: 500; color: var(--color-text-secondary); margin: 0; }
+  .pf-stat-value { font-size: 1.875rem; font-weight: 700; color: var(--color-text-primary); margin: 0.5rem 0 0; line-height: 1.2; }
+  @media (min-width: 640px) { .pf-stat-value { font-size: 2.25rem; } }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container">
+<section class="page-container min-w-0">
 
   <!-- =========================================================
        PAGE HEADER
        ========================================================= -->
-  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-      
-      <div class="flex items-start gap-4 min-w-0">
-        <!-- SVG Icon Wrapper -->
-        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700" aria-hidden="true">
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-          </svg>
-        </div>
-
-        <div class="min-w-0">
-          <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900">
-            My Profile
-          </h1>
-          <p class="mt-1.5 text-sm leading-6 text-gray-500 max-w-2xl">
-            Manage your account information and preferences.
-          </p>
-        </div>
+  <header class="agri-card pf-head">
+    <div class="pf-head-main">
+      <span class="pf-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <h1 class="pf-title">My Profile</h1>
+        <p class="pf-lead">Manage your account information and preferences.</p>
       </div>
-
     </div>
-  </div>
-
+  </header>
 
   <div class="space-y-6">
 
     <!-- =======================================================
          PERSONAL INFORMATION
          ======================================================= -->
-    <div class="agri-card overflow-hidden">
-
-      <!-- Section Header -->
-      <div class="px-4 sm:px-5 lg:px-6 py-4 sm:py-5 border-b border-gray-100">
-        <div>
-          <h2 class="text-base sm:text-lg font-semibold text-gray-900">
-            Personal Information
-          </h2>
-
-          <p class="mt-1 text-sm text-gray-500">
-            Update your account details below.
-          </p>
-        </div>
+    <section class="agri-card overflow-hidden">
+      <div class="pf-section-header">
+        <h2 class="pf-section-title">Personal Information</h2>
+        <p class="pf-section-lead">Update your account details below.</p>
       </div>
 
-
-      <!-- Form -->
-      <div class="p-4 sm:p-5 lg:p-6">
-
-        <form
-          method="post"
-          class="space-y-6"
-          {% if form.errors %}data-has-errors="true"{% endif %}
-        >
-
+      <div class="pf-form-body">
+        <form method="post" class="space-y-6" {% if form.errors %}data-has-errors="true"{% endif %}>
           {% csrf_token %}
-
           {% include 'partials/forms/_errors.html' %}
 
-
-          <!-- =================================================
-               FARM SIZE — FARMER ONLY
-               ================================================= -->
+          <!-- FARM SIZE — FARMER ONLY -->
           {% if user.profile.role == 'farmer' %}
-
-            <div class="rounded-lg border border-green-200 bg-green-50 p-4 sm:p-5">
-
+            <div class="pf-farm-stat">
               <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
                 <div class="min-w-0">
-
-                  <p class="text-sm font-semibold text-green-800">
-                    Total Farm Size
-                  </p>
-
-                  <p class="mt-1 text-2xl sm:text-3xl font-semibold tracking-tight text-green-900">
+                  <p class="pf-farm-stat-label">Total Farm Size</p>
+                  <p class="pf-farm-stat-value">
                     {{ user.profile.farm_size_ha|default:0|floatformat:2 }}
-                    <span class="text-base sm:text-lg font-medium">
-                      hectares
-                    </span>
+                    <span class="pf-farm-stat-unit">hectares</span>
                   </p>
-
-                  <p class="mt-1.5 text-xs leading-5 text-green-700">
-                    Auto-computed from your registered fields.
-                  </p>
-
+                  <p class="pf-farm-stat-sub">Auto-computed from your registered fields.</p>
                 </div>
-
-
-                <a
-                  href="{% url 'polls:fields_list' %}"
-                  class="btn btn-secondary w-full sm:w-auto shrink-0"
-                >
+                <a href="{% url 'polls:fields_list' %}" class="btn btn-secondary w-full sm:w-auto shrink-0">
                   View Fields
-                  <span aria-hidden="true">→</span>
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>
-
               </div>
-
             </div>
-
           {% endif %}
 
-
-          <!-- =================================================
-               FORM FIELDS
-               ================================================= -->
+          <!-- FORM FIELDS -->
           <div class="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
-
             {% for field in form %}
               {% include 'partials/forms/_field.html' with field=field %}
             {% endfor %}
-
           </div>
 
-
-          <!-- =================================================
-               UNSAVED CHANGES
-               ================================================= -->
-          <div
-            id="unsaved-notice"
-            class="hidden items-start gap-2.5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
-            role="status"
-            aria-live="polite"
-          >
-            <span>
-              You have unsaved changes.
-            </span>
+          <!-- UNSAVED CHANGES -->
+          <div id="unsaved-notice" class="agri-alert agri-alert-warning hidden items-center gap-3" role="status" aria-live="polite">
+            <svg class="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            <span class="font-medium">You have unsaved changes.</span>
           </div>
 
-
-          <!-- =================================================
-               CLIENT-SIDE ERRORS
-               ================================================= -->
-          <div
-            id="client-errors"
-            class="hidden rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-            role="alert"
-            aria-live="assertive"
-          >
-            <p class="mb-1 font-semibold">
-              Please fix the following before saving:
-            </p>
-
-            <ul
-              id="client-errors-list"
-              class="list-disc space-y-0.5 pl-5"
-            ></ul>
+          <!-- CLIENT-SIDE ERRORS -->
+          <div id="client-errors" class="agri-alert agri-alert-danger hidden" role="alert" aria-live="assertive">
+            <div class="flex items-start gap-3">
+              <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M10.29 3.86l-8.1 14A2 2 0 003.92 21h16.16a2 2 0 001.73-3.14l-8.1-14a2 2 0 00-3.42 0z"/>
+              </svg>
+              <div class="min-w-0 flex-1">
+                <p class="mb-1 font-semibold">Please fix the following before saving:</p>
+                <ul id="client-errors-list" class="list-disc space-y-0.5 pl-5"></ul>
+              </div>
+            </div>
           </div>
 
-
-          <!-- =================================================
-               FORM ACTIONS
-               ================================================= -->
-          <div class="border-t border-gray-100 pt-5">
-
+          <!-- FORM ACTIONS -->
+          <div class="pf-form-actions">
             <div class="flex flex-col-reverse gap-3 sm:flex-row">
-
-              <!-- Logout -->
-              <button
-                type="button"
-                data-open-logout="true"
-                class="btn btn-danger w-full sm:w-auto"
-              >
+              <button type="button" data-open-logout="true" class="btn btn-danger w-full sm:w-auto">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
                 Logout
               </button>
 
-
-              <!-- Save -->
-              <button
-                id="save-btn"
-                type="submit"
-                class="btn btn-primary w-full sm:flex-1"
-              >
-
-                <span
-                  id="save-idle"
-                  class="flex items-center justify-center gap-2"
-                >
-                  <span aria-hidden="true">✓</span>
+              <button id="save-btn" type="submit" class="btn btn-primary w-full sm:flex-1">
+                <span id="save-idle" class="flex items-center justify-center gap-2">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
                   Save Changes
                 </span>
-
-                <span
-                  id="save-loading"
-                  class="hidden items-center justify-center gap-2"
-                >
-                  <svg
-                    class="h-4 w-4 animate-spin shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
+                <span id="save-loading" class="hidden items-center justify-center gap-2">
+                  <svg class="h-4 w-4 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                   </svg>
-
                   Saving…
                 </span>
-
               </button>
-
             </div>
-
           </div>
-
         </form>
-
       </div>
-    </div>
-
+    </section>
 
     <!-- =======================================================
          ACTIVITY SUMMARY
          ======================================================= -->
-    <div class="agri-card overflow-hidden">
-
-      <div class="px-4 sm:px-5 lg:px-6 py-4 sm:py-5 border-b border-gray-100">
-
-        <div>
-          <h2 class="text-base sm:text-lg font-semibold text-gray-900">
-            Activity Summary
-          </h2>
-
-          <p class="mt-1 text-sm text-gray-500">
-            Overview of your AgriScan+ activity.
-          </p>
-        </div>
-
+    <section class="agri-card overflow-hidden">
+      <div class="pf-section-header">
+        <h2 class="pf-section-title">Activity Summary</h2>
+        <p class="pf-section-lead">Overview of your AgriScan+ activity.</p>
       </div>
 
-
-      <div class="p-4 sm:p-5 lg:p-6">
-
+      <div class="pf-form-body">
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-
-          <!-- Total Scans -->
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-5">
-
-            <p class="text-sm font-medium text-gray-600">
-              Total Scans
-            </p>
-
-            <p class="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900">
-              {{ stats.scans|default:0 }}
-            </p>
-
+          <div class="pf-stat-card">
+            <p class="pf-stat-label">Total Scans</p>
+            <p class="pf-stat-value">{{ stats.scans|default:0 }}</p>
           </div>
-
-
-          <!-- Yield Predictions -->
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-5">
-
-            <p class="text-sm font-medium text-gray-600">
-              Yield Predictions
-            </p>
-
-            <p class="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900">
-              {{ stats.yield_predictions|default:0 }}
-            </p>
-
+          <div class="pf-stat-card">
+            <p class="pf-stat-label">Yield Predictions</p>
+            <p class="pf-stat-value">{{ stats.yield_predictions|default:0 }}</p>
           </div>
-
-
-          <!-- Reports -->
-          <div class="rounded-lg border border-gray-200 bg-gray-50 p-4 sm:p-5">
-
-            <p class="text-sm font-medium text-gray-600">
-              Reports Generated
-            </p>
-
-            <p class="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight text-gray-900">
-              {{ stats.reports|default:0 }}
-            </p>
-
+          <div class="pf-stat-card">
+            <p class="pf-stat-label">Reports Generated</p>
+            <p class="pf-stat-value">{{ stats.reports|default:0 }}</p>
           </div>
-
         </div>
-
       </div>
-
-    </div>
-
+    </section>
 
     <!-- =======================================================
          ACCOUNT SETTINGS
          ======================================================= -->
-    <div class="agri-card overflow-hidden">
-
-      <div class="p-4 sm:p-5 lg:p-6">
-
+    <section class="agri-card overflow-hidden">
+      <div class="pf-form-body">
         <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-
-          <!-- Information -->
           <div class="min-w-0">
-
-            <h2 class="text-base sm:text-lg font-semibold text-gray-900">
-              Account Settings
-            </h2>
-
-            <p class="mt-1.5 text-sm leading-6 text-gray-500 max-w-2xl">
-              Keep your profile information up to date for personalized
-              recommendations and accurate farm management.
-            </p>
-
+            <h2 class="pf-section-title">Account Settings</h2>
+            <p class="pf-section-lead">Keep your profile information up to date for personalized recommendations and accurate farm management.</p>
           </div>
-
-
-          <!-- Actions -->
           <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap shrink-0">
-
-            <a
-              href="{% url 'polls:change_password' %}"
-              class="btn btn-secondary w-full sm:w-auto"
-            >
+            <a href="{% url 'polls:change_password' %}" class="btn btn-secondary w-full sm:w-auto">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+              </svg>
               Change Password
             </a>
-
-            <a
-              href="{% url 'polls:dashboard' %}"
-              class="btn btn-primary w-full sm:w-auto"
-            >
+            <a href="{% url 'polls:dashboard' %}" class="btn btn-primary w-full sm:w-auto">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
               Back to Dashboard
             </a>
-
           </div>
-
         </div>
-
       </div>
-
-    </div>
+    </section>
 
   </div>
 </section>
-
 
 <!-- ===========================================================
      PROFILE FORM CLIENT-SIDE VALIDATION
@@ -433,7 +299,7 @@
 
     if (!errorElement) {
       errorElement = document.createElement('p');
-      errorElement.className = 'js-field-error mt-1 text-sm text-red-600';
+      errorElement.className = 'js-field-error form-error mt-1';
       errorElement.setAttribute('role', 'alert');
       wrapper.appendChild(errorElement);
     }
@@ -597,6 +463,7 @@
       });
 
       errBox.classList.remove('hidden');
+      errBox.classList.add('flex');
 
       errBox.scrollIntoView({
         behavior: 'smooth',
@@ -634,6 +501,7 @@
     saveBtn.disabled = false;
 
     saveIdle.classList.remove('hidden');
+    saveIdle.classList.add('flex');
 
     saveLoad.classList.add('hidden');
     saveLoad.classList.remove('flex');

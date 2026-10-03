@@ -2,880 +2,337 @@
 
 {% block title %}System Notifications · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header & Filters */
+  .sn-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .sn-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .sn-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .sn-title { margin: 0; }
+  .sn-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .sn-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .sn-head { padding: 1.5rem; }
+    .sn-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .sn-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .sn-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .sn-filters { padding: 1.5rem; } }
+  .sn-filters form { display: grid; gap: 1rem; }
+  .sn-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .sn-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .sn-selects { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+
+  /* Table Unread State (Persistent Green Background) */
+  .data-table tbody tr.is-unread {
+    background: var(--color-success-soft) !important;
+    box-shadow: inset 4px 0 0 var(--color-brand);
+  }
+  .data-table tbody tr.is-unread:hover {
+    background: var(--color-success-soft) !important;
+  }
+  @media (max-width: 1023px) {
+    .data-table tbody tr.is-unread {
+      border: 1px solid var(--color-success-border) !important;
+      border-left: 4px solid var(--color-brand) !important;
+      box-shadow: none;
+    }
+  }
+
+  .sn-unread-dot {
+    width: 0.5rem; height: 0.5rem; border-radius: var(--radius-full);
+    background: var(--color-brand); flex-shrink: 0;
+  }
+
+  /* Type Icons */
+  .sn-type-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2rem; height: 2rem; border-radius: var(--radius-sm); flex-shrink: 0;
+  }
+  .sn-type-icon--disease { background: var(--color-danger-soft); color: var(--color-danger-text); }
+  .sn-type-icon--yield_drop { background: var(--color-warning-soft); color: var(--color-warning-text); }
+  .sn-type-icon--advisory { background: var(--color-info-soft); color: var(--color-info-text); }
+  .sn-type-icon--knowledge { background: var(--color-success-soft); color: var(--color-success-text); }
+  .sn-type-icon--treatment { background: var(--color-success-soft); color: var(--color-success-text); }
+  .sn-type-icon--system { background: var(--color-overlay); color: var(--color-text-secondary); }
+  .sn-type-icon--default { background: var(--color-overlay); color: var(--color-text-secondary); }
+
+  /* Related Links */
+  .sn-related-link {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    padding: 0.25rem 0.625rem; border: 1px solid var(--color-border-strong);
+    background: var(--color-surface); border-radius: var(--radius-sm);
+    font-size: var(--text-xs); font-weight: 500; color: var(--color-text);
+    transition: all var(--transition-fast);
+  }
+  .sn-related-link:hover {
+    background: var(--color-overlay); border-color: var(--color-brand); color: var(--color-brand);
+  }
+
+  /* Empty State */
+  .sn-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .sn-empty { padding: 3rem; } }
+  .sn-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .sn-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container">
+<section class="page-container min-w-0">
 
   <!-- =========================================================
        PAGE HEADER
        ========================================================= -->
-  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-
-      <!-- Title / description -->
+  <header class="agri-card sn-head">
+    <div class="sn-head-main">
+      <span class="sn-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+      </span>
       <div class="min-w-0">
-        <div class="flex items-start gap-3">
-
-          <div
-            class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-50 text-green-700"
-            aria-hidden="true"
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
-          </div>
-
-          <div class="min-w-0">
-            <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-              System Notifications
-            </h1>
-
-            <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-              Auto-generated alerts for disease detections, yield changes,
-              advisories, knowledge updates, treatments, and system changes.
-            </p>
-          </div>
-
-        </div>
-      </div>
-
-
-      <!-- Page actions -->
-      <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-
-        {% if unread_count > 0 %}
-
-          <!-- Unread count -->
-          <div
-            class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 text-sm font-medium text-green-800"
-            aria-label="{{ unread_count }} unread notification{{ unread_count|pluralize }}"
-          >
-            <span
-              class="h-2 w-2 shrink-0 rounded-full bg-green-600"
-              aria-hidden="true"
-            ></span>
-
-            <span>
-              {{ unread_count }} unread
-            </span>
-          </div>
-
-
-          <!-- Mark all as read -->
-          <form
-            method="post"
-            action="{% url 'polls:notifications_list' %}"
-            class="w-full sm:w-auto"
-          >
-            {% csrf_token %}
-
-            <input
-              type="hidden"
-              name="action"
-              value="mark_all_read"
-            >
-
-            <button
-              type="submit"
-              class="btn btn-secondary w-full sm:w-auto"
-            >
-              <svg
-                class="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
-
-              <span>Mark All as Read</span>
-
-              <span
-                class="inline-flex min-w-5 items-center justify-center rounded-full border border-green-200 bg-green-50 px-1.5 py-0.5 text-xs font-semibold text-green-700"
-              >
-                {{ unread_count }}
-              </span>
-            </button>
-          </form>
-
-        {% else %}
-
-          <!-- All caught up -->
-          <div
-            class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 text-sm font-medium text-green-800"
-          >
-            <svg
-              class="h-4 w-4 shrink-0"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-
-            <span>All Caught Up</span>
-          </div>
-
-        {% endif %}
-
+        <h1 class="sn-title">System Notifications</h1>
+        <p class="sn-lead">Auto-generated alerts for disease detections, yield changes, advisories, knowledge updates, treatments, and system changes.</p>
       </div>
     </div>
 
-
-    <!-- =======================================================
-         SEARCH / FILTERS
-         ======================================================= -->
-    <div class="mt-6 border-t border-gray-100 pt-5">
-
-      <form
-        method="get"
-        class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center"
-      >
-
-        <!-- Notification type -->
-        <div class="w-full sm:w-auto">
-          <label
-            for="notification-type-filter"
-            class="sr-only"
-          >
-            Notification type
-          </label>
-
-          <select
-            id="notification-type-filter"
-            name="type"
-            onchange="this.form.submit()"
-            class="form-select form-select-sm w-full sm:w-auto sm:min-w-[150px]"
-          >
-            <option
-              value=""
-              {% if not type_filter %}selected{% endif %}
-            >
-              All Types
-            </option>
-
-            {% for type_value, type_label in type_choices %}
-              <option
-                value="{{ type_value }}"
-                {% if type_filter == type_value %}selected{% endif %}
-              >
-                {{ type_label }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-
-
-        <!-- Notification status -->
-        <div class="w-full sm:w-auto">
-          <label
-            for="notification-status-filter"
-            class="sr-only"
-          >
-            Notification status
-          </label>
-
-          <select
-            id="notification-status-filter"
-            name="status"
-            onchange="this.form.submit()"
-            class="form-select form-select-sm w-full sm:w-auto sm:min-w-[120px]"
-          >
-            <option
-              value=""
-              {% if not status_filter %}selected{% endif %}
-            >
-              All
-            </option>
-
-            <option
-              value="unread"
-              {% if status_filter == 'unread' %}selected{% endif %}
-            >
-              Unread
-            </option>
-
-            <option
-              value="read"
-              {% if status_filter == 'read' %}selected{% endif %}
-            >
-              Read
-            </option>
-          </select>
-        </div>
-
-
-        <!-- Page size -->
-        <div class="w-full sm:w-auto">
-          <label
-            for="notification-page-size"
-            class="sr-only"
-          >
-            Notifications per page
-          </label>
-
-          <select
-            id="notification-page-size"
-            name="page_size"
-            onchange="this.form.submit()"
-            class="form-select form-select-sm w-full sm:w-auto sm:min-w-[130px]"
-          >
-            {% for size in allowed_page_sizes %}
-              <option
-                value="{{ size }}"
-                {% if page_size == size %}selected{% endif %}
-              >
-                {{ size }} / page
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-
-
-        <!-- Clear filters -->
-        {% if type_filter or status_filter %}
-
-          <a
-            href="{% url 'polls:notifications_list' %}"
-            class="btn btn-secondary btn-sm w-full sm:w-auto"
-          >
-            <svg
-              class="h-4 w-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-
-            <span>Clear Filters</span>
-          </a>
-
-        {% endif %}
-
-
-        <!-- Record count -->
-        <div
-          class="w-full text-sm text-gray-500 sm:ml-auto sm:w-auto sm:text-right"
-        >
-          <span class="font-medium text-gray-700">
-            {{ total_count }}
-          </span>
-
-          notification{{ total_count|pluralize }}
-        </div>
-
+    <div class="sn-head-actions">
+      {% if unread_count > 0 %}
+      <span class="badge-base badge-warning">
+        <span class="h-2 w-2 rounded-full bg-[var(--color-warning-text)]" aria-hidden="true"></span>
+        {{ unread_count }} unread
+      </span>
+      <form method="post" action="{% url 'polls:notifications_list' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="mark_all_read">
+        <button type="submit" class="btn btn-secondary btn-sm">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Mark All as Read
+          <span class="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--color-danger-soft)] px-1.5 py-0.5 text-xs font-bold text-[var(--color-danger-text)]">{{ unread_count }}</span>
+        </button>
       </form>
+      {% else %}
+      <span class="badge-base badge-success">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        All Caught Up
+      </span>
+      {% endif %}
     </div>
-
-  </div>
-
+  </header>
 
   <!-- =========================================================
-       NOTIFICATION LIST
+       FILTERS
+       ========================================================= -->
+  <div class="agri-card sn-filters no-print">
+    <form method="get">
+      <div class="sn-selects">
+        <div>
+          <label for="notification-type-filter" class="sr-only-agri">Notification type</label>
+          <select id="notification-type-filter" name="type" onchange="this.form.submit()" class="form-select">
+            <option value="" {% if not type_filter %}selected{% endif %}>All Types</option>
+            {% for type_value, type_label in type_choices %}
+            <option value="{{ type_value }}" {% if type_filter == type_value %}selected{% endif %}>{{ type_label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="notification-status-filter" class="sr-only-agri">Notification status</label>
+          <select id="notification-status-filter" name="status" onchange="this.form.submit()" class="form-select">
+            <option value="" {% if not status_filter %}selected{% endif %}>All Statuses</option>
+            <option value="unread" {% if status_filter == 'unread' %}selected{% endif %}>Unread</option>
+            <option value="read" {% if status_filter == 'read' %}selected{% endif %}>Read</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="notification-page-size" class="sr-only-agri">Notifications per page</label>
+          <select id="notification-page-size" name="page_size" onchange="this.form.submit()" class="form-select">
+            {% for size in allowed_page_sizes %}
+            <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} / page</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          {% if type_filter or status_filter %}
+          <a href="{% url 'polls:notifications_list' %}" class="btn btn-secondary w-full">Clear Filters</a>
+          {% endif %}
+          <span class="text-sm text-[var(--color-text-muted)] ml-auto">
+            {{ total_count }} notification{{ total_count|pluralize }}
+          </span>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- =========================================================
+       NOTIFICATIONS TABLE
        ========================================================= -->
   {% if notifications %}
-
-    <div class="agri-card overflow-hidden p-0">
-
-      <div class="divide-y divide-gray-200">
-
+  <div class="data-table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th scope="col">Type</th>
+          <th scope="col">Notification</th>
+          <th scope="col">Related</th>
+          <th scope="col">Time</th>
+          <th scope="col" class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
         {% for notif in notifications %}
-
-          <article
-            id="notif-{{ notif.pk }}"
-            class="
-              flex gap-3
-              px-4 py-4
-              transition-colors duration-150
-              focus-within:bg-gray-50
-              sm:gap-4 sm:px-5 sm:py-5
-              {% if not notif.is_read %}
-                bg-green-50/60
-              {% else %}
-                bg-white hover:bg-gray-50
-              {% endif %}
-            "
-          >
-
-            <!-- =================================================
-                 Notification Type Icon
-                 ================================================= -->
-            <div class="shrink-0 pt-0.5">
-
+        <tr id="notif-{{ notif.pk }}" class="{% if not notif.is_read %}is-unread{% endif %}">
+          
+          <!-- Type -->
+          <td data-label="Type">
+            <div class="flex items-center gap-2">
               {% if notif.type == 'disease' %}
-
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-md border border-red-100 bg-red-50 text-red-600"
-                  aria-hidden="true"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                  </svg>
-                </div>
-
+                <span class="sn-type-icon sn-type-icon--disease" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[var(--color-danger-text)]">Disease Alert</span>
               {% elif notif.type == 'yield_drop' %}
-
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-md border border-amber-100 bg-amber-50 text-amber-700"
-                  aria-hidden="true"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
-                    />
-                  </svg>
-                </div>
-
+                <span class="sn-type-icon sn-type-icon--yield_drop" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[var(--color-warning-text)]">Yield Drop</span>
               {% elif notif.type == 'advisory' %}
-
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-blue-600"
-                  aria-hidden="true"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                    />
-                  </svg>
-                </div>
-
+                <span class="sn-type-icon sn-type-icon--advisory" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[var(--color-info-text)]">Announcement</span>
               {% elif notif.type == 'knowledge' %}
-
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-md border border-green-100 bg-green-50 text-green-700"
-                  aria-hidden="true"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253m0-9C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9a4.5 4.5 0 00-4.5-4.5c-1.746 0-3.332.477-4.5 1.253"
-                    />
-                  </svg>
-                </div>
-
+                <span class="sn-type-icon sn-type-icon--knowledge" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253m0-9C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9a4.5 4.5 0 00-4.5-4.5c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[var(--color-success-text)]">Knowledge Update</span>
               {% elif notif.type == 'treatment' %}
-
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-md border border-green-100 bg-green-50 text-green-700"
-                  aria-hidden="true"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19.428 15.428a4 4 0 00-5.656-5.656l-8.486 8.485a2 2 0 102.829 2.829l8.485-8.486a1 1 0 00-1.414-1.414l-8.485 8.485"
-                    />
-                  </svg>
-                </div>
-
+                <span class="sn-type-icon sn-type-icon--treatment" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a4 4 0 00-5.656-5.656l-8.486 8.485a2 2 0 102.829 2.829l8.485-8.486a1 1 0 00-1.414-1.414l-8.485 8.485"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[var(--color-success-text)]">Treatment</span>
               {% elif notif.type == 'system' %}
-
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-gray-100 text-gray-600"
-                  aria-hidden="true"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10.325 4.317a1 1 0 011.35-.936l1.49.596a1 1 0 00.77 0l1.49-.596a1 1 0 011.35.936l.072 1.58a1 1 0 00.562.84l1.36.68a1 1 0 01.454 1.34l-.596 1.49a1 1 0 000 .77l.596 1.49a1 1 0 01-.454 1.34l-1.36.68a1 1 0 00-.562.84l-.072 1.58a1 1 0 01-1.35.936l-1.49-.596a1 1 0 00-.77 0l-1.49.596a1 1 0 01-1.35-.936l-.072-1.58a1 1 0 00-.562-.84l-1.36-.68a1 1 0 01-.454-1.34l.596-1.49a1 1 0 000-.77l-.596-1.49a1 1 0 01.454-1.34l1.36-.68a1 1 0 00.562-.84l.072-1.58z"
-                    />
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                    />
-                  </svg>
-                </div>
-
+                <span class="sn-type-icon sn-type-icon--system" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l1.49.596a1 1 0 00.77 0l1.49-.596a1 1 0 011.35.936l.072 1.58a1 1 0 00.562.84l1.36.68a1 1 0 01.454 1.34l-.596 1.49a1 1 0 000 .77l.596 1.49a1 1 0 01-.454 1.34l-1.36.68a1 1 0 00-.562.84l-.072 1.58a1 1 0 01-1.35.936l-1.49-.596a1 1 0 00-.77 0l-1.49.596a1 1 0 01-1.35-.936l-.072-1.58a1 1 0 00-.562-.84l-1.36-.68a1 1 0 01-.454-1.34l.596-1.49a1 1 0 000-.77l-.596-1.49a1 1 0 01.454-1.34l1.36-.68a1 1 0 00.562-.84l.072-1.58z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[var(--color-text-secondary)]">System Update</span>
               {% else %}
-
-                <div
-                  class="flex h-9 w-9 items-center justify-center rounded-md border border-gray-200 bg-gray-100 text-gray-600"
-                  aria-hidden="true"
-                >
-                  <svg
-                    class="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                </div>
-
+                <span class="sn-type-icon sn-type-icon--default" aria-hidden="true">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </span>
+                <span class="text-sm font-medium text-[var(--color-text-secondary)]">{{ notif.get_type_display }}</span>
               {% endif %}
-
             </div>
+          </td>
 
-
-            <!-- =================================================
-                 Notification Content
-                 ================================================= -->
-            <div class="min-w-0 flex-1">
-
-              <!-- Title + Mark Read -->
-              <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-
-                <div class="min-w-0">
-
-                  <div class="flex items-start gap-2">
-
-                    {% if not notif.is_read %}
-
-                      <span
-                        class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-green-600"
-                        data-unread-indicator
-                        aria-label="Unread"
-                        title="Unread"
-                      ></span>
-
-                    {% endif %}
-
-                    <p
-                      class="
-                        min-w-0
-                        text-sm
-                        leading-5
-                        {% if not notif.is_read %}
-                          font-semibold text-gray-900
-                        {% else %}
-                          font-medium text-gray-800
-                        {% endif %}
-                      "
-                    >
-                      {{ notif.title }}
-                    </p>
-
-                  </div>
-
-
-                  <!-- Type + time -->
-                  <p class="mt-1 text-xs text-gray-500">
-
-                    {% if notif.type == 'disease' %}
-
-                      <span class="font-medium text-red-700">
-                        Disease Alert
-                      </span>
-
-                    {% elif notif.type == 'yield_drop' %}
-
-                      <span class="font-medium text-amber-700">
-                        Yield Drop
-                      </span>
-
-                    {% elif notif.type == 'advisory' %}
-
-                      <span class="font-medium text-blue-700">
-                        Announcement
-                      </span>
-
-                    {% elif notif.type == 'knowledge' %}
-
-                      <span class="font-medium text-green-700">
-                        Knowledge Update
-                      </span>
-
-                    {% elif notif.type == 'treatment' %}
-
-                      <span class="font-medium text-green-700">
-                        Treatment Recommendation
-                      </span>
-
-                    {% elif notif.type == 'system' %}
-
-                      <span class="font-medium text-gray-700">
-                        System Update
-                      </span>
-
-                    {% else %}
-
-                      <span class="font-medium text-gray-700">
-                        {{ notif.get_type_display }}
-                      </span>
-
-                    {% endif %}
-
-                    <span
-                      class="mx-1 text-gray-300"
-                      aria-hidden="true"
-                    >
-                      ·
-                    </span>
-
-                    {{ notif.created_at|timesince }} ago
-
-                  </p>
-
-                </div>
-
-
-                <!-- Mark read -->
+          <!-- Notification -->
+          <td data-label="Notification" class="td-primary">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-2">
                 {% if not notif.is_read %}
-
-                  <button
-                    type="button"
-                    data-notif-id="{{ notif.pk }}"
-                    data-mark-read-url="{% url 'polls:notification_mark_read' notif.pk %}"
-                    onclick="markNotifRead(this)"
-                    class="
-                      inline-flex
-                      shrink-0
-                      items-center
-                      justify-center
-                      self-start
-                      rounded-md
-                      px-2.5
-                      py-1.5
-                      text-xs
-                      font-medium
-                      text-green-700
-                      transition
-                      hover:bg-green-100
-                      hover:text-green-800
-                      focus:outline-none
-                      focus:ring-2
-                      focus:ring-green-600
-                      focus:ring-offset-1
-                    "
-                  >
-                    Mark read
-                  </button>
-
+                <span class="sn-unread-dot" data-unread-indicator aria-label="Unread"></span>
                 {% endif %}
-
+                <span class="font-semibold text-[var(--color-text-primary)]">{{ notif.title }}</span>
               </div>
-
-
-              <!-- Message -->
-              <p class="mt-2 text-sm leading-6 text-gray-600">
-                {{ notif.message }}
-              </p>
-
-
-              <!-- =================================================
-                   Related Records
-                   ================================================= -->
-              {% if notif.related_detection or notif.related_yield or notif.related_announcement %}
-
-                <div class="mt-3 flex flex-wrap gap-2">
-
-                  {% if notif.related_detection %}
-
-                    <a
-                      href="{% url 'polls:detections_list' %}?search={{ notif.related_detection.pk }}"
-                      class="
-                        inline-flex
-                        items-center
-                        gap-1.5
-                        rounded-md
-                        border
-                        border-gray-200
-                        bg-white
-                        px-2.5
-                        py-1.5
-                        text-xs
-                        font-medium
-                        text-gray-700
-                        transition
-                        hover:border-gray-300
-                        hover:bg-gray-50
-                        hover:text-gray-900
-                        focus:outline-none
-                        focus:ring-2
-                        focus:ring-green-600
-                        focus:ring-offset-1
-                      "
-                    >
-                      <svg
-                        class="h-3.5 w-3.5 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                        />
-                      </svg>
-
-                      <span>
-                        View Detection #{{ notif.related_detection.pk }}
-                      </span>
-                    </a>
-
-                  {% endif %}
-
-
-                  {% if notif.related_yield %}
-
-                    <a
-                      href="{% url 'polls:yield_records_list' %}"
-                      class="
-                        inline-flex
-                        items-center
-                        gap-1.5
-                        rounded-md
-                        border
-                        border-gray-200
-                        bg-white
-                        px-2.5
-                        py-1.5
-                        text-xs
-                        font-medium
-                        text-gray-700
-                        transition
-                        hover:border-gray-300
-                        hover:bg-gray-50
-                        hover:text-gray-900
-                        focus:outline-none
-                        focus:ring-2
-                        focus:ring-green-600
-                        focus:ring-offset-1
-                      "
-                    >
-                      <svg
-                        class="h-3.5 w-3.5 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                        />
-                      </svg>
-
-                      <span>
-                        View Yield Record
-                      </span>
-                    </a>
-
-                  {% endif %}
-
-
-                  {% if notif.related_announcement %}
-
-                    <a
-                      href="{% url 'polls:announcements_list' %}"
-                      class="
-                        inline-flex
-                        items-center
-                        gap-1.5
-                        rounded-md
-                        border
-                        border-gray-200
-                        bg-white
-                        px-2.5
-                        py-1.5
-                        text-xs
-                        font-medium
-                        text-gray-700
-                        transition
-                        hover:border-gray-300
-                        hover:bg-gray-50
-                        hover:text-gray-900
-                        focus:outline-none
-                        focus:ring-2
-                        focus:ring-green-600
-                        focus:ring-offset-1
-                      "
-                    >
-                      <svg
-                        class="h-3.5 w-3.5 text-gray-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a2 2 0 01.293.707V19a2 2 0 01-2 2z"
-                        />
-                      </svg>
-
-                      <span>
-                        View Announcement
-                      </span>
-                    </a>
-
-                  {% endif %}
-
-                </div>
-
-              {% endif %}
-
+              <p class="text-sm text-[var(--color-text-secondary)] line-clamp-2">{{ notif.message }}</p>
             </div>
+          </td>
 
-          </article>
+          <!-- Related -->
+          <td data-label="Related">
+            <div class="flex flex-wrap gap-2">
+              {% if notif.related_detection %}
+              <a href="{% url 'polls:detections_list' %}?search={{ notif.related_detection.pk }}" class="sn-related-link">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Detection #{{ notif.related_detection.pk }}
+              </a>
+              {% endif %}
+              {% if notif.related_yield %}
+              <a href="{% url 'polls:yield_records_list' %}" class="sn-related-link">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Yield Record
+              </a>
+              {% endif %}
+              {% if notif.related_announcement %}
+              <a href="{% url 'polls:announcements_list' %}" class="sn-related-link">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a2 2 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Announcement
+              </a>
+              {% endif %}
+              {% if not notif.related_detection and not notif.related_yield and not notif.related_announcement %}
+              <span class="text-sm text-[var(--color-text-muted)] italic">None</span>
+              {% endif %}
+            </div>
+          </td>
 
+          <!-- Time -->
+          <td data-label="Time" class="whitespace-nowrap text-sm text-[var(--color-text-secondary)]">
+            {{ notif.created_at|timesince }} ago
+          </td>
+
+          <!-- Actions -->
+          <td data-label="Actions" class="td-actions">
+            {% if not notif.is_read %}
+            <button type="button" data-notif-id="{{ notif.pk }}" data-mark-read-url="{% url 'polls:notification_mark_read' notif.pk %}" onclick="markNotifRead(this)" class="btn btn-secondary btn-sm">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              Mark read
+            </button>
+            {% else %}
+            <span class="text-sm text-[var(--color-text-muted)] italic">Read</span>
+            {% endif %}
+          </td>
+
+        </tr>
         {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-      </div>
-    </div>
-
-
-    <!-- =========================================================
-         Pagination
-         ========================================================= -->
-    {% if page_obj and is_paginated %}
-      {% include 'partials/_pagination.html' %}
-    {% endif %}
-
+  {% if page_obj and is_paginated %}
+    {% include 'partials/_pagination.html' %}
+  {% endif %}
 
   {% else %}
-
-    <!-- =========================================================
-         EMPTY STATE
-         ========================================================= -->
-    <div class="agri-card p-8 text-center sm:p-10 lg:p-12">
-
-      <div
-        class="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-md border border-gray-200 bg-gray-50 text-gray-400"
-        aria-hidden="true"
-      >
-        <svg
-          class="h-6 w-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-          />
-        </svg>
-      </div>
-
-      <h2 class="text-base font-semibold tracking-tight text-gray-800 sm:text-lg">
-        No notifications
-      </h2>
-
-      <p class="mx-auto mt-1 max-w-xl text-sm leading-6 text-gray-500">
-
-        {% if type_filter or status_filter %}
-
-          No notifications match your current filters.
-
-          <a
-            href="{% url 'polls:notifications_list' %}"
-            class="font-medium text-green-700 hover:text-green-800 hover:underline"
-          >
-            Clear filters
-          </a>
-
-        {% else %}
-
-          You have no system notifications yet. They will appear here when
-          a disease is detected, a yield drop is predicted, or a new
-          announcement is published.
-
-        {% endif %}
-
-      </p>
-
-    </div>
-
+  <!-- =========================================================
+       EMPTY STATE
+       ========================================================= -->
+  <div class="agri-card sn-empty">
+    <span class="sn-empty-icon" aria-hidden="true">
+      <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      </svg>
+    </span>
+    <h2>No notifications</h2>
+    <p>
+      {% if type_filter or status_filter %}
+        No notifications match your current filters.
+      {% else %}
+        You have no system notifications yet. They will appear here when a disease is detected, a yield drop is predicted, or a new announcement is published.
+      {% endif %}
+    </p>
+    {% if type_filter or status_filter %}
+    <a href="{% url 'polls:notifications_list' %}" class="btn btn-secondary">Clear Filters</a>
+    {% endif %}
+  </div>
   {% endif %}
 
 </section>
 {% endblock %}
 
-
-<!-- =========================================================
-     AJAX MARK-READ
-     ========================================================= -->
 {% block extra_js %}
 <script>
   const CSRF_TOKEN = '{{ csrf_token }}';
@@ -893,63 +350,18 @@
     })
       .then(response => response.json())
       .then(data => {
-        if (!data.success) {
-          return;
+        if (!data.success) return;
+
+        const row = document.getElementById('notif-' + notifId);
+        if (row) {
+          row.classList.remove('is-unread');
+          const indicator = row.querySelector('[data-unread-indicator]');
+          if (indicator) indicator.remove();
         }
 
-        const card = document.getElementById('notif-' + notifId);
+        btn.outerHTML = '<span class="text-sm text-[var(--color-text-muted)] italic">Read</span>';
 
-        if (card) {
-
-          /*
-           * Convert unread notification to the neutral
-           * read state without reloading the page.
-           */
-          card.classList.remove('bg-green-50/60');
-
-          card.classList.add('bg-white');
-
-
-          /*
-           * Remove unread indicator.
-           */
-          const indicator = card.querySelector('[data-unread-indicator]');
-
-          if (indicator) {
-            indicator.remove();
-          }
-
-
-          /*
-           * Change title from unread to read styling.
-           */
-          const title = card.querySelector('p.min-w-0');
-
-          if (title) {
-            title.classList.remove(
-              'font-semibold',
-              'text-gray-900'
-            );
-
-            title.classList.add(
-              'font-medium',
-              'text-gray-800'
-            );
-          }
-        }
-
-
-        /*
-         * Remove the Mark Read action after success.
-         */
-        btn.remove();
-
-
-        /*
-         * Update navbar notification badge.
-         */
         const badge = document.getElementById('sysNotifBadge');
-
         if (badge) {
           if (data.unread_count > 0) {
             badge.textContent = data.unread_count;
@@ -959,9 +371,6 @@
         }
       })
       .catch(() => {
-        /*
-         * Preserve existing fallback behavior.
-         */
         window.location.reload();
       });
   }

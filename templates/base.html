@@ -19,7 +19,7 @@
     />
 
     <link rel="stylesheet" href="{% static 'polls/css/tailwind.css' %}" />
-    <link rel="icon" type="image/png" href="{% static 'polls/img/logo.jpg' %}" />
+    <link rel="icon" type="image/jpeg" href="{% static 'polls/img/logo.jpg' %}" />
     <link rel="stylesheet" href="{% static 'polls/css/agriscan-loaders.css' %}" />
 
     {% block extra_head %}{% endblock %}
@@ -713,6 +713,152 @@
         -webkit-overflow-scrolling: touch;
       }
 
+      /* ------------------------------------------------------------
+         RESPONSIVE DATA TABLE
+         Usage: <div class="data-table-wrap"><table class="data-table">
+         Desktop and laptop (1024px+): a real table.
+         Mobile and tablet (below 1024px): every row becomes a card
+         and every cell shows its column name (data-label, filled
+         automatically from <thead> by the script at the bottom).
+         Optional: class="td-actions" on the cell that holds buttons,
+         class="td-primary" on the cell that should lead the card.
+         ------------------------------------------------------------ */
+      .data-table { width: 100%; }
+
+      /* Mobile-first: cards */
+      .data-table thead {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+      }
+      .data-table,
+      .data-table tbody,
+      .data-table tr,
+      .data-table td {
+        display: block;
+        width: 100%;
+      }
+      .data-table tbody { display: grid; gap: 0.75rem; }
+      .data-table tbody tr {
+        padding: 0.25rem 1rem;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-sm);
+        transition:
+          border-color var(--transition-base),
+          box-shadow var(--transition-base),
+          transform var(--transition-base);
+      }
+      @media (hover: hover) {
+        .data-table tbody tr:hover {
+          border-color: var(--color-border-strong);
+          box-shadow: var(--shadow-md);
+          transform: translateY(-2px);
+        }
+      }
+      .data-table td {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        min-width: 0;
+        padding: 0.625rem 0;
+        border-top: 1px solid var(--color-border);
+        color: var(--color-text);
+        font-size: 0.875rem;
+        line-height: 1.45;
+        text-align: right;
+        overflow-wrap: anywhere;
+      }
+      .data-table td:first-child { border-top: 0; }
+      .data-table td[data-label]::before {
+        content: attr(data-label);
+        flex: 0 0 38%;
+        max-width: 38%;
+        color: var(--color-text-secondary);
+        font-size: var(--text-sm);
+        font-weight: 600;
+        line-height: 1.45;
+        text-align: left;
+      }
+      .data-table td.td-primary {
+        color: var(--color-text-primary);
+        font-weight: 600;
+      }
+      .data-table td.td-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        padding-top: 0.75rem;
+      }
+      .data-table td.td-actions::before { flex-basis: 100%; max-width: 100%; }
+      .data-table td:not([data-label]) { justify-content: flex-start; text-align: left; }
+
+      /* Desktop and laptop: real table inside a card surface */
+      @media (min-width: 1024px) {
+        .data-table-wrap {
+          max-width: 100%;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          background: var(--color-surface);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          box-shadow: var(--shadow-sm);
+        }
+        .data-table { display: table; }
+        .data-table thead {
+          position: static;
+          width: auto;
+          height: auto;
+          margin: 0;
+          overflow: visible;
+          clip: auto;
+          display: table-header-group;
+        }
+        .data-table tbody { display: table-row-group; }
+        .data-table tr { display: table-row; width: auto; }
+        .data-table th,
+        .data-table td { display: table-cell; width: auto; }
+        .data-table th {
+          padding: 0.75rem 1rem;
+          color: var(--color-text-secondary);
+          background: var(--color-overlay);
+          border-bottom: 1px solid var(--color-border-strong);
+          font-size: var(--text-sm);
+          font-weight: 600;
+          text-align: left;
+          white-space: nowrap;
+        }
+        .data-table tbody tr {
+          padding: 0;
+          background: transparent;
+          border: 0;
+          border-radius: 0;
+          box-shadow: none;
+        }
+        .data-table tbody tr:hover {
+          background: var(--color-canvas);
+          border-color: transparent;
+          box-shadow: none;
+          transform: none;
+        }
+        .data-table td {
+          padding: 0.875rem 1rem;
+          border-top: 1px solid var(--color-border);
+          text-align: left;
+          overflow-wrap: normal;
+          vertical-align: middle;
+        }
+        .data-table tbody tr:first-child td { border-top: 0; }
+        .data-table td:first-child { border-top: 1px solid var(--color-border); }
+        .data-table tbody tr:first-child td:first-child { border-top: 0; }
+        .data-table td[data-label]::before { content: none; }
+        .data-table td.td-actions { white-space: nowrap; text-align: right; }
+      }
+
       /* ============================================================
          HEADER / MOBILE MENU
          ============================================================ */
@@ -809,7 +955,7 @@
     {% block extra_styles %}{% endblock %}
   </head>
 
-  <body class="min-h-screen flex flex-col text-gray-800">
+  <body class="min-h-screen flex flex-col">
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
     <!-- ==========================================================
@@ -820,7 +966,7 @@
         <div class="flex items-center justify-between h-16 sm:h-[4.25rem] gap-2 sm:gap-4">
           <a
             href="{% url 'polls:dashboard' %}"
-            class="agri-brand flex items-center gap-2 font-bold flex-shrink-0 min-w-0 rounded-lg px-1 py-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-600/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+            class="agri-brand flex items-center gap-2 font-bold flex-shrink-0 min-w-0 rounded-lg px-1 py-0.5"
             aria-label="AgriScan+ Dashboard"
           >
             <img
@@ -1038,6 +1184,26 @@
           if (error) ids.push(error.id);
           if (ids.length) input.setAttribute("aria-describedby", ids.join(" "));
           if (error) input.setAttribute("aria-invalid", "true");
+        });
+
+        /* ---------- DATA TABLE: copy <thead> names into cell labels ---------- */
+        document.querySelectorAll("table.data-table").forEach(function (table) {
+          var heads = Array.prototype.map.call(
+            table.querySelectorAll("thead tr:last-child th"),
+            function (th) { return (th.textContent || "").replace(/\s+/g, " ").trim(); }
+          );
+          if (!heads.length) return;
+
+          table.querySelectorAll("tbody tr").forEach(function (row) {
+            var col = 0;
+            Array.prototype.forEach.call(row.children, function (cell) {
+              var span = parseInt(cell.getAttribute("colspan") || "1", 10) || 1;
+              if (span === 1 && !cell.hasAttribute("data-label") && heads[col]) {
+                cell.setAttribute("data-label", heads[col]);
+              }
+              col += span;
+            });
+          });
         });
 
         /* ---------- FILE PREVIEW ---------- */

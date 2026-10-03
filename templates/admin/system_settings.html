@@ -1,133 +1,141 @@
 {% extends "base.html" %}
 {% block title %}System Settings · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header */
+  .ss-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .ss-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .ss-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .ss-title { margin: 0; }
+  .ss-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .ss-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .ss-head { padding: 1.5rem; }
+    .ss-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .ss-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  /* Stats Grid */
+  .ss-stats-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .ss-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .ss-stats-grid { grid-template-columns: repeat(4, 1fr); } }
+  
+  .ss-stat-card { padding: 1.25rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-xs); display: flex; flex-direction: column; gap: 0.5rem; }
+  .ss-stat-icon { width: 2rem; height: 2rem; border-radius: var(--radius-sm); display: inline-flex; align-items: center; justify-content: center; }
+  .ss-stat-icon--success { background: var(--color-success-soft); color: var(--color-success-text); }
+  .ss-stat-icon--info { background: var(--color-info-soft); color: var(--color-info-text); }
+  .ss-stat-icon--warning { background: var(--color-warning-soft); color: var(--color-warning-text); }
+  .ss-stat-icon--neutral { background: var(--color-overlay); color: var(--color-text-secondary); }
+  
+  .ss-stat-label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin: 0; }
+  .ss-stat-value { font-size: 1.5rem; font-weight: 700; color: var(--color-text-primary); margin: 0; line-height: 1.2; }
+  .ss-stat-desc { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 0; line-height: 1.4; }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  /* .badge-base sets display, so the hidden attribute must be re-asserted */
+  .badge-base[hidden] { display: none; }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .badge-danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .badge-info    { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+
+  /* Form specifics */
+  .ss-section-title { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); margin: 0 0 0.75rem 0; display: flex; align-items: center; gap: 0.5rem; }
+  .ss-section-dot { width: 0.375rem; height: 0.375rem; border-radius: var(--radius-full); }
+  
+  .ss-toggle-label { display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; background: var(--color-overlay); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--color-border); transition: background var(--transition-base); }
+  .ss-toggle-label:hover { background: var(--color-canvas); }
+  .ss-toggle-text { font-size: var(--text-sm); font-weight: 500; color: var(--color-text-primary); display: block; }
+  .ss-toggle-help { font-size: var(--text-xs); color: var(--color-text-secondary); display: block; margin-top: 0.125rem; font-weight: 400; }
+</style>
+{% endblock %}
+
 {% block content %}
-<!-- Tagalog: Page na ito ay para sa admin lamang; dito ise-set ang global settings tulad ng pinapayagang araw para sa planting date. -->
-<section class="page-container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<section class="page-container min-w-0">
 
-  <!-- Responsive Page Header -->
-  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+  <!-- Page Header -->
+  <header class="agri-card ss-head">
+    <div class="ss-head-main">
+      <span class="ss-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31.826-2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.607 2.296.07 2.572-1.065z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </span>
       <div class="min-w-0">
-        <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 flex items-start sm:items-center gap-3 ">
-          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700" aria-hidden="true">
-          <svg class="h-6 w-6 sm:h-7 sm:w-7 text-emerald-600 shrink-0 mt-0.5 sm:mt-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924-1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31.826-2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.607 2.296.07 2.572-1.065z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          </div>
-          <span>System Settings</span>
-        </h1>
-        <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-          Configure global rules for planting dates, AI thresholds, and system-wide features.
-        </p>
-      </div>
-
-      <div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:flex-shrink-0">
-        <span id="unsaved-chip" class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-          <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
-          Unsaved changes
-        </span>
-
-        <a href="{% url 'polls:dashboard' %}" class="btn btn-secondary">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-          </svg>
-          <span>Back to Dashboard</span>
-        </a>
-
-        <button type="button" id="reset-recommended" form="system-settings-form" data-loading class="btn btn-secondary">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6"/>
-          </svg>
-          <span>Fill Recommended</span>
-        </button>
-
-        <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-          </svg>
-          <span>Audit Log</span>
-        </a>
-      </div>
-    </div>
-    <p class="mt-3 text-xs text-gray-400 leading-relaxed border-t border-gray-100 pt-3">
-      <span class="font-medium text-gray-500">Note:</span> This page lets an admin control global constraints. Changes apply system-wide immediately upon saving.
-    </p7>
-  </div>
-
-  <!-- Current Effective Settings Summary (Neutralized from Rainbow Gradients per Spec) -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <!-- Card 1: Current Rule -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="inline-flex items-center justify-center h-6 w-6 rounded-md bg-emerald-50 text-emerald-600">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </span>
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Current Rule</p>
-        </div>
-        <p class="text-2xl font-bold text-gray-900">
-          {{ current_allowed_days }} day{% if current_allowed_days != 1 %}s{% endif %}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">
-          Planting dates older than <span class="font-semibold text-gray-700">today − {{ current_allowed_days }} day(s)</span> are not allowed.
-        </p>
+        <h1 class="ss-title">System Settings</h1>
+        <p class="ss-lead">Configure global rules for planting dates, AI thresholds, and system-wide features.</p>
       </div>
     </div>
 
-    <!-- Card 2: AI Confidence -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="inline-flex items-center justify-center h-6 w-6 rounded-md bg-blue-50 text-blue-600">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          </span>
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Confidence Threshold</p>
-        </div>
-        <p class="text-2xl font-bold text-gray-900">
-          {{ current_confidence_threshold }}%
-        </p>
-        <p class="mt-1 text-xs text-gray-500">
-          Images below this threshold are treated as <span class="font-semibold text-gray-700">Unknown/Not Rice</span>.
-        </p>
+    <div class="ss-head-actions">
+      <span id="unsaved-chip" class="badge-base badge-warning" role="status" hidden>
+        <span class="h-1.5 w-1.5 rounded-full bg-[var(--color-warning-text)]" aria-hidden="true"></span>
+        Unsaved changes
+      </span>
+
+      <a href="{% url 'polls:dashboard' %}" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Dashboard</span>
+      </a>
+
+      <button type="button" id="reset-recommended" form="system-settings-form" data-loading class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v6h6M20 20v-6h-6"/></svg>
+        <span>Fill Recommended</span>
+      </button>
+
+      <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <span>Audit Log</span>
+      </a>
+    </div>
+  </header>
+
+  <p class="mb-6 text-[var(--text-xs)] text-[var(--color-text-muted)] leading-relaxed">
+    <span class="font-medium text-[var(--color-text-secondary)]">Note:</span> This page lets an admin control global constraints. Changes apply system-wide immediately upon saving.
+  </p>
+
+  <!-- Current Effective Settings Summary -->
+  <div class="ss-stats-grid">
+    <div class="ss-stat-card">
+      <div class="ss-stat-icon ss-stat-icon--success">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       </div>
+      <p class="ss-stat-label">Current Rule</p>
+      <p class="ss-stat-value">{{ current_allowed_days }} day{{ current_allowed_days|pluralize }}</p>
+      <p class="ss-stat-desc">Planting dates older than today − {{ current_allowed_days }} day(s) are not allowed.</p>
     </div>
 
-    <!-- Card 3: Yield CNN Mode -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="inline-flex items-center justify-center h-6 w-6 rounded-md bg-amber-50 text-amber-600">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
-          </span>
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Yield CNN Mode</p>
-        </div>
-        <p class="text-2xl font-bold text-gray-900">
-          {% if current_yield_cnn_enabled %}Enabled{% else %}Disabled{% endif %}  
-        </p>
-        <p class="mt-1 text-xs text-gray-500">
-          Controls whether users can select <span class="font-semibold text-gray-700">CNN Yield</span> in the Yield Tool.
-        </p>
+    <div class="ss-stat-card">
+      <div class="ss-stat-icon ss-stat-icon--info">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       </div>
+      <p class="ss-stat-label">Confidence Threshold</p>
+      <p class="ss-stat-value">{{ current_confidence_threshold }}%</p>
+      <p class="ss-stat-desc">Images below this threshold are treated as Unknown/Not Rice.</p>
     </div>
 
-    <!-- Card 4: Email Notifications -->
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col justify-between">
-      <div>
-        <div class="flex items-center gap-2 mb-2">
-          <span class="inline-flex items-center justify-center h-6 w-6 rounded-md bg-slate-100 text-slate-600">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-          </span>
-          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Email Notifications</p>
-        </div>
-        <p class="text-2xl font-bold text-gray-900">
-          {% if current_email_enabled %}Enabled{% else %}Disabled{% endif %}
-        </p>
-        <p class="mt-1 text-xs text-gray-500">
-          Controls whether system email alerts are actively sent.
-        </p>
+    <div class="ss-stat-card">
+      <div class="ss-stat-icon ss-stat-icon--warning">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
       </div>
+      <p class="ss-stat-label">Yield CNN Mode</p>
+      <p class="ss-stat-value">{% if current_yield_cnn_enabled %}Enabled{% else %}Disabled{% endif %}</p>
+      <p class="ss-stat-desc">Controls whether users can select CNN Yield in the Yield Tool.</p>
+    </div>
+
+    <div class="ss-stat-card">
+      <div class="ss-stat-icon ss-stat-icon--neutral">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+      </div>
+      <p class="ss-stat-label">Email Notifications</p>
+      <p class="ss-stat-value">{% if current_email_enabled %}Enabled{% else %}Disabled{% endif %}</p>
+      <p class="ss-stat-desc">Controls whether system email alerts are actively sent.</p>
     </div>
   </div>
 
@@ -140,41 +148,43 @@
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-      <div class="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
-        <svg class="h-5 w-5 text-red-500 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-        </svg>
-        <div>
-          <p class="text-sm font-semibold text-red-800">Please fix the following errors:</p>
-          <p class="text-sm text-red-600 mt-0.5">{{ form.non_field_errors }}</p>
+      <div class="agri-alert agri-alert-danger">
+        <div class="flex items-start gap-3">
+          <svg class="h-5 w-5 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          </svg>
+          <div>
+            <p class="font-semibold">Please fix the following errors:</p>
+            <p class="mt-0.5">{{ form.non_field_errors }}</p>
+          </div>
         </div>
       </div>
     {% endif %}
 
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="px-6 py-4 bg-slate-50/60 border-b border-gray-200">
-        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Global Rules Configuration</h2>
-        <p class="mt-1 text-xs text-gray-400">Edit values below, then click Save Settings to apply globally.</p>
+    <div class="agri-card overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-[var(--color-border)]">
+        <h2 class="text-[var(--text-md)] font-semibold">Global Rules Configuration</h2>
+        <p class="mt-1 text-[var(--text-sm)] text-[var(--color-text-secondary)]">Edit values below, then click Save Settings to apply globally.</p>
       </div>
       
-      <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+      <div class="p-5 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         <!-- Left Column -->
         <div class="space-y-8">
           <!-- Planting Constraints -->
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            <h3 class="ss-section-title">
+              <span class="ss-section-dot bg-[var(--color-success-text)]"></span>
               Planting Constraints
             </h3>
-            <label for="{{ form.allowed_past_days_planting.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.allowed_past_days_planting.id_for_label }}" class="block text-[var(--text-sm)] font-medium mb-1.5">
               Allowed Past Days for Planting Date
             </label>
             {{ form.allowed_past_days_planting }}
             {% if form.allowed_past_days_planting.help_text %}
-              <p class="mt-1 text-xs text-gray-400">{{ form.allowed_past_days_planting.help_text }}</p>
+              <p class="mt-1.5 form-help">{{ form.allowed_past_days_planting.help_text }}</p>
             {% endif %}
             {% if form.allowed_past_days_planting.errors %}
-              <p class="mt-1 text-xs text-red-600 flex items-center gap-1">
+              <p class="mt-1.5 form-error flex items-center gap-1">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 {{ form.allowed_past_days_planting.errors.0 }}
               </p>
@@ -183,19 +193,19 @@
 
           <!-- Detection Quality Gate -->
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+            <h3 class="ss-section-title">
+              <span class="ss-section-dot bg-[var(--color-info-text)]"></span>
               Detection Quality Gate
             </h3>
-            <label for="{{ form.detection_confidence_threshold.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.detection_confidence_threshold.id_for_label }}" class="block text-[var(--text-sm)] font-medium mb-1.5">
               AI Detection Confidence Threshold
             </label>
             {{ form.detection_confidence_threshold }}
             {% if form.detection_confidence_threshold.help_text %}
-              <p class="mt-1 text-xs text-gray-400">{{ form.detection_confidence_threshold.help_text }}</p>
+              <p class="mt-1.5 form-help">{{ form.detection_confidence_threshold.help_text }}</p>
             {% endif %}
             {% if form.detection_confidence_threshold.errors %}
-              <p class="mt-1 text-xs text-red-600 flex items-center gap-1">
+              <p class="mt-1.5 form-error flex items-center gap-1">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 {{ form.detection_confidence_threshold.errors.0 }}
               </p>
@@ -207,26 +217,26 @@
         <div class="space-y-8">
           <!-- Yield Model Access -->
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span>
+            <h3 class="ss-section-title">
+              <span class="ss-section-dot bg-[var(--color-warning-text)]"></span>
               Yield Model Access
             </h3>
-            <label for="{{ form.yield_cnn_enabled.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.yield_cnn_enabled.id_for_label }}" class="block text-[var(--text-sm)] font-medium mb-1.5">
               Enable CNN Yield Model
             </label>
-            <label class="flex items-start gap-3 cursor-pointer bg-slate-50/50 p-3 rounded-lg border border-gray-100 hover:bg-slate-50 transition">
+            <label class="ss-toggle-label">
               <div class="pt-0.5">{{ form.yield_cnn_enabled }}</div>
-              <div class="text-sm">
-                <span id="cnn-toggle-text" class="font-medium text-gray-800 block">
+              <div>
+                <span id="cnn-toggle-text" class="ss-toggle-text">
                   {% if current_yield_cnn_enabled %}CNN Yield is currently enabled for users.{% else %}CNN Yield is currently disabled for users.{% endif %}
                 </span>
                 {% if form.yield_cnn_enabled.help_text %}
-                  <span class="block text-xs text-gray-500 font-normal mt-0.5">{{ form.yield_cnn_enabled.help_text }}</span>
+                  <span class="ss-toggle-help">{{ form.yield_cnn_enabled.help_text }}</span>
                 {% endif %}
               </div>
             </label>
             {% if form.yield_cnn_enabled.errors %}
-              <p class="mt-1 text-xs text-red-600 flex items-center gap-1">
+              <p class="mt-1.5 form-error flex items-center gap-1">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 {{ form.yield_cnn_enabled.errors.0 }}
               </p>
@@ -235,26 +245,26 @@
 
           <!-- Email Notifications -->
           <div>
-            <h3 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-              <span class="h-1.5 w-1.5 rounded-full bg-slate-500"></span>
+            <h3 class="ss-section-title">
+              <span class="ss-section-dot bg-[var(--color-text-secondary)]"></span>
               Email Notifications
             </h3>
-            <label for="{{ form.email_enabled.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="{{ form.email_enabled.id_for_label }}" class="block text-[var(--text-sm)] font-medium mb-1.5">
               Enable System Email Notifications
             </label>
-            <label class="flex items-start gap-3 cursor-pointer bg-slate-50/50 p-3 rounded-lg border border-gray-100 hover:bg-slate-50 transition">
+            <label class="ss-toggle-label">
               <div class="pt-0.5">{{ form.email_enabled }}</div>
-              <div class="text-sm">
-                <span id="email-toggle-text" class="font-medium text-gray-800 block">
+              <div>
+                <span id="email-toggle-text" class="ss-toggle-text">
                   {% if current_email_enabled %}System email notifications are currently enabled.{% else %}System email notifications are currently disabled.{% endif %}
                 </span>
                 {% if form.email_enabled.help_text %}
-                  <span class="block text-xs text-gray-500 font-normal mt-0.5">{{ form.email_enabled.help_text }}</span>
+                  <span class="ss-toggle-help">{{ form.email_enabled.help_text }}</span>
                 {% endif %}
               </div>
             </label>
             {% if form.email_enabled.errors %}
-              <p class="mt-1 text-xs text-red-600 flex items-center gap-1">
+              <p class="mt-1.5 form-error flex items-center gap-1">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
                 {{ form.email_enabled.errors.0 }}
               </p>
@@ -266,22 +276,18 @@
 
     <!-- Responsive Actions -->
     <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
-      <a href="{% url 'polls:dashboard' %}" onclick="history.back(); return false;" class="btn btn-secondary w-full sm:w-auto text-center">
-        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-        </svg>
+      <a href="{% url 'polls:dashboard' %}" onclick="history.back(); return false;" class="btn btn-secondary w-full sm:w-auto">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         Cancel
       </a>
 
-      <button type="submit" id="system-settings-submit" form="system-settings-form" data-loading class="btn btn-primary w-full sm:w-auto justify-center">
-        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-        </svg>
+      <button type="submit" id="system-settings-submit" form="system-settings-form" data-loading class="btn btn-primary w-full sm:w-auto">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
         Save Settings
       </button>
     </div>
 
-    <p class="text-xs text-gray-400 italic text-center sm:text-left">
+    <p class="text-[var(--text-xs)] text-[var(--color-text-muted)] italic text-center sm:text-left">
       Tip: "Fill Recommended" only updates form inputs locally. Changes are not applied to the system until you click Save Settings.
     </p>
   </form>
@@ -289,73 +295,65 @@
   <!-- Audit log -->
   {% if audits %}
   <section class="mt-10">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-      <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <h2 class="text-[var(--text-lg)] font-semibold mb-4 flex items-center gap-2">
+      <svg class="h-5 w-5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
       Recent Configuration Changes
     </h2>
-    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm">
-          <thead class="bg-slate-50/80 border-b border-gray-200">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">When</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Who</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">What Changed</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            {% for entry in audits %}
-            <tr class="hover:bg-gray-50/50 transition-colors">
-              <td class="px-6 py-4 text-gray-600 whitespace-nowrap">{{ entry.changed_at|date:'M d, Y H:i' }}</td>
-              <td class="px-6 py-4 text-gray-700">
-                {% if entry.changed_by %}
-                  <span class="font-medium">{{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</span>
-                {% else %}
-                  <span class="text-gray-500 italic">(system)</span>
-                {% endif %}
-              </td>
-              <td class="px-6 py-4 text-gray-700">
-                {% if entry.details.changes %}
-                  <ul class="space-y-1.5">
-                    {% for key, diff in entry.details.changes.items %}
-                      <li class="flex items-start gap-2 text-xs">
-                        <span class="shrink-0 mt-0.5 h-1.5 w-1.5 rounded-full bg-gray-300"></span>
-                        <span>
-                          <span class="font-semibold text-gray-900">{{ key }}</span>: 
-                          <span class="text-red-600 line-through decoration-red-300">{{ diff.from }}</span> 
-                          <span class="text-gray-400 mx-1">→</span> 
-                          <span class="text-emerald-700 font-medium">{{ diff.to }}</span>
-                        </span>
-                      </li>
-                    {% endfor %}
-                  </ul>
-                {% else %}
-                  <p class="text-xs text-gray-400 italic">No changes (saved current values).</p>
-                {% endif %}
-              </td>
-            </tr>
-            {% endfor %}
-            {% if not audits %}
-            <tr>
-              <td colspan="3" class="px-6 py-8 text-center text-sm text-gray-500">No audit records found.</td>
-            </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">When</th>
+            <th scope="col">Who</th>
+            <th scope="col">What Changed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in audits %}
+          <tr>
+            <td data-label="When" class="whitespace-nowrap">{{ entry.changed_at|date:'M d, Y H:i' }}</td>
+            <td data-label="Who">
+              {% if entry.changed_by %}
+                <span class="font-medium">{{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</span>
+              {% else %}
+                <span class="text-[var(--color-text-muted)] italic">(system)</span>
+              {% endif %}
+            </td>
+            <td data-label="What Changed">
+              {% if entry.details.changes %}
+                <ul class="space-y-1.5">
+                  {% for key, diff in entry.details.changes.items %}
+                    <li class="flex items-start gap-2 text-[var(--text-xs)]">
+                      <span class="shrink-0 mt-1 h-1.5 w-1.5 rounded-full bg-[var(--color-border-strong)]"></span>
+                      <span>
+                        <span class="font-semibold">{{ key }}</span>: 
+                        <span class="text-[var(--color-danger-text)] line-through decoration-[var(--color-danger-border)]">{{ diff.from }}</span> 
+                        <span class="text-[var(--color-text-muted)] mx-1">to</span> 
+                        <span class="text-[var(--color-success-text)] font-medium">{{ diff.to }}</span>
+                      </span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="text-[var(--text-xs)] text-[var(--color-text-muted)] italic">No changes (saved current values).</p>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="text-center py-12 text-[var(--color-text-muted)]">No audit records found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </section>
   {% endif %}
 
   <script>
   (function () {
-    // UI Form Helper Flow:
-    // 1) I-track ang initial values
-    // 2) Ipakita ang unsaved chip kapag may pagbabago
-    // 3) I-sync ang helper text ng toggles
-    // 4) I-apply ang recommended defaults kapag ni-reset
     const resetButton = document.getElementById('reset-recommended');
     const form = document.getElementById('system-settings-form');
     const submitButton = document.getElementById('system-settings-submit');
@@ -368,7 +366,6 @@
     if (!resetButton || !form || !submitButton) return;
 
     const trackedInputs = Array.from(form.querySelectorAll('input, select, textarea'));
-    // Baseline state na paghahambingan para malaman kung "dirty" ang form.
     const initialState = trackedInputs.map((el) => (
       el.type === 'checkbox' ? String(!!el.checked) : String(el.value)
     ));
@@ -383,7 +380,7 @@
     function syncUnsavedChip() {
       if (!unsavedChip) return;
       const dirty = hasUnsavedChanges();
-      unsavedChip.classList.toggle('hidden', !dirty);
+      unsavedChip.hidden = !dirty;
     }
 
     function syncCnnText() {
@@ -414,7 +411,6 @@
     });
 
     resetButton.addEventListener('click', function () {
-      // Dapat naka-sync ito sa backend recommended defaults.
       const defaults = {
         allowed_past_days_planting: Number(form.dataset.recommendedAllowedPastDays || 30),
         detection_confidence_threshold: Number(form.dataset.recommendedConfidenceThreshold || 75),
@@ -444,10 +440,6 @@
   })();
 
   (function () {
-    // Loader Flow (System Settings Submit):
-    // - Kapag valid ang form submit, buksan ang modal loader
-    // - I-animate ang step progression para may visual feedback
-    // - I-reset sa pageshow para hindi mag-stuck kapag back/forward navigation
     const STEPS = [
       'Loading current settings...',
       'Validating configuration...',

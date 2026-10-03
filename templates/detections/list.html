@@ -1,7 +1,87 @@
 ﻿{% extends 'base.html' %}
 {% block title %}Detection Records · AgriScan+{% endblock %}
 
-{% block extra_head %}{% endblock %}
+{% block styles %}
+<style>
+  .dr-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .dr-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .dr-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .dr-title { margin: 0; }
+  .dr-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .dr-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .dr-chip { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: var(--btn-h); padding: 0 0.875rem; color: var(--color-text); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
+  @media (min-width: 640px) {
+    .dr-head { padding: 1.5rem; }
+    .dr-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .dr-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .dr-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .dr-filters { padding: 1.5rem; } }
+  .dr-filters form { display: grid; gap: 1rem; }
+  .dr-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .dr-search { position: relative; flex: 1; min-width: 0; }
+  .dr-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .dr-search input { padding-left: 2.5rem; }
+  .dr-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .dr-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .dr-search-row { flex-direction: row; }
+    .dr-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .dr-kbd { display: inline-block; }
+    .dr-search input { padding-right: 5rem; }
+    .dr-selects { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  }
+
+  .btn-warn { color: var(--color-warning-text); border-color: var(--color-warning-border); }
+  .btn-warn:hover { color: var(--color-warning-text); background: var(--color-warning-soft); border-color: #f59e0b; }
+
+  .dr-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .dr-bulk[hidden] { display: none; }
+  .dr-bulk-count { font-weight: 600; margin-right: auto; }
+
+  .dr-badge { display: inline-flex; align-items: center; padding: 0.125rem 0.625rem; border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); background: var(--color-overlay); color: var(--color-text); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; white-space: nowrap; }
+  .dr-badge--success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .dr-badge--warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .dr-badge--danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .dr-code { display: inline-flex; padding: 0.125rem 0.5rem; color: var(--color-success-text); background: var(--color-success-soft); border: 1px solid var(--color-success-border); border-radius: var(--radius-xs); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-sm); font-weight: 600; }
+  .dr-muted { color: var(--color-text-muted); font-style: italic; }
+  .dr-num { text-align: right; }
+  .dr-nowrap { white-space: nowrap; }
+  .dr-conf { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .dr-conf--high { color: var(--color-success-text); }
+  .dr-conf--mid  { color: var(--color-warning-text); }
+  .dr-conf--low  { color: var(--color-danger-text); }
+  .dr-thumb { display: block; width: 3.5rem; height: 3.5rem; object-fit: cover; background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); }
+  .dr-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+
+  .dr-check { justify-content: center; min-width: 2.75rem; }
+  .data-table th.dr-th-check { width: 3.5rem; padding-inline: 0.5rem; text-align: center; }
+  .data-table td.dr-td-check { padding-inline: 0.5rem; text-align: center; }
+  .data-table tbody tr.det-row { cursor: pointer; }
+  .data-table tbody tr.det-row.is-selected { background: var(--color-brand-light); border-color: var(--color-brand-border); }
+  @media (min-width: 1024px) {
+    .data-table tbody tr.det-row.is-selected,
+    .data-table tbody tr.det-row.is-selected:hover { background: var(--color-brand-light); }
+  }
+
+  .dr-sort { display: inline-flex; align-items: center; gap: 0.375rem; color: inherit; text-decoration: none; }
+  .dr-sort:hover { color: var(--color-text-primary); }
+  .dr-sort svg { width: 0.75rem; height: 0.75rem; opacity: 0; }
+  .dr-sort:hover svg { opacity: 0.5; }
+  .dr-sort.is-active { color: var(--color-text-primary); }
+  .dr-sort.is-active svg { opacity: 1; color: var(--color-brand); }
+
+  .dr-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .dr-empty { padding: 3rem; } }
+  .dr-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .dr-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
 
 {% block content %}
 
@@ -10,1014 +90,415 @@
   <h1 class="text-xl font-bold text-gray-900">AgriScan+ · Detection Records</h1>
   <p class="mt-1 text-sm text-gray-500">
     Printed on <span id="det-print-date"></span>
-    {% if request.GET.search or request.GET.disease or request.GET.date_filter %}
-      · Filtered view
-    {% endif %}
+    {% if request.GET.search or request.GET.date_filter or request.GET.disease or request.GET.variety %} · Filtered view{% endif %}
   </p>
 </div>
 
-<section class="page-container">
+<section class="page-container min-w-0">
 
-  <!-- =========================================================
-       PAGE HEADER
-       ========================================================= -->
-  <div class="mb-6 rounded-lg border border-gray-200 bg-white shadow-sm">
-    <div class="flex flex-col gap-4 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
-
+  <!-- PAGE HEADER -->
+  <header class="agri-card dr-head">
+    <div class="dr-head-main">
+      <span class="dr-icon" aria-hidden="true"><svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
       <div class="min-w-0">
-        <div class="flex items-center gap-3">
-          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-green-50 text-green-700">
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-          </span>
-
-          <div class="min-w-0">
-            <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-              Detection Records
-            </h1>
-            <p class="mt-1 text-sm text-gray-500">
-              Review and manage your leaf scan detection history.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-
-        <!-- Record count -->
-        <div class="inline-flex min-h-[42px] items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3.5 py-2">
-          <svg class="h-4 w-4 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M5 13l4 4L19 7"/>
-          </svg>
-          <span class="text-sm font-medium text-gray-700">
-            {{ total_count }} Record{{ total_count|pluralize }}
-          </span>
-        </div>
-
-        <!-- Print -->
-        <button
-          type="button"
-          onclick="handlePagePrint()"
-          class="no-print inline-flex min-h-[42px] items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-          aria-label="Print detection records"
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-          </svg>
-          Print
-        </button>
-
-        <!-- Export -->
-        <button
-          type="button"
-          onclick="openDetExportModal()"
-          class="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          Export
-          <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 9l-7 7-7-7"/>
-          </svg>
-        </button>
-
-        <!-- New Scan -->
-        <a
-          href="{% url 'polls:scan' %}"
-          class="no-print inline-flex min-h-[42px] items-center justify-center gap-2 rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-          </svg>
-          New Scan
-        </a>
+        <h1 class="dr-title">Detection Records</h1>
+        <p class="dr-lead">Review and manage your leaf scan detection history.</p>
       </div>
     </div>
 
-    <!-- =======================================================
-         FILTER / SEARCH PANEL
-         ======================================================= -->
-    <div class="border-t border-gray-200 bg-gray-50/70 p-4 sm:p-5">
-      <form method="get" class="space-y-3">
+    <div class="dr-head-actions">
+      <span class="dr-chip"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>{{ total_count }} Record{{ total_count|pluralize }}</span>
 
-        <!-- Search -->
-        <div class="flex flex-col gap-2 sm:flex-row">
-          <div class="relative min-w-0 flex-1">
-            <label for="det-search" class="sr-only">Search detection records</label>
+      <button type="button" onclick="handlePagePrint()" class="btn btn-secondary no-print" aria-label="Print detection records"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg><span>Print</span></button>
 
-            
+      <button type="button" onclick="openDetExportModal()" class="btn btn-secondary no-print"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg><span>Export</span></button>
 
-            <input
-              id="det-search"
-              type="text"
-              name="search"
-              value="{{ request.GET.search }}"
-              placeholder="Search ID, disease, variety, field… (Ctrl+K)"
-              autocomplete="off"
-              class="min-h-[44px] w-full rounded-md border border-gray-300 bg-white py-2.5 pl-9 pr-3 text-base text-gray-900 shadow-sm outline-none transition placeholder:text-gray-400 hover:border-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:text-sm"
-            />
-          </div>
-
-          <!-- Preserve filter values -->
-          <input type="hidden" name="date_filter" value="{{ request.GET.date_filter }}">
-          <input type="hidden" name="disease" value="{{ request.GET.disease }}">
-          <input type="hidden" name="variety" value="{{ request.GET.variety }}">
-          <input type="hidden" name="sort" value="{{ request.GET.sort }}">
-          <input type="hidden" name="page_size" value="{{ page_size }}">
-
-          <button
-            type="submit"
-            data-loading
-            class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-1.5 rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-          >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            Search
-          </button>
-
-          {% if request.GET.search or request.GET.date_filter or request.GET.disease or request.GET.variety %}
-            <a
-              href="{% url 'polls:detections_list' %}"
-              class="inline-flex min-h-[44px] items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-600 transition hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-            >
-              Clear
-            </a>
-          {% endif %}
-        </div>
-
-        <!-- Filters -->
-        <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-
-          <!-- Date -->
-          <div class="relative">
-            <label for="det-date-filter" class="sr-only">Date filter</label>
-            <select
-              id="det-date-filter"
-              name="date_filter"
-              onchange="this.form.submit()"
-              class="min-h-[44px] w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-base text-gray-700 shadow-sm outline-none transition hover:border-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:text-sm"
-            >
-              <option value="">All Time</option>
-              <option value="today" {% if request.GET.date_filter == 'today' %}selected{% endif %}>Today</option>
-              <option value="week" {% if request.GET.date_filter == 'week' %}selected{% endif %}>This Week</option>
-              <option value="month" {% if request.GET.date_filter == 'month' %}selected{% endif %}>This Month</option>
-            </select>
-
-            <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                    d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-
-          <!-- Disease -->
-          <div class="relative">
-            <label for="det-disease-filter" class="sr-only">Disease filter</label>
-            <select
-              id="det-disease-filter"
-              name="disease"
-              onchange="this.form.submit()"
-              class="min-h-[44px] w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-base text-gray-700 shadow-sm outline-none transition hover:border-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:text-sm"
-            >
-              <option value="">All Conditions</option>
-              {% if detection_classes %}
-                {% for d in detection_classes %}
-                  <option value="{{ d }}" {% if request.GET.disease == d %}selected{% endif %}>{{ d }}</option>
-                {% endfor %}
-              {% endif %}
-            </select>
-
-            <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                    d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-
-          <!-- Variety -->
-          <div class="relative">
-            <label for="det-variety-filter" class="sr-only">Variety filter</label>
-            <select
-              id="det-variety-filter"
-              name="variety"
-              onchange="this.form.submit()"
-              class="min-h-[44px] w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-base text-gray-700 shadow-sm outline-none transition hover:border-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:text-sm"
-            >
-              <option value="">All Varieties</option>
-              {% for v in varieties %}
-                <option value="{{ v }}" {% if request.GET.variety == v %}selected{% endif %}>{{ v }}</option>
-              {% endfor %}
-            </select>
-
-            <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                    d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-
-          <!-- Sort -->
-          <div class="relative">
-            <label for="det-sort-filter" class="sr-only">Sort detection records</label>
-            <select
-              id="det-sort-filter"
-              name="sort"
-              onchange="this.form.submit()"
-              class="min-h-[44px] w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-base text-gray-700 shadow-sm outline-none transition hover:border-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:text-sm"
-            >
-              <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest</option>
-              <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest</option>
-              <option value="-severity_pct" {% if request.GET.sort == '-severity_pct' or not request.GET.sort %}selected{% endif %}>Severity ↓</option>
-              <option value="severity_pct" {% if request.GET.sort == 'severity_pct' %}selected{% endif %}>Severity ↑</option>
-              <option value="-confidence_pct" {% if request.GET.sort == '-confidence_pct' %}selected{% endif %}>Confidence ↓</option>
-              <option value="confidence_pct" {% if request.GET.sort == 'confidence_pct' %}selected{% endif %}>Confidence ↑</option>
-              <option value="disease__name" {% if request.GET.sort == 'disease__name' %}selected{% endif %}>Disease A-Z</option>
-              <option value="-disease__name" {% if request.GET.sort == '-disease__name' %}selected{% endif %}>Disease Z-A</option>
-              <option value="planting__variety__code" {% if request.GET.sort == 'planting__variety__code' %}selected{% endif %}>Variety A-Z</option>
-              <option value="-planting__variety__code" {% if request.GET.sort == '-planting__variety__code' %}selected{% endif %}>Variety Z-A</option>
-              <option value="planting__field__name" {% if request.GET.sort == 'planting__field__name' %}selected{% endif %}>Field A-Z</option>
-              <option value="-planting__field__name" {% if request.GET.sort == '-planting__field__name' %}selected{% endif %}>Field Z-A</option>
-            </select>
-
-            <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                    d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-
-          <!-- Page size -->
-          <div class="relative">
-            <label for="det-page-size" class="sr-only">Records per page</label>
-            <select
-              id="det-page-size"
-              name="page_size"
-              onchange="this.form.submit()"
-              class="min-h-[44px] w-full appearance-none rounded-md border border-gray-300 bg-white px-3 py-2 pr-9 text-base text-gray-700 shadow-sm outline-none transition hover:border-gray-400 focus:border-green-600 focus:ring-2 focus:ring-green-100 sm:text-sm"
-            >
-              <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
-              <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
-              <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
-              <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
-            </select>
-
-            <svg class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                    d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-
-        </div>
-      </form>
+      <a href="{% url 'polls:scan' %}" class="btn btn-primary no-print"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span>New Scan</span></a>
     </div>
+  </header>
+
+  <!-- SEARCH AND FILTERS -->
+  <div class="agri-card dr-filters no-print">
+    <form method="get" role="search" aria-label="Search and filter detection records">
+
+      <div class="dr-search-row">
+        <div class="dr-search">
+          <label for="det-search" class="sr-only-agri">Search detection records</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="det-search" type="search" name="search" value="{{ request.GET.search }}" placeholder="Search ID, disease, variety, field" autocomplete="off">
+          <kbd class="dr-kbd" aria-hidden="true">Ctrl K</kbd>
+        </div>
+
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
+
+        {% if request.GET.search or request.GET.date_filter or request.GET.disease or request.GET.variety %}
+        <a href="{% url 'polls:detections_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+      </div>
+
+      <div class="dr-selects">
+        <div>
+          <label for="det-date-filter" class="sr-only-agri">Date filter</label>
+          <select id="det-date-filter" name="date_filter" data-autosubmit class="form-select">
+            <option value="">All Time</option>
+            <option value="today" {% if request.GET.date_filter == 'today' %}selected{% endif %}>Today</option>
+            <option value="week" {% if request.GET.date_filter == 'week' %}selected{% endif %}>This Week</option>
+            <option value="month" {% if request.GET.date_filter == 'month' %}selected{% endif %}>This Month</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="det-disease-filter" class="sr-only-agri">Disease filter</label>
+          <select id="det-disease-filter" name="disease" data-autosubmit class="form-select">
+            <option value="">All Conditions</option>
+            {% for d in detection_classes %}
+            <option value="{{ d }}" {% if request.GET.disease == d %}selected{% endif %}>{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="det-variety-filter" class="sr-only-agri">Variety filter</label>
+          <select id="det-variety-filter" name="variety" data-autosubmit class="form-select">
+            <option value="">All Varieties</option>
+            {% for v in varieties %}
+            <option value="{{ v }}" {% if request.GET.variety == v %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label for="det-sort-filter" class="sr-only-agri">Sort detection records</label>
+          <select id="det-sort-filter" name="sort" data-autosubmit class="form-select">
+            <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest</option>
+            <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest</option>
+            <option value="-severity_pct" {% if request.GET.sort == '-severity_pct' or not request.GET.sort %}selected{% endif %}>Severity (Highest)</option>
+            <option value="severity_pct" {% if request.GET.sort == 'severity_pct' %}selected{% endif %}>Severity (Lowest)</option>
+            <option value="-confidence_pct" {% if request.GET.sort == '-confidence_pct' %}selected{% endif %}>Confidence (Highest)</option>
+            <option value="confidence_pct" {% if request.GET.sort == 'confidence_pct' %}selected{% endif %}>Confidence (Lowest)</option>
+            <option value="disease__name" {% if request.GET.sort == 'disease__name' %}selected{% endif %}>Disease A-Z</option>
+            <option value="-disease__name" {% if request.GET.sort == '-disease__name' %}selected{% endif %}>Disease Z-A</option>
+            <option value="planting__variety__code" {% if request.GET.sort == 'planting__variety__code' %}selected{% endif %}>Variety A-Z</option>
+            <option value="-planting__variety__code" {% if request.GET.sort == '-planting__variety__code' %}selected{% endif %}>Variety Z-A</option>
+            <option value="planting__field__name" {% if request.GET.sort == 'planting__field__name' %}selected{% endif %}>Field A-Z</option>
+            <option value="-planting__field__name" {% if request.GET.sort == '-planting__field__name' %}selected{% endif %}>Field Z-A</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="det-page-size" class="sr-only-agri">Records per page</label>
+          <select id="det-page-size" name="page_size" data-autosubmit class="form-select">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
+            <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
+          </select>
+        </div>
+      </div>
+
+    </form>
   </div>
-
 
   {% if detections %}
 
-    <!-- =======================================================
-         BULK ACTION TOOLBAR
-         ======================================================= -->
-    <div
-      id="bulk-toolbar"
-      class="no-print hidden items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5"
-    >
-      <span id="bulk-count" class="text-sm font-semibold text-amber-900">
-        0 selected
-      </span>
-      
+  <!-- BULK ACTION TOOLBAR -->
+  <div id="bulk-toolbar" class="agri-alert agri-alert-warning dr-bulk no-print" role="region" aria-label="Bulk actions" hidden>
+    <span id="bulk-count" class="dr-bulk-count">0 selected</span>
+    <button type="button" onclick="confirmBulkDelete()" class="btn btn-sm btn-secondary btn-warn">Archive Selected</button>
+    <button type="button" onclick="clearSelection()" class="btn btn-sm btn-secondary">Clear selection</button>
+  </div>
 
-      <button
-        type="button"
-        onclick="confirmBulkDelete()"
-        class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
-      >
-        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-          />
-        </svg>
-        Archive Selected
-      </button>
+  <!-- TABLE (desktop and laptop) / CARDS (mobile and tablet) -->
+  <div class="data-table-wrap">
+    <table class="data-table" aria-label="Detection records">
+      <thead>
+        <tr>
+          {% with sb=sort_by p=request.GET.search d=request.GET.disease v=request.GET.variety df=request.GET.date_filter ps=request.GET.page_size %}
+          <th scope="col" class="dr-th-check no-print">
+            <label class="dr-check"><input type="checkbox" id="select-all-cb"><span class="sr-only-agri">Select all detection records on this page</span></label>
+          </th>
+          <th scope="col">Image</th>
+            <th scope="col" aria-sort="{% if sb == 'disease__name' %}ascending{% elif sb == '-disease__name' %}descending{% else %}none{% endif %}">
+              <a class="dr-sort{% if sb == 'disease__name' or sb == '-disease__name' %} is-active{% endif %}" href="?sort={% if sb == 'disease__name' %}-disease__name{% else %}disease__name{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
+                Disease
+                <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == '-disease__name' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              </a>
+            </th>
+            <th scope="col" aria-sort="{% if sb == 'planting__variety__code' %}ascending{% elif sb == '-planting__variety__code' %}descending{% else %}none{% endif %}">
+              <a class="dr-sort{% if sb == 'planting__variety__code' or sb == '-planting__variety__code' %} is-active{% endif %}" href="?sort={% if sb == 'planting__variety__code' %}-planting__variety__code{% else %}planting__variety__code{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
+                Variety
+                <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == '-planting__variety__code' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              </a>
+            </th>
+            <th scope="col" aria-sort="{% if sb == 'confidence_pct' %}ascending{% elif sb == '-confidence_pct' %}descending{% else %}none{% endif %}">
+              <a class="dr-sort{% if sb == 'confidence_pct' or sb == '-confidence_pct' %} is-active{% endif %}" href="?sort={% if sb == '-confidence_pct' %}confidence_pct{% else %}-confidence_pct{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
+                Confidence
+                <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'confidence_pct' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              </a>
+            </th>
+            <th scope="col" aria-sort="{% if sb == 'severity_pct' %}ascending{% elif sb == '-severity_pct' %}descending{% else %}none{% endif %}">
+              <a class="dr-sort{% if sb == 'severity_pct' or sb == '-severity_pct' %} is-active{% endif %}" href="?sort={% if sb == '-severity_pct' %}severity_pct{% else %}-severity_pct{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
+                Severity
+                <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'severity_pct' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              </a>
+            </th>
+            <th scope="col" aria-sort="{% if sb == 'planting__status' %}ascending{% elif sb == '-planting__status' %}descending{% else %}none{% endif %}">
+              <a class="dr-sort{% if sb == 'planting__status' or sb == '-planting__status' %} is-active{% endif %}" href="?sort={% if sb == 'planting__status' %}-planting__status{% else %}planting__status{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
+                Status
+                <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == '-planting__status' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              </a>
+            </th>
+            <th scope="col" aria-sort="{% if sb == 'planting__field__name' %}ascending{% elif sb == '-planting__field__name' %}descending{% else %}none{% endif %}">
+              <a class="dr-sort{% if sb == 'planting__field__name' or sb == '-planting__field__name' %} is-active{% endif %}" href="?sort={% if sb == 'planting__field__name' %}-planting__field__name{% else %}planting__field__name{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
+                Field
+                <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == '-planting__field__name' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              </a>
+            </th>
+            <th scope="col" aria-sort="{% if sb == 'created_at' %}ascending{% elif sb == '-created_at' %}descending{% else %}none{% endif %}">
+              <a class="dr-sort{% if sb == 'created_at' or sb == '-created_at' %} is-active{% endif %}" href="?sort={% if sb == '-created_at' %}created_at{% else %}-created_at{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
+                Created
+                <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'created_at' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              </a>
+            </th>
+          <th scope="col" class="dr-num no-print">Actions</th>
+          {% endwith %}
+        </tr>
+      </thead>
 
-      <button
-        type="button"
-        onclick="clearSelection()"
-        class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500"
-      >
-        Clear selection
-      </button>
-    </div>
+      <tbody>
+        {% for detection in detections %}
+        <tr class="det-row" data-id="{{ detection.pk }}">
 
+          <td class="dr-td-check no-print" data-label="Select">
+            <label class="dr-check"><input type="checkbox" class="row-cb" value="{{ detection.pk }}"><span class="sr-only-agri">Select detection {{ detection.pk }}</span></label>
+          </td>
 
-    <!-- =======================================================
-         TABLE SKELETON
-         ======================================================= -->
-    <div
-      id="detections-skeleton"
-      class="divide-y divide-gray-100 overflow-hidden rounded-lg border border-gray-200 bg-white"
-      aria-hidden="true"
-    >
-      {% for i in "12345" %}
-        <div class="flex min-w-0 items-center gap-4 px-4 py-4 sm:px-5">
-          <div class="sk h-4 w-4 shrink-0 rounded"></div>
-          <div class="sk h-14 w-14 shrink-0 rounded-md"></div>
-          <div class="sk h-4 min-w-0 flex-1 rounded"></div>
-          <div class="sk h-4 w-20 rounded"></div>
-          <div class="sk h-4 w-20 rounded"></div>
-          <div class="sk h-4 w-16 rounded"></div>
-          <div class="sk h-4 w-24 rounded"></div>
-          <div class="sk h-8 w-20 shrink-0 rounded-md"></div>
-        </div>
-      {% endfor %}
-    </div>
+          <td data-label="Image">
+            {% if detection.image_path %}
+            <img src="{{ media_url }}{{ detection.image_path }}" alt="Detection {{ detection.pk }}" class="dr-thumb" loading="lazy">
+            {% else %}<span class="dr-muted">No image</span>{% endif %}
+          </td>
 
+          <td data-label="Disease" class="td-primary">{{ detection.disease|default:'Unknown' }}</td>
 
-    <!-- =======================================================
-         REAL TABLE
-         ======================================================= -->
-    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+          <td data-label="Variety">
+            {% if detection.planting and detection.planting.variety %}<span class="dr-code">{{ detection.planting.variety.code }}</span>{% else %}<span class="dr-muted">None</span>{% endif %}
+          </td>
 
-      <div id="detections-table" class="hidden overflow-x-auto">
-        <table
-          role="table"
-          aria-label="Detection records"
-          class="min-w-[980px] divide-y divide-gray-200 text-sm"
-        >
+          <td data-label="Confidence">
+            {% if detection.confidence_pct %}
+            <span class="dr-conf {% if detection.confidence_pct >= 80 %}dr-conf--high{% elif detection.confidence_pct >= 60 %}dr-conf--mid{% else %}dr-conf--low{% endif %}">{{ detection.confidence_pct }}%</span>
+            {% else %}<span class="dr-muted">None</span>{% endif %}
+          </td>
 
-          <thead class="bg-gray-50">
-            <tr class="text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+          <td data-label="Severity">
+            {% if detection.severity_pct is not None %}
+            <span class="dr-badge {% if detection.severity_pct >= 70 %}dr-badge--danger{% elif detection.severity_pct >= 40 %}dr-badge--warning{% elif detection.severity_pct > 0 %}{% else %}dr-badge--success{% endif %}">{{ detection.severity_pct }}%</span>
+            {% else %}<span class="dr-muted">None</span>{% endif %}
+          </td>
 
-              {% with sb=sort_by p=request.GET.search d=request.GET.disease v=request.GET.variety df=request.GET.date_filter ps=request.GET.page_size %}
+          <td data-label="Status">
+            {% if detection.planting %}
+            <span class="dr-badge {% if detection.planting.status == 'harvested' or detection.planting.status == 'ongoing' %}dr-badge--success{% elif detection.planting.status == 'failed' %}dr-badge--danger{% endif %}">{{ detection.planting.get_status_display|default:detection.planting.status }}</span>
+            {% else %}<span class="dr-muted">None</span>{% endif %}
+          </td>
 
-                <!-- Select all -->
-                <th scope="col" class="w-10 px-4 py-3 no-print">
-                  <input
-                    type="checkbox"
-                    id="select-all-cb"
-                    class="h-4 w-4 cursor-pointer rounded border-gray-300 text-green-700 focus:ring-2 focus:ring-green-600"
-                    title="Select all on this page"
-                    aria-label="Select all detection records on this page"
-                  />
-                </th>
+          <td data-label="Field">
+            {% if detection.planting and detection.planting.field %}{{ detection.planting.field.name }}{% else %}<span class="dr-muted">None</span>{% endif %}
+          </td>
 
-                <!-- Image -->
-                <th scope="col" class="w-20 whitespace-nowrap px-4 py-3">
-                  Image
-                </th>
+          <td data-label="Created" class="dr-nowrap">{{ detection.created_at|date:'Y-m-d H:i' }}</td>
 
-                <!-- Disease -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3">
-                  <a
-                    href="?sort={% if sb == 'disease__name' %}-disease__name{% else %}disease__name{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
-                    class="group inline-flex items-center gap-1 transition-colors hover:text-green-700"
-                  >
-                    Disease
-                    <svg
-                      class="h-3 w-3 shrink-0 {% if sb == 'disease__name' or sb == '-disease__name' %}text-green-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      {% if sb == 'disease__name' %}
-                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% else %}
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                      {% endif %}
-                    </svg>
-                  </a>
-                </th>
+          <td data-label="Actions" class="td-actions no-print">
+            <span class="dr-actions">
+              <a href="{% url 'polls:detections_detail' detection.pk %}" class="btn btn-secondary btn-sm" aria-label="View treatment for detection {{ detection.pk }}">Treatment</a>
 
-                <!-- Variety -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3">
-                  <a
-                    href="?sort={% if sb == 'planting__variety__code' %}-planting__variety__code{% else %}planting__variety__code{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
-                    class="group inline-flex items-center gap-1 transition-colors hover:text-green-700"
-                  >
-                    Variety
-                    <svg
-                      class="h-3 w-3 shrink-0 {% if sb == 'planting__variety__code' or sb == '-planting__variety__code' %}text-green-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      {% if sb == 'planting__variety__code' %}
-                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414 1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% else %}
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
-                      {% endif %}
-                    </svg>
-                  </a>
-                </th>
+              {% if not is_farmer %}
+              <a href="{% url 'polls:detections_edit' detection.pk %}" class="btn btn-secondary btn-sm" aria-label="View detection {{ detection.pk }}">View</a>
+              {% endif %}
 
-                <!-- Confidence -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3">
-                  <a
-                    href="?sort={% if sb == '-confidence_pct' %}confidence_pct{% else %}-confidence_pct{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
-                    class="group inline-flex items-center gap-1 transition-colors hover:text-green-700"
-                  >
-                    Confidence
-                    <svg
-                      class="h-3 w-3 shrink-0 {% if sb == 'confidence_pct' or sb == '-confidence_pct' %}text-green-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      {% if sb == 'confidence_pct' %}
-                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 011.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% else %}
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 1l-4-4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% endif %}
-                    </svg>
-                  </a>
-                </th>
+              {% if not is_farmer or detection.user == request.user.profile %}
+              <a href="{% url 'polls:detections_delete' detection.pk %}"
+                 data-open-delete="true"
+                 data-delete-label="Detection #{{ detection.pk }}"
+                 class="btn btn-secondary btn-sm btn-warn"
+                 aria-label="Archive detection {{ detection.pk }}">Archive</a>
+              {% endif %}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
-                <!-- Severity -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3">
-                  <a
-                    href="?sort={% if sb == '-severity_pct' %}severity_pct{% else %}-severity_pct{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
-                    class="group inline-flex items-center gap-1 transition-colors hover:text-green-700"
-                  >
-                    Severity
-                    <svg
-                      class="h-3 w-3 shrink-0 {% if sb == 'severity_pct' or sb == '-severity_pct' %}text-green-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      {% if sb == 'severity_pct' %}
-                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% else %}
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 1.414l-4-4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% endif %}
-                    </svg>
-                  </a>
-                </th>
-
-                <!-- Status -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3">
-                  <a
-                    href="?sort={% if sb == 'planting__status' %}-planting__status{% else %}planting__status{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
-                    class="group inline-flex items-center gap-1 transition-colors hover:text-green-700"
-                  >
-                    Status
-                    <svg
-                      class="h-3 w-3 shrink-0 {% if sb == 'planting__status' or sb == '-planting__status' %}text-green-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      {% if sb == 'planting__status' %}
-                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 011.414 1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% else %}
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% endif %}
-                    </svg>
-                  </a>
-                </th>
-
-                <!-- Field -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3">
-                  <a
-                    href="?sort={% if sb == 'planting__field__name' %}-planting__field__name{% else %}planting__field__name{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
-                    class="group inline-flex items-center gap-1 transition-colors hover:text-green-700"
-                  >
-                    Field
-                    <svg
-                      class="h-3 w-3 shrink-0 {% if sb == 'planting__field__name' or sb == '-planting__field__name' %}text-green-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      {% if sb == 'planting__field__name' %}
-                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414 1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% else %}
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 1.414l-4-4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% endif %}
-                    </svg>
-                  </a>
-                </th>
-
-                <!-- Created -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3">
-                  <a
-                    href="?sort={% if sb == '-created_at' %}created_at{% else %}-created_at{% endif %}{% if p %}&search={{ p }}{% endif %}{% if d %}&disease={{ d }}{% endif %}{% if v %}&variety={{ v }}{% endif %}{% if df %}&date_filter={{ df }}{% endif %}{% if ps %}&page_size={{ ps }}{% endif %}"
-                    class="group inline-flex items-center gap-1 transition-colors hover:text-green-700"
-                  >
-                    Created
-                    <svg
-                      class="h-3 w-3 shrink-0 {% if sb == 'created_at' or sb == '-created_at' %}text-green-700{% else %}opacity-0 group-hover:opacity-40{% endif %} transition-opacity"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                      aria-hidden="true"
-                    >
-                      {% if sb == 'created_at' %}
-                        <path fill-rule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 011.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% else %}
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 011.414 1.414l4-4a1 1 0 01-1.414 1.414l-4-4a1 1 0 010 1.414z" clip-rule="evenodd"/>
-                      {% endif %}
-                    </svg>
-                  </a>
-                </th>
-
-                <!-- Actions -->
-                <th scope="col" class="whitespace-nowrap px-4 py-3 text-right">
-                  Actions
-                </th>
-
-              {% endwith %}
-            </tr>
-          </thead>
-
-
-          <tbody class="divide-y divide-gray-100">
-
-            {% for detection in detections %}
-
-              <tr
-                class="det-row transition hover:bg-gray-50"
-                data-id="{{ detection.pk }}"
-              >
-
-                <!-- Selection -->
-                <td class="w-10 px-4 py-3 no-print">
-                  <input
-                    type="checkbox"
-                    class="row-cb h-4 w-4 cursor-pointer rounded border-gray-300 text-green-700 focus:ring-2 focus:ring-green-600"
-                    value="{{ detection.pk }}"
-                    aria-label="Select detection {{ detection.pk }}"
-                  />
-                </td>
-
-                <!-- Image -->
-                <td class="px-4 py-3">
-                  {% if detection.image_path %}
-                    <img
-                      src="{{ media_url }}{{ detection.image_path }}"
-                      alt="Detection {{ detection.pk }}"
-                      class="h-14 w-14 rounded-md border border-gray-200 bg-gray-50 object-cover"
-                      loading="lazy"
-                    />
-                  {% else %}
-                    <span class="text-xs text-gray-400">—</span>
-                  {% endif %}
-                </td>
-
-                <!-- Disease -->
-                <td class="px-4 py-3">
-                  <div class="max-w-[240px] font-medium text-gray-900">
-                    {{ detection.disease|default:'Unknown' }}
-                  </div>
-                </td>
-
-                <!-- Variety -->
-                <td class="px-4 py-3">
-                  {% if detection.planting and detection.planting.variety %}
-                    <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2 py-1 text-xs font-medium text-green-800">
-                      {{ detection.planting.variety.code }}
-                    </span>
-                  {% else %}
-                    <span class="text-xs text-gray-400">—</span>
-                  {% endif %}
-                </td>
-
-                <!-- Confidence -->
-                <td class="px-4 py-3">
-                  {% if detection.confidence_pct %}
-                    <span
-                      class="text-sm font-medium
-                      {% if detection.confidence_pct >= 80 %}
-                        text-green-700
-                      {% elif detection.confidence_pct >= 60 %}
-                        text-amber-700
-                      {% else %}
-                        text-red-700
-                      {% endif %}"
-                    >
-                      {{ detection.confidence_pct }}%
-                    </span>
-                  {% else %}
-                    <span class="text-xs text-gray-400">—</span>
-                  {% endif %}
-                </td>
-
-                <!-- Severity -->
-                <td class="px-4 py-3">
-                  {% if detection.severity_pct is not None %}
-                    <span
-                      class="inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium
-                      {% if detection.severity_pct >= 70 %}
-                        border-red-200 bg-red-50 text-red-700
-                      {% elif detection.severity_pct >= 40 %}
-                        border-amber-200 bg-amber-50 text-amber-700
-                      {% elif detection.severity_pct > 0 %}
-                        border-yellow-200 bg-yellow-50 text-yellow-700
-                      {% else %}
-                        border-green-200 bg-green-50 text-green-700
-                      {% endif %}"
-                    >
-                      {{ detection.severity_pct }}%
-                    </span>
-                  {% else %}
-                    <span class="text-xs text-gray-400">—</span>
-                  {% endif %}
-                </td>
-
-                <!-- Status -->
-                <td class="px-4 py-3">
-                  {% if detection.planting %}
-                    <span
-                      class="inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium
-                      {% if detection.planting.status == 'harvested' %}
-                        border-green-200 bg-green-50 text-green-800
-                      {% elif detection.planting.status == 'ongoing' %}
-                        border-green-200 bg-green-50 text-green-700
-                      {% elif detection.planting.status == 'planned' %}
-                        border-gray-200 bg-gray-50 text-gray-700
-                      {% elif detection.planting.status == 'failed' %}
-                        border-red-200 bg-red-50 text-red-700
-                      {% elif detection.planting.status == 'cancelled' %}
-                        border-gray-200 bg-gray-100 text-gray-700
-                      {% else %}
-                        border-gray-200 bg-gray-50 text-gray-600
-                      {% endif %}"
-                    >
-                      {{ detection.planting.get_status_display|default:detection.planting.status }}
-                    </span>
-                  {% else %}
-                    <span class="text-xs text-gray-400">—</span>
-                  {% endif %}
-                </td>
-
-                <!-- Field -->
-                <td class="px-4 py-3 text-sm text-gray-700">
-                  {% if detection.planting and detection.planting.field %}
-                    {{ detection.planting.field.name }}
-                  {% else %}
-                    <span class="text-gray-400">—</span>
-                  {% endif %}
-                </td>
-
-                <!-- Created -->
-                <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
-                  {{ detection.created_at|date:'Y-m-d H:i' }}
-                </td>
-
-                <!-- Actions -->
-                <td class="px-4 py-3 text-right">
-                  <div class="inline-flex items-center justify-end gap-3">
-
-                    <a
-                      href="{% url 'polls:detections_detail' detection.pk %}"
-                      class="inline-flex items-center gap-1.5 text-sm font-medium text-green-700 transition hover:text-green-800 focus:outline-none focus:underline"
-                      aria-label="View treatment for detection {{ detection.pk }}"
-                      title="View Full Treatment"
-                    >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                      </svg>
-                      Treatment
-                    </a>
-
-                    {% if not is_farmer %}
-                      <a
-                        href="{% url 'polls:detections_edit' detection.pk %}"
-                        class="btn btn-sm border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100"
-                        aria-label="Edit detection {{ detection.pk }}"
-                      >
-                        View
-                      </a>
-                    {% endif %}
-
-                    {% if not is_farmer or detection.user == request.user.profile %}
-                      <a
-                        href="{% url 'polls:detections_delete' detection.pk %}"
-                        data-open-delete="true"
-                        data-delete-label="Detection #{{ detection.pk }}"
-                        class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
-                        aria-label="Delete detection {{ detection.pk }}"
-                      >
-                        Archive
-                      </a>
-                    {% endif %}
-
-                  </div>
-                </td>
-
-              </tr>
-
-            {% endfor %}
-
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      {% if is_paginated and page_obj %}
-        {% include 'partials/_pagination.html' %}
-      {% endif %}
-
-    </div>
+  {% if is_paginated and page_obj %}
+    {% include 'partials/_pagination.html' %}
+  {% endif %}
 
   {% else %}
 
-    <!-- =======================================================
-         EMPTY STATE
-         ======================================================= -->
-    <div class="rounded-lg border border-gray-200 bg-white px-6 py-12 text-center shadow-sm">
-
-      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-md bg-gray-50 text-gray-400">
-        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-      </div>
-
-      <p class="mt-4 text-sm font-medium text-gray-700">
-        No detection records yet
-      </p>
-
-      <p class="mt-1 text-sm text-gray-500">
-        Start scanning leaves to see results here.
-      </p>
-
-      <a
-        href="{% url 'polls:scan' %}"
-        class="no-print mt-5 inline-flex min-h-[42px] items-center justify-center gap-2 rounded-md bg-green-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-      >
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        New Scan
-      </a>
-
-    </div>
+  <!-- EMPTY STATE -->
+  <div class="agri-card dr-empty">
+    <span class="dr-empty-icon" aria-hidden="true"><svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></span>
+    {% if request.GET.search or request.GET.date_filter or request.GET.disease or request.GET.variety %}
+    <h2>No records match your filters</h2>
+    <p>Try adjusting your search term or removing a filter.</p>
+    <a href="{% url 'polls:detections_list' %}" class="btn btn-secondary btn-lg no-print">Clear All Filters</a>
+    {% else %}
+    <h2>No detection records yet</h2>
+    <p>Start scanning leaves to see results here.</p>
+    <a href="{% url 'polls:scan' %}" class="btn btn-primary btn-lg no-print"><svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg><span>New Scan</span></a>
+    {% endif %}
+  </div>
 
   {% endif %}
 
 </section>
 
+{% include 'partials/_ctrlk.html' with input_id='det-search' %}
+{% endblock %}
 
-<!-- =============================================================
-     PAGE SCRIPT
-     ============================================================= -->
+{% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  var sk  = document.getElementById('detections-skeleton');
-  var tbl = document.getElementById('detections-table');
-
-  if (sk) {
-    sk.style.display = 'none';
-  }
-
-  if (tbl) {
-    tbl.classList.remove('hidden');
-  }
-
-  var el = document.getElementById('det-print-date');
-
-  if (el) {
-    el.textContent = new Date().toLocaleDateString('en-PH', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+  /* Auto-submit the form when a dropdown changes */
+  document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
+    el.addEventListener("change", function () {
+      if (el.form) el.form.submit();
     });
-  }
+  });
 
-  /* ── Bulk select ─────────────────────────────────────── */
-  const selectAll = document.getElementById('select-all-cb');
-  const toolbar   = document.getElementById('bulk-toolbar');
-  const countEl   = document.getElementById('bulk-count');
+  /* Print date */
+  (function () {
+    var el = document.getElementById("det-print-date");
+    if (el) {
+      el.textContent = new Date().toLocaleDateString("en-PH", { year: "numeric", month: "long", day: "numeric" });
+    }
+  })();
 
-  function getRowCbs() {
-    return document.querySelectorAll('.row-cb');
-  }
+  /* Bulk select */
+  var selectAll = document.getElementById("select-all-cb");
+  var toolbar   = document.getElementById("bulk-toolbar");
+  var countEl   = document.getElementById("bulk-count");
+
+  function getRowCbs() { return document.querySelectorAll(".row-cb"); }
 
   function updateToolbar() {
-    const checked = [...getRowCbs()].filter(cb => cb.checked);
-    const n = checked.length;
+    var cbs = Array.prototype.slice.call(getRowCbs());
+    var n = cbs.filter(function (cb) { return cb.checked; }).length;
 
-    if (toolbar) {
-      toolbar.classList.toggle('hidden', n === 0);
-      toolbar.classList.toggle('flex', n > 0);
-    }
-
-    if (countEl) {
-      countEl.textContent = n + ' selected';
-    }
-
-    /* Sync select-all state */
-    const total = getRowCbs().length;
+    if (toolbar) toolbar.hidden = n === 0;
+    if (countEl) countEl.textContent = n + " selected";
 
     if (selectAll) {
-      selectAll.checked = n === total && total > 0;
-      selectAll.indeterminate = n > 0 && n < total;
+      selectAll.checked = n === cbs.length && cbs.length > 0;
+      selectAll.indeterminate = n > 0 && n < cbs.length;
     }
 
-    /* Highlight selected rows */
-    document.querySelectorAll('.det-row').forEach(row => {
-      const cb = row.querySelector('.row-cb');
-
-      row.classList.toggle(
-        'bg-green-50',
-        cb && cb.checked
-      );
+    document.querySelectorAll(".det-row").forEach(function (row) {
+      var cb = row.querySelector(".row-cb");
+      row.classList.toggle("is-selected", !!(cb && cb.checked));
     });
+  }
+
+  function clearSelection() {
+    getRowCbs().forEach(function (cb) { cb.checked = false; });
+    updateToolbar();
   }
 
   if (selectAll) {
-    selectAll.addEventListener('change', function () {
-      getRowCbs().forEach(cb => {
-        cb.checked = this.checked;
-      });
-
+    selectAll.addEventListener("change", function () {
+      var checked = this.checked;
+      getRowCbs().forEach(function (cb) { cb.checked = checked; });
       updateToolbar();
     });
   }
 
-  document.addEventListener('change', function (e) {
-    if (e.target.classList.contains('row-cb')) {
-      updateToolbar();
-    }
+  document.addEventListener("change", function (e) {
+    if (e.target.classList && e.target.classList.contains("row-cb")) updateToolbar();
   });
 
-  /* Click anywhere on row toggles checkbox
-     except links, buttons, and inputs */
-  document.querySelectorAll('.det-row').forEach(row => {
-    row.addEventListener('click', function (e) {
-      if (e.target.closest('a, button, input')) {
-        return;
-      }
-
-      const cb = row.querySelector('.row-cb');
-
+  /* Click on a row toggles its checkbox, except on links, buttons and inputs */
+  document.querySelectorAll(".det-row").forEach(function (row) {
+    row.addEventListener("click", function (e) {
+      if (e.target.closest("a, button, input, label")) return;
+      var cb = row.querySelector(".row-cb");
       if (cb) {
         cb.checked = !cb.checked;
         updateToolbar();
       }
     });
-
-    row.style.cursor = 'pointer';
-  });
-});
-
-
-function clearSelection() {
-  document.querySelectorAll('.row-cb').forEach(cb => {
-    cb.checked = false;
   });
 
-  const sa = document.getElementById('select-all-cb');
+  window.addEventListener("pageshow", updateToolbar);
 
-  if (sa) {
-    sa.checked = false;
-    sa.indeterminate = false;
+  function confirmBulkDelete() {
+    var checked = Array.prototype.slice.call(document.querySelectorAll(".row-cb:checked"));
+    var count = checked.length;
+    if (count === 0) return;
+
+    /* Reuse the global delete modal */
+    var modal = document.getElementById("confirm-delete-modal");
+    var form  = document.getElementById("delete-post-form");
+    if (!modal || !form) return;
+
+    document.getElementById("delete-modal-title").textContent = "Archive Detections?";
+    document.getElementById("confirm-delete-text").textContent =
+      count + " detection" + (count !== 1 ? "s" : "") + " selected";
+
+    var sub = document.getElementById("confirm-delete-subtitle");
+    if (sub) sub.textContent = "They will be archived and can be restored from Trash.";
+
+    var noticeA = document.getElementById("delete-modal-notice-archive");
+    var noticeP = document.getElementById("delete-modal-notice-permanent");
+    if (noticeA) noticeA.style.display = "block";
+    if (noticeP) noticeP.style.display = "none";
+
+    document.getElementById("delete-modal-confirm").textContent = "Yes, Archive";
+
+    /* Point the global form to the bulk-delete endpoint and inject selected IDs */
+    form.action = '{% url "polls:detections_bulk_delete" %}';
+    form.querySelectorAll(".injected-bulk").forEach(function (el) { el.remove(); });
+
+    checked.forEach(function (cb) {
+      var inp = document.createElement("input");
+      inp.type = "hidden";
+      inp.name = "selected_ids";
+      inp.value = cb.value;
+      inp.className = "injected-bulk injected-purge";
+      form.appendChild(inp);
+    });
+
+    modal.style.display = "flex";
+    modal.setAttribute("aria-hidden", "false");
+
+    setTimeout(function () {
+      var btn = document.getElementById("delete-modal-confirm");
+      if (btn) btn.focus();
+    }, 50);
   }
-
-  const toolbar = document.getElementById('bulk-toolbar');
-
-  if (toolbar) {
-    toolbar.classList.add('hidden');
-    toolbar.classList.remove('flex');
-  }
-
-  document.querySelectorAll('.det-row').forEach(row => {
-    row.classList.remove('bg-green-50');
-  });
-}
-
-
-function confirmBulkDelete() {
-  const checked = [...document.querySelectorAll('.row-cb:checked')];
-  const count   = checked.length;
-
-  if (count === 0) {
-    return;
-  }
-
-  /* Reuse the global delete modal */
-  const modal = document.getElementById('confirm-delete-modal');
-  const form  = document.getElementById('delete-post-form');
-
-  if (!modal || !form) {
-    return;
-  }
-
-  /* Configure modal text */
-  document.getElementById('delete-modal-title').textContent =
-    'Archive Detections?';
-
-  document.getElementById('confirm-delete-text').textContent =
-    `${count} detection${count !== 1 ? 's' : ''} selected`;
-
-  const sub = document.getElementById('confirm-delete-subtitle');
-
-  if (sub) {
-    sub.textContent =
-      'They will be archived and can be restored from Trash.';
-  }
-
-  /* Show archive notice, hide permanent */
-  const noticeA =
-    document.getElementById('delete-modal-notice-archive');
-
-  const noticeP =
-    document.getElementById('delete-modal-notice-permanent');
-
-  if (noticeA) {
-    noticeA.style.display = 'block';
-  }
-
-  if (noticeP) {
-    noticeP.style.display = 'none';
-  }
-
-  document.getElementById('delete-modal-confirm').textContent =
-    'Yes, Archive';
-
-  /* Point the global form to the bulk-delete endpoint
-     and inject selected IDs */
-  form.action = '{% url "polls:detections_bulk_delete" %}';
-
-  form.querySelectorAll('.injected-bulk').forEach(el => {
-    el.remove();
-  });
-
-  checked.forEach(cb => {
-    const inp = document.createElement('input');
-
-    inp.type = 'hidden';
-    inp.name = 'selected_ids';
-    inp.value = cb.value;
-    inp.className = 'injected-bulk injected-purge';
-
-    form.appendChild(inp);
-  });
-
-  modal.style.display = 'flex';
-  modal.setAttribute('aria-hidden', 'false');
-
-  setTimeout(() => {
-    document
-      .getElementById('delete-modal-confirm')
-      ?.focus();
-  }, 50);
-}
 </script>
-
-
-{% include 'partials/_ctrlk.html' with input_id='det-search' %}
-
 {% endblock %}
 
-
 {% block modals %}
-
 <script>
 function openDetExportModal() {
   openExportModal({
     title: 'Export Detection Records',
-
     csvUrl: '{% url "polls:export_detections_csv" %}',
-
     pdfUrl: '{% url "polls:export_detections_pdf" %}',
-
     showBarangay: true,
-
     cols: [
-      { value: 'id',         label: 'ID'          },
-      { value: 'date',       label: 'Date'        },
-      { value: 'disease',    label: 'Disease'     },
-      { value: 'confidence', label: 'Confidence'  },
-      { value: 'severity',   label: 'Severity'    },
-      { value: 'field',      label: 'Field'       },
-      { value: 'source',     label: 'Source'      },
+      { value: 'id',         label: 'ID'           },
+      { value: 'date',       label: 'Date'         },
+      { value: 'disease',    label: 'Disease'      },
+      { value: 'confidence', label: 'Confidence'   },
+      { value: 'severity',   label: 'Severity'     },
+      { value: 'field',      label: 'Field'        },
+      { value: 'source',     label: 'Source'       },
       { value: 'model',      label: 'Model Version'},
     ],
   });
 }
 </script>
-
 {% endblock %}

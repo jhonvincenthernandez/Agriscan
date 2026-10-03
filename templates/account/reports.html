@@ -1,27 +1,67 @@
 ﻿{% extends 'base.html' %}
 {% block title %}Reports & Analytics · AgriScan+{% endblock %}
 
-{% block extra_head %}
+{% block styles %}
 <style>
+  /* Page Header & Filters */
+  .rp-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .rp-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .rp-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .rp-title { margin: 0; }
+  .rp-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .rp-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .rp-head { padding: 1.5rem; }
+    .rp-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .rp-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .rp-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .rp-filters { padding: 1.5rem; } }
+  .rp-filter-form { display: grid; gap: 1rem; }
+  .rp-filter-row { display: flex; flex-direction: column; gap: 0.75rem; }
+  @media (min-width: 640px) {
+    .rp-filter-row { flex-direction: row; align-items: flex-end; }
+    .rp-filter-row > div { flex: 1; }
+  }
+
+  .rp-section-title { margin: 0; font-size: var(--text-lg); font-weight: 600; color: var(--color-text-primary); }
+  .rp-section-lead { margin: 0.25rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.5; }
+
+  /* Stats Grid */
+  .rp-stats-grid { display: grid; gap: 1rem; grid-template-columns: 1fr; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .rp-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1024px) { .rp-stats-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 1280px) { .rp-stats-grid { grid-template-columns: repeat(5, 1fr); } }
+
+  .rp-stat-card { padding: 1.25rem; }
+  .rp-stat-label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin: 0; }
+  .rp-stat-value { font-size: 1.875rem; font-weight: 700; color: var(--color-text-primary); margin: 0.5rem 0 0; line-height: 1.2; }
+  .rp-stat-sub { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 0.25rem 0 0; }
+
+  /* Chart Skeleton */
+  .rp-chart-skeleton { display: flex; align-items: flex-end; gap: 0.5rem; height: 200px; }
+  .rp-chart-bar { flex: 1; background: var(--color-overlay); border-radius: var(--radius-sm) var(--radius-sm) 0 0; }
+
+  /* Progress Bar */
+  .rp-progress { height: 0.5rem; width: 100%; overflow: hidden; border-radius: var(--radius-full); background: var(--color-overlay); }
+  .rp-progress-fill { height: 100%; border-radius: var(--radius-full); background: var(--color-brand); transition: width 0.3s ease; }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-info { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .badge-danger { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+
+  /* Print overrides */
   @media print {
-    canvas {
-      max-height: 220px !important;
-      page-break-inside: avoid;
-    }
-
-    .grid {
-      display: block !important;
-    }
-
-    .grid > * {
-      margin-bottom: 1rem;
-      width: 100% !important;
-    }
-
-    .lg\:grid-cols-2,
-    .lg\:grid-cols-3 {
-      columns: 1 !important;
-    }
+    canvas { max-height: 220px !important; page-break-inside: avoid; }
+    .grid { display: block !important; }
+    .grid > * { margin-bottom: 1rem; width: 100% !important; }
+    .lg\:grid-cols-2, .lg\:grid-cols-3 { columns: 1 !important; }
   }
 </style>
 {% endblock %}
@@ -31,434 +71,224 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
 <!-- Print-only header -->
-<div id="print-header" style="display: none;" class="mb-6 border-b border-gray-200 pb-4">
+<div id="print-header" style="display: none;" class="mb-6 border-b border-[var(--color-border)] pb-4">
   <div class="flex items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-gray-900">
-        AgriScan+ · Reports &amp; Analytics
+      <h1 class="text-2xl font-bold text-[var(--color-text-primary)]">
+        AgriScan+ · Reports & Analytics
       </h1>
-      <p class="mt-1 text-sm text-gray-500">
-        Period: {{ start_date|default:"All time" }} — {{ end_date|default:"Present" }}
+      <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+        Period: {{ start_date|default:"All time" }} to {{ end_date|default:"Present" }}
       </p>
     </div>
-
-    <p class="text-xs text-gray-400">
+    <p class="text-xs text-[var(--color-text-muted)]">
       Printed on <span id="print-date"></span>
     </p>
   </div>
 </div>
 
-<section class="page-container" aria-labelledby="reports-title">
+<section class="page-container min-w-0" aria-labelledby="reports-title">
 
-  <!-- Page Header -->
-  <header class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-      
-      <div class="flex items-start gap-4 min-w-0">
-        <!-- Consistent Green Icon Wrapper -->
-        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700" aria-hidden="true">
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
-        </div>
-
-        <div class="min-w-0">
-          <h1
-            id="reports-title"
-            class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl"
-          >
-            Reports &amp; Analytics
-          </h1>
-
-          <p class="mt-1.5 max-w-2xl text-sm leading-relaxed text-gray-500">
-            Monthly summaries and performance metrics for the AgriScan+ system.
-          </p>
-        </div>
+  <!-- PAGE HEADER -->
+  <header class="agri-card rp-head">
+    <div class="rp-head-main">
+      <span class="rp-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <h1 id="reports-title" class="rp-title">Reports & Analytics</h1>
+        <p class="rp-lead">Monthly summaries and performance metrics for the AgriScan+ system.</p>
       </div>
+    </div>
 
-      <div class="no-print flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap lg:shrink-0">
-        <!-- Print -->
-        <button
-          id="print-btn"
-          type="button"
-          onclick="handlePagePrint()"
-          class="no-print inline-flex min-h-[42px] items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-          </svg>
-          <span>Print</span>
-        </button>
+    <div class="rp-head-actions no-print">
+      <button id="print-btn" type="button" onclick="handlePagePrint()" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+        </svg>
+        <span>Print</span>
+      </button>
 
-        <!-- Export -->
-        <button
-          type="button"
-          onclick="openExportModal({
-            title: 'Export Report',
-            baseUrl: '?',
-            fmtParam: 'export',
-            showBarangay: true,
-            extraParams: {
-              start_date: '{{ start_date }}',
-              end_date: '{{ end_date }}'
-            },
-            sections: _reportSections
-          })"
-          class="inline-flex min-h-[42px] items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-1"
-        >
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          <span>Export</span>
-        </button>
-      </div>
-
+      <button type="button" onclick="openExportModal({
+        title: 'Export Report',
+        baseUrl: '?',
+        fmtParam: 'export',
+        showBarangay: true,
+        extraParams: {
+          start_date: '{{ start_date }}',
+          end_date: '{{ end_date }}'
+        },
+        sections: _reportSections
+      })" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        <span>Export</span>
+      </button>
     </div>
   </header>
 
-  <!-- Date Range Filter -->
-  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="mb-4">
-      <h2 class="text-base font-semibold text-gray-900">
-        Report Period
-      </h2>
-      <p class="mt-1 text-sm text-gray-500">
-        Select the date range used for the report data.
-      </p>
-    </div>
-
-    <form method="get" class="flex flex-col gap-4 sm:flex-row sm:items-end">
-      <div class="min-w-0 flex-1">
-        <label
-          for="start_date"
-          class="mb-1 block text-sm font-medium text-gray-700"
-        >
-          Start Date
-        </label>
-
-        <input
-          type="date"
-          id="start_date"
-          name="start_date"
-          value="{{ start_date }}"
-          class="form-input w-full"
-        >
+  <!-- DATE RANGE FILTER -->
+  <div class="agri-card rp-filters no-print">
+    <form method="get" class="rp-filter-form">
+      <div class="rp-filter-row">
+        <div>
+          <label for="start_date" class="block text-sm font-semibold text-[var(--color-text-primary)] mb-1.5">Start Date</label>
+          <input type="date" id="start_date" name="start_date" value="{{ start_date }}" class="form-input w-full">
+        </div>
+        <div>
+          <label for="end_date" class="block text-sm font-semibold text-[var(--color-text-primary)] mb-1.5">End Date</label>
+          <input type="date" id="end_date" name="end_date" value="{{ end_date }}" class="form-input w-full">
+        </div>
+        <div class="flex items-end">
+          <button type="submit" data-loading class="btn btn-primary w-full sm:w-auto">Apply Filter</button>
+        </div>
       </div>
-
-      <div class="min-w-0 flex-1">
-        <label
-          for="end_date"
-          class="mb-1 block text-sm font-medium text-gray-700"
-        >
-          End Date
-        </label>
-
-        <input
-          type="date"
-          id="end_date"
-          name="end_date"
-          value="{{ end_date }}"
-          class="form-input w-full"
-        >
-      </div>
-
-      <button
-        type="submit"
-        data-loading
-        class="btn btn-primary w-full sm:w-auto"
-      >
-        Apply Filter
-      </button>
     </form>
   </div>
 
-  <!-- Summary Statistics -->
+  <!-- SUMMARY STATISTICS -->
   <section aria-labelledby="summary-heading" class="mb-6">
-    <div class="mb-3">
-      <h2 id="summary-heading" class="text-base font-semibold text-gray-900">
-        Summary Statistics
-      </h2>
-    </div>
-
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-
-      <!-- Model Accuracy -->
-      <div class="agri-card p-4 sm:p-5">
-        <p class="text-xs font-medium text-gray-500">
-          Model Accuracy
-        </p>
-
-        <p class="mt-2 text-2xl font-semibold tracking-tight text-gray-900">
-          {{ model_accuracy|default:"N/A" }}{% if model_accuracy %}%{% endif %}
-        </p>
-
-        <p class="mt-1 text-xs text-gray-500">
-          CNN Detection Model
+    <h2 id="summary-heading" class="sr-only-agri">Summary Statistics</h2>
+    <div class="rp-stats-grid">
+      <div class="agri-card rp-stat-card">
+        <p class="rp-stat-label">Model Accuracy</p>
+        <p class="rp-stat-value">{{ model_accuracy|default:"N/A" }}{% if model_accuracy %}%{% endif %}</p>
+        <p class="rp-stat-sub">CNN detection model</p>
+      </div>
+      <div class="agri-card rp-stat-card">
+        <p class="rp-stat-label">Detections</p>
+        <p class="rp-stat-value">{{ total_detections }}</p>
+        <p class="rp-stat-sub">
+          <span class="font-semibold text-[var(--color-success-text)]">{{ healthy_count }} healthy</span>
+          <span class="mx-1 text-[var(--color-border-strong)]" aria-hidden="true">·</span>
+          <span class="font-semibold text-[var(--color-danger-text)]">{{ diseased_count }} diseased</span>
         </p>
       </div>
-
-      <!-- Total Detections -->
-      <div class="agri-card p-4 sm:p-5">
-        <p class="text-xs font-medium text-gray-500">
-          Detections
-        </p>
-
-        <p class="mt-2 text-2xl font-semibold tracking-tight text-gray-900">
-          {{ total_detections }}
-        </p>
-
-        <p class="mt-1 text-xs text-gray-500">
-          <span class="font-medium text-green-700">
-            {{ healthy_count }} healthy
-          </span>
-
-          <span class="mx-1 text-gray-300" aria-hidden="true">·</span>
-
-          <span class="font-medium text-red-700">
-            {{ diseased_count }} diseased
-          </span>
-        </p>
+      <div class="agri-card rp-stat-card">
+        <p class="rp-stat-label">Yield Records</p>
+        <p class="rp-stat-value">{{ total_yields }}</p>
+        <p class="rp-stat-sub">Predictions in range</p>
       </div>
-
-      <!-- Yield Predictions -->
-      <div class="agri-card p-4 sm:p-5">
-        <p class="text-xs font-medium text-gray-500">
-          Yield Records
-        </p>
-
-        <p class="mt-2 text-2xl font-semibold tracking-tight text-gray-900">
-          {{ total_yields }}
-        </p>
-
-        <p class="mt-1 text-xs text-gray-500">
-          Predictions in range
-        </p>
+      <div class="agri-card rp-stat-card">
+        <p class="rp-stat-label">Active Fields</p>
+        <p class="rp-stat-value">{{ total_fields }}</p>
+        <p class="rp-stat-sub">Registered rice fields</p>
       </div>
-
-      <!-- Active Fields -->
-      <div class="agri-card p-4 sm:p-5">
-        <p class="text-xs font-medium text-gray-500">
-          Active Fields
-        </p>
-
-        <p class="mt-2 text-2xl font-semibold tracking-tight text-gray-900">
-          {{ total_fields }}
-        </p>
-
-        <p class="mt-1 text-xs text-gray-500">
-          Registered rice fields
-        </p>
+      <div class="agri-card rp-stat-card">
+        <p class="rp-stat-label">Plantings</p>
+        <p class="rp-stat-value">{{ total_plantings }}</p>
+        <p class="rp-stat-sub">Planting cycles in range</p>
       </div>
-
-      <!-- Plantings -->
-      <div class="agri-card p-4 sm:p-5">
-        <p class="text-xs font-medium text-gray-500">
-          Plantings
-        </p>
-
-        <p class="mt-2 text-2xl font-semibold tracking-tight text-gray-900">
-          {{ total_plantings }}
-        </p>
-
-        <p class="mt-1 text-xs text-gray-500">
-          Planting cycles in range
-        </p>
-      </div>
-
     </div>
   </section>
 
-  <!-- Monthly Detection Analysis -->
+  <!-- MONTHLY DETECTION ANALYSIS -->
   <section class="mb-6">
     <div class="grid gap-6 lg:grid-cols-2">
-
-      <!-- Chart skeleton -->
-      <div
-        id="monthly-chart-skeleton"
-        class="agri-card p-4 sm:p-5 lg:p-6"
-        aria-hidden="true"
-      >
-        <div class="mb-5 h-5 w-64 rounded bg-gray-100"></div>
-
-        <div class="flex items-end gap-2" style="height: 200px;">
-          <div class="flex-1 rounded-t bg-gray-100" style="height: 55%;"></div>
-          <div class="flex-1 rounded-t bg-gray-100" style="height: 80%;"></div>
-          <div class="flex-1 rounded-t bg-gray-100" style="height: 35%;"></div>
-          <div class="flex-1 rounded-t bg-gray-100" style="height: 65%;"></div>
-          <div class="flex-1 rounded-t bg-gray-100" style="height: 90%;"></div>
-          <div class="flex-1 rounded-t bg-gray-100" style="height: 45%;"></div>
-        </div>
-      </div>
-
-      <!-- Real chart -->
-      <div
-        id="monthly-chart-real"
-        class="agri-card hidden p-4 sm:p-5 lg:p-6"
-      >
-        <div class="mb-4">
-          <h2 class="text-lg font-semibold tracking-tight text-gray-900">
-            Healthy vs Diseased Crops
-          </h2>
-
-          <p class="mt-1 text-sm text-gray-500">
-            Last 6 months
-          </p>
+      
+      <!-- Chart -->
+      <div class="agri-card p-5 sm:p-6">
+        <div id="monthly-chart-skeleton" aria-hidden="true">
+          <div class="mb-4">
+            <h2 class="rp-section-title">Healthy vs Diseased Crops</h2>
+            <p class="rp-section-lead">Last 6 months</p>
+          </div>
+          <div class="rp-chart-skeleton">
+            <div class="rp-chart-bar" style="height: 55%;"></div>
+            <div class="rp-chart-bar" style="height: 80%;"></div>
+            <div class="rp-chart-bar" style="height: 35%;"></div>
+            <div class="rp-chart-bar" style="height: 65%;"></div>
+            <div class="rp-chart-bar" style="height: 90%;"></div>
+            <div class="rp-chart-bar" style="height: 45%;"></div>
+          </div>
         </div>
 
-        <div class="relative h-64 sm:h-72">
-          <canvas id="monthlyChart" class="max-h-80"></canvas>
+        <div id="monthly-chart-real" class="hidden">
+          <div class="mb-4">
+            <h2 class="rp-section-title">Healthy vs Diseased Crops</h2>
+            <p class="rp-section-lead">Last 6 months</p>
+          </div>
+          <div class="relative h-64 sm:h-72">
+            <canvas id="monthlyChart" class="max-h-80"></canvas>
+          </div>
         </div>
       </div>
 
       <!-- Monthly Summary Table -->
-      <div class="agri-card overflow-hidden">
-        <div class="p-4 sm:p-5 lg:p-6">
-          <div class="mb-4">
-            <h2 class="text-lg font-semibold tracking-tight text-gray-900">
-              Monthly Detection Summary
-            </h2>
-
-            <p class="mt-1 text-sm text-gray-500">
-              Detection counts by month for the selected period.
-            </p>
-          </div>
+      <div>
+        <div class="mb-3">
+          <h2 class="rp-section-title">Monthly Detection Summary</h2>
+          <p class="rp-section-lead">Detection counts by month for the selected period.</p>
         </div>
-
-        <div class="overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead class="bg-gray-50 text-left">
-              <tr class="border-y border-gray-200 text-xs font-medium uppercase tracking-wide text-gray-500">
-                <th scope="col" class="px-4 py-3">
-                  Month
-                </th>
-                <th scope="col" class="px-4 py-3 text-center">
-                  Healthy
-                </th>
-                <th scope="col" class="px-4 py-3 text-center">
-                  Diseased
-                </th>
-                <th scope="col" class="px-4 py-3 text-center">
-                  Total
-                </th>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th scope="col">Month</th>
+                <th scope="col" class="text-center">Healthy</th>
+                <th scope="col" class="text-center">Diseased</th>
+                <th scope="col" class="text-center">Total</th>
               </tr>
             </thead>
-
-            <tbody class="divide-y divide-gray-100">
+            <tbody>
               {% for data in monthly_data %}
-              <tr class="transition-colors hover:bg-gray-50">
-                <td class="px-4 py-3 font-medium text-gray-900">
-                  {{ data.month }}
-                </td>
-
-                <td class="px-4 py-3 text-center font-medium text-green-700">
-                  {{ data.healthy }}
-                </td>
-
-                <td class="px-4 py-3 text-center font-medium text-red-700">
-                  {{ data.diseased }}
-                </td>
-
-                <td class="px-4 py-3 text-center font-semibold text-gray-900">
-                  {{ data.total }}
-                </td>
+              <tr>
+                <td data-label="Month" class="td-primary">{{ data.month }}</td>
+                <td data-label="Healthy" class="text-center text-[var(--color-success-text)] font-semibold">{{ data.healthy }}</td>
+                <td data-label="Diseased" class="text-center text-[var(--color-danger-text)] font-semibold">{{ data.diseased }}</td>
+                <td data-label="Total" class="text-center font-bold">{{ data.total }}</td>
               </tr>
-
               {% empty %}
               <tr>
-                <td
-                  colspan="4"
-                  class="px-4 py-10 text-center text-sm text-gray-500"
-                >
-                  No data available.
-                </td>
+                <td colspan="4" class="text-center py-10 text-[var(--color-text-muted)]">No data available.</td>
               </tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
       </div>
-
     </div>
   </section>
 
-  <!-- Top Disease Frequency -->
-  <section class="agri-card mb-6 overflow-hidden">
-    <div class="flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-start lg:justify-between lg:p-6">
+  <!-- TOP DISEASE FREQUENCY -->
+  <section class="mb-6">
+    <div class="flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <h2 class="text-lg font-semibold tracking-tight text-gray-900">
-          Top Disease Frequency
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-500">
-          Diseases with the highest detection counts in the selected period.
-        </p>
+        <h2 class="rp-section-title">Top Disease Frequency</h2>
+        <p class="rp-section-lead">Diseases with the highest detection counts in the selected period.</p>
       </div>
-
       {% if unclassified_count and role != 'farmer' %}
-      <div class="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-full px-3 py-1">
+      <div class="badge-base badge-warning">
         {{ unclassified_count }} unclassified scan{{ unclassified_count|pluralize }} excluded
       </div>
       {% endif %}
     </div>
 
     {% if disease_freq %}
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-gray-50 text-left">
-          <tr class="border-y border-gray-200 text-xs font-medium uppercase tracking-wide text-gray-500">
-            <th scope="col" class="px-4 py-3">
-              #
-            </th>
-
-            <th scope="col" class="px-4 py-3">
-              Disease
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Detections
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              % of Diseased
-            </th>
-
-            <th scope="col" class="px-4 py-3">
-              Share
-            </th>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Disease</th>
+            <th scope="col" class="text-right">Detections</th>
+            <th scope="col" class="text-right">% of Diseased</th>
+            <th scope="col">Share</th>
           </tr>
         </thead>
-
-        <tbody class="divide-y divide-gray-100">
+        <tbody>
           {% for item in disease_freq %}
-          <tr class="transition-colors hover:bg-gray-50">
-            <td class="px-4 py-3 text-xs font-mono text-gray-400">
-              {{ forloop.counter }}
-            </td>
-
-            <td class="px-4 py-3 font-medium text-gray-900">
-              {{ item.disease__name|default:"Unknown" }}
-            </td>
-
-            <td class="px-4 py-3 text-right font-semibold text-gray-900">
-              {{ item.count }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-600">
-              {{ item.pct }}%
-            </td>
-
-            <td class="w-40 px-4 py-3">
-              <div
-                class="h-2 w-full overflow-hidden rounded-full bg-gray-100"
-                role="img"
-                aria-label="{{ item.pct }} percent share"
-              >
-                <div
-                  class="h-2 rounded-full bg-red-400"
-                  style="width: {{ item.pct }}%;"
-                ></div>
+          <tr>
+            <td data-label="#" class="text-[var(--color-text-muted)] font-mono">{{ forloop.counter }}</td>
+            <td data-label="Disease" class="td-primary">{{ item.disease__name|default:"Unknown" }}</td>
+            <td data-label="Detections" class="text-right font-semibold">{{ item.count }}</td>
+            <td data-label="% of Diseased" class="text-right">{{ item.pct }}%</td>
+            <td data-label="Share">
+              <div class="rp-progress" role="img" aria-label="{{ item.pct }} percent share">
+                <div class="rp-progress-fill" style="width: {{ item.pct }}%;"></div>
               </div>
             </td>
           </tr>
@@ -466,110 +296,60 @@
         </tbody>
       </table>
     </div>
-
     {% else %}
-    <div class="border-t border-gray-200 px-4 py-10 text-center sm:px-6">
-      <p class="text-sm text-gray-500">
-        No disease detections in the selected period.
-      </p>
+    <div class="agri-card p-10 text-center">
+      <p class="text-sm text-[var(--color-text-muted)]">No disease detections in the selected period.</p>
     </div>
     {% endif %}
   </section>
 
-  <!-- Average Yield per Rice Variety -->
-  <section class="agri-card mb-6 overflow-hidden">
-    <div class="flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-start lg:justify-between lg:p-6">
+  <!-- AVERAGE YIELD PER RICE VARIETY -->
+  <section class="mb-6">
+    <div class="flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <h2 class="text-lg font-semibold tracking-tight text-gray-900">
-          Average Yield per Rice Variety
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-500">
-          Average predicted yield grouped by rice variety.
-        </p>
+        <h2 class="rp-section-title">Average Yield per Rice Variety</h2>
+        <p class="rp-section-lead">Average predicted yield grouped by rice variety.</p>
       </div>
-
       {% if unlinked_yield_count and role != 'farmer' %}
-      <div class="agri-alert agri-alert-warning w-full lg:w-auto">
-        {{ unlinked_yield_count }} prediction{{ unlinked_yield_count|pluralize }} excluded — no variety linked
+      <div class="badge-base badge-warning">
+        {{ unlinked_yield_count }} prediction{{ unlinked_yield_count|pluralize }} excluded (no variety linked)
       </div>
       {% endif %}
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-gray-50 text-left">
-          <tr class="border-y border-gray-200 text-xs font-medium uppercase tracking-wide text-gray-500">
-            <th scope="col" class="px-4 py-3">
-              Variety
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Avg Sacks/ha
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Avg Tons/ha
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Predictions
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Performance
-            </th>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Variety</th>
+            <th scope="col" class="text-right">Avg Sacks/ha</th>
+            <th scope="col" class="text-right">Avg Tons/ha</th>
+            <th scope="col" class="text-right">Predictions</th>
+            <th scope="col" class="text-right">Performance</th>
           </tr>
         </thead>
-
-        <tbody class="divide-y divide-gray-100">
+        <tbody>
           {% for item in variety_yields %}
-          <tr class="transition-colors hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-900">
-              {{ item.variety }}
-            </td>
-
-            <td class="px-4 py-3 text-right font-medium text-gray-900">
-              {{ item.avg_sacks }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-600">
-              {{ item.avg_tons }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-600">
-              {{ item.count }}
-            </td>
-
-            <td class="px-4 py-3 text-right">
+          <tr>
+            <td data-label="Variety" class="td-primary">{{ item.variety }}</td>
+            <td data-label="Avg Sacks/ha" class="text-right font-semibold">{{ item.avg_sacks }}</td>
+            <td data-label="Avg Tons/ha" class="text-right">{{ item.avg_tons }}</td>
+            <td data-label="Predictions" class="text-right">{{ item.count }}</td>
+            <td data-label="Performance" class="text-right">
               {% if item.avg_sacks >= 100 %}
-                <span class="rounded border border-green-200 bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
-                  Excellent
-                </span>
+                <span class="badge-base badge-success">Excellent</span>
               {% elif item.avg_sacks >= 80 %}
-                <span class="rounded border border-blue-200 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">
-                  Good
-                </span>
+                <span class="badge-base badge-info">Good</span>
               {% elif item.avg_sacks >= 60 %}
-                <span class="rounded border border-yellow-200 bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-700">
-                  Average
-                </span>
+                <span class="badge-base badge-warning">Average</span>
               {% else %}
-                <span class="rounded border border-red-200 bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
-                  Low
-                </span>
+                <span class="badge-base badge-danger">Low</span>
               {% endif %}
             </td>
           </tr>
-
           {% empty %}
           <tr>
-            <td
-              colspan="5"
-              class="px-4 py-10 text-center text-sm text-gray-500"
-            >
-              No yield data available.
-            </td>
+            <td colspan="5" class="text-center py-10 text-[var(--color-text-muted)]">No yield data available.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -577,92 +357,45 @@
     </div>
   </section>
 
-  <!-- Rice Production per Barangay -->
-  <section class="agri-card overflow-hidden">
-    <div class="flex flex-col gap-3 p-4 sm:p-5 lg:flex-row lg:items-start lg:justify-between lg:p-6">
+  <!-- RICE PRODUCTION PER BARANGAY -->
+  <section class="mb-6">
+    <div class="flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
       <div>
-        <h2 class="text-lg font-semibold tracking-tight text-gray-900">
-          Rice Production per Barangay
-        </h2>
-
-        <p class="mt-1 text-sm text-gray-500">
-          Production and harvest summary grouped by barangay.
-        </p>
+        <h2 class="rp-section-title">Rice Production per Barangay</h2>
+        <p class="rp-section-lead">Production and harvest summary grouped by barangay.</p>
       </div>
-
       {% if barangay_filter %}
-      <div class="agri-alert agri-alert-info w-full lg:w-auto">
+      <div class="badge-base badge-info">
         Filtered by {{ barangay_filter }}
       </div>
       {% endif %}
     </div>
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-gray-50 text-left">
-          <tr class="border-y border-gray-200 text-xs font-medium uppercase tracking-wide text-gray-500">
-            <th scope="col" class="px-4 py-3">
-              Barangay
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Farmers
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Area (ha)
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Production (tons)
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Avg Yield (t/ha)
-            </th>
-
-            <th scope="col" class="px-4 py-3 text-right">
-              Harvest Records
-            </th>
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th scope="col">Barangay</th>
+            <th scope="col" class="text-right">Farmers</th>
+            <th scope="col" class="text-right">Area (ha)</th>
+            <th scope="col" class="text-right">Production (tons)</th>
+            <th scope="col" class="text-right">Avg Yield (t/ha)</th>
+            <th scope="col" class="text-right">Harvest Records</th>
           </tr>
         </thead>
-
-        <tbody class="divide-y divide-gray-100">
+        <tbody>
           {% for row in barangay_summary %}
-          <tr class="transition-colors hover:bg-gray-50">
-            <td class="px-4 py-3 font-medium text-gray-900">
-              {{ row.barangay|default:"Unknown" }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-700">
-              {{ row.farmer_count }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-700">
-              {{ row.total_area_ha|floatformat:"2" }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-700">
-              {{ row.total_production_tons|floatformat:"2" }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-700">
-              {{ row.avg_yield_tons_per_ha|floatformat:"2" }}
-            </td>
-
-            <td class="px-4 py-3 text-right text-gray-700">
-              {{ row.record_count }}
-            </td>
+          <tr>
+            <td data-label="Barangay" class="td-primary">{{ row.barangay|default:"Unknown" }}</td>
+            <td data-label="Farmers" class="text-right">{{ row.farmer_count }}</td>
+            <td data-label="Area (ha)" class="text-right">{{ row.total_area_ha|floatformat:"2" }}</td>
+            <td data-label="Production (tons)" class="text-right">{{ row.total_production_tons|floatformat:"2" }}</td>
+            <td data-label="Avg Yield (t/ha)" class="text-right">{{ row.avg_yield_tons_per_ha|floatformat:"2" }}</td>
+            <td data-label="Harvest Records" class="text-right">{{ row.record_count }}</td>
           </tr>
-
           {% empty %}
           <tr>
-            <td
-              colspan="6"
-              class="px-4 py-10 text-center text-sm text-gray-500"
-            >
-              No barangay production data available.
-            </td>
+            <td colspan="6" class="text-center py-10 text-[var(--color-text-muted)]">No barangay production data available.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -687,16 +420,18 @@ new Chart(document.getElementById('monthlyChart'), {
       {
         label: 'Healthy',
         data: healthyData,
-        backgroundColor: 'rgba(34, 197, 94, 0.8)',
-        borderColor: 'rgb(34, 197, 94)',
-        borderWidth: 1
+        backgroundColor: 'rgba(22, 163, 74, 0.8)',
+        borderColor: 'rgb(22, 163, 74)',
+        borderWidth: 1,
+        borderRadius: 4
       },
       {
         label: 'Diseased',
         data: diseasedData,
-        backgroundColor: 'rgba(239, 68, 68, 0.8)',
-        borderColor: 'rgb(239, 68, 68)',
-        borderWidth: 1
+        backgroundColor: 'rgba(220, 38, 38, 0.8)',
+        borderColor: 'rgb(220, 38, 38)',
+        borderWidth: 1,
+        borderRadius: 4
       }
     ]
   },
@@ -705,15 +440,29 @@ new Chart(document.getElementById('monthlyChart'), {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'top'
+        position: 'top',
+        labels: {
+          font: { family: "'Inter', sans-serif", size: 12 },
+          color: '#374151'
+        }
       }
     },
     scales: {
       y: {
         beginAtZero: true,
         ticks: {
-          stepSize: 1
-        }
+          stepSize: 1,
+          font: { family: "'Inter', sans-serif", size: 11 },
+          color: '#6b7280'
+        },
+        grid: { color: 'rgba(0,0,0,0.05)' }
+      },
+      x: {
+        ticks: {
+          font: { family: "'Inter', sans-serif", size: 11 },
+          color: '#6b7280'
+        },
+        grid: { display: false }
       }
     }
   }
@@ -724,52 +473,24 @@ document.addEventListener('DOMContentLoaded', function () {
   var sk = document.getElementById('monthly-chart-skeleton');
   var real = document.getElementById('monthly-chart-real');
 
-  if (sk) {
-    sk.style.display = 'none';
-  }
-
-  if (real) {
-    real.classList.remove('hidden');
+  if (sk) sk.style.display = 'none';
+  if (real) real.classList.remove('hidden');
+  
+  var printDate = document.getElementById('print-date');
+  if (printDate) {
+    printDate.textContent = new Date().toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' });
   }
 });
 
 // Sections config shared by both Export PDF and Export CSV buttons
 var _reportSections = [
-  {
-    value: 'summary',
-    label: 'Summary Statistics',
-    desc: 'Total detections, yield overview, model accuracy'
-  },
-  {
-    value: 'monthly',
-    label: 'Monthly Breakdown',
-    desc: 'Healthy vs diseased per month'
-  },
-  {
-    value: 'diseases',
-    label: 'Disease Frequency',
-    desc: 'Top 10 diseases by detection count'
-  },
-  {
-    value: 'varieties',
-    label: 'Yield per Variety',
-    desc: 'Average sacks/ha per rice variety'
-  },
-  {
-    value: 'barangay',
-    label: 'Barangay Production',
-    desc: 'Area and production totals per barangay'
-  },
-  {
-    value: 'detections',
-    label: 'Detection Details',
-    desc: 'Full list of scan records in date range'
-  },
-  {
-    value: 'yields',
-    label: 'Yield Prediction Details',
-    desc: 'Full list of yield predictions in date range'
-  }
+  { value: 'summary', label: 'Summary Statistics', desc: 'Total detections, yield overview, model accuracy' },
+  { value: 'monthly', label: 'Monthly Breakdown', desc: 'Healthy vs diseased per month' },
+  { value: 'diseases', label: 'Disease Frequency', desc: 'Top 10 diseases by detection count' },
+  { value: 'varieties', label: 'Yield per Variety', desc: 'Average sacks/ha per rice variety' },
+  { value: 'barangay', label: 'Barangay Production', desc: 'Area and production totals per barangay' },
+  { value: 'detections', label: 'Detection Details', desc: 'Full list of scan records in date range' },
+  { value: 'yields', label: 'Yield Prediction Details', desc: 'Full list of yield predictions in date range' }
 ];
 </script>
 

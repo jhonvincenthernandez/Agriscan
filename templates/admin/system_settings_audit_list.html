@@ -1,245 +1,289 @@
 {% extends "base.html" %}
 {% block title %}System Settings Audit Log · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header & Filters */
+  .al-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .al-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .al-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .al-title { margin: 0; }
+  .al-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .al-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .al-head { padding: 1.5rem; }
+    .al-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .al-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .al-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .al-filters { padding: 1.5rem; } }
+  .al-filters form { display: grid; gap: 1rem; }
+  .al-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .al-search { position: relative; flex: 1; min-width: 0; }
+  .al-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .al-search input { padding-left: 2.5rem; }
+  .al-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .al-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .al-search-row { flex-direction: row; }
+    .al-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .al-kbd { display: inline-block; }
+    .al-search input { padding-right: 5rem; }
+    .al-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 32rem; }
+  }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+
+  .btn-warn { color: var(--color-warning-text) !important; border-color: var(--color-warning-border) !important; }
+  .btn-warn:hover { background: var(--color-warning-soft) !important; border-color: #f59e0b !important; }
+
+  /* Table specifics */
+  .al-check { justify-content: center; min-width: 2.75rem; }
+  .data-table th.al-th-check { width: 3.5rem; padding-inline: 0.5rem; text-align: center; }
+  .data-table td.al-td-check { padding-inline: 0.5rem; text-align: center; }
+  .data-table tbody tr.al-row { cursor: pointer; }
+  .data-table tbody tr.al-row.is-selected { background: var(--color-brand-light); border-color: var(--color-brand-border); }
+  @media (min-width: 1024px) {
+    .data-table tbody tr.al-row.is-selected,
+    .data-table tbody tr.al-row.is-selected:hover { background: var(--color-brand-light); }
+  }
+
+  .al-changes-list { display: flex; flex-direction: column; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+  .al-change-item { display: flex; align-items: flex-start; gap: 0.5rem; font-size: var(--text-xs); }
+  .al-change-dot { flex-shrink: 0; margin-top: 0.375rem; width: 0.375rem; height: 0.375rem; border-radius: var(--radius-full); background: var(--color-border-strong); }
+  .al-change-key { font-weight: 600; color: var(--color-text-primary); }
+  .al-change-from { color: var(--color-danger-text); text-decoration: line-through; text-decoration-color: var(--color-danger-border); }
+  .al-change-arrow { color: var(--color-text-muted); margin: 0 0.25rem; }
+  .al-change-to { color: var(--color-success-text); font-weight: 500; }
+
+  .al-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .al-bulk[hidden] { display: none; }
+  .al-bulk-count { font-weight: 600; margin-right: auto; }
+
+  /* Empty State */
+  .al-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .al-empty { padding: 3rem; } }
+  .al-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .al-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+
+  /* Sort Links */
+  .al-sort { display: inline-flex; align-items: center; gap: 0.375rem; color: inherit; text-decoration: none; }
+  .al-sort:hover { color: var(--color-text-primary); }
+  .al-sort svg { width: 0.75rem; height: 0.75rem; opacity: 0; }
+  .al-sort:hover svg { opacity: 0.5; }
+  .al-sort.is-active { color: var(--color-text-primary); }
+  .al-sort.is-active svg { opacity: 1; color: var(--color-brand); }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<section class="page-container min-w-0">
 
   <!-- Page Header -->
-  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
-    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5">
+  <header class="agri-card al-head">
+    <div class="al-head-main">
+      <span class="al-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+        </svg>
+      </span>
       <div class="min-w-0">
-        <h1 class="text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 flex items-center gap-3">
-          <svg class="h-6 w-6 sm:h-7 sm:w-7 text-slate-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
-          </svg>
-          <span>System Settings Audit Log</span>
-        </h1>
-        <p class="mt-2 text-sm text-gray-600 leading-relaxed">
-          View and manage all changes made to the system configuration settings.
-        </p>
-      </div>
-
-      <div class="flex w-full flex-col gap-2 sm:flex-row lg:w-auto lg:flex-shrink-0">
-        <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-          <svg class="h-4 w-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-          </svg>
-          {{ total_count }} Entr{{ total_count|pluralize:"y,ies" }}
-        </span>
-
-        <a href="{% url 'polls:system_settings' %}" class="btn btn-secondary">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-          </svg>
-          Back to Settings
-        </a>
-
-        <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">
-          <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-          Refresh
-        </a>
+        <h1 class="al-title">System Settings Audit Log</h1>
+        <p class="al-lead">View and manage all changes made to the system configuration settings.</p>
       </div>
     </div>
-  </div>
+
+    <div class="al-head-actions">
+      <span class="inline-flex items-center justify-center gap-2 min-h-[var(--btn-h)] px-3.5 text-[var(--color-text)] bg-[var(--color-overlay)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] text-sm font-semibold whitespace-nowrap">
+        <svg class="h-4 w-4 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        {{ total_count }} Entr{{ total_count|pluralize:"y,ies" }}
+      </span>
+
+      <a href="{% url 'polls:system_settings' %}" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        <span>Back to Settings</span>
+      </a>
+
+      <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        <span>Refresh</span>
+      </a>
+    </div>
+  </header>
 
   <!-- Filters & Search -->
-  <div class="agri-card p-4 sm:p-5 lg:p-6 mb-6">
-    <form method="get" action="{% url 'polls:system_settings_audit_list' %}" class="space-y-4">
-      <!-- Row 1: Search + Actions -->
-      <div class="flex flex-col sm:flex-row gap-3">
-        <div class="relative flex-1">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-          </div>
-          <input id="audit-search" type="text" name="search" value="{{ search_query }}"
-                 placeholder="Search user, field, values… (Ctrl+K)"
-                 autocomplete="off"
-                 class="form-input pl-9" />
+  <div class="agri-card al-filters no-print">
+    <form method="get" action="{% url 'polls:system_settings_audit_list' %}">
+      <div class="al-search-row">
+        <div class="al-search">
+          <label for="audit-search" class="sr-only-agri">Search audit logs</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="audit-search" type="search" name="search" value="{{ search_query }}" placeholder="Search user, field, values..." autocomplete="off">
+          <kbd class="al-kbd" aria-hidden="true">Ctrl K</kbd>
         </div>
 
-        <!-- Preserve filter state when searching -->
         <input type="hidden" name="sort" value="{{ sort }}">
         <input type="hidden" name="page_size" value="{{ page_size }}">
 
-          <button type="submit" class="btn btn-primary">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            Search
-          </button>
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
 
-          {% if filters_active %}
-          <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-            Clear
-          </a>
-          {% endif %}
+        {% if filters_active %}
+        <a href="{% url 'polls:system_settings_audit_list' %}" class="btn btn-secondary">Clear</a>
+        {% endif %}
       </div>
 
-      <!-- Row 2: Sort + Page size -->
-      <div class="flex flex-grid gap-3 items-center">
-        <select name="sort" onchange="this.form.submit()" class="form-select w-auto min-w-[160px]">
-          <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
-          <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
-          <option value="user" {% if sort == 'user' %}selected{% endif %}>User A → Z</option>
-          <option value="-user" {% if sort == '-user' %}selected{% endif %}>User Z → A</option>
-        </select>
+      <div class="al-selects">
+        <div>
+          <label for="al-sort-filter" class="sr-only-agri">Sort logs</label>
+          <select id="al-sort-filter" name="sort" onchange="this.form.submit()" class="form-select">
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest first</option>
+            <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest first</option>
+            <option value="user" {% if sort == 'user' %}selected{% endif %}>User A-Z</option>
+            <option value="-user" {% if sort == '-user' %}selected{% endif %}>User Z-A</option>
+          </select>
+        </div>
 
-        <select name="page_size" onchange="this.form.submit()" class="form-select w-auto min-w-[140px]">
-          <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
-          <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
-          <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
-          <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
-        </select>
+        <div>
+          <label for="al-page-size" class="sr-only-agri">Records per page</label>
+          <select id="al-page-size" name="page_size" onchange="this.form.submit()" class="form-select">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10 / page</option>
+            <option value="25" {% if page_size == 25 %}selected{% endif %}>25 / page</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50 / page</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100 / page</option>
+          </select>
+        </div>
       </div>
     </form>
   </div>
 
-  <!-- Audit Log Table -->
-  <div class="agri-card overflow-hidden">
-    <!-- Bulk action toolbar -->
-    <div id="audit-bulk-toolbar" class="no-print items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5 flex">
-      <span id="audit-bulk-count" class="text-sm font-semibold text-amber-900">0 selected</span>
-      <button type="button" onclick="confirmBulkAuditArchive()" class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1">
-        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        Archive Selected
-      </button>
-      <button type="button" onclick="clearAuditSelection()" class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2 py-1 text-xs font-medium text-green-700 transition hover:bg-green-100 hover:text-green-900 focus:outline-none focus:ring-2 focus:ring-green-500">
-        ✕ Clear selection
-      </button>
-    </div>
+  {% if audits %}
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm">
-        <thead class="bg-slate-50/80 border-b border-slate-200">
-          <tr>
-            <th class="px-4 sm:px-6 py-3 w-8 no-print">
-              <input type="checkbox" id="audit-select-all-cb"
-                     class="h-4 w-4 rounded border-gray-300 text-emerald-600 cursor-pointer focus:ring-emerald-500"
-                     title="Select all on this page" />
-            </th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">When</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Who</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Changes</th>
-            <th class="px-4 sm:px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
-          {% for entry in audits %}
-          <tr class="audit-row hover:bg-slate-50/50 transition-colors">
-            <td class="px-4 sm:px-6 py-4">
-              <input type="checkbox" class="row-cb h-4 w-4 rounded border-gray-300 text-emerald-600 cursor-pointer focus:ring-emerald-500" value="{{ entry.pk }}" />
-            </td>
-            <td class="px-4 sm:px-6 py-4 text-gray-600 whitespace-nowrap">{{ entry.changed_at|date:'M d, Y H:i' }}</td>
-            <td class="px-4 sm:px-6 py-4 text-gray-700">
-              {% if entry.changed_by %}
-                <span class="font-medium">{{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</span>
-              {% else %}
-                <span class="text-gray-500 italic">(system)</span>
-              {% endif %}
-            </td>
-            <td class="px-4 sm:px-6 py-4 text-gray-700">
-              {% if entry.details.changes %}
-                <ul class="space-y-1.5">
-                  {% for key, diff in entry.details.changes.items %}
-                    <li class="flex items-start gap-2 text-xs">
-                      <span class="shrink-0 mt-0.5 h-1.5 w-1.5 rounded-full bg-gray-300"></span>
-                      <span>
-                        <span class="font-semibold text-gray-900">{{ key }}</span>: 
-                        <span class="text-red-600 line-through decoration-red-300">{{ diff.from }}</span> 
-                        <span class="text-gray-400 mx-1">→</span> 
-                        <span class="text-emerald-700 font-medium">{{ diff.to }}</span>
-                      </span>
-                    </li>
-                  {% endfor %}
-                </ul>
-              {% else %}
-                <p class="text-xs text-gray-400 italic">No changes recorded (saved current values).</p>
-              {% endif %}
-            </td>
-            <td class="px-4 sm:px-6 py-4">
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                <a href="{% url 'polls:system_settings_audit_revert' entry.pk %}"
-                   data-open-delete="true"
-                   data-delete-type="revert"
-                   data-delete-label="Revert to audit entry #{{ entry.pk }}"
-                   data-delete-subtitle="This will overwrite current settings with the values saved in this audit entry."
-                   data-delete-notice="This action will restore the captured settings state."
-                   data-delete-title="Revert settings?"
-                   data-delete-confirm="Yes, Revert"
-                   class="relative z-10 inline-flex min-h-[34px] items-center rounded-md border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-100 hover:text-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
-                  <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
-                  </svg>
-                  Revert
-                </a>
-
-                <a href="{% url 'polls:system_settings_audit_archive' entry.pk %}"
-                   data-open-delete="true"
-                   data-delete-label="Audit entry #{{ entry.pk }}"
-                   class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100">
-                  <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
-                  </svg>
-                  Archive
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5" class="px-4 sm:px-6 py-12 text-center">
-              <div class="flex flex-col items-center justify-center text-gray-500">
-                <svg class="h-10 w-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                </svg>
-                <p class="text-sm font-medium">No audit entries found.</p>
-                <p class="text-xs text-gray-400 mt-1">Changes to system settings will appear here.</p>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Pagination -->
-    {% if audits.has_other_pages %}
-    <div class="px-4 sm:px-6 py-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="text-xs text-gray-500">
-        Page {{ audits.number }} of {{ audits.paginator.num_pages }}
-      </div>
-      <div class="flex gap-2">
-        {% if audits.has_previous %}
-        <a href="?page={{ audits.previous_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-           class="btn btn-secondary btn-sm">
-          <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-          </svg>
-          Previous
-        </a>
-        {% endif %}
-        {% if audits.has_next %}
-        <a href="?page={{ audits.next_page_number }}{% if sort %}&sort={{ sort }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-           class="btn btn-secondary btn-sm">
-          Next
-          <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-          </svg>
-        </a>
-        {% endif %}
-      </div>
-    </div>
-    {% endif %}
+  <!-- Bulk action toolbar -->
+  <div id="audit-bulk-toolbar" class="agri-alert agri-alert-warning al-bulk no-print" role="region" aria-label="Bulk actions" hidden>
+    <span id="audit-bulk-count" class="al-bulk-count">0 selected</span>
+    <button type="button" onclick="confirmBulkAuditArchive()" class="btn btn-sm btn-secondary btn-warn">
+      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Archive Selected
+    </button>
+    <button type="button" onclick="clearAuditSelection()" class="btn btn-sm btn-secondary">Clear selection</button>
   </div>
+
+  <!-- Audit Log Table -->
+  <div class="data-table-wrap">
+    <table class="data-table" aria-label="Audit logs">
+      <thead>
+        <tr>
+          <th scope="col" class="al-th-check no-print">
+            <label class="al-check"><input type="checkbox" id="audit-select-all-cb"><span class="sr-only-agri">Select all on this page</span></label>
+          </th>
+          <th scope="col">When</th>
+          <th scope="col">Who</th>
+          <th scope="col">Changes</th>
+          <th scope="col" class="text-right no-print">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in audits %}
+        <tr class="al-row">
+          <td class="al-td-check no-print" data-label="Select">
+            <label class="al-check"><input type="checkbox" class="row-cb" value="{{ entry.pk }}"><span class="sr-only-agri">Select audit {{ entry.pk }}</span></label>
+          </td>
+          <td data-label="When" class="whitespace-nowrap">{{ entry.changed_at|date:'M d, Y H:i' }}</td>
+          <td data-label="Who" class="td-primary">
+            {% if entry.changed_by %}
+              <span class="font-medium">{{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</span>
+            {% else %}
+              <span class="text-[var(--color-text-muted)] italic">(system)</span>
+            {% endif %}
+          </td>
+          <td data-label="Changes">
+            {% if entry.details.changes %}
+              <ul class="al-changes-list">
+                {% for key, diff in entry.details.changes.items %}
+                  <li class="al-change-item">
+                    <span class="al-change-dot"></span>
+                    <span>
+                      <span class="al-change-key">{{ key }}</span>: 
+                      <span class="al-change-from">{{ diff.from }}</span> 
+                      <span class="al-change-arrow">→</span> 
+                      <span class="al-change-to">{{ diff.to }}</span>
+                    </span>
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-[var(--text-xs)] text-[var(--color-text-muted)] italic">No changes recorded (saved current values).</p>
+            {% endif %}
+          </td>
+          <td data-label="Actions" class="td-actions no-print">
+            <div class="flex flex-wrap items-center gap-2 justify-end">
+              <a href="{% url 'polls:system_settings_audit_revert' entry.pk %}"
+                 data-open-delete="true"
+                 data-delete-type="revert"
+                 data-delete-label="Revert to audit entry #{{ entry.pk }}"
+                 data-delete-subtitle="This will overwrite current settings with the values saved in this audit entry."
+                 data-delete-notice="This action will restore the captured settings state."
+                 data-delete-title="Revert settings?"
+                 data-delete-confirm="Yes, Revert"
+                 class="btn btn-secondary btn-sm">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                Revert
+              </a>
+
+              <a href="{% url 'polls:system_settings_audit_archive' entry.pk %}"
+                 data-open-delete="true"
+                 data-delete-label="Audit entry #{{ entry.pk }}"
+                 class="btn btn-secondary btn-sm btn-warn">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                Archive
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center py-12">
+            <div class="flex flex-col items-center justify-center text-[var(--color-text-muted)]">
+              <svg class="h-10 w-10 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <p class="text-sm font-medium">No audit entries found.</p>
+              <p class="text-xs mt-1">Changes to system settings will appear here.</p>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if audits.has_other_pages %}
+    <div class="mt-6">
+      {% include 'partials/_pagination.html' with page_obj=audits %}
+    </div>
+  {% endif %}
+
+  {% else %}
+  
+  <!-- Empty State -->
+  <div class="agri-card al-empty">
+    <span class="al-empty-icon" aria-hidden="true">
+      <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </span>
+    <h2>No audit entries found</h2>
+    <p>Changes to system settings will appear here.</p>
+  </div>
+
+  {% endif %}
 
 </section>
 
@@ -254,7 +298,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateToolbar() {
     const checked = [...getRowCbs()].filter(cb => cb.checked);
     const n = checked.length;
-    if (toolbar)  toolbar.classList.toggle('hidden', n === 0);
+    if (toolbar)  toolbar.hidden = n === 0;
     if (countEl)  countEl.textContent = n + ' selected';
 
     const total = getRowCbs().length;
@@ -263,10 +307,9 @@ document.addEventListener('DOMContentLoaded', function () {
       selectAll.indeterminate = n > 0 && n < total;
     }
 
-    // Highlight selected rows
-    document.querySelectorAll('.audit-row').forEach(row => {
+    document.querySelectorAll('.al-row').forEach(row => {
       const cb = row.querySelector('.row-cb');
-      row.classList.toggle('bg-emerald-50/50', cb && cb.checked);
+      row.classList.toggle('is-selected', cb && cb.checked);
     });
   }
 
@@ -281,23 +324,24 @@ document.addEventListener('DOMContentLoaded', function () {
     if (e.target.classList.contains('row-cb')) updateToolbar();
   });
 
-  // Click anywhere on row toggles checkbox (except links/buttons)
-  document.querySelectorAll('.audit-row').forEach(row => {
+  document.querySelectorAll('.al-row').forEach(row => {
     row.addEventListener('click', function (e) {
-      if (e.target.closest('a, button, input')) return;
+      if (e.target.closest('a, button, input, label')) return;
       const cb = row.querySelector('.row-cb');
       if (cb) { cb.checked = !cb.checked; updateToolbar(); }
     });
-    row.style.cursor = 'pointer';
   });
+
+  updateToolbar();
 });
 
 function clearAuditSelection() {
   document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
   const sa = document.getElementById('audit-select-all-cb');
   if (sa) { sa.checked = false; sa.indeterminate = false; }
-  document.getElementById('audit-bulk-toolbar')?.classList.add('hidden');
-  document.querySelectorAll('.audit-row').forEach(r => r.classList.remove('bg-emerald-50/50'));
+  const toolbar = document.getElementById('audit-bulk-toolbar');
+  if (toolbar) toolbar.hidden = true;
+  document.querySelectorAll('.al-row').forEach(r => r.classList.remove('is-selected'));
 }
 
 function confirmBulkAuditArchive() {

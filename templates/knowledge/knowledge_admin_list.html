@@ -2,692 +2,408 @@
 
 {% block title %}Manage Knowledge Base · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Page Header & Filters */
+  .kb-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .kb-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .kb-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .kb-title { margin: 0; }
+  .kb-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .kb-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .kb-head { padding: 1.5rem; }
+    .kb-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .kb-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .kb-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .kb-filters { padding: 1.5rem; } }
+  .kb-filters form { display: grid; gap: 1rem; }
+  .kb-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .kb-search { position: relative; flex: 1; min-width: 0; }
+  .kb-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .kb-search input { padding-left: 2.5rem; }
+  .kb-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .kb-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .kb-search-row { flex-direction: row; }
+    .kb-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .kb-kbd { display: inline-block; }
+    .kb-search input { padding-right: 5rem; }
+    .kb-selects { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  /* Badges */
+  .badge-base { display: inline-flex; align-items: center; gap: 0.375rem; padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full); font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem; }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .badge-danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .badge-info    { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+
+  .btn-warn { color: var(--color-warning-text) !important; border-color: var(--color-warning-border) !important; }
+  .btn-warn:hover { background: var(--color-warning-soft) !important; border-color: #f59e0b !important; }
+
+  /* Bulk Toolbar */
+  .kb-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+  .kb-bulk[hidden] { display: none; }
+  .kb-bulk-count { font-weight: 600; margin-right: auto; }
+
+  /* Table specifics */
+  .kb-check { justify-content: center; min-width: 2.75rem; }
+  .data-table th.kb-th-check { width: 3.5rem; padding-inline: 0.5rem; text-align: center; }
+  .data-table td.kb-td-check { padding-inline: 0.5rem; text-align: center; }
+  .data-table tbody tr.kb-row { cursor: pointer; }
+  .data-table tbody tr.kb-row.is-selected { background: var(--color-brand-light); border-color: var(--color-brand-border); }
+  @media (min-width: 1024px) {
+    .data-table tbody tr.kb-row.is-selected,
+    .data-table tbody tr.kb-row.is-selected:hover { background: var(--color-brand-light); }
+  }
+
+  .kb-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
+    max-width: 24rem;
+  }
+
+  /* Empty State */
+  .kb-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .kb-empty { padding: 3rem; } }
+  .kb-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .kb-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
+
 {% block content %}
-<section class="page-container">
+<section class="page-container min-w-0">
 
   {% include 'partials/_ctrlk.html' with input_id='knowledge-admin-search' %}
 
-  <!-- Page Header -->
-  <div class="agri-card mb-6 p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
+  <!-- =========================================================
+       PAGE HEADER
+       ========================================================= -->
+  <header class="agri-card kb-head">
+    <div class="kb-head-main">
+      <span class="kb-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+      </span>
       <div class="min-w-0">
-        <h1 class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl lg:text-3xl">
-          Knowledge Base Management
-        </h1>
-
-        <p class="mt-1.5 max-w-2xl text-sm text-gray-500">
-          Create, edit, and publish farming guides and knowledge entries.
-        </p>
-      </div>
-
-      <div class="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center">
-
-        <!-- Entry Count Badge -->
-        <div
-          class="inline-flex min-h-[var(--btn-h)] items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 shadow-xs"
-          aria-label="Total knowledge entries"
-        >
-          <svg
-            class="h-4 w-4 shrink-0 text-green-700"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-
-          <span>
-            {{ total_count }} entr{{ total_count|pluralize:"y,ies" }}
-          </span>
-        </div>
-
-        <!-- Create Button -->
-        <a
-          href="{% url 'polls:knowledge_create' %}"
-          class="btn btn-primary w-full sm:w-auto"
-        >
-          <svg
-            class="h-4 w-4 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          New entry
-        </a>
-
+        <h1 class="kb-title">Knowledge Base Management</h1>
+        <p class="kb-lead">Create, edit, and publish farming guides and knowledge entries.</p>
       </div>
     </div>
-  </div>
 
+    <div class="kb-head-actions">
+      <span class="inline-flex items-center justify-center gap-2 min-h-[var(--btn-h)] px-3.5 text-[var(--color-text)] bg-[var(--color-overlay)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] text-sm font-semibold whitespace-nowrap">
+        <svg class="h-4 w-4 text-[var(--color-text-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        {{ total_count }} entr{{ total_count|pluralize:"y,ies" }}
+      </span>
 
-  <!-- Search & Filters -->
-  <div class="agri-card mb-6 p-4 sm:p-5">
-
-    <div class="mb-4">
-      <h2 class="text-base font-semibold text-gray-900">
-        Search and filter
-      </h2>
-
-      <p class="mt-0.5 text-xs text-gray-500">
-        Narrow the knowledge base by keyword, category, publication status, or page size.
-      </p>
+      <a href="{% url 'polls:knowledge_create' %}" class="btn btn-primary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>New Entry</span>
+      </a>
     </div>
+  </header>
 
-    <form method="get" class="space-y-4">
-
-      <!-- Search Field -->
-      <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-
-        <div class="relative min-w-0 flex-1">
-          <label
-            for="knowledge-admin-search"
-            class="sr-only"
-          >
-            Search knowledge entries
-          </label>
-
-          <input
-            id="knowledge-admin-search"
-            type="text"
-            name="search"
-            value="{{ search_query }}"
-            placeholder="Search entries... (Ctrl+K)"
-            class="form-input w-full"
-          />
+  <!-- =========================================================
+       SEARCH & FILTERS
+       ========================================================= -->
+  <div class="agri-card kb-filters no-print">
+    <form method="get" role="search" aria-label="Search and filter knowledge entries">
+      <div class="kb-search-row">
+        <div class="kb-search">
+          <label for="knowledge-admin-search" class="sr-only-agri">Search knowledge entries</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="knowledge-admin-search" type="search" name="search" value="{{ search_query }}" placeholder="Search entries..." autocomplete="off">
+          <kbd class="kb-kbd" aria-hidden="true">Ctrl K</kbd>
         </div>
 
-        <!-- Preserve active filters during search -->
-        <input
-          type="hidden"
-          name="category"
-          value="{{ category_filter }}"
-        >
+        <input type="hidden" name="category" value="{{ category_filter }}">
+        <input type="hidden" name="status" value="{{ status_filter }}">
 
-        <input
-          type="hidden"
-          name="status"
-          value="{{ status_filter }}"
-        >
-
-        <button
-          type="submit"
-          class="btn btn-primary w-full sm:w-auto"
-          data-loading
-        >
-          <svg
-            class="h-4 w-4 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
-          Search
-        </button>
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
 
         {% if search_query or category_filter or status_filter %}
-          <a
-            href="{% url 'polls:knowledge_admin_list' %}"
-            class="btn btn-secondary w-full sm:w-auto"
-          >
-            Clear
-          </a>
+        <a href="{% url 'polls:knowledge_admin_list' %}" class="btn btn-secondary">Clear</a>
         {% endif %}
-
       </div>
 
-
-      <!-- Select Filters -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-
-        <!-- Category -->
+      <div class="kb-selects">
         <div>
-          <label
-            for="knowledge-category-filter"
-            class="mb-1.5 block text-xs font-semibold text-gray-700"
-          >
-            Category
-          </label>
-
-          <select
-            id="knowledge-category-filter"
-            name="category"
-            onchange="this.form.submit()"
-            class="form-select w-full"
-          >
-            <option value="">All categories</option>
-
-            <option
-              value="disease"
-              {% if category_filter == 'disease' %}selected{% endif %}
-            >
-              Disease
-            </option>
-
-            <option
-              value="pest"
-              {% if category_filter == 'pest' %}selected{% endif %}
-            >
-              Pest
-            </option>
-
-            <option
-              value="crop_nutrition"
-              {% if category_filter == 'crop_nutrition' %}selected{% endif %}
-            >
-              Crop Nutrition & Fertilizer
-            </option>
-
-            <option
-              value="irrigation"
-              {% if category_filter == 'irrigation' %}selected{% endif %}
-            >
-              Irrigation & Water Management
-            </option>
-
-            <option
-              value="soil"
-              {% if category_filter == 'soil' %}selected{% endif %}
-            >
-              Soil Management
-            </option>
-
-            <option
-              value="post_harvest"
-              {% if category_filter == 'post_harvest' %}selected{% endif %}
-            >
-              Post-Harvest & Storage
-            </option>
+          <label for="knowledge-category-filter" class="sr-only-agri">Category</label>
+          <select id="knowledge-category-filter" name="category" data-autosubmit class="form-select">
+            <option value="">All Categories</option>
+            <option value="disease" {% if category_filter == 'disease' %}selected{% endif %}>Disease</option>
+            <option value="pest" {% if category_filter == 'pest' %}selected{% endif %}>Pest</option>
+            <option value="crop_nutrition" {% if category_filter == 'crop_nutrition' %}selected{% endif %}>Crop Nutrition & Fertilizer</option>
+            <option value="irrigation" {% if category_filter == 'irrigation' %}selected{% endif %}>Irrigation & Water Management</option>
+            <option value="soil" {% if category_filter == 'soil' %}selected{% endif %}>Soil Management</option>
+            <option value="post_harvest" {% if category_filter == 'post_harvest' %}selected{% endif %}>Post-Harvest & Storage</option>
           </select>
         </div>
 
-
-        <!-- Status -->
         <div>
-          <label
-            for="knowledge-status-filter"
-            class="mb-1.5 block text-xs font-semibold text-gray-700"
-          >
-            Publication status
-          </label>
-
-          <select
-            id="knowledge-status-filter"
-            name="status"
-            onchange="this.form.submit()"
-            class="form-select w-full"
-          >
-            <option value="">All statuses</option>
-
-            <option
-              value="published"
-              {% if status_filter == 'published' %}selected{% endif %}
-            >
-              Published
-            </option>
-
-            <option
-              value="draft"
-              {% if status_filter == 'draft' %}selected{% endif %}
-            >
-              Draft
-            </option>
+          <label for="knowledge-status-filter" class="sr-only-agri">Publication status</label>
+          <select id="knowledge-status-filter" name="status" data-autosubmit class="form-select">
+            <option value="">All Statuses</option>
+            <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+            <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Draft</option>
           </select>
         </div>
 
-
-        <!-- Page Size -->
         <div>
-          <label
-            for="knowledge-page-size"
-            class="mb-1.5 block text-xs font-semibold text-gray-700"
-          >
-            Entries per page
-          </label>
-
-          <select
-            id="knowledge-page-size"
-            name="page_size"
-            onchange="this.form.submit()"
-            class="form-select w-full"
-          >
+          <label for="knowledge-page-size" class="sr-only-agri">Entries per page</label>
+          <select id="knowledge-page-size" name="page_size" data-autosubmit class="form-select">
             {% for sz in allowed_page_sizes %}
-              <option
-                value="{{ sz }}"
-                {% if page_size == sz %}selected{% endif %}
-              >
-                {{ sz }} / page
-              </option>
+            <option value="{{ sz }}" {% if page_size == sz %}selected{% endif %}>{{ sz }} / page</option>
             {% endfor %}
           </select>
         </div>
-
       </div>
-
     </form>
   </div>
 
-
-  <!-- Knowledge Entries Table -->
-  <div class="agri-card overflow-hidden">
-
-    <form
-      id="kb-bulk-form"
-      method="post"
-      action="{% url 'polls:knowledge_bulk_archive' %}"
-    >
-      {% csrf_token %}
-
-      <input
-        type="hidden"
-        name="_next"
-        value="{{ request.get_full_path }}"
-      >
-
-
-      <!-- Bulk Actions Toolbar -->
-      <div
-        id="bulk-toolbar"
-        class="no-print hidden items-center gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 sm:px-5"
-      >
-        <span class="text-xs font-semibold text-amber-900 sm:text-sm">
-          <span id="selected-count">0</span> selected
-        </span>
-
-        <button
-          type="button"
-          data-open-bulk-archive="true"
-          data-bulk-form-id="kb-bulk-form"
-          data-bulk-action-url="{% url 'polls:knowledge_bulk_archive' %}"
-          data-bulk-label-singular="knowledge entry"
-          data-bulk-label-plural="knowledge entries"
-          data-bulk-title="Archive Knowledge Entries?"
-          data-bulk-subtitle="They will be archived and can be restored from Trash."
-          data-bulk-confirm="Yes, Archive"
-          class="inline-flex min-h-[36px] items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-amber-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-1"
-        >
-          <svg
-            class="h-3.5 w-3.5 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-            />
-          </svg>
-          Archive selected
-        </button>
-
-        <button
-          type="button"
-          onclick="clearSelection()"
-          class="ml-auto inline-flex min-h-[36px] items-center rounded-lg px-2.5 py-1 text-xs font-medium text-amber-900 transition hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500"
-        >
-          Clear selection
-        </button>
-      </div>
-
-
-      <!-- Table Container -->
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-left text-sm">
-
-          <thead class="border-b border-gray-200 bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-600">
-            <tr>
-
-              <th scope="col" class="w-12 px-4 py-3 sm:px-5">
-                <input
-                  type="checkbox"
-                  id="select-all-cb"
-                  title="Select all on this page"
-                  aria-label="Select all knowledge entries on this page"
-                >
-              </th>
-
-              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
-                Name
-              </th>
-
-              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
-                Category
-              </th>
-
-              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
-                Status
-              </th>
-
-              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
-                Updated
-              </th>
-
-              <th scope="col" class="whitespace-nowrap px-4 py-3 sm:px-5">
-                Actions
-              </th>
-
-            </tr>
-          </thead>
-
-
-          <tbody class="divide-y divide-gray-100 bg-white">
-
-            {% for entry in entries %}
-
-              <tr class="transition hover:bg-gray-50/80">
-
-                <!-- Checkbox -->
-                <td class="px-4 py-3 sm:px-5">
-                  <input
-                    type="checkbox"
-                    name="selected_ids"
-                    value="{{ entry.pk }}"
-                    class="row-cb"
-                    aria-label="Select {{ entry.name }}"
-                  >
-                </td>
-
-
-                <!-- Title & Description -->
-                <td class="max-w-xs px-4 py-3 sm:px-5">
-                  <a
-                    href="{% url 'polls:knowledge_detail' entry.pk %}"
-                    class="font-semibold text-gray-900 hover:text-green-700 hover:underline"
-                  >
-                    {{ entry.name }}
-                  </a>
-                  {% if entry.description %}
-                    <p class="mt-0.5 line-clamp-1 text-xs text-gray-500">
-                      {{ entry.description }}
-                    </p>
-                  {% endif %}
-                </td>
-
-
-                <!-- Category Badge -->
-                <td class="whitespace-nowrap px-4 py-3 sm:px-5">
-
-                  {% if entry.category == 'disease' %}
-
-                    <span class="inline-flex items-center rounded-md border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
-                      Disease
-                    </span>
-
-                  {% elif entry.category == 'pest' %}
-
-                    <span class="inline-flex items-center rounded-md border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-700">
-                      Pest
-                    </span>
-
-                  {% elif entry.category == 'crop_nutrition' %}
-
-                    <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                      Crop Nutrition
-                    </span>
-
-                  {% elif entry.category == 'irrigation' %}
-
-                    <span class="inline-flex items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">
-                      Irrigation
-                    </span>
-
-                  {% elif entry.category == 'soil' %}
-
-                    <span class="inline-flex items-center rounded-md border border-lime-200 bg-lime-50 px-2.5 py-0.5 text-xs font-medium text-lime-700">
-                      Soil
-                    </span>
-
-                  {% elif entry.category == 'post_harvest' %}
-
-                    <span class="inline-flex items-center rounded-md border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-medium text-orange-700">
-                      Post-Harvest
-                    </span>
-
-                  {% else %}
-
-                    <span class="inline-flex items-center rounded-md border border-gray-200 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                      {{ entry.get_category_display }}
-                    </span>
-
-                  {% endif %}
-
-                </td>
-
-
-                <!-- Publication Status -->
-                <td class="whitespace-nowrap px-4 py-3 sm:px-5">
-
-                  {% if entry.is_published %}
-
-                    <span class="agri-badge">
-                      <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                      Published
-                    </span>
-
-                  {% else %}
-
-                    <span class="inline-flex items-center rounded-full border border-gray-300 bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                      Draft
-                    </span>
-
-                  {% endif %}
-
-                </td>
-
-
-                <!-- Last Updated -->
-                <td class="whitespace-nowrap px-4 py-3 text-xs text-gray-500 sm:px-5">
-                  {{ entry.updated_at|date:'M d, Y' }}
-                </td>
-
-
-                <!-- Action Buttons -->
-                <td class="whitespace-nowrap px-4 py-3 sm:px-5">
-
-                  <div class="flex flex-wrap items-center gap-2">
-
-                    <a
-                      href="{% url 'polls:knowledge_edit' entry.pk %}"
-                      class="btn btn-primary btn-sm"
-                    >
-                      Edit
-                    </a>
-
-                    <a
-                      href="{% url 'polls:knowledge_detail' entry.pk %}"
-                      class="btn btn-secondary btn-sm"
-                    >
-                      View
-                    </a>
-
-                    <a
-                      href="{% url 'polls:knowledge_archive' entry.pk %}"
-                      data-open-delete="true"
-                      data-delete-label="Knowledge entry: {{ entry.name }}"
-                      data-delete-subtitle="This will archive the entry and move it to Trash & Archive."
-                      class="btn btn-sm border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400 hover:bg-amber-100"
-                    >
-                      Archive
-                    </a>
-
-                  </div>
-
-                </td>
-
-              </tr>
-
-            {% empty %}
-
-              <tr>
-                <td
-                  colspan="6"
-                  class="px-4 py-12 text-center sm:px-5"
-                >
-                  <div class="mx-auto max-w-sm">
-
-                    <svg
-                      class="mx-auto h-10 w-10 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="1.5"
-                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-                      />
-                    </svg>
-
-                    <p class="mt-3 text-sm font-semibold text-gray-900">
-                      No knowledge entries found
-                    </p>
-
-                    <p class="mt-1 text-xs text-gray-500">
-                      Try adjusting your search query or clear the active filters.
-                    </p>
-
-                    {% if search_query or category_filter or status_filter %}
-                      <div class="mt-4">
-                        <a
-                          href="{% url 'polls:knowledge_admin_list' %}"
-                          class="btn btn-secondary btn-sm"
-                        >
-                          Clear all filters
-                        </a>
-                      </div>
-                    {% endif %}
-
-                  </div>
-                </td>
-              </tr>
-
-            {% endfor %}
-
-          </tbody>
-
-        </table>
-      </div>
-
-    </form>
-
+  <!-- =========================================================
+       KNOWLEDGE ENTRIES TABLE
+       ========================================================= -->
+  {% if entries %}
+  
+  <!-- BULK ACTION TOOLBAR -->
+  <div id="bulk-toolbar" class="agri-alert agri-alert-warning kb-bulk no-print" role="region" aria-label="Bulk actions" hidden>
+    <span class="kb-bulk-count"><span id="selected-count">0</span> selected</span>
+    <button type="button"
+            data-open-bulk-archive="true"
+            data-bulk-form-id="kb-bulk-form"
+            data-bulk-action-url="{% url 'polls:knowledge_bulk_archive' %}"
+            data-bulk-label-singular="knowledge entry"
+            data-bulk-label-plural="knowledge entries"
+            data-bulk-title="Archive Knowledge Entries?"
+            data-bulk-subtitle="They will be archived and can be restored from Trash."
+            data-bulk-confirm="Yes, Archive"
+            class="btn btn-sm btn-secondary btn-warn">
+      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Archive Selected
+    </button>
+    <button type="button" onclick="clearSelection()" class="btn btn-sm btn-secondary">Clear selection</button>
   </div>
 
+  <form id="kb-bulk-form" method="post" action="{% url 'polls:knowledge_bulk_archive' %}">
+    {% csrf_token %}
+    <input type="hidden" name="_next" value="{{ request.get_full_path }}">
 
-  <!-- Pagination -->
+    <div class="data-table-wrap">
+      <table class="data-table" aria-label="Knowledge entries">
+        <thead>
+          <tr>
+            <th scope="col" class="kb-th-check no-print">
+              <label class="kb-check"><input type="checkbox" id="select-all-cb"><span class="sr-only-agri">Select all entries on this page</span></label>
+            </th>
+            <th scope="col">Name</th>
+            <th scope="col">Description</th>
+            <th scope="col">Category</th>
+            <th scope="col">Status</th>
+            <th scope="col">Updated</th>
+            <th scope="col" class="text-right no-print">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in entries %}
+          <tr class="kb-row">
+            <td class="kb-td-check no-print" data-label="Select">
+              <label class="kb-check"><input type="checkbox" name="selected_ids" value="{{ entry.pk }}" class="row-cb"><span class="sr-only-agri">Select {{ entry.name }}</span></label>
+            </td>
+
+            <td data-label="Name" class="td-primary">
+              <a href="{% url 'polls:knowledge_detail' entry.pk %}" class="font-semibold text-[var(--color-brand)] hover:underline">
+                {{ entry.name }}
+              </a>
+            </td>
+
+            <td data-label="Description">
+              {% if entry.description %}
+                <span class="kb-desc">{{ entry.description }}</span>
+              {% else %}
+                <span class="text-[var(--color-text-muted)] italic">No description</span>
+              {% endif %}
+            </td>
+
+            <td data-label="Category">
+              {% if entry.category == 'disease' %}
+                <span class="badge-base badge-danger">Disease</span>
+              {% elif entry.category == 'pest' %}
+                <span class="badge-base badge-warning">Pest</span>
+              {% elif entry.category == 'crop_nutrition' %}
+                <span class="badge-base badge-success">Crop Nutrition</span>
+              {% elif entry.category == 'irrigation' %}
+                <span class="badge-base badge-info">Irrigation</span>
+              {% elif entry.category == 'soil' %}
+                <span class="badge-base badge-neutral">Soil</span>
+              {% elif entry.category == 'post_harvest' %}
+                <span class="badge-base badge-warning">Post-Harvest</span>
+              {% else %}
+                <span class="badge-base badge-neutral">{{ entry.get_category_display }}</span>
+              {% endif %}
+            </td>
+
+            <td data-label="Status">
+              {% if entry.is_published %}
+                <span class="badge-base badge-success">
+                  <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  Published
+                </span>
+              {% else %}
+                <span class="badge-base badge-neutral">Draft</span>
+              {% endif %}
+            </td>
+
+            <td data-label="Updated" class="whitespace-nowrap text-[var(--text-sm)] text-[var(--color-text-secondary)]">
+              {{ entry.updated_at|date:'M d, Y' }}
+            </td>
+
+            <td data-label="Actions" class="td-actions no-print">
+              <div class="flex flex-wrap items-center gap-2 justify-end">
+                <a href="{% url 'polls:knowledge_edit' entry.pk %}" class="btn btn-secondary btn-sm">Edit</a>
+                <a href="{% url 'polls:knowledge_detail' entry.pk %}" class="btn btn-secondary btn-sm">View</a>
+                <a href="{% url 'polls:knowledge_archive' entry.pk %}"
+                   data-open-delete="true"
+                   data-delete-label="Knowledge entry: {{ entry.name }}"
+                   data-delete-subtitle="This will archive the entry and move it to Trash & Archive."
+                   class="btn btn-secondary btn-sm btn-warn">
+                  Archive
+                </a>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+
   {% if page_obj and is_paginated %}
     <div class="mt-6">
       {% include 'partials/_pagination.html' %}
     </div>
   {% endif %}
 
+  {% else %}
+  
+  <!-- =========================================================
+       EMPTY STATE
+       ========================================================= -->
+  <div class="agri-card kb-empty">
+    <span class="kb-empty-icon" aria-hidden="true">
+      <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+      </svg>
+    </span>
+    <h2>No knowledge entries found</h2>
+    <p>
+      {% if search_query or category_filter or status_filter %}
+        Try adjusting your search query or clear the active filters.
+      {% else %}
+        Start building your knowledge base by creating your first farming guide or entry.
+      {% endif %}
+    </p>
+    {% if search_query or category_filter or status_filter %}
+      <a href="{% url 'polls:knowledge_admin_list' %}" class="btn btn-secondary">Clear all filters</a>
+    {% else %}
+      <a href="{% url 'polls:knowledge_create' %}" class="btn btn-primary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span>Create First Entry</span>
+      </a>
+    {% endif %}
+  </div>
 
-  <script>
-    // Bulk selection handlers for knowledge admin list
-    (function () {
-      "use strict";
-
-      const selectAll = document.getElementById('select-all-cb');
-      const selectedCountEl = document.getElementById('selected-count');
-      const bulkToolbar = document.getElementById('bulk-toolbar');
-
-      function updateSelectedCount() {
-        const checked = document.querySelectorAll('.row-cb:checked').length;
-
-        if (selectedCountEl) {
-          selectedCountEl.textContent = checked;
-        }
-
-        if (bulkToolbar) {
-          if (checked > 0) {
-            bulkToolbar.classList.remove('hidden');
-            bulkToolbar.classList.add('flex');
-          } else {
-            bulkToolbar.classList.add('hidden');
-            bulkToolbar.classList.remove('flex');
-          }
-        }
-      }
-
-      function clearSelection() {
-        document
-          .querySelectorAll('.row-cb:checked')
-          .forEach(cb => {
-            cb.checked = false;
-          });
-
-        if (selectAll) {
-          selectAll.checked = false;
-          selectAll.indeterminate = false;
-        }
-
-        updateSelectedCount();
-      }
-
-      window.clearSelection = clearSelection;
-
-      if (selectAll) {
-        selectAll.addEventListener('change', function () {
-          document
-            .querySelectorAll('.row-cb')
-            .forEach(cb => {
-              cb.checked = selectAll.checked;
-            });
-
-          selectAll.indeterminate = false;
-          updateSelectedCount();
-        });
-      }
-
-      document.addEventListener('change', function (e) {
-        if (
-          e.target &&
-          e.target.classList &&
-          e.target.classList.contains('row-cb')
-        ) {
-          const total = document.querySelectorAll('.row-cb').length;
-          const checked = document.querySelectorAll('.row-cb:checked').length;
-
-          if (selectAll) {
-            selectAll.checked = checked === total && total > 0;
-            selectAll.indeterminate = checked > 0 && checked < total;
-          }
-
-          updateSelectedCount();
-        }
-      });
-
-      // Initial state sync
-      updateSelectedCount();
-    })();
-  </script>
+  {% endif %}
 
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /* Auto-submit the filter form when a dropdown changes */
+  document.querySelectorAll("[data-autosubmit]").forEach(function (el) {
+    el.addEventListener("change", function () {
+      if (el.form) el.form.submit();
+    });
+  });
+
+  /* Bulk selection handlers for knowledge admin list */
+  (function () {
+    const selectAll = document.getElementById('select-all-cb');
+    const selectedCountEl = document.getElementById('selected-count');
+    const bulkToolbar = document.getElementById('bulk-toolbar');
+    const rows = document.querySelectorAll('.kb-row');
+
+    function updateSelectionState() {
+      const checkboxes = document.querySelectorAll('.row-cb');
+      const checked = document.querySelectorAll('.row-cb:checked').length;
+      const total = checkboxes.length;
+
+      if (selectedCountEl) selectedCountEl.textContent = checked;
+
+      if (bulkToolbar) {
+        bulkToolbar.hidden = checked === 0;
+      }
+
+      rows.forEach(function (row) {
+        const cb = row.querySelector('.row-cb');
+        if (cb) row.classList.toggle('is-selected', cb.checked);
+      });
+
+      if (selectAll) {
+        selectAll.checked = total > 0 && checked === total;
+        selectAll.indeterminate = checked > 0 && checked < total;
+      }
+    }
+
+    window.clearSelection = function () {
+      document.querySelectorAll('.row-cb').forEach(cb => cb.checked = false);
+      if (selectAll) {
+        selectAll.checked = false;
+        selectAll.indeterminate = false;
+      }
+      updateSelectionState();
+    };
+
+    if (selectAll) {
+      selectAll.addEventListener('change', function () {
+        document.querySelectorAll('.row-cb').forEach(cb => cb.checked = selectAll.checked);
+        updateSelectionState();
+      });
+    }
+
+    document.addEventListener('change', function (e) {
+      if (e.target && e.target.classList.contains('row-cb')) {
+        updateSelectionState();
+      }
+    });
+
+    rows.forEach(function (row) {
+      row.addEventListener('click', function (e) {
+        if (e.target.closest('a, button, input, select, textarea, label')) return;
+        const cb = row.querySelector('.row-cb');
+        if (cb) {
+          cb.checked = !cb.checked;
+          updateSelectionState();
+        }
+      });
+    });
+
+    updateSelectionState();
+  })();
+</script>
 {% endblock %}

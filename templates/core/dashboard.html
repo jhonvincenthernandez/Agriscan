@@ -2,52 +2,674 @@
 
 {% block title %}Dashboard · AgriScan+{% endblock %}
 
+{% block head_meta %}
+<meta
+  name="description"
+  content="AgriScan+ dashboard: farm statistics, disease detection trends, severity distribution and yield insights."
+>
+{% endblock %}
+
+
+{% block extra_head %}
+<!-- Chart.js (deferred: executes before DOMContentLoaded) -->
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+></script>
+{% endblock %}
+
+
+{% block styles %}
+<style>
+  /* ==========================================================
+     DASHBOARD — built on base.html design tokens only
+     Palette policy: brand hue ramp + 2 semantic hues + neutral
+     ========================================================== */
+  .dash {
+    --dash-gap: 1rem;
+
+    /* Chart palette (read by JS through getComputedStyle) */
+    --chart-1: var(--color-brand-active);
+    --chart-2: var(--color-brand);
+    --chart-3: hsl(142, 42%, 44%);
+    --chart-4: hsl(142, 32%, 58%);
+    --chart-5: hsl(142, 24%, 72%);
+    --chart-6: var(--color-text-muted);
+
+    --chart-sev-1: var(--color-brand);
+    --chart-sev-2: hsl(45, 92%, 46%);
+    --chart-sev-3: hsl(25, 90%, 48%);
+    --chart-sev-4: var(--color-danger);
+
+    --chart-grid: var(--color-border);
+    --chart-text: var(--color-text-secondary);
+    --chart-muted: var(--color-text-muted);
+  }
+  @media (min-width: 768px)  { .dash { --dash-gap: 1.25rem; } }
+  @media (min-width: 1280px) { .dash { --dash-gap: 1.5rem; } }
+
+  .dash [hidden] { display: none !important; }
+  .dash > * + * { margin-top: var(--dash-gap); }
+  .dash-section + .dash-section { margin-top: calc(var(--dash-gap) * 1.5); }
+
+  /* ---------- section heading ---------- */
+  .dash-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+  .dash-section-head__text { min-width: 0; }
+  .dash-section-head h2 {
+    margin: 0;
+    font-size: var(--text-md);
+    font-weight: 650;
+    line-height: 1.3;
+  }
+  .dash-section-head p {
+    margin: 0.1875rem 0 0;
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    color: var(--color-text-secondary);
+  }
+  .dash-section-head__aside {
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+  }
+
+  /* ---------- header ---------- */
+  .dash-header__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.125rem;
+  }
+  @media (min-width: 640px) {
+    .dash-header__inner { padding: 1.375rem 1.5rem; }
+  }
+  @media (min-width: 1024px) {
+    .dash-header__inner {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  .dash-header__lead {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    min-width: 0;
+  }
+  .dash-header__text { min-width: 0; }
+  .dash-header__title {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+  .dash-header__subtitle {
+    margin: 0.375rem 0 0;
+    max-width: 70ch;
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+  .dash-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    flex: none;
+  }
+  .dash-header__actions .btn { flex: 1 1 auto; }
+  @media (min-width: 640px) {
+    .dash-header__actions .btn { flex: 0 0 auto; }
+  }
+
+  /* ---------- icon tiles ---------- */
+  .dash-icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    background: var(--color-overlay);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+  }
+  .dash-icon svg { width: 1.125rem; height: 1.125rem; }
+  .dash-icon--brand {
+    background: var(--color-brand-light);
+    border-color: var(--color-brand-border);
+    color: var(--color-brand);
+  }
+  .dash-icon--lg {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--radius-md);
+  }
+  .dash-icon--lg svg { width: 1.375rem; height: 1.375rem; }
+  .dash-icon--round {
+    width: 2rem;
+    height: 2rem;
+    border-radius: var(--radius-full);
+  }
+  .dash-icon--round svg { width: 1rem; height: 1rem; }
+
+  /* ---------- chips ---------- */
+  .dash-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  .dash-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    padding: 0.1875rem 0.625rem;
+    background: var(--color-overlay);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+  .dash-chip svg { width: 0.8125rem; height: 0.8125rem; }
+  .dash-chip--brand {
+    background: var(--color-brand-light);
+    border-color: var(--color-brand-border);
+    color: var(--color-brand-active);
+  }
+  .dash-chip--brand svg { color: var(--color-brand); }
+
+  /* ---------- grids ---------- */
+  .dash-quick-grid,
+  .dash-stats-grid,
+  .dash-charts-grid,
+  .dash-bottom-grid,
+  .dash-rail {
+    display: grid;
+    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 480px) {
+    .dash-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 640px) {
+    .dash-quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 768px) {
+    .dash-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .dash-charts-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (min-width: 1024px) {
+    .dash-stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .dash-bottom-grid {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+  @media (min-width: 1280px) {
+    .dash-stats-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .dash-charts-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  /* ---------- quick actions ---------- */
+  .dash-action {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-height: 9.5rem;
+    padding: 1.25rem;
+    text-decoration: none;
+  }
+  .dash-action__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .dash-action__arrow {
+    display: flex;
+    color: var(--color-border-strong);
+    transition: transform var(--transition-base), color var(--transition-base);
+  }
+  .dash-action__arrow svg { width: 1.125rem; height: 1.125rem; }
+  @media (hover: hover) {
+    .dash-action:hover .dash-action__arrow {
+      transform: translateX(3px);
+      color: var(--color-brand);
+    }
+  }
+  .dash-action__title { margin: 0; font-size: var(--text-md); font-weight: 650; }
+  .dash-action__desc {
+    margin: 0.3125rem 0 0;
+    max-width: 56ch;
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    color: var(--color-text-secondary);
+  }
+  .dash-action__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin: 0.75rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* ---------- stat cards ---------- */
+  .dash-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1.125rem;
+    text-decoration: none;
+  }
+  .dash-stat__top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+  .dash-stat__arrow {
+    display: flex;
+    color: var(--color-border-strong);
+    transition: transform var(--transition-base), color var(--transition-base);
+  }
+  .dash-stat__arrow svg { width: 0.9375rem; height: 0.9375rem; }
+  @media (hover: hover) {
+    .dash-stat:hover .dash-stat__arrow {
+      transform: translateX(3px);
+      color: var(--color-brand);
+    }
+  }
+  .dash-stat__value {
+    margin: 0;
+    font-size: var(--text-xl);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  @media (min-width: 640px) {
+    .dash-stat__value { font-size: var(--text-2xl); }
+  }
+  .dash-stat__label {
+    margin: 0.3125rem 0 0;
+    font-size: var(--text-sm);
+    font-weight: 650;
+    line-height: 1.4;
+    color: var(--color-text);
+  }
+  .dash-stat__meta {
+    margin: 0.125rem 0 0;
+    font-size: var(--text-xs);
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+
+  .dash-meter-block { margin-top: auto; }
+  .dash-meter-legend {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.375rem;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .dash-meter {
+    display: flex;
+    height: 0.375rem;
+    overflow: hidden;
+    background: var(--color-overlay);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-full);
+  }
+  .dash-meter__seg {
+    height: 100%;
+    transition: width var(--transition-slow);
+  }
+  .dash-meter__seg--brand { background: var(--color-brand); }
+  .dash-meter__seg--danger { background: var(--color-danger); }
+  .dash-meter__seg--warning { background: var(--chart-sev-3); }
+
+  /* ---------- chart cards ---------- */
+  .dash-chart { display: flex; flex-direction: column; overflow: hidden; }
+  .dash-chart__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.9375rem 1.125rem;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .dash-chart__head-lead { display: flex; align-items: flex-start; gap: 0.6875rem; min-width: 0; }
+  .dash-chart__title { margin: 0; font-size: 0.9375rem; font-weight: 650; }
+  .dash-chart__subtitle {
+    margin: 0.1875rem 0 0;
+    font-size: var(--text-xs);
+    line-height: 1.45;
+    color: var(--color-text-muted);
+  }
+  .dash-chart__body {
+    position: relative;
+    flex: 1 1 auto;
+    padding: 1rem 1.125rem;
+  }
+  .dash-chart__wrap {
+    position: relative;
+    height: 15rem;
+    min-width: 0;
+  }
+  @media (min-width: 640px) {
+    .dash-chart__wrap { height: 16rem; }
+  }
+  .dash-chart__wrap canvas { min-width: 0; }
+
+  .dash-chart__skeleton {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+  .dash-chart__skeleton span {
+    display: block;
+    border-radius: var(--radius-xs);
+  }
+
+  .dash-chart__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    height: 100%;
+    min-height: 12rem;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    background: var(--color-canvas);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-sm);
+  }
+  .dash-chart__empty svg { width: 1.5rem; height: 1.5rem; color: var(--color-text-muted); }
+  .dash-chart__empty-title {
+    margin: 0.5rem 0 0;
+    font-size: var(--text-sm);
+    font-weight: 650;
+    color: var(--color-text);
+  }
+  .dash-chart__empty-text {
+    margin: 0.1875rem 0 0;
+    max-width: 34ch;
+    font-size: var(--text-xs);
+    line-height: 1.5;
+    color: var(--color-text-muted);
+  }
+
+  .dash-chart__foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 2.875rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-overlay);
+    border-top: 1px solid var(--color-border);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+  }
+  .dash-chart__foot svg { width: 0.9375rem; height: 0.9375rem; flex: none; }
+  @media (hover: hover) {
+    .dash-chart__foot:hover {
+      background: var(--color-brand-light);
+      color: var(--color-brand-hover);
+    }
+  }
+
+  /* ---------- activity ---------- */
+  .dash-activity {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.375rem;
+  }
+  .dash-activity__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    transition:
+      background-color var(--transition-base),
+      border-color var(--transition-base);
+  }
+  @media (hover: hover) {
+    .dash-activity__item:hover {
+      background: var(--color-overlay);
+      border-color: var(--color-border);
+    }
+  }
+  .dash-activity__body { min-width: 0; flex: 1 1 auto; }
+  .dash-activity__title {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.45;
+    color: var(--color-text-primary);
+    overflow-wrap: anywhere;
+  }
+  .dash-activity__time {
+    display: flex;
+    align-items: center;
+    gap: 0.3125rem;
+    margin: 0.25rem 0 0;
+    font-size: var(--text-xs);
+    color: var(--color-text-muted);
+  }
+  .dash-activity__time svg { width: 0.75rem; height: 0.75rem; flex: none; }
+
+  .dash-empty {
+    padding: 2.5rem 1rem;
+    text-align: center;
+    background: var(--color-canvas);
+    border: 1px dashed var(--color-border-strong);
+    border-radius: var(--radius-sm);
+  }
+  .dash-empty svg { width: 2rem; height: 2rem; color: var(--color-text-muted); }
+  .dash-empty__title {
+    margin: 0.75rem 0 0;
+    font-size: 0.9375rem;
+    font-weight: 650;
+    color: var(--color-text);
+  }
+  .dash-empty__text {
+    margin: 0.25rem 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+  .dash-empty .btn { margin-top: 1rem; }
+
+  /* ---------- tip + system info ---------- */
+  .dash-card--brand { background: var(--color-brand-light); border-color: var(--color-brand-border); }
+  .dash-card__body { padding: 1.125rem; }
+  @media (min-width: 640px) {
+    .dash-card__body { padding: 1.375rem 1.5rem; }
+  }
+  .dash-card__head { display: flex; align-items: flex-start; gap: 0.75rem; }
+  .dash-card__title { margin: 0; font-size: var(--text-md); font-weight: 650; }
+  .dash-card--brand .dash-card__title { color: var(--color-brand-active); }
+  .dash-card__desc {
+    margin: 0.25rem 0 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+  }
+  .dash-card--brand .dash-card__desc { color: var(--color-brand-active); }
+  .dash-card__overline {
+    margin: 0;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+  }
+
+  .dash-tip-text {
+    margin: 0.875rem 0 0;
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: var(--color-brand-active);
+    max-width: 65ch;
+  }
+  .dash-tip-actions { margin-top: 1rem; }
+
+  .dash-sysinfo { margin: 0.875rem 0 0; padding: 0; }
+  .dash-sysinfo__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.6875rem 0;
+    border-top: 1px solid var(--color-border);
+  }
+  .dash-sysinfo__row:first-child { border-top: 0; padding-top: 0; }
+  .dash-sysinfo__row dt {
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+  }
+  .dash-sysinfo__row dd {
+    margin: 0;
+    max-width: 62%;
+    font-size: var(--text-sm);
+    font-weight: 650;
+    color: var(--color-text-primary);
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+
+  /* ---------- skeleton helpers ---------- */
+  .dash-sk-card { padding: 1.125rem; }
+  .dash-sk-line { display: block; height: 0.75rem; border-radius: var(--radius-xs); }
+  .dash-sk-value { display: block; height: 1.75rem; width: 4.5rem; border-radius: var(--radius-xs); }
+</style>
+{% endblock %}
+
+
 {% block content %}
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
-<section class="page-container">
+<section class="page-container dash">
 
   <!-- ============================================================
        PAGE HEADER
        ============================================================ -->
-  <header class="mb-6">
-    <div class="rounded-xl border border-gray-200 bg-white px-5 py-5 shadow-sm sm:px-6">
-      <div class="flex items-start gap-4">
+  <header class="dash-section">
+    <div class="agri-card">
+      <div class="dash-header__inner">
 
-        <div
-          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700"
-          aria-hidden="true"
-        >
-          <svg
-            class="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-            />
-          </svg>
+        <div class="dash-header__lead">
+          <span class="dash-icon dash-icon--brand dash-icon--lg" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+              />
+            </svg>
+          </span>
+
+          <div class="dash-header__text">
+            <h1 class="dash-header__title">
+              Welcome, {{ user.first_name|default:user.username }}
+            </h1>
+
+            <p class="dash-header__subtitle">
+              {% if is_admin %}
+                System-wide overview. You are managing records across all users.
+              {% elif is_technician %}
+                System-wide overview. You are monitoring records across all farmers.
+              {% else %}
+                Here is what is happening with your farm today.
+              {% endif %}
+            </p>
+
+            <ul class="dash-chips">
+              <li class="dash-chip dash-chip--brand">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                  />
+                </svg>
+                {% if is_admin %}
+                  Administrator
+                {% elif is_technician %}
+                  Technician
+                {% else %}
+                  Farmer
+                {% endif %}
+              </li>
+
+              <li class="dash-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                {% now "F j, Y" %}
+              </li>
+
+              <li class="dash-chip">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span id="dash-updated">Live data</span>
+              </li>
+            </ul>
+          </div>
         </div>
 
-        <div class="min-w-0">
-          <h1 class="text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
-            Welcome, {{ user.first_name|default:user.username }}!
-          </h1>
-
-          <p class="mt-1 max-w-3xl text-sm leading-6 text-gray-500">
-            {% if is_admin %}
-              System-wide overview · Managing records across all users.
-            {% elif is_technician %}
-              System-wide overview · Monitoring records across all farmers.
-            {% else %}
-              Here's what's happening with your farm today.
-            {% endif %}
-          </p>
+        <div class="dash-header__actions">
+          <button type="button" class="btn btn-secondary" id="dash-refresh-btn">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:1rem;height:1rem;">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0113.3-3.3M20 15a8 8 0 01-13.3 3.3"
+              />
+            </svg>
+            <span>Refresh</span>
+          </button>
         </div>
 
       </div>
@@ -58,136 +680,90 @@
   <!-- ============================================================
        QUICK ACTIONS
        ============================================================ -->
-  <section
-    aria-labelledby="quick-actions-heading"
-    class="mb-8"
-  >
-    <div class="mb-3 flex items-center justify-between gap-3">
-      <div>
-        <h2
-          id="quick-actions-heading"
-          class="text-base font-semibold text-gray-900"
-        >
-          Quick actions
-        </h2>
-        <p class="mt-0.5 text-sm text-gray-500">
-          Start a common farming task.
-        </p>
+  <section class="dash-section" aria-labelledby="quick-actions-heading">
+    <div class="dash-section-head">
+      <div class="dash-section-head__text">
+        <h2 id="quick-actions-heading">Quick actions</h2>
+        <p>Start a common farming task.</p>
       </div>
     </div>
 
-    <div class="grid gap-4 sm:grid-cols-2">
+    <div class="dash-quick-grid">
 
       <!-- Scan -->
-      <a
-        href="{% url 'polls:scan' %}"
-        class="group flex min-h-[150px] flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:p-6"
-      >
-        <div class="flex items-start justify-between gap-4">
-
-          <div
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700"
-            aria-hidden="true"
-          >
-            <svg
-              class="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+      <a href="{% url 'polls:scan' %}" class="agri-card agri-card-interactive dash-action">
+        <div class="dash-action__top">
+          <span class="dash-icon dash-icon--brand dash-icon--lg" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="1.8"
                 d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
               />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-          </div>
+          </span>
 
-          <svg
-            class="mt-1 h-5 w-5 shrink-0 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-
+          <span class="dash-action__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
         </div>
 
-        <div class="mt-5">
-          <h3 class="text-base font-semibold text-gray-900 sm:text-lg">
-            Scan Leaf Disease
-          </h3>
-          <p class="mt-1 text-sm leading-5 text-gray-500">
+        <div>
+          <h3 class="dash-action__title">Scan Leaf Disease</h3>
+
+          <p class="dash-action__desc">
             Capture or upload rice leaf images for disease detection and severity analysis.
           </p>
+
+          <ul class="dash-action__meta">
+            <li class="dash-chip dash-chip--brand">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              AI detection
+            </li>
+            <li class="dash-chip">Camera or upload</li>
+          </ul>
         </div>
       </a>
 
 
       <!-- Yield -->
-      <a
-        href="{% url 'polls:yield_prediction' %}"
-        class="group flex min-h-[150px] flex-col justify-between rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 sm:p-6"
-      >
-        <div class="flex items-start justify-between gap-4">
-
-          <div
-            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700"
-            aria-hidden="true"
-          >
-            <svg
-              class="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M3 17h18M8 17V9m4 8V5m4 12v-6"
-              />
+      <a href="{% url 'polls:yield_prediction' %}" class="agri-card agri-card-interactive dash-action">
+        <div class="dash-action__top">
+          <span class="dash-icon dash-icon--brand dash-icon--lg" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17h18M8 17V9m4 8V5m4 12v-6" />
             </svg>
-          </div>
+          </span>
 
-          <svg
-            class="mt-1 h-5 w-5 shrink-0 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-
+          <span class="dash-action__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
         </div>
 
-        <div class="mt-5">
-          <h3 class="text-base font-semibold text-gray-900 sm:text-lg">
-            Predict Yield
-          </h3>
-          <p class="mt-1 text-sm leading-5 text-gray-500">
-            Estimate harvest yield using your available crop and field data.
+        <div>
+          <h3 class="dash-action__title">Predict Yield</h3>
+
+          <p class="dash-action__desc">
+            Estimate harvest yield using your available crop, field, and health data.
           </p>
+
+          <ul class="dash-action__meta">
+            <li class="dash-chip dash-chip--brand">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10" />
+              </svg>
+              3 models
+            </li>
+            <li class="dash-chip">Tons per hectare</li>
+          </ul>
         </div>
       </a>
 
@@ -196,763 +772,552 @@
 
 
   <!-- ============================================================
-       STATISTICS SKELETON
+       STATISTICS (server-rendered, visible immediately)
        ============================================================ -->
-  <div
-    id="dashboard-stats-skeleton"
-    class="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
-    aria-hidden="true"
-  >
-    {% for i in "12345678" %}
-      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <div class="flex items-center justify-between">
-          <span class="sk block h-10 w-10 rounded-lg"></span>
-        </div>
-
-        <span class="sk mt-5 block h-7 w-14 rounded"></span>
-        <span class="sk mt-2 block h-3 w-24 rounded"></span>
-        <span class="sk mt-2 block h-3 w-20 rounded"></span>
-      </div>
-    {% endfor %}
-  </div>
-
-
-  <!-- ============================================================
-       STATISTICS
-       ============================================================ -->
-  <div
-    id="dashboard-stats"
-    class="mb-8 hidden grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6"
-  >
-
-    <!-- Fields -->
-    <a
-      href="{% url 'polls:fields_list' %}"
-      class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-    >
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-            />
-          </svg>
-        </div>
-
-        <svg
-          class="h-4 w-4 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </div>
-
-      <div class="mt-5">
-        <p class="text-2xl font-semibold tracking-tight text-gray-900">
-          {{ active_fields }}
-        </p>
-
-        <p class="mt-1 text-sm font-medium text-gray-700">
-          {% if is_admin or is_technician %}Active{% else %}My{% endif %} Fields
-        </p>
-
-        <p class="mt-0.5 text-xs text-gray-500">
-          {% if is_admin or is_technician %}System-wide{% else %}Your farms{% endif %}
-        </p>
-      </div>
-    </a>
-
-
-    <!-- Plantings -->
-    <a
-      href="{% url 'polls:plantings_list' %}"
-      class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-    >
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M12 15v5m0-5c-3 0-5-2.5-5-5s2-4 5-4 5 2 5 4-2 5-5 5z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M4 20h16"
-            />
-          </svg>
-        </div>
-
-        <svg
-          class="h-4 w-4 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </div>
-
-      <div class="mt-5">
-        <p class="text-2xl font-semibold tracking-tight text-gray-900">
-          {{ active_plantings }}
-        </p>
-
-        <p class="mt-1 text-sm font-medium text-gray-700">
-          {% if is_admin or is_technician %}Active{% else %}My{% endif %} Plantings
-        </p>
-
-        <p class="mt-0.5 text-xs text-gray-500">
-          {% if is_admin or is_technician %}System-wide{% else %}Your crops{% endif %}
-        </p>
-      </div>
-    </a>
-
-
-    <!-- Detections -->
-    <a
-      href="{% url 'polls:detections_list' %}"
-      class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-    >
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M3 7a2 2 0 012-2h1.5l1-1h7l1 1H19a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M12 11a3 3 0 100 6 3 3 0 000-6z"
-            />
-          </svg>
-        </div>
-
-        <svg
-          class="h-4 w-4 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </div>
-
-      <div class="mt-5">
-        <p class="text-2xl font-semibold tracking-tight text-gray-900">
-          {{ detections_count }}
-        </p>
-
-        <p class="mt-1 text-sm font-medium text-gray-700">
-          {% if is_admin or is_technician %}System-wide{% else %}My{% endif %}
-          Rice Detections
-        </p>
-
-        <p class="mt-0.5 text-xs text-gray-500">
-          {% if is_admin or is_technician %}All users{% else %}Your scans{% endif %}
-        </p>
-      </div>
-
-      <div class="mt-4 space-y-2">
-        <div class="flex items-center justify-between gap-3 text-xs text-gray-500">
-          <span>{{ healthy_count }} healthy</span>
-          <span>{{ diseased_count }} diseased</span>
-        </div>
-
-        <div class="flex h-1.5 overflow-hidden rounded-full bg-gray-100">
-          <div
-            class="bg-green-600 transition-all"
-            style="width: {{ health_percentage }}%"
-          ></div>
-
-          <div
-            class="bg-red-500 transition-all"
-            style="width: {{ diseased_percentage }}%"
-          ></div>
-        </div>
-      </div>
-    </a>
-
-
-    <!-- Yield Predictions -->
-    <a
-      href="{% url 'polls:yield_records_list' %}"
-      class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-    >
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M3 17h18M8 17V9m4 8V5m4 12v-6"
-            />
-          </svg>
-        </div>
-
-        <svg
-          class="h-4 w-4 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </div>
-
-      <div class="mt-5">
-        <p class="text-2xl font-semibold tracking-tight text-gray-900">
-          {{ yield_count }}
-        </p>
-
-        <p class="mt-1 text-sm font-medium text-gray-700">
-          {% if is_admin or is_technician %}System-wide{% else %}My{% endif %}
-          Yield Predictions
-        </p>
-
-        <p class="mt-0.5 text-xs text-gray-500">
-          {% if is_admin or is_technician %}All users{% else %}Your predictions{% endif %}
-        </p>
-      </div>
-
-      <div class="mt-4 space-y-2">
-        <div class="flex items-center justify-between gap-3 text-xs text-gray-500">
-          <span>{{ harvest_ready_count }} ready</span>
-          <span>{{ still_growing_count }} growing</span>
-        </div>
-
-        <div class="flex h-1.5 overflow-hidden rounded-full bg-gray-100">
-          {% if yield_count > 0 %}
-            <div
-              class="bg-green-600 transition-all"
-              style="width: {% widthratio harvest_ready_count yield_count 100 %}%"
-            ></div>
-
-            <div
-              class="bg-amber-400 transition-all"
-              style="width: {% widthratio still_growing_count yield_count 100 %}%"
-            ></div>
+  <section class="dash-section" aria-labelledby="stats-heading">
+    <div class="dash-section-head">
+      <div class="dash-section-head__text">
+        <h2 id="stats-heading">
+          {% if is_admin or is_technician %}System overview{% else %}Your farm at a glance{% endif %}
+        </h2>
+        <p>
+          {% if is_admin or is_technician %}
+            Records aggregated across all users.
+          {% else %}
+            Records linked to your fields and planting cycles.
           {% endif %}
-        </div>
-      </div>
-    </a>
-
-
-    <!-- Knowledge -->
-    <a
-      href="{% url 'polls:knowledge_list' %}"
-      class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-    >
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M5 4a2 2 0 012-2h10a2 2 0 012 2v18l-7-3-7 3V4z"
-            />
-          </svg>
-        </div>
-
-        <svg
-          class="h-4 w-4 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </div>
-
-      <div class="mt-5">
-        <p class="text-2xl font-semibold tracking-tight text-gray-900">
-          {{ knowledge_count|default:'—' }}
-        </p>
-
-        <p class="mt-1 text-sm font-medium text-gray-700">
-          Agri Knowledge
-        </p>
-
-        <p class="mt-0.5 text-xs text-gray-500">
-          Farming guides & references
         </p>
       </div>
-    </a>
 
-
-    <!-- Varieties -->
-    <a
-      href="{% url 'polls:varieties_list' %}"
-      class="group rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-green-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-    >
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-green-50 text-green-700">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M12 3c2.485 0 4.5 2.015 4.5 4.5S14.485 12 12 12s-4.5-2.015-4.5-4.5S9.515 3 12 3z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="1.8"
-              d="M17.25 16.5c0 3-2.25 4.5-5.25 4.5s-5.25-1.5-5.25-4.5c0-4.5 5.25-7.5 5.25-7.5s5.25 3 5.25 7.5z"
-            />
-          </svg>
-        </div>
-
-        <svg
-          class="h-4 w-4 text-gray-300 transition duration-200 group-hover:translate-x-0.5 group-hover:text-green-600"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </div>
-
-      <div class="mt-5">
-        <p class="text-2xl font-semibold tracking-tight text-gray-900">
-          {{ varieties_count|default:'—' }}
-        </p>
-
-        <p class="mt-1 text-sm font-medium text-gray-700">
-          Varieties
-        </p>
-
-        <p class="mt-0.5 text-xs text-gray-500">
-          Rice variety catalog
-        </p>
-      </div>
-    </a>
-
-  </div>
-
-
-  <!-- ============================================================
-       CHART SKELETON
-       ============================================================ -->
-  <div
-    id="dashboard-charts-skeleton"
-    class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3"
-    aria-hidden="true"
-  >
-
-    <div class="lg:col-span-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {% for i in "1234" %}
-        <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-          <span class="sk block h-5 w-40 rounded"></span>
-          <span class="sk mt-4 block h-[200px] w-full rounded-lg"></span>
-        </div>
-      {% endfor %}
+      <span class="dash-section-head__aside">Select a card to open records</span>
     </div>
 
-    <div class="space-y-4">
-      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <span class="sk block h-5 w-32 rounded"></span>
-        <span class="sk mt-3 block h-4 w-full rounded"></span>
-        <span class="sk mt-2 block h-4 w-4/5 rounded"></span>
-      </div>
+    <div class="dash-stats-grid">
 
-      <div class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <span class="sk block h-4 w-24 rounded"></span>
+      <!-- Fields -->
+      <a href="{% url 'polls:fields_list' %}" class="agri-card agri-card-interactive dash-stat">
+        <div class="dash-stat__top">
+          <span class="dash-icon dash-icon--brand" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="1.8"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          </span>
 
-        {% for i in "12345" %}
-          <span class="sk mt-3 block h-10 w-full rounded"></span>
-        {% endfor %}
-      </div>
-    </div>
-
-  </div>
-
-
-  <!-- ============================================================
-       CHARTS + ACTIVITY
-       ============================================================ -->
-  <div
-    id="dashboard-charts"
-    class="hidden grid grid-cols-1 gap-4 lg:grid-cols-6"
-  >
-
-    <!-- Disease Distribution -->
-    <article
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:shadow-md lg:col-span-2"
-    >
-      <div class="p-5 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-base font-semibold text-gray-900">
-            Disease Distribution
-          </h2>
-          <p class="mt-0.5 text-xs text-gray-500">
-            Recorded rice disease detections
-          </p>
+          <span class="dash-stat__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
         </div>
 
-        <div class="relative h-64">
-          <canvas
-            id="diseaseChart"
-            aria-label="Disease distribution chart"
-            role="img"
-          ></canvas>
-        </div>
-      </div>
-
-      <a
-        href="{% url 'polls:reports' %}"
-        class="flex min-h-11 items-center justify-between border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-      >
-        <span>View full report</span>
-
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </a>
-    </article>
-
-
-    <!-- Detection Trends -->
-    <article
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:shadow-md lg:col-span-2"
-    >
-      <div class="p-5 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-base font-semibold text-gray-900">
-            Detection Trends
-          </h2>
-          <p class="mt-0.5 text-xs text-gray-500">
-            Detection activity over time
-          </p>
-        </div>
-
-        <div class="relative h-64">
-          <canvas
-            id="trendChart"
-            aria-label="Detection trends chart"
-            role="img"
-          ></canvas>
-        </div>
-      </div>
-
-      <a
-        href="{% url 'polls:reports' %}"
-        class="flex min-h-11 items-center justify-between border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-      >
-        <span>View full report</span>
-
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </a>
-    </article>
-
-
-    <!-- Severity -->
-    <article
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:shadow-md lg:col-span-2"
-    >
-      <div class="p-5 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-base font-semibold text-gray-900">
-            Severity Distribution
-          </h2>
-          <p class="mt-0.5 text-xs text-gray-500">
-            Detection severity levels
-          </p>
-        </div>
-
-        <div class="relative h-64">
-          <canvas
-            id="severityChart"
-            aria-label="Severity distribution chart"
-            role="img"
-          ></canvas>
-        </div>
-      </div>
-
-      <a
-        href="{% url 'polls:detections_list' %}?sort=-severity_pct"
-        class="flex min-h-11 items-center justify-between border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-      >
-        <span>View by severity</span>
-
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </a>
-    </article>
-
-
-    <!-- Yield -->
-    <article
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:shadow-md lg:col-span-2"
-    >
-      <div class="p-5 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-base font-semibold text-gray-900">
-            {% if is_admin or is_technician %}
-              Average Yield by Barangay
-            {% else %}
-              My Yield by Field
-            {% endif %}
-          </h2>
-
-          <p class="mt-0.5 text-xs text-gray-500">
-            Average recorded yield
-          </p>
-        </div>
-
-        <div class="relative h-64">
-          <canvas
-            id="yieldChart"
-            aria-label="Yield chart"
-            role="img"
-          ></canvas>
-        </div>
-      </div>
-
-      <a
-        href="{% url 'polls:yield_records_list' %}"
-        class="flex min-h-11 items-center justify-between border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-      >
-        <span>View yield records</span>
-
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </a>
-    </article>
-
-
-    <!-- Variety -->
-    <article
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:shadow-md lg:col-span-2"
-    >
-      <div class="p-5 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-base font-semibold text-gray-900">
-            Variety Trend
-          </h2>
-
-          <p class="mt-0.5 text-xs text-gray-500">
-            Planting distribution by variety
-          </p>
-        </div>
-
-        <div class="relative h-64">
-          <canvas
-            id="varietyChart"
-            aria-label="Variety trend chart"
-            role="img"
-          ></canvas>
-        </div>
-      </div>
-
-      <a
-        href="{% url 'polls:varieties_list' %}"
-        class="flex min-h-11 items-center justify-between border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-      >
-        <span>View varieties</span>
-
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </a>
-    </article>
-
-
-    <!-- Knowledge -->
-    <article
-      class="group overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:shadow-md lg:col-span-2"
-    >
-      <div class="p-5 sm:p-6">
-        <div class="mb-4">
-          <h2 class="text-base font-semibold text-gray-900">
-            Knowledge Trend
-          </h2>
-
-          <p class="mt-0.5 text-xs text-gray-500">
-            Knowledge resource views
-          </p>
-        </div>
-
-        <div class="relative h-64">
-          <canvas
-            id="knowledgeChart"
-            aria-label="Knowledge trend chart"
-            role="img"
-          ></canvas>
-        </div>
-      </div>
-
-      <a
-        href="{% url 'polls:knowledge_list' %}"
-        class="flex min-h-11 items-center justify-between border-t border-gray-100 bg-gray-50 px-5 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-green-50 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-      >
-        <span>View knowledge base</span>
-
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="1.8"
-            d="M9 5l7 7-7 7"
-          />
-        </svg>
-      </a>
-    </article>
-
-
-    <!-- ==========================================================
-         RECENT ACTIVITY
-         ========================================================== -->
-    <article
-      class="lg:col-span-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6"
-    >
-      <div class="mb-5 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 class="text-base font-semibold text-gray-900">
-            Recent Activity
-          </h2>
+          <p class="dash-stat__value" data-count-up="{{ active_fields|default:0 }}">{{ active_fields|default:0 }}</p>
+          <p class="dash-stat__label">
+            {% if is_admin or is_technician %}Active Fields{% else %}My Fields{% endif %}
+          </p>
+          <p class="dash-stat__meta">
+            {% if is_admin or is_technician %}System-wide{% else %}Your farms{% endif %}
+          </p>
+        </div>
+      </a>
 
-          <p class="mt-0.5 text-sm text-gray-500">
-            Latest activity recorded in the system.
+
+      <!-- Plantings -->
+      <a href="{% url 'polls:plantings_list' %}" class="agri-card agri-card-interactive dash-stat">
+        <div class="dash-stat__top">
+          <span class="dash-icon dash-icon--brand" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 15v5m0-5c-3 0-5-2.5-5-5s2-4 5-4 5 2 5 4-2 5-5 5z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 20h16" />
+            </svg>
+          </span>
+
+          <span class="dash-stat__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+
+        <div>
+          <p class="dash-stat__value" data-count-up="{{ active_plantings|default:0 }}">{{ active_plantings|default:0 }}</p>
+          <p class="dash-stat__label">
+            {% if is_admin or is_technician %}Active Plantings{% else %}My Plantings{% endif %}
+          </p>
+          <p class="dash-stat__meta">
+            {% if is_admin or is_technician %}System-wide{% else %}Your crops{% endif %}
+          </p>
+        </div>
+      </a>
+
+
+      <!-- Detections -->
+      <a href="{% url 'polls:detections_list' %}" class="agri-card agri-card-interactive dash-stat">
+        <div class="dash-stat__top">
+          <span class="dash-icon dash-icon--brand" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7a2 2 0 012-2h1.5l1-1h7l1 1H19a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 11a3 3 0 100 6 3 3 0 000-6z" />
+            </svg>
+          </span>
+
+          <span class="dash-stat__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+
+        <div>
+          <p class="dash-stat__value" data-count-up="{{ detections_count|default:0 }}">{{ detections_count|default:0 }}</p>
+          <p class="dash-stat__label">
+            {% if is_admin or is_technician %}System-wide{% else %}My{% endif %}
+            Rice Detections
+          </p>
+          <p class="dash-stat__meta">
+            {% if is_admin or is_technician %}All users{% else %}Your scans{% endif %}
           </p>
         </div>
 
-        <span class="text-xs text-gray-500">
-          Last 6 actions
-        </span>
-      </div>
-
-      <div class="space-y-2">
-        {% for activity in recent_activity %}
+        <div class="dash-meter-block">
+          <div class="dash-meter-legend">
+            <span data-count-up="{{ healthy_count|default:0 }}">{{ healthy_count|default:0 }} healthy</span>
+            <span data-count-up="{{ diseased_count|default:0 }}">{{ diseased_count|default:0 }} diseased</span>
+          </div>
 
           <div
-            class="flex items-start gap-3 rounded-lg border border-transparent p-3 transition-colors hover:border-gray-200 hover:bg-gray-50"
+            class="dash-meter"
+            role="img"
+            aria-label="{{ health_percentage|default:0 }} percent healthy, {{ diseased_percentage|default:0 }} percent diseased"
           >
-            <div
-              class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-green-50 text-green-700"
-              aria-hidden="true"
-            >
-              <svg
-                class="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.8"
-                  d="M5 13l4 4L19 7"
-                />
+            <span class="dash-meter__seg dash-meter__seg--brand" style="width: {{ health_percentage|default:0 }}%"></span>
+            <span class="dash-meter__seg dash-meter__seg--danger" style="width: {{ diseased_percentage|default:0 }}%"></span>
+          </div>
+        </div>
+      </a>
+
+
+      <!-- Yield predictions -->
+      <a href="{% url 'polls:yield_records_list' %}" class="agri-card agri-card-interactive dash-stat">
+        <div class="dash-stat__top">
+          <span class="dash-icon dash-icon--brand" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17h18M8 17V9m4 8V5m4 12v-6" />
+            </svg>
+          </span>
+
+          <span class="dash-stat__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+
+        <div>
+          <p class="dash-stat__value" data-count-up="{{ yield_count|default:0 }}">{{ yield_count|default:0 }}</p>
+          <p class="dash-stat__label">
+            {% if is_admin or is_technician %}System-wide{% else %}My{% endif %}
+            Yield Predictions
+          </p>
+          <p class="dash-stat__meta">
+            {% if is_admin or is_technician %}All users{% else %}Your predictions{% endif %}
+          </p>
+        </div>
+
+        <div class="dash-meter-block">
+          <div class="dash-meter-legend">
+            <span data-count-up="{{ harvest_ready_count|default:0 }}">{{ harvest_ready_count|default:0 }} ready</span>
+            <span data-count-up="{{ still_growing_count|default:0 }}">{{ still_growing_count|default:0 }} growing</span>
+          </div>
+
+          <div class="dash-meter" role="img" aria-label="{{ harvest_ready_count|default:0 }} harvest ready, {{ still_growing_count|default:0 }} still growing">
+            {% if yield_count > 0 %}
+              <span
+                class="dash-meter__seg dash-meter__seg--brand"
+                style="width: {% widthratio harvest_ready_count yield_count 100 %}%"
+              ></span>
+              <span
+                class="dash-meter__seg dash-meter__seg--warning"
+                style="width: {% widthratio still_growing_count yield_count 100 %}%"
+              ></span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+
+
+      <!-- Knowledge -->
+      <a href="{% url 'polls:knowledge_list' %}" class="agri-card agri-card-interactive dash-stat">
+        <div class="dash-stat__top">
+          <span class="dash-icon dash-icon--brand" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4a2 2 0 012-2h10a2 2 0 012 2v18l-7-3-7 3V4z" />
+            </svg>
+          </span>
+
+          <span class="dash-stat__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+
+        <div>
+          <p class="dash-stat__value" data-count-up="{{ knowledge_count|default:0 }}">{{ knowledge_count|default:0 }}</p>
+          <p class="dash-stat__label">Agri Knowledge</p>
+          <p class="dash-stat__meta">Farming guides and references</p>
+        </div>
+      </a>
+
+
+      <!-- Varieties -->
+      <a href="{% url 'polls:varieties_list' %}" class="agri-card agri-card-interactive dash-stat">
+        <div class="dash-stat__top">
+          <span class="dash-icon dash-icon--brand" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3c2.485 0 4.5 2.015 4.5 4.5S14.485 12 12 12s-4.5-2.015-4.5-4.5S9.515 3 12 3z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.25 16.5c0 3-2.25 4.5-5.25 4.5s-5.25-1.5-5.25-4.5c0-4.5 5.25-7.5 5.25-7.5s5.25 3 5.25 7.5z" />
+            </svg>
+          </span>
+
+          <span class="dash-stat__arrow" aria-hidden="true">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+            </svg>
+          </span>
+        </div>
+
+        <div>
+          <p class="dash-stat__value" data-count-up="{{ varieties_count|default:0 }}">{{ varieties_count|default:0 }}</p>
+          <p class="dash-stat__label">Varieties</p>
+          <p class="dash-stat__meta">Rice variety catalog</p>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       CHARTS (skeleton per card until Chart.js paints it)
+       ============================================================ -->
+  <section class="dash-section" aria-labelledby="analytics-heading">
+    <div class="dash-section-head">
+      <div class="dash-section-head__text">
+        <h2 id="analytics-heading">Analytics</h2>
+        <p>Disease, severity, yield and knowledge trends from your records.</p>
+      </div>
+
+      <a href="{% url 'polls:reports' %}" class="btn btn-sm btn-secondary">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:0.9375rem;height:0.9375rem;">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 17v-6m4 6V7m4 10v-4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <span>Full reports</span>
+      </a>
+    </div>
+
+    <noscript>
+      <div class="agri-alert agri-alert-warning" style="margin-bottom:0.75rem;">
+        <p>Charts require JavaScript. Enable scripts to view the analytics visuals.</p>
+      </div>
+    </noscript>
+
+    <div class="dash-charts-grid">
+
+      <!-- Disease distribution -->
+      <article class="agri-card dash-chart" data-chart-card="diseaseChart">
+        <div class="dash-chart__head">
+          <div class="dash-chart__head-lead">
+            <span class="dash-icon dash-icon--round dash-icon--brand" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11 3.055A9 9 0 1020.945 13H11V3.055z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
               </svg>
+            </span>
+
+            <div>
+              <h3 class="dash-chart__title">Disease Distribution</h3>
+              <p class="dash-chart__subtitle">Recorded rice disease detections</p>
             </div>
+          </div>
+        </div>
 
-            <div class="min-w-0 flex-1">
-              <p class="break-words text-sm font-medium text-gray-900">
-                {{ activity.title }}
-              </p>
+        <div class="dash-chart__body">
+          <div class="dash-chart__wrap">
+            <canvas id="diseaseChart" role="img" aria-label="Doughnut chart of disease distribution"></canvas>
+            <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
+              <span class="agri-skeleton" style="height:40%"></span>
+              <span class="agri-skeleton" style="height:16%"></span>
+              <span class="agri-skeleton" style="height:24%"></span>
+            </div>
+          </div>
+        </div>
 
-              <p class="mt-1 text-xs text-gray-500">
-                {{ activity.timestamp }}
-              </p>
+        <a href="{% url 'polls:reports' %}" class="dash-chart__foot">
+          <span>View full report</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </article>
+
+
+      <!-- Detection trends -->
+      <article class="agri-card dash-chart" data-chart-card="trendChart">
+        <div class="dash-chart__head">
+          <div class="dash-chart__head-lead">
+            <span class="dash-icon dash-icon--round dash-icon--brand" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17l6-6 4 4 8-8" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M14 7h7v7" />
+              </svg>
+            </span>
+
+            <div>
+              <h3 class="dash-chart__title">Detection Trends</h3>
+              <p class="dash-chart__subtitle">Detection activity over time</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-chart__body">
+          <div class="dash-chart__wrap">
+            <canvas id="trendChart" role="img" aria-label="Line chart of detection activity over time"></canvas>
+            <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
+              <span class="agri-skeleton" style="height:55%"></span>
+              <span class="agri-skeleton" style="height:12%"></span>
+              <span class="agri-skeleton" style="height:20%"></span>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'polls:reports' %}" class="dash-chart__foot">
+          <span>View full report</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </article>
+
+
+      <!-- Severity distribution -->
+      <article class="agri-card dash-chart" data-chart-card="severityChart">
+        <div class="dash-chart__head">
+          <div class="dash-chart__head-lead">
+            <span class="dash-icon dash-icon--round dash-icon--brand" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 19V5m0 14h16M8 16v-4m4 4V8m4 8v-6" />
+              </svg>
+            </span>
+
+            <div>
+              <h3 class="dash-chart__title">Severity Distribution</h3>
+              <p class="dash-chart__subtitle">Detection severity levels</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-chart__body">
+          <div class="dash-chart__wrap">
+            <canvas id="severityChart" role="img" aria-label="Bar chart of detection severity levels"></canvas>
+            <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
+              <span class="agri-skeleton" style="height:35%"></span>
+              <span class="agri-skeleton" style="height:18%"></span>
+              <span class="agri-skeleton" style="height:26%"></span>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'polls:detections_list' %}?sort=-severity_pct" class="dash-chart__foot">
+          <span>View by severity</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </article>
+
+
+      <!-- Yield -->
+      <article class="agri-card dash-chart" data-chart-card="yieldChart">
+        <div class="dash-chart__head">
+          <div class="dash-chart__head-lead">
+            <span class="dash-icon dash-icon--round dash-icon--brand" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M13 17h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14" />
+              </svg>
+            </span>
+
+            <div>
+              <h3 class="dash-chart__title">
+                {% if is_admin or is_technician %}
+                  Average Yield by Barangay
+                {% else %}
+                  My Yield by Field
+                {% endif %}
+              </h3>
+              <p class="dash-chart__subtitle">Average recorded yield in tons per hectare</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-chart__body">
+          <div class="dash-chart__wrap">
+            <canvas id="yieldChart" role="img" aria-label="Bar chart of average yield"></canvas>
+            <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
+              <span class="agri-skeleton" style="height:60%"></span>
+              <span class="agri-skeleton" style="height:14%"></span>
+              <span class="agri-skeleton" style="height:18%"></span>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'polls:yield_records_list' %}" class="dash-chart__foot">
+          <span>View yield records</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </article>
+
+
+      <!-- Variety trend -->
+      <article class="agri-card dash-chart" data-chart-card="varietyChart">
+        <div class="dash-chart__head">
+          <div class="dash-chart__head-lead">
+            <span class="dash-icon dash-icon--round dash-icon--brand" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 3c2.485 0 4.5 2.015 4.5 4.5S14.485 12 12 12s-4.5-2.015-4.5-4.5S9.515 3 12 3z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17.25 16.5c0 3-2.25 4.5-5.25 4.5s-5.25-1.5-5.25-4.5c0-4.5 5.25-7.5 5.25-7.5s5.25 3 5.25 7.5z" />
+              </svg>
+            </span>
+
+            <div>
+              <h3 class="dash-chart__title">Variety Trend</h3>
+              <p class="dash-chart__subtitle">Planting distribution by variety</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-chart__body">
+          <div class="dash-chart__wrap">
+            <canvas id="varietyChart" role="img" aria-label="Bar chart of planting distribution by variety"></canvas>
+            <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
+              <span class="agri-skeleton" style="height:45%"></span>
+              <span class="agri-skeleton" style="height:20%"></span>
+              <span class="agri-skeleton" style="height:22%"></span>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'polls:varieties_list' %}" class="dash-chart__foot">
+          <span>View varieties</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </article>
+
+
+      <!-- Knowledge trend -->
+      <article class="agri-card dash-chart" data-chart-card="knowledgeChart">
+        <div class="dash-chart__head">
+          <div class="dash-chart__head-lead">
+            <span class="dash-icon dash-icon--round dash-icon--brand" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4a2 2 0 012-2h10a2 2 0 012 2v18l-7-3-7 3V4z" />
+              </svg>
+            </span>
+
+            <div>
+              <h3 class="dash-chart__title">Knowledge Trend</h3>
+              <p class="dash-chart__subtitle">Knowledge resource views</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-chart__body">
+          <div class="dash-chart__wrap">
+            <canvas id="knowledgeChart" role="img" aria-label="Bar chart of knowledge resource views"></canvas>
+            <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
+              <span class="agri-skeleton" style="height:38%"></span>
+              <span class="agri-skeleton" style="height:22%"></span>
+              <span class="agri-skeleton" style="height:26%"></span>
+            </div>
+          </div>
+        </div>
+
+        <a href="{% url 'polls:knowledge_list' %}" class="dash-chart__foot">
+          <span>View knowledge base</span>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      </article>
+
+    </div>
+  </section>
+
+
+  <!-- ============================================================
+       ACTIVITY + RAIL (tip / system info)
+       ============================================================ -->
+  <section class="dash-section" aria-label="Recent activity and system information">
+    <div class="dash-bottom-grid">
+
+      <!-- Recent activity -->
+      <article class="agri-card">
+        <div class="dash-chart__head">
+          <div class="dash-chart__head-lead">
+            <span class="dash-icon dash-icon--round" aria-hidden="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+
+            <div>
+              <h2 class="dash-chart__title">Recent Activity</h2>
+              <p class="dash-chart__subtitle">Latest activity recorded in the system</p>
             </div>
           </div>
 
-        {% empty %}
+          <span class="dash-section-head__aside">Last 6 actions</span>
+        </div>
 
-          <div class="rounded-lg border border-dashed border-gray-200 px-5 py-10 text-center">
-            <svg
-              class="mx-auto h-10 w-10 text-gray-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
+        <div class="dash-card__body">
+          {% if recent_activity %}
+          <ul class="dash-activity">
+            {% for activity in recent_activity %}
+            <li class="dash-activity__item">
+              <span class="dash-icon dash-icon--round dash-icon--brand" data-activity-icon aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 13l4 4L19 7" />
+                </svg>
+              </span>
+
+              <div class="dash-activity__body">
+                <p class="dash-activity__title" data-activity-title="{{ activity.title }}">{{ activity.title }}</p>
+
+                <p class="dash-activity__time">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {{ activity.timestamp }}
+                </p>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+
+          {% else %}
+          <div class="dash-empty">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -961,769 +1326,924 @@
               />
             </svg>
 
-            <p class="mt-3 text-sm font-medium text-gray-700">
-              No recent activity yet
-            </p>
+            <p class="dash-empty__title">No recent activity yet</p>
+            <p class="dash-empty__text">Start scanning a leaf or predicting your yield.</p>
 
-            <p class="mt-1 text-xs text-gray-500">
-              Start scanning or predicting yield.
-            </p>
+            <a href="{% url 'polls:scan' %}" class="btn btn-primary">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:1rem;height:1rem;">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.8"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span>Scan Leaf Disease</span>
+            </a>
           </div>
+          {% endif %}
+        </div>
+      </article>
 
-        {% endfor %}
-      </div>
-    </article>
 
+      <!-- Right rail -->
+      <div class="dash-rail">
 
-    <!-- ==========================================================
-         TIP + SYSTEM INFO
-         ========================================================== -->
-    <div class="lg:col-span-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <!-- Tip of the day -->
+        <article class="agri-card dash-card--brand">
+          <div class="dash-card__body">
+            <div class="dash-card__head">
+              <span class="dash-icon dash-icon--brand" style="background:var(--color-surface);" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.8"
+                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                  />
+                </svg>
+              </span>
 
-      <!-- Tip -->
-      <article class="rounded-xl border border-green-200 bg-green-50 p-5 sm:p-6">
+              <div>
+                <h2 class="dash-card__title">Tip of the Day</h2>
+                <p class="dash-card__desc">Practical guidance for healthier crops.</p>
+              </div>
+            </div>
 
-        <div class="flex items-start gap-3">
-
-          <div
-            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-green-700 shadow-sm"
-            aria-hidden="true"
-          >
-            <svg
-              class="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="1.8"
-                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-              />
-            </svg>
-          </div>
-
-          <div class="min-w-0">
-            <h2 class="text-base font-semibold text-gray-900">
-              Tip of the Day
-            </h2>
-
-            <p class="mt-2 text-sm leading-6 text-gray-600">
+            <p class="dash-tip-text">
               {{ tip|default:'Monitor leaf discoloration early to reduce severity progression and protect your yield.' }}
             </p>
-          </div>
 
-        </div>
-      </article>
-
-
-      <!-- System Info -->
-      <article class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-700">
-          System Information
-        </h2>
-
-        <div class="mt-4 divide-y divide-gray-100">
-
-          <div class="flex items-center justify-between gap-4 py-3">
-            <span class="text-sm text-gray-500">
-              Model Version
-            </span>
-
-            <span class="max-w-[60%] truncate text-right text-sm font-medium text-gray-900">
-              {{ model_version|default:'—' }}
-            </span>
-          </div>
-
-          <div class="flex items-center justify-between gap-4 py-3">
-            <span class="text-sm text-gray-500">
-              Detectable Classes
-            </span>
-
-            <span class="max-w-[60%] truncate text-right text-sm font-medium text-gray-900">
-              {{ detectable_classes|default:'—' }}
-            </span>
-          </div>
-
-          {% if last_sync %}
-            <div class="flex items-center justify-between gap-4 py-3">
-              <span class="text-sm text-gray-500">
-                Last Scan
-              </span>
-
-              <span class="max-w-[60%] truncate text-right text-xs font-medium text-gray-900">
-                {{ last_sync }}
-              </span>
+            <div class="dash-tip-actions">
+              <a href="{% url 'polls:knowledge_list' %}" class="btn btn-secondary btn-sm">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" style="width:0.9375rem;height:0.9375rem;">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 4a2 2 0 012-2h10a2 2 0 012 2v18l-7-3-7 3V4z" />
+                </svg>
+                <span>Browse knowledge base</span>
+              </a>
             </div>
-          {% endif %}
+          </div>
+        </article>
 
-        </div>
-      </article>
+
+        <!-- System information -->
+        <article class="agri-card">
+          <div class="dash-card__body">
+            <div class="dash-card__head">
+              <span class="dash-icon" aria-hidden="true">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.8"
+                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                  />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </span>
+
+              <div>
+                <p class="dash-card__overline">System Information</p>
+                <p class="dash-card__desc">Detection model metadata.</p>
+              </div>
+            </div>
+
+            <dl class="dash-sysinfo">
+              <div class="dash-sysinfo__row">
+                <dt>Model Version</dt>
+                <dd>{{ model_version|default:"Not set" }}</dd>
+              </div>
+
+              <div class="dash-sysinfo__row">
+                <dt>Detectable Classes</dt>
+                <dd>{{ detectable_classes|default:"Not set" }}</dd>
+              </div>
+
+              {% if last_sync %}
+              <div class="dash-sysinfo__row">
+                <dt>Last Scan</dt>
+                <dd>{{ last_sync }}</dd>
+              </div>
+              {% endif %}
+
+              <div class="dash-sysinfo__row">
+                <dt>Access Level</dt>
+                <dd>
+                  {% if is_admin %}
+                    Administrator
+                  {% elif is_technician %}
+                    Technician
+                  {% else %}
+                    Farmer
+                  {% endif %}
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </article>
+
+      </div>
 
     </div>
+  </section>
 
-  </div>
-
-
-  <!-- ============================================================
-       DASHBOARD JSON DATA
-       ============================================================ -->
-  {{ disease_stats|default:"[]"|json_script:"dashboardDiseaseStats" }}
-  {{ trend_data|default:"[]"|json_script:"dashboardTrendData" }}
-  {{ severity_distribution|default:"[]"|json_script:"dashboardSeverityData" }}
-  {{ avg_yield_by_barangay|default:"[]"|json_script:"dashboardYieldByBarangay" }}
-  {{ avg_yield_by_field|default:"[]"|json_script:"dashboardYieldByField" }}
-  {{ variety_trend|default:"[]"|json_script:"dashboardVarietyTrend" }}
-  {{ knowledge_trend|default:"[]"|json_script:"dashboardKnowledgeTrend" }}
+</section>
+{% endblock %}
 
 
-  <!-- ============================================================
-       CHART JAVASCRIPT
-       ============================================================ -->
-  <script>
-    const chartAvailable = typeof window.Chart === 'function';
+{% block scripts %}
+<!-- ============================================================
+     DASHBOARD JSON DATA
+     ============================================================ -->
+{{ disease_stats|default:"[]"|json_script:"dashboardDiseaseStats" }}
+{{ trend_data|default:"[]"|json_script:"dashboardTrendData" }}
+{{ severity_distribution|default:"[]"|json_script:"dashboardSeverityData" }}
+{{ avg_yield_by_barangay|default:"[]"|json_script:"dashboardYieldByBarangay" }}
+{{ avg_yield_by_field|default:"[]"|json_script:"dashboardYieldByField" }}
+{{ variety_trend|default:"[]"|json_script:"dashboardVarietyTrend" }}
+{{ knowledge_trend|default:"[]"|json_script:"dashboardKnowledgeTrend" }}
 
-    const isAdmin = {{ is_admin|yesno:"true,false" }};
-    const isTechnician = {{ is_technician|yesno:"true,false" }};
+<div
+  id="dashboard-config"
+  hidden
+  data-is-admin="{{ is_admin|yesno:'true,false' }}"
+  data-is-technician="{{ is_technician|yesno:'true,false' }}"
+></div>
 
-    function getArrayFromScript(id) {
-      const node = document.getElementById(id);
+<script>
+(function () {
+  'use strict';
 
-      if (!node) {
-        return [];
+  /* ==========================================================
+     CONFIG + HELPERS
+     ========================================================== */
+  const configEl = document.getElementById('dashboard-config');
+  const isAdmin = !!(configEl && configEl.dataset.isAdmin === 'true');
+  const isTechnician = !!(configEl && configEl.dataset.isTechnician === 'true');
+
+  const prefersReducedMotion = !!(
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+
+  const dashRoot = document.querySelector('.dash');
+
+  function readVar(name, fallback) {
+    if (!dashRoot) return fallback;
+    const value = getComputedStyle(dashRoot).getPropertyValue(name).trim();
+    return value || fallback;
+  }
+
+  /* hsl()/hex to rgba() so canvas fills can use alpha */
+  function toRgba(color, alpha) {
+    const raw = String(color || '').trim();
+
+    if (raw.charAt(0) === '#') {
+      let hex = raw.slice(1);
+      if (hex.length === 3) {
+        hex = hex.split('').map((c) => c + c).join('');
       }
-
-      try {
-        const parsed = JSON.parse(node.textContent);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (error) {
-        return [];
-      }
+      const int = parseInt(hex, 16);
+      return 'rgba(' + ((int >> 16) & 255) + ',' + ((int >> 8) & 255) + ',' + (int & 255) + ',' + alpha + ')';
     }
 
-    function setChartPlaceholder(canvasId, message) {
-      const canvas = document.getElementById(canvasId);
+    const hslMatch = raw.match(/hsla?\(\s*([\d.]+)[,\s]+([\d.]+)%[,\s]+([\d.]+)%/i);
 
-      if (!canvas || !canvas.parentElement) {
+    if (hslMatch) {
+      const h = parseFloat(hslMatch[1]) / 360;
+      const s = parseFloat(hslMatch[2]) / 100;
+      const l = parseFloat(hslMatch[3]) / 100;
+
+      let r, g, b;
+
+      if (s === 0) {
+        r = g = b = l;
+      } else {
+        const hue2rgb = (p, q, t) => {
+          let n = t;
+          if (n < 0) n += 1;
+          if (n > 1) n -= 1;
+          if (n < 1 / 6) return p + (q - p) * 6 * n;
+          if (n < 1 / 2) return q;
+          if (n < 2 / 3) return p + (q - p) * (2 / 3 - n) * 6;
+          return p;
+        };
+
+        const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+        const p = 2 * l - q;
+
+        r = hue2rgb(p, q, h + 1 / 3);
+        g = hue2rgb(p, q, h);
+        b = hue2rgb(p, q, h - 1 / 3);
+      }
+
+      return 'rgba(' + Math.round(r * 255) + ',' + Math.round(g * 255) + ',' + Math.round(b * 255) + ',' + alpha + ')';
+    }
+
+    return raw;
+  }
+
+  const PALETTE = {
+    ramp: [
+      readVar('--chart-1', '#14532d'),
+      readVar('--chart-2', '#157f3c'),
+      readVar('--chart-3', '#3f9c60'),
+      readVar('--chart-4', '#6fb58a'),
+      readVar('--chart-5', '#a7cfb7'),
+      readVar('--chart-6', '#6b7280')
+    ],
+    severity: [
+      readVar('--chart-sev-1', '#157f3c'),
+      readVar('--chart-sev-2', '#e0b406'),
+      readVar('--chart-sev-3', '#ea730c'),
+      readVar('--chart-sev-4', '#dc2626')
+    ],
+    brand: readVar('--chart-2', '#157f3c'),
+    brandDeep: readVar('--chart-1', '#14532d'),
+    grid: readVar('--chart-grid', '#dcdfe4'),
+    text: readVar('--chart-text', '#5b6472'),
+    muted: readVar('--chart-muted', '#7c8593'),
+    surface: readVar('--color-surface', '#ffffff')
+  };
+
+  function getArrayFromScript(id) {
+    const node = document.getElementById(id);
+    if (!node) return [];
+
+    try {
+      const parsed = JSON.parse(node.textContent);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  function removeSkeleton(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !canvas.parentElement) return;
+
+    const skeleton = canvas.parentElement.querySelector('[data-skeleton]');
+    if (skeleton && skeleton.parentNode) skeleton.parentNode.removeChild(skeleton);
+  }
+
+  function renderChartEmpty(canvasId, title, message) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas || !canvas.parentElement) return;
+
+    const wrap = canvas.parentElement;
+
+    removeSkeleton(canvasId);
+
+    if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
+    wrap.textContent = '';
+
+    const box = document.createElement('div');
+    box.className = 'dash-chart__empty';
+
+    const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    icon.setAttribute('viewBox', '0 0 24 24');
+    icon.setAttribute('aria-hidden', 'true');
+    icon.innerHTML =
+      '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.7" ' +
+      'd="M9 17v-6m4 6V7m4 10v-4M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/>';
+
+    const heading = document.createElement('p');
+    heading.className = 'dash-chart__empty-title';
+    heading.textContent = title;
+
+    const text = document.createElement('p');
+    text.className = 'dash-chart__empty-text';
+    text.textContent = message;
+
+    box.appendChild(icon);
+    box.appendChild(heading);
+    box.appendChild(text);
+    wrap.appendChild(box);
+  }
+
+  /* Screen-reader data table mirroring each chart */
+  function renderDataTable(card, caption, labels, values, valueLabel) {
+    if (!card) return;
+
+    const existing = card.querySelector('[data-chart-table]');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    const table = document.createElement('table');
+    table.className = 'sr-only-agri';
+    table.setAttribute('data-chart-table', 'true');
+
+    const captionEl = document.createElement('caption');
+    captionEl.textContent = caption;
+    table.appendChild(captionEl);
+
+    const head = document.createElement('thead');
+    const headRow = document.createElement('tr');
+
+    [caption.split(' ')[0], valueLabel || 'Value'].forEach((text) => {
+      const th = document.createElement('th');
+      th.setAttribute('scope', 'col');
+      th.textContent = text;
+      headRow.appendChild(th);
+    });
+
+    head.appendChild(headRow);
+    table.appendChild(head);
+
+    const body = document.createElement('tbody');
+
+    labels.forEach((label, index) => {
+      const row = document.createElement('tr');
+
+      const th = document.createElement('th');
+      th.setAttribute('scope', 'row');
+      th.textContent = label;
+
+      const td = document.createElement('td');
+      td.textContent = values[index];
+
+      row.appendChild(th);
+      row.appendChild(td);
+      body.appendChild(row);
+    });
+
+    table.appendChild(body);
+    card.appendChild(table);
+  }
+
+  /* ==========================================================
+     COUNT-UP + METER ANIMATION (progressive enhancement only)
+     ========================================================== */
+  function animateCountUp(node) {
+    const target = parseFloat(node.getAttribute('data-count-up'));
+    if (isNaN(target)) return;
+
+    const suffix = (node.textContent || '').replace(/^[\d.,\s-]+/, '').trim();
+
+    if (prefersReducedMotion || target <= 0 || target > 100000) {
+      node.textContent = target.toLocaleString() + (suffix ? ' ' + suffix : '');
+      return;
+    }
+
+    const duration = 700;
+    const startedAt = performance.now();
+
+    function frame(now) {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = Math.round(target * eased);
+
+      node.textContent = value.toLocaleString() + (suffix ? ' ' + suffix : '');
+
+      if (progress < 1) window.requestAnimationFrame(frame);
+    }
+
+    node.textContent = '0' + (suffix ? ' ' + suffix : '');
+    window.requestAnimationFrame(frame);
+  }
+
+  function initStatAnimations() {
+    document.querySelectorAll('[data-count-up]').forEach(animateCountUp);
+
+    document.querySelectorAll('.dash-meter__seg').forEach((segment) => {
+      const inline = segment.style.width;
+      if (!inline) return;
+
+      segment.style.width = '0%';
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          segment.style.width = inline;
+        });
+      });
+    });
+  }
+
+  /* ==========================================================
+     ACTIVITY ICONS
+     ========================================================== */
+  const ACTIVITY_ICONS = [
+    {
+      match: /(scan|detect|disease|leaf|photo|image)/i,
+      path: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9zM15 13a3 3 0 11-6 0 3 3 0 016 0z'
+    },
+    {
+      match: /(yield|predict|harvest|forecast|tons)/i,
+      path: 'M3 17h18M8 17V9m4 8V5m4 12v-6'
+    },
+    {
+      match: /(plant|cycle|crop|sow)/i,
+      path: 'M12 15v5m0-5c-3 0-5-2.5-5-5s2-4 5-4 5 2 5 4-2 5-5 5zM4 20h16'
+    },
+    {
+      match: /(field|farm|land|barangay)/i,
+      path: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z'
+    },
+    {
+      match: /(knowledge|guide|article|reference)/i,
+      path: 'M5 4a2 2 0 012-2h10a2 2 0 012 2v18l-7-3-7 3V4z'
+    },
+    {
+      match: /(variet|seed)/i,
+      path: 'M12 3c2.485 0 4.5 2.015 4.5 4.5S14.485 12 12 12s-4.5-2.015-4.5-4.5S9.515 3 12 3zM17.25 16.5c0 3-2.25 4.5-5.25 4.5s-5.25-1.5-5.25-4.5c0-4.5 5.25-7.5 5.25-7.5s5.25 3 5.25 7.5z'
+    },
+    {
+      match: /(user|account|login|profile)/i,
+      path: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'
+    }
+  ];
+
+  const DEFAULT_ACTIVITY_PATH = 'M5 13l4 4L19 7';
+
+  function initActivityIcons() {
+    document.querySelectorAll('[data-activity-icon]').forEach((holder) => {
+      const item = holder.closest('.dash-activity__item');
+      const titleNode = item ? item.querySelector('[data-activity-title]') : null;
+      const title = titleNode ? titleNode.getAttribute('data-activity-title') || '' : '';
+
+      let path = DEFAULT_ACTIVITY_PATH;
+
+      for (let i = 0; i < ACTIVITY_ICONS.length; i++) {
+        if (ACTIVITY_ICONS[i].match.test(title)) {
+          path = ACTIVITY_ICONS[i].path;
+          break;
+        }
+      }
+
+      holder.innerHTML =
+        '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">' +
+        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="' + path + '"/></svg>';
+    });
+  }
+
+  /* ==========================================================
+     CHARTS
+     ========================================================== */
+  const chartInstances = {};
+
+  function baseOptions(extra) {
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: prefersReducedMotion ? false : { duration: 650, easing: 'easeOutQuart' },
+      layout: { padding: { top: 4, bottom: 0, left: 0, right: 0 } },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          titleColor: '#ffffff',
+          bodyColor: '#e2e8f0',
+          borderColor: 'rgba(255,255,255,0.12)',
+          borderWidth: 1,
+          padding: 10,
+          cornerRadius: 6,
+          displayColors: true,
+          boxWidth: 8,
+          boxHeight: 8,
+          usePointStyle: true
+        }
+      }
+    };
+
+    if (extra) {
+      Object.keys(extra).forEach((key) => {
+        if (key === 'plugins') {
+          options.plugins = Object.assign({}, options.plugins, extra.plugins);
+        } else {
+          options[key] = extra[key];
+        }
+      });
+    }
+
+    return options;
+  }
+
+  function cartesianScales(axisOptions) {
+    const scales = {
+      x: {
+        grid: { display: false, drawBorder: false },
+        ticks: { color: PALETTE.muted, maxRotation: 0, autoSkipPadding: 12 },
+        border: { color: PALETTE.grid }
+      },
+      y: {
+        beginAtZero: true,
+        grid: { color: toRgba(PALETTE.grid, 0.7), drawBorder: false },
+        border: { display: false },
+        ticks: { color: PALETTE.muted, precision: 0, maxTicksLimit: 6 }
+      }
+    };
+
+    if (axisOptions && axisOptions.x) Object.assign(scales.x, axisOptions.x);
+    if (axisOptions && axisOptions.y) Object.assign(scales.y, axisOptions.y);
+
+    return scales;
+  }
+
+  function createChart(canvasId, config) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return null;
+
+    if (chartInstances[canvasId]) {
+      chartInstances[canvasId].destroy();
+      delete chartInstances[canvasId];
+    }
+
+    removeSkeleton(canvasId);
+
+    chartInstances[canvasId] = new Chart(canvas.getContext('2d'), config);
+    return chartInstances[canvasId];
+  }
+
+  /* ---------- individual charts ---------- */
+  const chartBuilders = {
+
+    diseaseChart: function () {
+      const data = getArrayFromScript('dashboardDiseaseStats');
+      const labels = data.map((row) => row.disease__name || 'Unknown');
+      const values = data.map((row) => Number(row.count || 0));
+
+      if (!labels.length || !values.some((value) => value > 0)) {
+        renderChartEmpty('diseaseChart', 'No disease data yet', 'Run a leaf scan to populate this chart.');
         return;
       }
 
-      canvas.parentElement.innerHTML = `
-        <div class="flex h-full min-h-48 items-center justify-center rounded-lg border border-dashed border-gray-200 px-4 text-center">
-          <p class="text-sm text-gray-500">${message}</p>
-        </div>
-      `;
-    }
-
-
-    /*
-     * Shared chart design
-     * Keeps the dashboard visually consistent with the
-     * AgriScan+ agricultural-green design system.
-     */
-    const chartTextColor = '#374151';
-    const chartMutedColor = '#6b7280';
-    const chartGridColor = '#e5e7eb';
-
-    const chartGreen = '#15803d';
-    const chartGreenLight = '#86efac';
-
-    const chartHealthy = '#16a34a';
-    const chartWarning = '#d97706';
-    const chartDanger = '#dc2626';
-    const chartNeutral = '#64748b';
-
-
-    if (!chartAvailable) {
-
-      const message =
-        'Charts are unavailable. Allow Chart.js or disable tracking prevention for this site.';
-
-      [
-        'diseaseChart',
-        'trendChart',
-        'severityChart',
-        'yieldChart',
-        'varietyChart',
-        'knowledgeChart'
-      ].forEach((id) => {
-        setChartPlaceholder(id, message);
+      createChart('diseaseChart', {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: labels.map((label, index) => PALETTE.ramp[index % PALETTE.ramp.length]),
+            borderColor: PALETTE.surface,
+            borderWidth: 2,
+            hoverOffset: 6
+          }]
+        },
+        options: baseOptions({
+          cutout: '62%',
+          plugins: {
+            legend: {
+              display: true,
+              position: 'bottom',
+              labels: {
+                color: PALETTE.text,
+                usePointStyle: true,
+                pointStyle: 'circle',
+                boxWidth: 8,
+                boxHeight: 8,
+                padding: 14,
+                font: { size: 11 }
+              }
+            }
+          }
+        })
       });
 
-    } else {
+      renderDataTable(
+        document.querySelector('[data-chart-card="diseaseChart"]'),
+        'Disease distribution', labels, values, 'Detections'
+      );
+    },
 
-      /* ==========================================================
-         GLOBAL CHART DEFAULTS
-         ========================================================== */
+    trendChart: function () {
+      const data = getArrayFromScript('dashboardTrendData');
+      const labels = data.map((row) => row.date);
+      const values = data.map((row) => Number(row.count || 0));
 
-      Chart.defaults.font.family =
-        'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-
-      Chart.defaults.font.size = 12;
-      Chart.defaults.color = chartTextColor;
-
-      Chart.defaults.plugins.legend.labels.usePointStyle = true;
-      Chart.defaults.plugins.legend.labels.boxWidth = 8;
-      Chart.defaults.plugins.legend.labels.padding = 16;
-
-
-      /* ==========================================================
-         DISEASE DISTRIBUTION
-         ========================================================== */
-
-      const diseaseData =
-        getArrayFromScript('dashboardDiseaseStats');
-
-      const diseaseLabels =
-        diseaseData.map(d => d.disease__name || 'Unknown');
-
-      const diseaseCounts =
-        diseaseData.map(d => d.count);
-
-      if (diseaseLabels.length > 0) {
-
-        new Chart(document.getElementById('diseaseChart'), {
-          type: 'doughnut',
-
-          data: {
-            labels: diseaseLabels,
-
-            datasets: [{
-              data: diseaseCounts,
-
-              backgroundColor: [
-                '#166534',
-                '#16a34a',
-                '#65a30d',
-                '#ca8a04',
-                '#dc2626',
-                '#64748b'
-              ],
-
-              borderColor: '#ffffff',
-              borderWidth: 2,
-
-              hoverOffset: 4
-            }]
-          },
-
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            cutout: '62%',
-
-            plugins: {
-              legend: {
-                position: 'bottom'
-              }
-            }
-          }
-        });
-
-      } else {
-
-        setChartPlaceholder(
-          'diseaseChart',
-          'No disease data yet'
-        );
+      if (!labels.length) {
+        renderChartEmpty('trendChart', 'No trend data yet', 'Detection activity will appear here over time.');
+        return;
       }
 
+      createChart('trendChart', {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Detections',
+            data: values,
+            borderColor: PALETTE.brand,
+            borderWidth: 2,
+            pointRadius: labels.length > 24 ? 0 : 3,
+            pointHoverRadius: 5,
+            pointBackgroundColor: PALETTE.brand,
+            pointBorderColor: PALETTE.surface,
+            pointBorderWidth: 1.5,
+            tension: 0.32,
+            fill: true,
+            backgroundColor: function (context) {
+              const chart = context.chart;
+              const area = chart.chartArea;
 
-      /* ==========================================================
-         DETECTION TRENDS
-         ========================================================== */
+              if (!area) return toRgba(PALETTE.brand, 0.12);
 
-      const trendData =
-        getArrayFromScript('dashboardTrendData');
-
-      const trendLabels =
-        trendData.map(d => d.date);
-
-      const trendCounts =
-        trendData.map(d => d.count);
-
-      if (trendLabels.length > 0) {
-
-        new Chart(document.getElementById('trendChart'), {
-          type: 'line',
-
-          data: {
-            labels: trendLabels,
-
-            datasets: [{
-              label: 'Detections',
-
-              data: trendCounts,
-
-              borderColor: chartGreen,
-
-              backgroundColor: 'rgba(21, 128, 61, 0.08)',
-
-              borderWidth: 2,
-
-              pointRadius: 3,
-              pointHoverRadius: 5,
-
-              pointBackgroundColor: chartGreen,
-
-              tension: 0.3,
-
-              fill: true
-            }]
-          },
-
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            interaction: {
-              intersect: false,
-              mode: 'index'
-            },
-
-            plugins: {
-              legend: {
-                display: false
-              }
-            },
-
-            scales: {
-              x: {
-                grid: {
-                  display: false
-                },
-
-                ticks: {
-                  color: chartMutedColor
-                }
-              },
-
-              y: {
-                beginAtZero: true,
-
-                ticks: {
-                  stepSize: 1,
-                  color: chartMutedColor
-                },
-
-                grid: {
-                  color: chartGridColor
-                }
-              }
+              const gradient = chart.ctx.createLinearGradient(0, area.top, 0, area.bottom);
+              gradient.addColorStop(0, toRgba(PALETTE.brand, 0.22));
+              gradient.addColorStop(1, toRgba(PALETTE.brand, 0.02));
+              return gradient;
             }
-          }
-        });
+          }]
+        },
+        options: baseOptions({
+          interaction: { intersect: false, mode: 'index' },
+          scales: cartesianScales({
+            y: { ticks: { color: PALETTE.muted, precision: 0, maxTicksLimit: 5, stepSize: 1 } }
+          })
+        })
+      });
 
-      } else {
+      renderDataTable(
+        document.querySelector('[data-chart-card="trendChart"]'),
+        'Detection trends', labels, values, 'Detections'
+      );
+    },
 
-        setChartPlaceholder(
-          'trendChart',
-          'No trend data yet'
-        );
+    severityChart: function () {
+      const data = getArrayFromScript('dashboardSeverityData');
+      const labels = data.map((row) => row.label);
+      const values = data.map((row) => Number(row.count || 0));
+
+      if (!values.some((value) => value > 0)) {
+        renderChartEmpty('severityChart', 'No severity data yet', 'Severity levels appear after detections are recorded.');
+        return;
       }
 
+      createChart('severityChart', {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Detections',
+            data: values,
+            backgroundColor: labels.map((label, index) => PALETTE.severity[index % PALETTE.severity.length]),
+            borderRadius: 4,
+            borderSkipped: false,
+            maxBarThickness: 44
+          }]
+        },
+        options: baseOptions({
+          scales: cartesianScales({
+            y: { ticks: { color: PALETTE.muted, precision: 0, stepSize: 1, maxTicksLimit: 5 } }
+          })
+        })
+      });
 
-      /* ==========================================================
-         SEVERITY DISTRIBUTION
-         ========================================================== */
+      renderDataTable(
+        document.querySelector('[data-chart-card="severityChart"]'),
+        'Severity distribution', labels, values, 'Detections'
+      );
+    },
 
-      const severityData =
-        getArrayFromScript('dashboardSeverityData');
+    yieldChart: function () {
+      const byBarangay = getArrayFromScript('dashboardYieldByBarangay');
+      const byField = getArrayFromScript('dashboardYieldByField');
 
-      const severityLabels =
-        severityData.map(d => d.label);
-
-      const severityCounts =
-        severityData.map(d => d.count);
-
-      if (severityCounts.some(c => c > 0)) {
-
-        new Chart(document.getElementById('severityChart'), {
-          type: 'bar',
-
-          data: {
-            labels: severityLabels,
-
-            datasets: [{
-              label: 'Detections',
-
-              data: severityCounts,
-
-              backgroundColor: [
-                chartHealthy,
-                chartWarning,
-                '#ea580c',
-                chartDanger
-              ],
-
-              borderRadius: 4,
-
-              borderSkipped: false
-            }]
-          },
-
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            plugins: {
-              legend: {
-                display: false
-              }
-            },
-
-            scales: {
-              x: {
-                grid: {
-                  display: false
-                }
-              },
-
-              y: {
-                beginAtZero: true,
-
-                ticks: {
-                  stepSize: 1,
-                  color: chartMutedColor
-                },
-
-                grid: {
-                  color: chartGridColor
-                }
-              }
-            }
-          }
-        });
-
-      } else {
-
-        setChartPlaceholder(
-          'severityChart',
-          'No severity data yet'
-        );
-      }
-
-
-      /* ==========================================================
-         AVERAGE YIELD
-         ========================================================== */
-
-      const yieldByBarangay =
-        getArrayFromScript('dashboardYieldByBarangay');
-
-      const yieldByField =
-        getArrayFromScript('dashboardYieldByField');
-
-      let yieldLabels;
-      let yieldValues;
+      let labels = [];
+      let values = [];
 
       if (isAdmin || isTechnician) {
-
-        yieldLabels =
-          yieldByBarangay.map(
-            d => d.planting__field__barangay || 'N/A'
-          );
-
-        yieldValues =
-          yieldByBarangay.map(
-            d => parseFloat(d.avg_yield || 0).toFixed(2)
-          );
-
+        labels = byBarangay.map((row) => row.planting__field__barangay || 'N/A');
+        values = byBarangay.map((row) => Number(parseFloat(row.avg_yield || 0).toFixed(2)));
       } else {
-
-        yieldLabels =
-          yieldByField.map(
-            d =>
-              d.planting__field__name ||
-              'Field ' + d.planting__field__id
-          );
-
-        yieldValues =
-          yieldByField.map(
-            d => parseFloat(d.avg_yield || 0).toFixed(2)
-          );
+        labels = byField.map((row) => row.planting__field__name || ('Field ' + row.planting__field__id));
+        values = byField.map((row) => Number(parseFloat(row.avg_yield || 0).toFixed(2)));
       }
 
-      if (yieldLabels && yieldLabels.length > 0) {
+      if (!labels.length) {
+        renderChartEmpty('yieldChart', 'No yield data yet', 'Submit a yield prediction to see averages here.');
+        return;
+      }
 
-        new Chart(document.getElementById('yieldChart'), {
-          type: 'bar',
-
-          data: {
-            labels: yieldLabels,
-
-            datasets: [{
-              label: 'Avg Yield (tons/ha)',
-
-              data: yieldValues,
-
-              backgroundColor: chartGreen,
-
-              borderRadius: 4,
-
-              borderSkipped: false
-            }]
-          },
-
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            indexAxis: 'y',
-
-            plugins: {
-              legend: {
-                display: false
+      createChart('yieldChart', {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Avg yield (tons/ha)',
+            data: values,
+            backgroundColor: toRgba(PALETTE.brand, 0.85),
+            hoverBackgroundColor: PALETTE.brandDeep,
+            borderRadius: 4,
+            borderSkipped: false,
+            maxBarThickness: 26
+          }]
+        },
+        options: baseOptions({
+          indexAxis: 'y',
+          scales: {
+            x: {
+              beginAtZero: true,
+              grid: { color: toRgba(PALETTE.grid, 0.7), drawBorder: false },
+              border: { display: false },
+              ticks: { color: PALETTE.muted, maxTicksLimit: 5 },
+              title: {
+                display: true,
+                text: 'Tons per hectare',
+                color: PALETTE.muted,
+                font: { size: 11, weight: '600' }
               }
             },
-
-            scales: {
-              x: {
-                beginAtZero: true,
-
-                title: {
-                  display: true,
-                  text: 'Tons per Hectare',
-                  color: chartMutedColor
-                },
-
-                ticks: {
-                  color: chartMutedColor
-                },
-
-                grid: {
-                  color: chartGridColor
-                }
-              },
-
-              y: {
-                ticks: {
-                  color: chartTextColor
-                },
-
-                grid: {
-                  display: false
+            y: {
+              grid: { display: false, drawBorder: false },
+              border: { color: PALETTE.grid },
+              ticks: {
+                color: PALETTE.text,
+                font: { size: 11 },
+                callback: function (value) {
+                  const label = this.getLabelForValue(value);
+                  return label && label.length > 18 ? label.slice(0, 17) + '…' : label;
                 }
               }
             }
           }
-        });
+        })
+      });
 
-      } else {
+      renderDataTable(
+        document.querySelector('[data-chart-card="yieldChart"]'),
+        'Average yield', labels, values, 'Tons/ha'
+      );
+    },
 
-        setChartPlaceholder(
-          'yieldChart',
-          'No yield data yet'
-        );
+    varietyChart: function () {
+      const data = getArrayFromScript('dashboardVarietyTrend');
+      const labels = data.map((row) => row.variety__name || 'Unknown');
+      const values = data.map((row) => Number(row.count || 0));
+
+      if (!labels.length) {
+        renderChartEmpty('varietyChart', 'No variety data yet', 'Add planting cycles to build this distribution.');
+        return;
       }
 
+      createChart('varietyChart', {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Plantings',
+            data: values,
+            backgroundColor: toRgba(PALETTE.brand, 0.85),
+            hoverBackgroundColor: PALETTE.brandDeep,
+            borderRadius: 4,
+            borderSkipped: false,
+            maxBarThickness: 44
+          }]
+        },
+        options: baseOptions({
+          scales: cartesianScales({
+            y: { ticks: { color: PALETTE.muted, precision: 0, stepSize: 1, maxTicksLimit: 5 } }
+          })
+        })
+      });
 
-      /* ==========================================================
-         VARIETY TREND
-         ========================================================== */
+      renderDataTable(
+        document.querySelector('[data-chart-card="varietyChart"]'),
+        'Variety trend', labels, values, 'Plantings'
+      );
+    },
 
-      const varietyTrend =
-        getArrayFromScript('dashboardVarietyTrend');
+    knowledgeChart: function () {
+      const data = getArrayFromScript('dashboardKnowledgeTrend');
+      const labels = data.map((row) => row.name || 'Unknown');
+      const values = data.map((row) => Number(row.view_count || 0));
 
-      const varietyLabels =
-        varietyTrend.map(
-          d => d.variety__name || 'Unknown'
-        );
-
-      const varietyValues =
-        varietyTrend.map(
-          d => d.count
-        );
-
-      if (varietyLabels.length > 0) {
-
-        new Chart(document.getElementById('varietyChart'), {
-          type: 'bar',
-
-          data: {
-            labels: varietyLabels,
-
-            datasets: [{
-              label: 'Plantings',
-
-              data: varietyValues,
-
-              backgroundColor: chartGreen,
-
-              borderRadius: 4,
-
-              borderSkipped: false
-            }]
-          },
-
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            plugins: {
-              legend: {
-                display: false
-              }
-            },
-
-            scales: {
-              x: {
-                grid: {
-                  display: false
-                }
-              },
-
-              y: {
-                beginAtZero: true,
-
-                ticks: {
-                  stepSize: 1,
-                  color: chartMutedColor
-                },
-
-                grid: {
-                  color: chartGridColor
-                }
-              }
-            }
-          }
-        });
-
-      } else {
-
-        setChartPlaceholder(
-          'varietyChart',
-          'No variety data yet'
-        );
+      if (!labels.length || !values.some((value) => value > 0)) {
+        renderChartEmpty('knowledgeChart', 'No knowledge trend data yet', 'Views are tracked when resources are opened.');
+        return;
       }
 
+      createChart('knowledgeChart', {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Views',
+            data: values,
+            backgroundColor: PALETTE.ramp.map((color) => toRgba(color, 0.9)),
+            hoverBackgroundColor: PALETTE.brandDeep,
+            borderRadius: 4,
+            borderSkipped: false,
+            maxBarThickness: 44
+          }]
+        },
+        options: baseOptions({
+          scales: cartesianScales({
+            y: { ticks: { color: PALETTE.muted, precision: 0, stepSize: 1, maxTicksLimit: 5 } }
+          })
+        })
+      });
 
-      /* ==========================================================
-         KNOWLEDGE TREND
-         ========================================================== */
+      renderDataTable(
+        document.querySelector('[data-chart-card="knowledgeChart"]'),
+        'Knowledge trend', labels, values, 'Views'
+      );
+    }
+  };
 
-      const knowledgeTrend =
-        getArrayFromScript('dashboardKnowledgeTrend');
-
-      const knowledgeLabels =
-        knowledgeTrend.map(
-          d => d.name || 'Unknown'
+  /* ---------- lazy chart initialization ---------- */
+  function initCharts() {
+    if (typeof window.Chart !== 'function') {
+      Object.keys(chartBuilders).forEach((canvasId) => {
+        renderChartEmpty(
+          canvasId,
+          'Charts unavailable',
+          'Allow Chart.js to load, or disable tracking prevention for this site.'
         );
+      });
+      return;
+    }
 
-      const knowledgeValues =
-        knowledgeTrend.map(
-          d => d.view_count
-        );
+    Chart.defaults.font.family =
+      'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    Chart.defaults.font.size = 12;
+    Chart.defaults.color = PALETTE.text;
+    Chart.defaults.plugins.legend.labels.usePointStyle = true;
+    Chart.defaults.plugins.legend.labels.boxWidth = 8;
+    Chart.defaults.plugins.legend.labels.boxHeight = 8;
+    Chart.defaults.plugins.legend.labels.padding = 14;
 
-      if (knowledgeLabels.length > 0) {
+    const ids = Object.keys(chartBuilders);
+    const built = {};
 
-        new Chart(document.getElementById('knowledgeChart'), {
-          type: 'bar',
+    function build(canvasId) {
+      if (built[canvasId]) return;
+      built[canvasId] = true;
 
-          data: {
-            labels: knowledgeLabels,
-
-            datasets: [{
-              label: 'Views',
-
-              data: knowledgeValues,
-
-              backgroundColor: '#15803d',
-
-              borderRadius: 4,
-
-              borderSkipped: false
-            }]
-          },
-
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-
-            plugins: {
-              legend: {
-                display: false
-              }
-            },
-
-            scales: {
-              x: {
-                grid: {
-                  display: false
-                }
-              },
-
-              y: {
-                beginAtZero: true,
-
-                ticks: {
-                  stepSize: 1,
-                  color: chartMutedColor
-                },
-
-                grid: {
-                  color: chartGridColor
-                }
-              }
-            }
-          }
-        });
-
-      } else {
-
-        setChartPlaceholder(
-          'knowledgeChart',
-          'No knowledge trend data yet'
-        );
+      try {
+        chartBuilders[canvasId]();
+      } catch (error) {
+        renderChartEmpty(canvasId, 'Chart could not be rendered', 'Please refresh the dashboard to try again.');
       }
     }
 
+    if (!('IntersectionObserver' in window)) {
+      ids.forEach(build);
+      return;
+    }
 
-    /* ============================================================
-       SKELETON LOADER
-       ============================================================ */
+    const observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
 
-    document.addEventListener('DOMContentLoaded', function () {
+        const card = entry.target;
+        const canvasId = card.getAttribute('data-chart-card');
 
-      setTimeout(function () {
+        build(canvasId);
+        observer.unobserve(card);
+      });
+    }, { rootMargin: '160px 0px', threshold: 0.05 });
 
-        const statsSkel =
-          document.getElementById('dashboard-stats-skeleton');
-
-        const chartsSkel =
-          document.getElementById('dashboard-charts-skeleton');
-
-        const statsReal =
-          document.getElementById('dashboard-stats');
-
-        const chartsReal =
-          document.getElementById('dashboard-charts');
-
-
-        if (statsSkel) {
-          statsSkel.style.display = 'none';
-        }
-
-        if (chartsSkel) {
-          chartsSkel.style.display = 'none';
-        }
-
-        if (statsReal) {
-          statsReal.classList.remove('hidden');
-        }
-
-        if (chartsReal) {
-          chartsReal.classList.remove('hidden');
-        }
-
-      }, 350);
-
+    ids.forEach(function (canvasId) {
+      const card = document.querySelector('[data-chart-card="' + canvasId + '"]');
+      if (card) observer.observe(card);
+      else build(canvasId);
     });
-  </script>
+  }
 
-</section>
+  /* ==========================================================
+     HEADER ACTIONS
+     ========================================================== */
+  function initActions() {
+    const refreshBtn = document.getElementById('dash-refresh-btn');
+    const updatedNode = document.getElementById('dash-updated');
 
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function () {
+        refreshBtn.disabled = true;
+        window.location.reload();
+      });
+    }
+
+    if (updatedNode) {
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      updatedNode.textContent = 'Updated ' + time;
+    }
+  }
+
+  /* ==========================================================
+     BOOT
+     ========================================================== */
+  function boot() {
+    initActions();
+    initStatAnimations();
+    initActivityIcons();
+    initCharts();
+
+    window.addEventListener('beforeunload', function () {
+      Object.keys(chartInstances).forEach(function (key) {
+        if (chartInstances[key] && typeof chartInstances[key].destroy === 'function') {
+          chartInstances[key].destroy();
+        }
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+})();
+</script>
 {% endblock %}

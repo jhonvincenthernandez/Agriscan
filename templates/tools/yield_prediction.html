@@ -2,580 +2,54 @@
 
 {% block title %}Yield Prediction · AgriScan+{% endblock %}
 
-{% block content %}
-<section class="page-container min-w-0">
-
-  <!-- =========================================================
-       PAGE HEADER
-       ========================================================= -->
-  <header class="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-
-      <div class="min-w-0">
-        <div class="flex flex-wrap items-center gap-2">
-          <div class="flex items-center gap-2">
-            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-700 sm:h-11 sm:w-11">
-              <svg class="h-6 w-6 shrink-0 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2" />
-              </svg>
-            </div>
-
-            <h1 class="text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
-              Yield Prediction Tool
-            </h1>
-          </div>
-
-          {% if from_detection %}
-          <span class="inline-flex items-center rounded-md border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-            Auto-filled from detection
-          </span>
-          {% endif %}
-        </div>
-
-        <p class="mt-2 max-w-3xl text-sm leading-6 text-gray-600">
-          {% if from_detection %}
-            The planting information from your disease detection is already loaded.
-            Review the available data and submit the prediction.
-          {% else %}
-            Estimate rice harvest yield using available planting, agronomic, and disease-related data.
-          {% endif %}
-        </p>
-      </div>
-
-      <a
-        href="{% url 'polls:yield_records_list' %}"
-        class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
-      >
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-        </svg>
-        Yield Records
-      </a>
-
-    </div>
-  </header>
-
-
-  <!-- =========================================================
-       GUIDE
-       ========================================================= -->
-  {% include 'partials/_yield_guide.html' %}
-
-
-  <!-- =========================================================
-       MAIN CONTENT (2-COLUMN GRID)
-       ========================================================= -->
-  <div class="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
-
-
-    <!-- =======================================================
-         LEFT COLUMN — INPUT FORM
-         ================================================------- -->
-    <div class="min-w-0 space-y-6">
-
-      <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
-        <div class="border-b border-gray-200 px-5 py-4 sm:px-6">
-          <div class="flex items-center justify-between gap-3">
-            <div>
-              <h2 class="text-lg font-semibold text-gray-900">Prediction Inputs</h2>
-              <p class="mt-1 text-sm text-gray-500">
-                Select the prediction model and provide the required field data.
-              </p>
-            </div>
-
-            <span class="hidden rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600 sm:inline-flex">
-              Required data
-            </span>
-          </div>
-        </div>
-
-
-        <div class="p-5 sm:p-6">
-
-          <!-- DETECTION CONTEXT -->
-          {% if from_detection %}
-          <div class="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
-            <div class="flex items-start gap-3">
-
-              <svg class="mt-0.5 h-5 w-5 shrink-0 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M13 16h-1v-4h-1m1-4h.01M12 3a9 9 0 110 18 9 9 0 010-18z" />
-              </svg>
-
-              <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-green-900">
-                  Fields auto-filled from disease detection
-                </p>
-
-                <p class="mt-1 text-xs leading-5 text-green-800">
-                  Core planting information has been loaded from the detection record.
-                  Area planted, variety, planting date, and growth duration are locked
-                  to preserve the source data. Historical fields remain editable where applicable.
-                </p>
-
-                {% if detection %}
-                <div class="mt-3 border-t border-green-200 pt-3">
-                  <dl class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
-
-                    <div>
-                      <dt class="font-medium text-green-700">Source detection</dt>
-                      <dd class="mt-0.5 text-green-900">#{{ detection.pk }}</dd>
-                    </div>
-
-                    <div>
-                      <dt class="font-medium text-green-700">Disease</dt>
-                      <dd class="mt-0.5 text-green-900">{{ detection.disease.name|default:"Unknown" }}</dd>
-                    </div>
-
-                    <div>
-                      <dt class="font-medium text-green-700">Severity</dt>
-                      <dd class="mt-0.5 text-green-900">{{ detection.severity_pct|default:0 }}%</dd>
-                    </div>
-
-                    {% if detection.planting and detection.planting.field %}
-                    <div>
-                      <dt class="font-medium text-green-700">Field</dt>
-                      <dd class="mt-0.5 text-green-900">{{ detection.planting.field.name }}</dd>
-                    </div>
-                    {% endif %}
-
-                  </dl>
-                </div>
-                {% endif %}
-
-              </div>
-            </div>
-          </div>
-          {% endif %}
-
-
-          <!-- FORM -->
-          <form
-            method="post"
-            enctype="multipart/form-data"
-            class="space-y-5"
-            id="yield-prediction-form"
-          >
-
-            {% csrf_token %}
-
-            {# Hidden flag: 1 = user manually edited fields while a planting was selected #}
-            <input type="hidden" name="use_manual_data" id="id_use_manual_data" value="0">
-
-
-            <!-- GENERAL ERROR -->
-            {% if error %}
-            <div class="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
-              <div class="flex items-start gap-3">
-                <svg class="mt-0.5 h-5 w-5 shrink-0 text-red-600" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                  <path fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L8.707 7.293z"
-                    clip-rule="evenodd" />
-                </svg>
-                <p class="text-sm font-medium leading-5 text-red-800">{{ error }}</p>
-              </div>
-            </div>
-            {% endif %}
-
-
-            {% include 'partials/forms/_errors.html' %}
-
-
-            <!-- MODEL -->
-            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div class="mb-3">
-                <h3 class="text-sm font-semibold text-gray-900">Prediction Model</h3>
-                <p class="mt-1 text-xs leading-5 text-gray-500">
-                  Select the model first. The required fields will adjust automatically.
-                </p>
-              </div>
-
-              {% include 'partials/forms/_field.html' with field=form.selected_model %}
-
-              <div
-                id="model-required-hint"
-                class="mt-3 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5"
-                aria-live="polite"
-              >
-                <p class="text-xs font-semibold text-blue-900">Model-specific required fields</p>
-
-                <p id="model-required-hint-text" class="mt-1 text-xs leading-5 text-blue-800">
-                  Linear Regression: Planting data and Historical data are required.
-                </p>
-              </div>
-            </div>
-
-
-            <!-- CANOPY -->
-            <div id="field-canopy_image">
-              {% include 'partials/forms/_field.html' with field=form.canopy_image %}
-            </div>
-
-
-            <!-- PLANTING -->
-            {% if not from_detection %}
-            <div id="field-planting">
-              {% include 'partials/forms/_field.html' with field=form.planting %}
-            </div>
-            {% endif %}
-
-
-            <!-- CORE AGRONOMIC DATA -->
-            <div class="rounded-lg border border-gray-200 p-4">
-              <div class="mb-4">
-                <h3 class="text-sm font-semibold text-gray-900">Core Agronomic Data</h3>
-                <p class="mt-1 text-xs leading-5 text-gray-500">
-                  These values are used directly by the prediction computation.
-                </p>
-              </div>
-
-              <div class="space-y-4">
-                <div id="field-area">{% include 'partials/forms/_field.html' with field=form.area %}</div>
-                <div id="field-planting_date">{% include 'partials/forms/_field.html' with field=form.planting_date %}</div>
-                <div id="field-average_growth_duration_days">{% include 'partials/forms/_field.html' with field=form.average_growth_duration_days %}</div>
-                <div id="field-variety">{% include 'partials/forms/_field.html' with field=form.variety %}</div>
-              </div>
-            </div>
-
-
-            <!-- HISTORICAL & HEALTH -->
-            <div class="rounded-lg border border-gray-200 p-4">
-              <div class="mb-4">
-                <h3 class="text-sm font-semibold text-gray-900">Historical &amp; Health Data</h3>
-                <p class="mt-1 text-xs leading-5 text-gray-500">
-                  Additional information that may improve the available prediction.
-                </p>
-              </div>
-
-              <div class="space-y-4">
-                <div id="field-historical_production_tons">{% include 'partials/forms/_field.html' with field=form.historical_production_tons %}</div>
-                <div id="field-historical_yield_tons_per_ha">{% include 'partials/forms/_field.html' with field=form.historical_yield_tons_per_ha %}</div>
-                <div id="field-health">{% include 'partials/forms/_field.html' with field=form.health %}</div>
-              </div>
-            </div>
-
-
-            <!-- FIELD CONTEXT -->
-            <div class="rounded-lg border border-gray-200 p-4">
-              <div class="mb-4">
-                <h3 class="text-sm font-semibold text-gray-900">Field Context</h3>
-                <p class="mt-1 text-xs leading-5 text-gray-500">
-                  Contextual information associated with the selected planting record.
-                </p>
-              </div>
-
-              <div class="space-y-4">
-                <div id="field-season">{% include 'partials/forms/_field.html' with field=form.season %}</div>
-                <div id="field-ecosystem_type">{% include 'partials/forms/_field.html' with field=form.ecosystem_type %}</div>
-              </div>
-            </div>
-
-
-            <!-- SUBMIT -->
-            <button
-              type="submit"
-              id="yield-submit-btn"
-              data-loading
-              class="inline-flex min-h-[46px] w-full items-center justify-center gap-2 rounded-lg bg-green-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2" />
-              </svg>
-              Calculate Yield Prediction
-            </button>
-
-          </form>
-
-        </div>
-      </section>
-
-    </div>
-
-
-    <!-- =======================================================
-         RIGHT COLUMN — RESULT + TIPS + HOW IT WORKS
-         ======================================================= -->
-    <div class="min-w-0 space-y-6">
-
-      <!-- PREDICTION RESULT -->
-      <section class="rounded-xl border border-gray-200 bg-white shadow-sm">
-
-        <div class="border-b border-gray-200 px-5 py-4 sm:px-6">
-          <h2 class="text-lg font-semibold text-gray-900">Prediction Result</h2>
-          <p class="mt-1 text-sm text-gray-500">
-            Your calculated yield estimate will appear here.
-          </p>
-        </div>
-
-
-        <div class="p-5 sm:p-6">
-
-          {% if yield_result %}
-
-          <div class="space-y-5">
-
-            <!-- PRIMARY RESULT -->
-            <div class="rounded-xl border border-green-200 bg-green-50 p-5 sm:p-6">
-
-              <p class="text-xs font-semibold uppercase tracking-wide text-green-700">
-                Predicted Yield
-              </p>
-
-              <div class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <p class="text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-                  {{ yield_result.value }}
-                </p>
-                <span class="text-lg font-semibold text-gray-600">tons/ha</span>
-              </div>
-
-              <p class="mt-1 text-sm text-gray-600">
-                {{ yield_result.sacks_per_ha }} sacks per hectare
-              </p>
-
-              <!-- Confidence -->
-              <div class="mt-5 border-t border-green-200 pt-4">
-                <div class="flex items-center justify-between gap-3">
-                  <span class="text-xs font-medium text-green-800">Prediction confidence</span>
-                  <span class="text-xs font-semibold text-gray-700">{{ yield_result.confidence }}%</span>
-                </div>
-
-                <div
-                  class="mt-2 h-2 overflow-hidden rounded-full bg-white"
-                  role="progressbar"
-                  aria-valuenow="{{ yield_result.confidence }}"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                  aria-label="Prediction confidence"
-                >
-                  <div class="h-full rounded-full bg-green-600 transition-all" style="width: {{ yield_result.confidence }}%"></div>
-                </div>
-              </div>
-
-            </div>
-
-
-            <!-- RESULT DETAILS -->
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-
-              <div class="rounded-lg border border-gray-200 bg-white p-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Area Planted</p>
-                <p class="mt-1 text-lg font-semibold text-gray-900">{{ yield_result.area }} ha</p>
-              </div>
-
-              <div class="rounded-lg border border-gray-200 bg-white p-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Variety</p>
-                <p class="mt-1 break-words text-lg font-semibold text-gray-900">{{ yield_result.variety }}</p>
-              </div>
-
-              <div class="rounded-lg border border-gray-200 bg-white p-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Model Used</p>
-                <p class="mt-1 break-words text-sm font-medium text-gray-900">
-                  {{ yield_result.model|default:"Linear Regression" }}
-                </p>
-              </div>
-
-              <div class="rounded-lg border border-gray-200 bg-white p-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Health Status</p>
-                <p class="mt-1 break-words text-sm font-medium text-gray-900">{{ yield_result.health }}</p>
-              </div>
-
-              <div class="rounded-lg border border-gray-200 bg-white p-4 sm:col-span-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">Harvest Date</p>
-                <p class="mt-1 text-sm font-medium text-gray-900">{{ yield_result.harvest_date }}</p>
-              </div>
-
-            </div>
-
-
-            <!-- TOTAL HARVEST -->
-            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Projected Total Harvest
-              </p>
-
-              <p class="mt-1 text-2xl font-bold text-gray-900">
-                {{ yield_result.total_tons }} tons
-              </p>
-
-              <p class="mt-1 text-sm text-gray-600">
-                {{ yield_result.total_sacks }} sacks total
-              </p>
-
-              <p class="mt-2 text-xs leading-5 text-gray-500">
-                1 sack = 50 kg, so 1 ton = 20 sacks.
-              </p>
-            </div>
-
-
-            <!-- SAVED RECORD -->
-            {% if yield_record %}
-            <div class="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 p-3">
-              <svg class="mt-0.5 h-5 w-5 shrink-0 text-green-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                <path fill-rule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                  clip-rule="evenodd" />
-              </svg>
-
-              <p class="text-xs leading-5 text-green-800">
-                Prediction saved as
-                <a
-                  href="{% url 'polls:yield_records_list' %}?search={{ yield_record.pk }}"
-                  class="font-semibold text-green-800 underline decoration-green-300 underline-offset-2 hover:text-green-900"
-                >
-                  Yield Record #{{ yield_record.pk }}
-                </a>
-              </p>
-            </div>
-            {% endif %}
-
-          </div>
-
-
-          {% else %}
-
-          <!-- EMPTY RESULT -->
-          <div class="flex min-h-[320px] flex-col items-center justify-center text-center">
-
-            <div class="flex h-14 w-14 items-center justify-center rounded-full border border-gray-200 bg-gray-50">
-              <svg class="h-7 w-7 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2" />
-              </svg>
-            </div>
-
-            <p class="mt-4 text-sm font-medium text-gray-700">No prediction generated yet</p>
-
-            <p class="mt-1 max-w-sm text-xs leading-5 text-gray-500">
-              Complete the required inputs and submit the form.
-              The prediction result will appear here.
-            </p>
-
-          </div>
-
-          {% endif %}
-
-        </div>
-      </section>
-
-
-      <!-- TIPS -->
-      <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-
-        <div class="mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Tips for Better Input Quality</h3>
-          <p class="mt-1 text-sm text-gray-500">
-            Accurate source data helps keep the prediction grounded in your field records.
-          </p>
-        </div>
-
-        <ul class="space-y-3">
-          <li class="flex items-start gap-3 text-sm">
-            <svg class="mt-0.5 h-5 w-5 shrink-0 text-green-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
-            <span class="leading-5 text-gray-700">Use the actual planted area rather than the total field size.</span>
-          </li>
-
-          <li class="flex items-start gap-3 text-sm">
-            <svg class="mt-0.5 h-5 w-5 shrink-0 text-green-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
-            <span class="leading-5 text-gray-700">Use health information from recent disease scans when available.</span>
-          </li>
-
-          <li class="flex items-start gap-3 text-sm">
-            <svg class="mt-0.5 h-5 w-5 shrink-0 text-green-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
-            <span class="leading-5 text-gray-700">Enter the correct planting date.</span>
-          </li>
-
-          <li class="flex items-start gap-3 text-sm">
-            <svg class="mt-0.5 h-5 w-5 shrink-0 text-green-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-            </svg>
-            <span class="leading-5 text-gray-700">Match growth duration with the selected rice variety.</span>
-          </li>
-        </ul>
-
-      </section>
-
-
-      <!-- =======================================================
-           HOW IT WORKS — MODEL INFORMATION & WORKFLOW
-           ======================================================= -->
-      <aside class="min-w-0" aria-label="About the yield prediction model">
-
-        <article class="rounded-xl border border-green-200 bg-green-50 p-5 sm:p-6">
-
-          <div class="flex items-center gap-3">
-            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
-                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-              </svg>
-            </div>
-
-            <h3 class="text-base font-semibold text-green-950">How It Works</h3>
-          </div>
-
-          <p class="mt-4 text-sm leading-6 text-green-900">
-            The yield prediction system uses the available agronomic variables and
-            disease-related information to generate a rice yield estimate for the
-            selected field or planting record. Clear canopy images with proper lighting
-            can provide better input for analysis.
-          </p>
-
-          <!-- MODEL OPTIONS -->
-          <div class="mt-4 grid grid-cols-1 gap-3">
-
-            <div class="rounded-lg border border-green-200 bg-white/70 p-3">
-              <p class="text-xs font-semibold uppercase tracking-wide text-green-700">Linear Regression</p>
-              <p class="mt-1 text-xs leading-5 text-green-900">
-                Uses planting, historical, and health data. Best when no canopy image is available.
-              </p>
-            </div>
-
-            <div class="rounded-lg border border-green-200 bg-white/70 p-3">
-              <p class="text-xs font-semibold uppercase tracking-wide text-green-700">CNN Yield</p>
-              <p class="mt-1 text-xs leading-5 text-green-900">
-                Analyzes the canopy image together with core planting data.
-              </p>
-            </div>
-
-            <div class="rounded-lg border border-green-200 bg-white/70 p-3">
-              <p class="text-xs font-semibold uppercase tracking-wide text-green-700">Ensemble</p>
-              <p class="mt-1 text-xs leading-5 text-green-900">
-                Combines CNN and Linear Regression for the most complete estimate.
-              </p>
-            </div>
-
-          </div>
-
-          <!-- WORKFLOW -->
-          <div class="mt-4 rounded-lg border border-green-200 bg-white/70 p-3">
-            <p class="text-xs leading-5 text-green-800">
-              <span class="font-semibold">Workflow:</span>
-              Canopy image &amp; data → AI yield model → confidence &amp; estimate → projected harvest &amp; insights
-            </p>
-          </div>
-
-        </article>
-
-      </aside>
-
-    </div>
-
-  </div>
-</section>
-
-
-<!-- =========================================================
-     PAGE-LOCAL STYLES
-     ========================================================= -->
+{% block styles %}
 <style>
+  /* Page Header & Filters (mirroring Detection Records structure) */
+  .yp-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .yp-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .yp-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .yp-title { margin: 0; }
+  .yp-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .yp-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .yp-chip { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: var(--btn-h); padding: 0 0.875rem; color: var(--color-text); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
+  @media (min-width: 640px) {
+    .yp-head { padding: 1.5rem; }
+    .yp-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .yp-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .yp-section-header { padding: 1.25rem; border-bottom: 1px solid var(--color-border); }
+  @media (min-width: 640px) { .yp-section-header { padding: 1.5rem; } }
+  .yp-section-title { margin: 0; font-size: var(--text-lg); font-weight: 600; }
+  .yp-section-lead { margin: 0.25rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); }
+
+  .yp-form-body { padding: 1.25rem; }
+  @media (min-width: 640px) { .yp-form-body { padding: 1.5rem; } }
+
+  .yp-field-group { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-overlay); padding: 1rem; margin-bottom: 1.25rem; }
+  .yp-field-group-title { font-size: var(--text-sm); font-weight: 600; margin: 0 0 0.25rem 0; }
+  .yp-field-group-lead { font-size: var(--text-xs); color: var(--color-text-secondary); margin: 0 0 1rem 0; line-height: 1.5; }
+
+  .yp-result-primary { border: 1px solid var(--color-success-border); background: var(--color-success-soft); border-radius: var(--radius-md); padding: 1.25rem; }
+  @media (min-width: 640px) { .yp-result-primary { padding: 1.5rem; } }
+  .yp-result-value { font-size: 2.5rem; font-weight: 700; line-height: 1; }
+  @media (min-width: 640px) { .yp-result-value { font-size: 3rem; } }
+
+  .yp-result-detail { border: 1px solid var(--color-border); background: var(--color-overlay); border-radius: var(--radius-md); padding: 1rem; }
+  .yp-result-detail-label { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin: 0; }
+  .yp-result-detail-value { font-size: var(--text-lg); font-weight: 600; margin: 0.25rem 0 0 0; }
+
+  .yp-tip-item { display: flex; align-items: flex-start; gap: 0.75rem; font-size: var(--text-sm); line-height: 1.5; }
+  .yp-tip-icon { flex-shrink: 0; width: 1.25rem; height: 1.25rem; margin-top: 0.125rem; color: var(--color-brand); }
+
+  .yp-info-card { border: 1px solid var(--color-brand-border); background: var(--color-brand-light); border-radius: var(--radius-lg); padding: 1.25rem; }
+  @media (min-width: 640px) { .yp-info-card { padding: 1.5rem; } }
+  .yp-info-item { border: 1px solid var(--color-brand-border); background: var(--color-surface); border-radius: var(--radius-sm); padding: 0.75rem; }
+  .yp-info-item-title { font-size: var(--text-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-brand); margin: 0; }
+  .yp-info-item-text { font-size: var(--text-xs); line-height: 1.5; margin: 0.25rem 0 0 0; }
+
   @keyframes slideInRight {
     from { transform: translate3d(100%, 0, 0); opacity: 0; }
     to   { transform: translate3d(0, 0, 0);    opacity: 1; }
@@ -585,9 +59,10 @@
 
   /* Locked fields */
   .field-locked {
-    background-color: #f3f4f6 !important;
+    background-color: var(--color-overlay) !important;
     cursor: not-allowed !important;
-    border-color: #d1d5db !important;
+    border-color: var(--color-border) !important;
+    color: var(--color-text-muted) !important;
   }
 
   /* JS-generated badges */
@@ -597,15 +72,30 @@
     display: inline-flex;
     align-items: center;
     padding: 0.125rem 0.5rem;
-    border-radius: 0.375rem;
-    font-size: 0.75rem;
+    border-radius: var(--radius-sm);
+    font-size: var(--text-xs);
     font-weight: 600;
     line-height: 1rem;
+    margin-left: 0.5rem;
   }
 
-  .lock-badge        { background-color: #ecfdf5; color: #166534; border: 1px solid #bbf7d0; }
-  .auto-calc-badge   { background-color: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
-  .manual-entry-badge{ background-color: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  .lock-badge {
+    background-color: var(--color-success-soft);
+    color: var(--color-success-text);
+    border: 1px solid var(--color-success-border);
+  }
+  
+  .auto-calc-badge {
+    background-color: var(--color-info-soft);
+    color: var(--color-info-text);
+    border: 1px solid var(--color-info-border);
+  }
+  
+  .manual-entry-badge {
+    background-color: var(--color-warning-soft);
+    color: var(--color-warning-text);
+    border: 1px solid var(--color-warning-border);
+  }
 
   #yield-prediction-form input[type="text"],
   #yield-prediction-form input[type="number"],
@@ -629,7 +119,392 @@
     .animate-slide-in { animation: none; }
   }
 </style>
+{% endblock %}
 
+{% block content %}
+<section class="page-container min-w-0">
+
+  <!-- =========================================================
+       PAGE HEADER
+       ========================================================= -->
+  <header class="agri-card yp-head">
+    <div class="yp-head-main">
+      <span class="yp-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="yp-title">Yield Prediction Tool</h1>
+          {% if from_detection %}
+          <span class="agri-badge">Auto-filled from detection</span>
+          {% endif %}
+        </div>
+        <p class="yp-lead">
+          {% if from_detection %}
+            The planting information from your disease detection is already loaded. Review the available data and submit the prediction.
+          {% else %}
+            Estimate rice harvest yield using available planting, agronomic, and disease-related data.
+          {% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="yp-head-actions">
+      <a href="{% url 'polls:yield_records_list' %}" class="btn btn-secondary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        <span>Yield Records</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       MAIN CONTENT (2-COLUMN GRID)
+       ========================================================= -->
+  <div class="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-2">
+
+    <!-- =======================================================
+         LEFT COLUMN — INPUT FORM
+         ======================================================= -->
+    <div class="min-w-0 space-y-6">
+
+      <section class="agri-card">
+        <div class="yp-section-header">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <h2 class="yp-section-title">Prediction Inputs</h2>
+              <p class="yp-section-lead">Select the prediction model and provide the required field data.</p>
+            </div>
+            <span class="hidden sm:inline-flex items-center rounded-[var(--radius-sm)] bg-[var(--color-overlay)] px-2.5 py-1 text-[var(--text-xs)] font-medium text-[var(--color-text-secondary)] border border-[var(--color-border-strong)]">
+              Required data
+            </span>
+          </div>
+        </div>
+
+        <div class="yp-form-body">
+
+          <!-- DETECTION CONTEXT -->
+          {% if from_detection %}
+          <div class="agri-alert agri-alert-success mb-6">
+            <div class="flex items-start gap-3">
+              <svg class="mt-0.5 h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 3a9 9 0 110 18 9 9 0 010-18z"/>
+              </svg>
+              <div class="min-w-0 flex-1">
+                <p class="text-sm font-semibold">Fields auto-filled from disease detection</p>
+                <p class="mt-1 text-xs leading-5">
+                  Core planting information has been loaded from the detection record.
+                  Area planted, variety, planting date, and growth duration are locked
+                  to preserve the source data. Historical fields remain editable where applicable.
+                </p>
+                {% if detection %}
+                <div class="mt-3 border-t border-[var(--color-success-border)] pt-3">
+                  <dl class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
+                    <div>
+                      <dt class="font-medium text-[var(--color-success-text)]">Source detection</dt>
+                      <dd class="mt-0.5">#{{ detection.pk }}</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-[var(--color-success-text)]">Disease</dt>
+                      <dd class="mt-0.5">{{ detection.disease.name|default:"Unknown" }}</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-[var(--color-success-text)]">Severity</dt>
+                      <dd class="mt-0.5">{{ detection.severity_pct|default:0 }}%</dd>
+                    </div>
+                    {% if detection.planting and detection.planting.field %}
+                    <div>
+                      <dt class="font-medium text-[var(--color-success-text)]">Field</dt>
+                      <dd class="mt-0.5">{{ detection.planting.field.name }}</dd>
+                    </div>
+                    {% endif %}
+                  </dl>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- FORM -->
+          <form method="post" enctype="multipart/form-data" class="space-y-5" id="yield-prediction-form">
+            {% csrf_token %}
+            <input type="hidden" name="use_manual_data" id="id_use_manual_data" value="0">
+
+            {% if error %}
+            <div class="agri-alert agri-alert-danger" role="alert">
+              <div class="flex items-start gap-3">
+                <svg class="mt-0.5 h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-sm font-medium leading-5">{{ error }}</p>
+              </div>
+            </div>
+            {% endif %}
+
+            {% include 'partials/forms/_errors.html' %}
+
+            <!-- MODEL -->
+            <div class="yp-field-group">
+              <h3 class="yp-field-group-title">Prediction Model</h3>
+              <p class="yp-field-group-lead">Select the model first. The required fields will adjust automatically.</p>
+              {% include 'partials/forms/_field.html' with field=form.selected_model %}
+              <div id="model-required-hint" class="agri-alert agri-alert-info mt-3" aria-live="polite">
+                <p class="text-xs font-semibold">Model-specific required fields</p>
+                <p id="model-required-hint-text" class="mt-1 text-xs leading-5">
+                  Linear Regression: Planting data and Historical data are required.
+                </p>
+              </div>
+            </div>
+
+            <!-- CANOPY -->
+            <div id="field-canopy_image">
+              {% include 'partials/forms/_field.html' with field=form.canopy_image %}
+            </div>
+
+            <!-- PLANTING -->
+            {% if not from_detection %}
+            <div id="field-planting">
+              {% include 'partials/forms/_field.html' with field=form.planting %}
+            </div>
+            {% endif %}
+
+            <!-- CORE AGRONOMIC DATA -->
+            <div class="yp-field-group">
+              <h3 class="yp-field-group-title">Core Agronomic Data</h3>
+              <p class="yp-field-group-lead">These values are used directly by the prediction computation.</p>
+              <div class="space-y-4">
+                <div id="field-area">{% include 'partials/forms/_field.html' with field=form.area %}</div>
+                <div id="field-planting_date">{% include 'partials/forms/_field.html' with field=form.planting_date %}</div>
+                <div id="field-average_growth_duration_days">{% include 'partials/forms/_field.html' with field=form.average_growth_duration_days %}</div>
+                <div id="field-variety">{% include 'partials/forms/_field.html' with field=form.variety %}</div>
+              </div>
+            </div>
+
+            <!-- HISTORICAL & HEALTH -->
+            <div class="yp-field-group">
+              <h3 class="yp-field-group-title">Historical & Health Data</h3>
+              <p class="yp-field-group-lead">Additional information that may improve the available prediction.</p>
+              <div class="space-y-4">
+                <div id="field-historical_production_tons">{% include 'partials/forms/_field.html' with field=form.historical_production_tons %}</div>
+                <div id="field-historical_yield_tons_per_ha">{% include 'partials/forms/_field.html' with field=form.historical_yield_tons_per_ha %}</div>
+                <div id="field-health">{% include 'partials/forms/_field.html' with field=form.health %}</div>
+              </div>
+            </div>
+
+            <!-- FIELD CONTEXT -->
+            <div class="yp-field-group">
+              <h3 class="yp-field-group-title">Field Context</h3>
+              <p class="yp-field-group-lead">Contextual information associated with the selected planting record.</p>
+              <div class="space-y-4">
+                <div id="field-season">{% include 'partials/forms/_field.html' with field=form.season %}</div>
+                <div id="field-ecosystem_type">{% include 'partials/forms/_field.html' with field=form.ecosystem_type %}</div>
+              </div>
+            </div>
+
+            <!-- SUBMIT -->
+            <button type="submit" id="yield-submit-btn" data-loading class="btn btn-primary btn-block">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/>
+              </svg>
+              <span>Calculate Yield Prediction</span>
+            </button>
+          </form>
+        </div>
+      </section>
+    </div>
+
+    <!-- =======================================================
+         RIGHT COLUMN — RESULT + TIPS + HOW IT WORKS
+         ======================================================= -->
+    <div class="min-w-0 space-y-6">
+
+      <!-- PREDICTION RESULT -->
+      <section class="agri-card">
+        <div class="yp-section-header">
+          <h2 class="yp-section-title">Prediction Result</h2>
+          <p class="yp-section-lead">Your calculated yield estimate will appear here.</p>
+        </div>
+
+        <div class="yp-form-body">
+          {% if yield_result %}
+          <div class="space-y-5">
+
+            <!-- PRIMARY RESULT -->
+            <div class="yp-result-primary">
+              <p class="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-success-text)]">
+                Predicted Yield
+              </p>
+              <div class="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <p class="yp-result-value">{{ yield_result.value }}</p>
+                <span class="text-lg font-semibold text-[var(--color-text-secondary)]">tons/ha</span>
+              </div>
+              <p class="mt-1 text-sm text-[var(--color-text-secondary)]">
+                {{ yield_result.sacks_per_ha }} sacks per hectare
+              </p>
+
+              <!-- Confidence -->
+              <div class="mt-5 border-t border-[var(--color-success-border)] pt-4">
+                <div class="flex items-center justify-between gap-3">
+                  <span class="text-xs font-medium text-[var(--color-success-text)]">Prediction confidence</span>
+                  <span class="text-xs font-semibold">{{ yield_result.confidence }}%</span>
+                </div>
+                <div class="mt-2 h-2 overflow-hidden rounded-full bg-[var(--color-surface)]" role="progressbar" aria-valuenow="{{ yield_result.confidence }}" aria-valuemin="0" aria-valuemax="100" aria-label="Prediction confidence">
+                  <div class="h-full rounded-full bg-[var(--color-brand)] transition-all" style="width: {{ yield_result.confidence }}%"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- RESULT DETAILS -->
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div class="yp-result-detail">
+                <p class="yp-result-detail-label">Area Planted</p>
+                <p class="yp-result-detail-value">{{ yield_result.area }} ha</p>
+              </div>
+              <div class="yp-result-detail">
+                <p class="yp-result-detail-label">Variety</p>
+                <p class="yp-result-detail-value break-words">{{ yield_result.variety }}</p>
+              </div>
+              <div class="yp-result-detail">
+                <p class="yp-result-detail-label">Model Used</p>
+                <p class="mt-1 break-words text-sm font-medium">{{ yield_result.model|default:"Linear Regression" }}</p>
+              </div>
+              <div class="yp-result-detail">
+                <p class="yp-result-detail-label">Health Status</p>
+                <p class="mt-1 break-words text-sm font-medium">{{ yield_result.health }}</p>
+              </div>
+              <div class="yp-result-detail sm:col-span-2">
+                <p class="yp-result-detail-label">Harvest Date</p>
+                <p class="mt-1 text-sm font-medium">{{ yield_result.harvest_date }}</p>
+              </div>
+            </div>
+
+            <!-- TOTAL HARVEST -->
+            <div class="yp-result-detail">
+              <p class="yp-result-detail-label">Projected Total Harvest</p>
+              <p class="mt-1 text-2xl font-bold">{{ yield_result.total_tons }} tons</p>
+              <p class="mt-1 text-sm text-[var(--color-text-secondary)]">{{ yield_result.total_sacks }} sacks total</p>
+              <p class="mt-2 text-xs leading-5 text-[var(--color-text-muted)]">1 sack = 50 kg, so 1 ton = 20 sacks.</p>
+            </div>
+
+            <!-- SAVED RECORD -->
+            {% if yield_record %}
+            <div class="agri-alert agri-alert-success">
+              <div class="flex items-start gap-3">
+                <svg class="mt-0.5 h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                </svg>
+                <p class="text-sm leading-5">
+                  Prediction saved as
+                  <a href="{% url 'polls:yield_records_list' %}?search={{ yield_record.pk }}" class="font-semibold underline underline-offset-2 hover:opacity-80">
+                    Yield Record #{{ yield_record.pk }}
+                  </a>
+                </p>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          {% else %}
+          <!-- EMPTY RESULT -->
+          <div class="flex min-h-[320px] flex-col items-center justify-center text-center px-4">
+            <div class="flex h-14 w-14 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-overlay)]">
+              <svg class="h-7 w-7 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"/>
+              </svg>
+            </div>
+            <p class="mt-4 text-sm font-medium">No prediction generated yet</p>
+            <p class="mt-1 max-w-sm text-xs leading-5 text-[var(--color-text-secondary)]">
+              Complete the required inputs and submit the form. The prediction result will appear here.
+            </p>
+          </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- TIPS -->
+      <section class="agri-card p-5 sm:p-6">
+        <div class="mb-4">
+          <h3 class="yp-section-title">Tips for Better Input Quality</h3>
+          <p class="yp-section-lead">Accurate source data helps keep the prediction grounded in your field records.</p>
+        </div>
+        <ul class="space-y-3">
+          <li class="yp-tip-item">
+            <svg class="yp-tip-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span>Use the actual planted area rather than the total field size.</span>
+          </li>
+          <li class="yp-tip-item">
+            <svg class="yp-tip-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span>Use health information from recent disease scans when available.</span>
+          </li>
+          <li class="yp-tip-item">
+            <svg class="yp-tip-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span>Enter the correct planting date.</span>
+          </li>
+          <li class="yp-tip-item">
+            <svg class="yp-tip-icon" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <span>Match growth duration with the selected rice variety.</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <aside class="min-w-0" aria-label="About the yield prediction model">
+        <article class="yp-info-card">
+          <div class="flex items-center gap-3">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-surface)] text-[var(--color-brand)]">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+              </svg>
+            </div>
+            <h3 class="text-base font-semibold">How It Works</h3>
+          </div>
+          <p class="mt-4 text-sm leading-6">
+            The yield prediction system uses the available agronomic variables and
+            disease-related information to generate a rice yield estimate for the
+            selected field or planting record. Canopy images with proper lighting
+            can provide better input for analysis.
+          </p>
+
+          <!-- MODEL OPTIONS -->
+          <div class="mt-4 grid grid-cols-1 gap-3">
+            <div class="yp-info-item">
+              <p class="yp-info-item-title">Linear Regression</p>
+              <p class="yp-info-item-text">Uses planting, historical, and health data. Best when no canopy image is available.</p>
+            </div>
+            <div class="yp-info-item">
+              <p class="yp-info-item-title">CNN Yield</p>
+              <p class="yp-info-item-text">Analyzes the canopy image together with core planting data.</p>
+            </div>
+            <div class="yp-info-item">
+              <p class="yp-info-item-title">Ensemble</p>
+              <p class="yp-info-item-text">Combines CNN and Linear Regression for the most complete estimate.</p>
+            </div>
+          </div>
+
+          <!-- WORKFLOW -->
+          <div class="mt-4 yp-info-item">
+            <p class="yp-info-item-text">
+              <span class="font-semibold">Workflow:</span>
+              Canopy image & data → AI yield model → confidence & estimate → projected harvest & insights
+            </p>
+          </div>
+        </article>
+      </aside>
+    </div>
+  </div>
+</section>
 
 <!-- =========================================================
      FUNCTIONAL JAVASCRIPT
@@ -647,6 +522,12 @@ document.addEventListener('DOMContentLoaded', function () {
     ecosystem: 'ecosystem_type',
   };
   const hintText = document.getElementById('model-required-hint-text');
+
+  // SVG Icons for badges (replacing emojis)
+  const lockIcon = `<svg class="h-3 w-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>`;
+  const calcIcon = `<svg class="h-3 w-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m-6 4h6m-6 4h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>`;
+  const manualIcon = `<svg class="h-3 w-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>`;
+  const warnIcon = `<svg class="h-3 w-3 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
 
   function getFieldWrapper(name) {
     return document.getElementById(`field-${name}`);
@@ -726,7 +607,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
     searchInput.placeholder = 'Search disease, date, field, or ID...';
-    searchInput.className = 'w-full px-4 py-2 mb-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500';
+    searchInput.className = 'form-input mb-2';
     wrapper.insertBefore(searchInput, healthSelect);
 
     const allOptions = Array.from(healthSelect.options);
@@ -776,8 +657,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const labelElement = fieldWrapper.querySelector('label');
       if (labelElement && !labelElement.querySelector('.lock-badge')) {
         const lockBadge = document.createElement('span');
-        lockBadge.className = 'lock-badge ml-2';
-        lockBadge.textContent = '🔒 Auto-filled';
+        lockBadge.className = 'lock-badge';
+        lockBadge.innerHTML = `${lockIcon} Auto-filled`;
         lockBadge.title = 'This field was automatically filled from your disease detection scan and cannot be edited';
         labelElement.appendChild(lockBadge);
       }
@@ -814,7 +695,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (searchInput) {
           searchInput.readOnly = true;
           searchInput.classList.add('field-locked');
-          searchInput.placeholder = '🔒 Auto-filled from detection';
+          searchInput.placeholder = 'Auto-filled from detection';
         }
       }
 
@@ -829,8 +710,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const seasonDisplay = document.getElementById('id_season_display');
     if (seasonDisplay) {
       seasonDisplay.value = '{{ form.season.value|escapejs }}';
-      seasonDisplay.style.backgroundColor = '#e0f2fe';
-      seasonDisplay.style.color = '#1e40af';
+      seasonDisplay.style.backgroundColor = 'var(--color-info-soft)';
+      seasonDisplay.style.color = 'var(--color-info-text)';
       seasonDisplay.style.fontWeight = '500';
     }
     {% endif %}
@@ -838,8 +719,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const ecoDisplay = document.getElementById('id_ecosystem_type_display');
     if (ecoDisplay) {
       ecoDisplay.value = '{{ form.ecosystem_type.value|escapejs }}';
-      ecoDisplay.style.backgroundColor = '#e0f2fe';
-      ecoDisplay.style.color = '#1e40af';
+      ecoDisplay.style.backgroundColor = 'var(--color-info-soft)';
+      ecoDisplay.style.color = 'var(--color-info-text)';
       ecoDisplay.style.fontWeight = '500';
     }
     {% endif %}
@@ -858,19 +739,19 @@ document.addEventListener('DOMContentLoaded', function () {
         yieldFieldLocal.value = (production / area).toFixed(2);
         yieldFieldLocal.dataset.autoCalculated = 'true';
         yieldFieldLocal.dataset.manualEdit = 'false';
-        yieldFieldLocal.style.backgroundColor = '#f0fdf4';
+        yieldFieldLocal.style.backgroundColor = 'var(--color-info-soft)';
 
         if (yieldLabel && !yieldLabel.querySelector('.auto-calc-badge')) {
           const calcBadge = document.createElement('span');
-          calcBadge.className = 'auto-calc-badge ml-2';
-          calcBadge.textContent = '🧮 Auto-calculated';
+          calcBadge.className = 'auto-calc-badge';
+          calcBadge.innerHTML = `${calcIcon} Auto-calculated`;
           calcBadge.title = 'Calculated automatically from Production ÷ Area. You can edit if needed.';
           yieldLabel.appendChild(calcBadge);
         }
       } else if (yieldLabel && !yieldLabel.querySelector('.manual-entry-badge')) {
         const manualBadge = document.createElement('span');
-        manualBadge.className = 'manual-entry-badge ml-2';
-        manualBadge.textContent = '✏ Manual entry';
+        manualBadge.className = 'manual-entry-badge';
+        manualBadge.innerHTML = `${manualIcon} Manual entry`;
         manualBadge.title = 'No historical data available. Please enter production and yield manually.';
         yieldLabel.appendChild(manualBadge);
       }
@@ -878,22 +759,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const hasHistoricalData = productionFieldLocal && productionFieldLocal.value && parseFloat(productionFieldLocal.value) > 0;
     const notification = document.createElement('div');
-    notification.className = 'fixed top-4 right-4 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 shadow-lg z-50 animate-slide-in';
+    notification.className = 'fixed top-4 right-4 agri-alert agri-alert-info shadow-lg z-50 animate-slide-in max-w-sm';
     notification.setAttribute('role', 'status');
     notification.innerHTML = `
       <div class="flex items-center gap-3">
-        <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <svg class="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
           <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
         </svg>
         <div>
-          <p class="text-sm font-semibold text-blue-900">Fields Auto-Filled &amp; Locked</p>
-          <p class="text-xs text-blue-700 mt-0.5">
+          <p class="text-sm font-semibold">Fields Auto-Filled & Locked</p>
+          <p class="text-xs mt-0.5">
             ${hasHistoricalData
               ? 'Core data locked. Historical yield auto-calculated. Review and click Calculate!'
               : 'Core data locked. Please enter Historical Production & Yield manually below.'}
           </p>
         </div>
-        <button type="button" aria-label="Dismiss" onclick="this.parentElement.parentElement.remove()" class="ml-2 text-blue-400 hover:text-blue-600">
+        <button type="button" aria-label="Dismiss" onclick="this.parentElement.parentElement.remove()" class="ml-2 opacity-60 hover:opacity-100">
           <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
           </svg>
@@ -923,7 +804,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const icon = document.createElement('div');
     icon.className = 'absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none';
-    icon.innerHTML = '<svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
+    icon.innerHTML = '<svg class="h-5 w-5 text-[var(--color-text-muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
 
     const options = Array.from(plantingSelect.options);
 
@@ -936,7 +817,7 @@ document.addEventListener('DOMContentLoaded', function () {
     plantingSelect.style.display = 'none';
 
     const dropdown = document.createElement('div');
-    dropdown.className = 'absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
+    dropdown.className = 'absolute z-50 w-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-md)] shadow-lg max-h-60 overflow-y-auto hidden';
 
     wrapper.appendChild(searchInput);
     wrapper.appendChild(icon);
@@ -949,11 +830,11 @@ document.addEventListener('DOMContentLoaded', function () {
       const filtered = options.filter((o) => o.value && o.text.toLowerCase().includes(t));
 
       if (filtered.length === 0) {
-        dropdown.innerHTML = '<div class="px-4 py-2 text-gray-500 text-sm">No planting cycles found. Create a planting cycle first so you can start prediction.</div>';
+        dropdown.innerHTML = '<div class="px-4 py-2 text-[var(--color-text-muted)] text-sm">No planting cycles found. Create a planting cycle first so you can start prediction.</div>';
       } else {
         filtered.forEach((opt) => {
           const div = document.createElement('div');
-          div.className = 'px-4 py-2 hover:bg-green-50 cursor-pointer text-sm border-b border-gray-100 last:border-0';
+          div.className = 'px-4 py-2 hover:bg-[var(--color-brand-light)] cursor-pointer text-sm border-b border-[var(--color-border)] last:border-0';
           div.textContent = opt.text;
           div.dataset.value = opt.value;
           div.addEventListener('click', function () {
@@ -985,8 +866,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const isError = kind === 'error';
     const notification = document.createElement('div');
     notification.className = isError
-      ? 'fixed top-4 right-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 shadow-lg z-50'
-      : 'fixed top-4 right-4 bg-green-50 border border-green-200 rounded-lg px-4 py-3 shadow-lg z-50';
+      ? 'fixed top-4 right-4 agri-alert agri-alert-danger shadow-lg z-50 max-w-sm'
+      : 'fixed top-4 right-4 agri-alert agri-alert-success shadow-lg z-50 max-w-sm';
     notification.setAttribute('role', 'status');
 
     const iconPath = isError
@@ -995,10 +876,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     notification.innerHTML = `
       <div class="flex items-center gap-2">
-        <svg class="h-5 w-5 ${isError ? 'text-red-500' : 'text-green-500'}" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+        <svg class="h-5 w-5 shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
           <path fill-rule="evenodd" d="${iconPath}" clip-rule="evenodd"/>
         </svg>
-        <span class="text-sm font-medium ${isError ? 'text-red-800' : 'text-green-800'}"></span>
+        <span class="text-sm font-medium"></span>
       </div>
     `;
     notification.querySelector('span').textContent = message;
@@ -1058,7 +939,7 @@ document.addEventListener('DOMContentLoaded', function () {
                   field.parentNode.appendChild(hiddenInput);
                 } else {
                   field.readOnly = true;
-                  field.style.backgroundColor = '#f3f4f6';
+                  field.style.backgroundColor = 'var(--color-overlay)';
                   field.style.cursor = 'not-allowed';
                 }
               }
@@ -1076,8 +957,8 @@ document.addEventListener('DOMContentLoaded', function () {
           ['id_season_display', 'id_ecosystem_type_display'].forEach((id) => {
             const el = document.getElementById(id);
             if (el && el.value) {
-              el.style.backgroundColor = '#f0f9ff';
-              el.style.color = '#1e40af';
+              el.style.backgroundColor = 'var(--color-info-soft)';
+              el.style.color = 'var(--color-info-text)';
               el.style.fontWeight = '500';
             }
           });
@@ -1153,20 +1034,24 @@ document.addEventListener('DOMContentLoaded', function () {
     const seasonSuffix = seasonLabel && data.season !== 'any' ? `, ${seasonLabel} season` : '';
 
     if (data.historical_source === 'none') {
-      bg = 'bg-yellow-50'; border = 'border-yellow-200'; textColor = 'text-yellow-800'; icon = '⚠';
+      bg = 'var(--color-warning-soft)'; border = 'var(--color-warning-border)'; textColor = 'var(--color-warning-text)'; icon = warnIcon;
       message = 'No baseline available yet. Please enter Historical Production and Yield manually.';
     } else if (data.historical_source === 'harvest_records_field') {
-      bg = 'bg-green-50'; border = 'border-green-200'; textColor = 'text-green-700'; icon = '🧮';
+      bg = 'var(--color-success-soft)'; border = 'var(--color-success-border)'; textColor = 'var(--color-success-text)'; icon = calcIcon;
       message = `Historical yield based on ${recordCount} actual harvest record${recordCount === 1 ? '' : 's'} (same field + variety${seasonSuffix}, last 2 years)`;
     } else if (data.historical_source === 'harvest_records_variety') {
-      bg = 'bg-blue-50'; border = 'border-blue-200'; textColor = 'text-blue-700'; icon = '🧮';
+      bg = 'var(--color-info-soft)'; border = 'var(--color-info-border)'; textColor = 'var(--color-info-text)'; icon = calcIcon;
       message = `Historical yield based on ${recordCount} harvest record${recordCount === 1 ? '' : 's'} (same variety${seasonSuffix}, last 2 years)`;
     } else {
-      bg = 'bg-amber-50'; border = 'border-amber-200'; textColor = 'text-amber-700'; icon = '⚠️';
+      bg = 'var(--color-warning-soft)'; border = 'var(--color-warning-border)'; textColor = 'var(--color-warning-text)'; icon = warnIcon;
       message = 'Estimated from variety average (no harvest records yet). Prediction may be less accurate.';
     }
 
-    badge.className = `mt-2 text-sm font-medium ${bg} ${border} ${textColor} border rounded-lg px-3 py-2`;
+    badge.className = `mt-2 text-sm font-medium border rounded-[var(--radius-md)] px-3 py-2`;
+    badge.style.backgroundColor = bg;
+    badge.style.borderColor = border;
+    badge.style.color = textColor;
+    
     badge.innerHTML = `
       <div class="flex flex-col gap-1">
         <div class="flex items-center gap-2">
@@ -1199,9 +1084,8 @@ document.addEventListener('DOMContentLoaded', function () {
       if (area > 0 && production > 0) {
         yieldField.value = (production / area).toFixed(2);
         yieldField.dataset.autoCalculated = 'true';
-        yieldField.style.backgroundColor = '#f0fdf4';
+        yieldField.style.backgroundColor = 'var(--color-info-soft)';
       } else {
-        // Consistent behavior: only clear auto-calculated background if not manually edited, maintaining persistent field availability
         if (yieldField.dataset.autoCalculated === 'true') {
           yieldField.value = '';
           yieldField.style.backgroundColor = '';
@@ -1217,8 +1101,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const wrapper = plantingField.closest('.mb-4, .space-y-2, .form-field');
         if (wrapper && !wrapper.querySelector('.manual-override-badge')) {
           const badge = document.createElement('span');
-          badge.className = 'manual-override-badge manual-entry-badge ml-2';
-          badge.textContent = '✏️ Using manual values';
+          badge.className = 'manual-override-badge manual-entry-badge';
+          badge.innerHTML = `${manualIcon} Using manual values`;
           badge.title = 'You edited some fields manually. The planting record is still linked for tracking.';
           const lbl = wrapper.querySelector('label');
           if (lbl) lbl.appendChild(badge);
@@ -1293,14 +1177,14 @@ const YieldLoader = (() => {
       if (i < index) {
         el.classList.add('is-done');
         if (iconEl) {
-          iconEl.style.borderColor = '#16a34a';
-          iconEl.style.background = '#16a34a';
+          iconEl.style.borderColor = '#166534';
+          iconEl.style.background = '#166534';
           iconEl.style.boxShadow = '';
           iconEl.innerHTML = `<svg class="h-3.5 w-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
           </svg>`;
         }
-        if (labelEl) { labelEl.style.color = '#16a34a'; labelEl.style.fontWeight = '600'; }
+        if (labelEl) { labelEl.style.color = '#166534'; labelEl.style.fontWeight = '600'; }
 
       } else if (i === index) {
         el.classList.add('is-active');

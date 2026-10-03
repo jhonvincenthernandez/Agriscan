@@ -5,212 +5,156 @@
 
 {% block styles %}
 <style>
-  /* Plantings list. Uses the global tokens from base.html only. */
+  /* Page-specific badge variants using global tokens */
+  .badge-base {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.125rem 0.625rem;
+    border: 1px solid;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 1.25rem;
+  }
+  .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+  .badge-outline { background: var(--color-surface); border-color: var(--color-border-strong); color: var(--color-text-secondary); }
+  .badge-solid   { background: var(--color-brand); border-color: var(--color-brand); color: #ffffff; }
+  .badge-danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
 
-  .pl-panel { padding: 1rem; }
-  @media (min-width: 640px) { .pl-panel { padding: 1.5rem; } }
+  .btn-warn { color: var(--color-warning-text) !important; border-color: var(--color-warning-border) !important; }
+  .btn-warn:hover { background: var(--color-warning-soft) !important; border-color: #f59e0b !important; }
 
-  /* ---- Page header ---- */
-  .pl-head { display: flex; flex-direction: column; gap: 1.25rem; }
+  /* Page Header & Filters (mirroring Detection Records structure) */
+  .pl-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .pl-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .pl-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-brand); background: var(--color-brand-light); border: 1px solid var(--color-brand-border); border-radius: var(--radius-sm); }
+  .pl-title { margin: 0; }
+  .pl-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .pl-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .pl-chip { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: var(--btn-h); padding: 0 0.875rem; color: var(--color-text); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); font-size: 0.875rem; font-weight: 600; white-space: nowrap; }
+  @media (min-width: 640px) {
+    .pl-head { padding: 1.5rem; }
+    .pl-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
   @media (min-width: 1024px) {
     .pl-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
   }
-  .pl-titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
-  .pl-icon {
-    display: flex; flex: none; align-items: center; justify-content: center;
-    width: 2.5rem; height: 2.5rem; color: var(--color-brand);
-    background: var(--color-brand-light); border: 1px solid var(--color-brand-border);
-    border-radius: var(--radius-sm);
-  }
-  .pl-icon svg { width: 1.25rem; height: 1.25rem; }
-  .pl-title {
-    min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-    font-size: var(--text-page); line-height: 1.25; font-weight: 700; color: var(--color-text-primary);
-  }
-  .pl-sub { max-width: 65ch; margin: 0.5rem 0 0; font-size: 0.875rem; line-height: 1.5; color: var(--color-text-secondary); }
 
-  .pl-actions { display: flex; flex-direction: column; gap: 0.5rem; width: 100%; }
-  @media (min-width: 640px)  { .pl-actions { flex-direction: row; } }
-  @media (min-width: 1024px) { .pl-actions { width: auto; flex: none; } }
-
-  .pl-count {
-    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    min-height: var(--btn-h); padding: 0.375rem 0.875rem;
-    color: var(--color-text); background: var(--color-overlay);
-    border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm);
-    font-size: 0.875rem; font-weight: 600; white-space: nowrap;
-  }
-  .pl-count svg { width: 1rem; height: 1rem; color: var(--color-text-secondary); }
-
-  /* ---- Badges ---- */
-  .pl-badge {
-    display: inline-flex; align-items: center; gap: 0.375rem;
-    padding: 0.125rem 0.625rem; border: 1px solid; border-radius: var(--radius-full);
-    font-size: var(--text-sm); font-weight: 500; line-height: 1.25rem;
-  }
-  .pl-badge--neutral { color: var(--color-text); background: var(--color-overlay); border-color: var(--color-border-strong); }
-  .pl-badge--outline { color: var(--color-text-secondary); background: var(--color-surface); border-color: var(--color-border-strong); }
-  .pl-badge--success { color: var(--color-success-text); background: var(--color-success-soft); border-color: var(--color-success-border); }
-  .pl-badge--solid   { color: #ffffff; background: var(--color-brand); border-color: var(--color-brand); }
-  .pl-badge--warning { color: var(--color-warning-text); background: var(--color-warning-soft); border-color: var(--color-warning-border); }
-  .pl-badge--danger  { color: var(--color-danger-text); background: var(--color-danger-soft); border-color: var(--color-danger-border); }
-  .pl-dot { width: 0.5rem; height: 0.5rem; border-radius: var(--radius-full); background: var(--color-brand); }
-
-  /* ---- Filters (own surface, not nested in the header card) ---- */
-  .pl-filter { margin-bottom: 1.5rem; }
-  .pl-searchrow { display: flex; flex-direction: column; gap: 0.5rem; }
-  @media (min-width: 640px) { .pl-searchrow { flex-direction: row; } }
-  .pl-search { position: relative; flex: 1 1 auto; min-width: 0; }
-  .pl-search > svg {
-    position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem;
-    transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none;
-  }
+  .pl-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .pl-filters { padding: 1.5rem; } }
+  .pl-filters form { display: grid; gap: 1rem; }
+  .pl-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .pl-search { position: relative; flex: 1; min-width: 0; }
+  .pl-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
   .pl-search input { padding-left: 2.5rem; }
-  .pl-kbd { display: none; }
+  .pl-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  .pl-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 640px) {
+    .pl-search-row { flex-direction: row; }
+    .pl-selects { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   @media (min-width: 1024px) {
-    .pl-search input { padding-right: 4.5rem; }
-    .pl-kbd {
-      display: inline-block; position: absolute; right: 0.625rem; top: 50%;
-      transform: translateY(-50%); padding: 0.125rem 0.375rem;
-      color: var(--color-text-secondary); background: var(--color-overlay);
-      border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs);
-      font-size: var(--text-xs); pointer-events: none;
-    }
+    .pl-kbd { display: inline-block; }
+    .pl-search input { padding-right: 5rem; }
+    .pl-selects { grid-template-columns: repeat(5, minmax(0, 1fr)); }
   }
-  .pl-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; margin-top: 0.75rem; }
-  @media (min-width: 640px)  { .pl-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (min-width: 1024px) { .pl-filters { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 
-  /* ---- Planting cards ---- */
-  .pl-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-bottom: 2rem; }
-
-  .pl-card__inner { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; }
-  @media (min-width: 640px)  { .pl-card__inner { padding: 1.5rem; } }
-  @media (min-width: 1024px) { .pl-card__inner { flex-direction: row; align-items: center; justify-content: space-between; } }
-
-  .pl-main { min-width: 0; flex: 1; }
-  .pl-name-row { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
-  .pl-name {
-    margin: 0; font-size: var(--text-lg); font-weight: 700; line-height: 1.3;
-    color: var(--color-text-primary); overflow-wrap: anywhere;
+  /* View switch: cards below 1024px (current design), table from 1024px */
+  .pl-table-view { display: none; margin-bottom: 2rem; }
+  .pl-card-view { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 1024px) {
+    .pl-table-view { display: block; }
+    .pl-card-view { display: none; }
   }
-  .pl-variety { margin: 0 0 1rem; font-size: 0.875rem; color: var(--color-text-secondary); }
 
-  .pl-owner {
-    display: flex; align-items: flex-start; gap: 0.5rem; margin: 0 0 0.75rem;
-    font-size: 0.875rem; color: var(--color-text); overflow-wrap: anywhere;
+  .pl-muted { color: var(--color-text-muted); font-style: italic; }
+  .pl-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .pl-name { color: var(--color-text-primary); font-weight: 600; }
+  .pl-sub { display: block; margin-top: 0.125rem; color: var(--color-text-secondary); font-size: var(--text-sm); }
+  .pl-date { white-space: nowrap; }
+  .pl-notes {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    max-width: 16rem;
+    overflow: hidden;
+    color: var(--color-text-secondary);
+    font-size: var(--text-sm);
   }
-  .pl-owner svg { width: 1rem; height: 1rem; flex: none; margin-top: 0.125rem; color: var(--color-brand); }
-  .pl-owner strong { font-weight: 600; color: var(--color-text-primary); }
+  .pl-actions { display: inline-flex; gap: 0.5rem; }
 
-  /* Label / value pairs, no extra surface inside the card */
-  .pl-kv {
-    display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem 1.5rem; margin: 0;
-    padding-top: 1rem; border-top: 1px solid var(--color-border);
-  }
-  @media (min-width: 640px) { .pl-kv { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  .pl-kv dt {
-    font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--color-text-secondary);
-  }
-  .pl-kv dd { margin: 0.125rem 0 0; font-size: 0.9375rem; font-weight: 600; color: var(--color-text-primary); }
-  .pl-kv dd.is-empty { font-weight: 400; color: var(--color-text-muted); }
-
-  .pl-stats {
-    display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 1rem;
-    padding-top: 1rem; border-top: 1px solid var(--color-border);
-  }
-  .pl-stat { display: inline-flex; align-items: center; gap: 0.5rem; margin: 0; font-size: 0.875rem; color: var(--color-text-secondary); }
-  .pl-stat svg { width: 1rem; height: 1rem; flex: none; }
-  .pl-stat strong { font-weight: 650; color: var(--color-text-primary); }
-
-  .pl-notes { margin: 1rem 0 0; padding-left: 0.875rem; border-left: 3px solid var(--color-border-strong); }
-  .pl-notes dt { font-size: var(--text-xs); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); }
-  .pl-notes dd { margin: 0.125rem 0 0; font-size: 0.875rem; line-height: 1.5; color: var(--color-text); white-space: pre-line; overflow-wrap: anywhere; }
-
-  .pl-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; width: 100%; }
-  @media (min-width: 1024px) { .pl-side { grid-template-columns: minmax(0, 1fr); width: 8rem; flex: none; } }
-  .pl-btn-warn { color: var(--color-warning-text); border-color: var(--color-warning-border); }
-  .pl-btn-warn:hover { color: var(--color-warning-text); background: var(--color-warning-soft); border-color: #f59e0b; }
-
-  /* ---- Empty state ---- */
-  .pl-empty { padding: 2.5rem 1.5rem; text-align: center; }
-  @media (min-width: 640px) { .pl-empty { padding: 3rem 1.5rem; } }
-  .pl-empty__icon {
-    display: flex; align-items: center; justify-content: center;
-    width: 3.5rem; height: 3.5rem; margin: 0 auto 1.25rem;
-    color: var(--color-text-secondary); background: var(--color-overlay);
-    border: 1px solid var(--color-border-strong); border-radius: var(--radius-full);
-  }
-  .pl-empty__icon svg { width: 1.75rem; height: 1.75rem; }
-  .pl-empty h2 { margin: 0 0 0.5rem; font-size: var(--text-lg); }
-  .pl-empty p { max-width: 50ch; margin: 0 auto 1.5rem; font-size: 0.9375rem; color: var(--color-text-secondary); }
+  .pl-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .pl-empty { padding: 3rem; } }
+  .pl-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .pl-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
 </style>
 {% endblock %}
 
 {% block content %}
 <section class="page-container min-w-0">
 
-  <!-- Page header -->
-  <header class="agri-card pl-panel" style="margin-bottom: 1.5rem;">
-    <div class="pl-head">
-      <div style="min-width:0; flex:1;">
-        <div class="pl-titlerow">
-          <div style="display:flex; align-items:center; gap:0.75rem; min-width:0;">
-            <div class="pl-icon" aria-hidden="true">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-              </svg>
-            </div>
-            <h1 class="pl-title">{% if role == 'farmer' %}My Planting Cycles{% else %}All Planting Cycles{% endif %}</h1>
-          </div>
-
+  <!-- =========================================================
+       PAGE HEADER
+       ========================================================= -->
+  <header class="agri-card pl-head">
+    <div class="pl-head-main">
+      <span class="pl-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </span>
+      <div class="min-w-0">
+        <div class="flex flex-wrap items-center gap-2">
+          <h1 class="pl-title">
+            {% if role == 'farmer' %}My Planting Cycles{% else %}All Planting Cycles{% endif %}
+          </h1>
           {% if role == 'admin' %}
-          <span class="pl-badge pl-badge--neutral">Admin</span>
+          <span class="badge-base badge-neutral">Admin</span>
           {% elif role == 'technician' %}
-          <span class="pl-badge pl-badge--neutral">Technician</span>
+          <span class="badge-base badge-neutral">Technician</span>
           {% endif %}
         </div>
-
-        <p class="pl-sub">
+        <p class="pl-lead">
           {% if role == 'farmer' %}Track your rice planting records and harvest schedules.{% else %}Monitor farmers' planting cycles across the system.{% endif %}
         </p>
       </div>
+    </div>
 
-      <div class="pl-actions">
-        <span class="pl-count">
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-          </svg>
-          {{ total_count }} Record{{ total_count|pluralize }}
-        </span>
+    <div class="pl-head-actions">
+      <span class="pl-chip">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ total_count }} Record{{ total_count|pluralize }}
+      </span>
 
-        <a href="{% url 'polls:planting_create' %}" class="btn btn-primary">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Add Planting
-        </a>
-      </div>
+      <a href="{% url 'polls:planting_create' %}" class="btn btn-primary">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span>Add Planting</span>
+      </a>
     </div>
   </header>
 
-  <!-- Search and filters -->
-  <div class="agri-card pl-panel pl-filter">
+  <!-- =========================================================
+       SEARCH & FILTERS
+       ========================================================= -->
+  <div class="agri-card pl-filters no-print">
     <form method="get" role="search" aria-label="Search and filter planting cycles">
 
-      <div class="pl-searchrow">
+      <div class="pl-search-row">
         <div class="pl-search">
           <label for="planting-search" class="sr-only-agri">Search planting cycles</label>
-          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
           </svg>
-          <input id="planting-search" type="search" name="search" value="{{ search }}"
-                 placeholder="Search ID, field, variety, farmer, location" autocomplete="off">
+          <input id="planting-search" type="search" name="search" value="{{ search }}" placeholder="Search ID, field, variety, farmer, location" autocomplete="off">
           <kbd class="pl-kbd" aria-hidden="true">Ctrl K</kbd>
         </div>
 
-        <!-- The field filter has no dropdown here, so keep it across searches. -->
         <input type="hidden" name="field" value="{{ field_filter }}">
 
         <button type="submit" data-loading class="btn btn-primary">Search</button>
@@ -220,10 +164,10 @@
         {% endif %}
       </div>
 
-      <div class="pl-filters">
+      <div class="pl-selects">
         <div>
           <label for="season-filter" class="sr-only-agri">Season</label>
-          <select id="season-filter" name="season" data-autosubmit>
+          <select id="season-filter" name="season" data-autosubmit class="form-select">
             <option value="">All Seasons</option>
             <option value="wet" {% if season_filter == 'wet' %}selected{% endif %}>Wet Season</option>
             <option value="dry" {% if season_filter == 'dry' %}selected{% endif %}>Dry Season</option>
@@ -232,7 +176,7 @@
 
         <div>
           <label for="status-filter" class="sr-only-agri">Status</label>
-          <select id="status-filter" name="status" data-autosubmit>
+          <select id="status-filter" name="status" data-autosubmit class="form-select">
             <option value="">All Statuses</option>
             <option value="planned" {% if status_filter == 'planned' %}selected{% endif %}>Planned</option>
             <option value="ongoing" {% if status_filter == 'ongoing' %}selected{% endif %}>Ongoing</option>
@@ -244,7 +188,7 @@
 
         <div>
           <label for="variety-filter" class="sr-only-agri">Rice variety</label>
-          <select id="variety-filter" name="variety" data-autosubmit>
+          <select id="variety-filter" name="variety" data-autosubmit class="form-select">
             <option value="">All Varieties</option>
             {% for v in varieties %}
             <option value="{{ v }}" {% if variety_filter == v %}selected{% endif %}>{{ v }}</option>
@@ -254,7 +198,7 @@
 
         <div>
           <label for="sort-filter" class="sr-only-agri">Sort planting cycles</label>
-          <select id="sort-filter" name="sort" data-autosubmit>
+          <select id="sort-filter" name="sort" data-autosubmit class="form-select">
             <option value="-planting_date" {% if sort_by == '-planting_date' or not sort_by %}selected{% endif %}>Planting Date (Newest)</option>
             <option value="planting_date" {% if sort_by == 'planting_date' %}selected{% endif %}>Planting Date (Oldest)</option>
             <option value="field__name" {% if sort_by == 'field__name' %}selected{% endif %}>Field Name A-Z</option>
@@ -270,118 +214,190 @@
 
         <div>
           <label for="page-size-filter" class="sr-only-agri">Records per page</label>
-          <select id="page-size-filter" name="page_size" data-autosubmit>
+          <select id="page-size-filter" name="page_size" data-autosubmit class="form-select">
             {% for size in allowed_page_sizes %}
             <option value="{{ size }}" {% if page_size == size %}selected{% endif %}>{{ size }} / page</option>
             {% endfor %}
           </select>
         </div>
       </div>
+      
     </form>
   </div>
 
+  <!-- =========================================================
+       PLANTING RECORDS GRID
+       ========================================================= -->
   {% if plantings %}
 
-  <!-- Planting records -->
-  <div class="pl-list">
+  <!-- TABLE VIEW (desktop and laptop, 1024px+) -->
+  <div class="pl-table-view">
+    <div class="data-table-wrap">
+      <table class="data-table">
+        <caption class="sr-only-agri">{% if role == 'farmer' %}My planting cycles{% else %}All planting cycles{% endif %}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Field</th>
+            {% if role == 'admin' or role == 'technician' %}<th scope="col">Owner</th>{% endif %}
+            <th scope="col">Variety</th>
+            <th scope="col">Season</th>
+            <th scope="col">Status</th>
+            <th scope="col">Planting Date</th>
+            <th scope="col">Expected Harvest</th>
+            <th scope="col" class="pl-num">Growth</th>
+            <th scope="col" class="pl-num">Detections</th>
+            <th scope="col" class="pl-num">Yield Predictions</th>
+            <th scope="col">Notes</th>
+            <th scope="col" class="pl-num">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for planting in plantings %}
+          <tr>
+            <td class="td-primary"><span class="pl-name">{{ planting.field.name }}</span></td>
+            {% if role == 'admin' or role == 'technician' %}
+            <td>{{ planting.field.owner.user.get_full_name|default:planting.field.owner.user.username }}</td>
+            {% endif %}
+            <td>
+              <span class="pl-name">{{ planting.variety.code }}</span>
+              <span class="pl-sub">{{ planting.variety.name }}</span>
+            </td>
+            <td>{% if planting.season %}<span class="badge-base badge-outline">{{ planting.get_season_display }}</span>{% else %}<span class="pl-muted">Not set</span>{% endif %}</td>
+            <td>
+              {% if planting.status == 'planned' %}<span class="badge-base badge-neutral">Planned</span>
+              {% elif planting.status == 'ongoing' %}<span class="agri-badge"><span class="h-2 w-2 rounded-full bg-[var(--color-brand)]" aria-hidden="true"></span>Ongoing</span>
+              {% elif planting.status == 'harvested' %}<span class="badge-base badge-solid">Harvested</span>
+              {% elif planting.status == 'failed' %}<span class="badge-base badge-danger">Failed</span>
+              {% elif planting.status == 'cancelled' %}<span class="badge-base badge-warning">Cancelled</span>
+              {% else %}<span class="badge-base badge-neutral">{{ planting.status|capfirst }}</span>{% endif %}
+            </td>
+            <td class="pl-date">{{ planting.planting_date|date:"M d, Y" }}</td>
+            <td class="pl-date">{% if planting.expected_harvest_date %}{{ planting.expected_harvest_date|date:"M d, Y" }}{% else %}<span class="pl-muted">Not set</span>{% endif %}</td>
+            <td class="pl-num">{{ planting.variety.average_growth_days }} days</td>
+            <td class="pl-num">{{ planting.detections.count }}</td>
+            <td class="pl-num">{{ planting.yield_predictions.count }}</td>
+            <td>{% if planting.notes %}<span class="pl-notes" title="{{ planting.notes }}">{{ planting.notes }}</span>{% else %}<span class="pl-muted">None</span>{% endif %}</td>
+            <td class="td-actions">
+              <span class="pl-actions">
+                <a href="{% url 'polls:planting_edit' planting.pk %}" class="btn btn-secondary btn-sm" aria-label="Edit planting {{ planting.pk }}">Edit</a>
+                <a href="{% url 'polls:planting_delete' planting.pk %}"
+                   data-open-delete="true"
+                   data-delete-label="Planting #{{ planting.pk }} in {{ planting.field.name }}"
+                   data-delete-subtitle="{{ planting.variety.code|default:'No variety' }} planted {{ planting.planting_date|date:'M d, Y' }}"
+                   aria-label="Archive planting {{ planting.pk }}"
+                   class="btn btn-secondary btn-sm btn-warn">Archive</a>
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CARD VIEW (mobile and tablet, below 1024px) -->
+  <div class="pl-card-view mb-8">
     {% for planting in plantings %}
     <article class="agri-card agri-card-interactive">
-      <div class="pl-card__inner">
-
-        <div class="pl-main">
-
+      <div class="flex flex-col gap-5 p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+        
+        <div class="min-w-0 flex-1">
+          
           <!-- Title and status -->
-          <div class="pl-name-row">
-            <h2 class="pl-name">{{ planting.field.name }}</h2>
-
-            <span class="pl-badge pl-badge--neutral">{{ planting.variety.code }}</span>
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <h2 class="text-[var(--text-lg)] font-bold text-[var(--color-text-primary)] break-words">
+              {{ planting.field.name }}
+            </h2>
+            
+            <span class="badge-base badge-neutral">{{ planting.variety.code }}</span>
 
             {% if planting.status == 'planned' %}
-              <span class="pl-badge pl-badge--neutral">Planned</span>
+              <span class="badge-base badge-neutral">Planned</span>
             {% elif planting.status == 'ongoing' %}
-              <span class="pl-badge pl-badge--success"><span class="pl-dot" aria-hidden="true"></span>Ongoing</span>
+              <span class="agri-badge"><span class="h-2 w-2 rounded-full bg-[var(--color-brand)]" aria-hidden="true"></span>Ongoing</span>
             {% elif planting.status == 'harvested' %}
-              <span class="pl-badge pl-badge--solid">Harvested</span>
+              <span class="badge-base badge-solid">Harvested</span>
             {% elif planting.status == 'failed' %}
-              <span class="pl-badge pl-badge--danger">Failed</span>
+              <span class="badge-base badge-danger">Failed</span>
             {% elif planting.status == 'cancelled' %}
-              <span class="pl-badge pl-badge--warning">Cancelled</span>
+              <span class="badge-base badge-warning">Cancelled</span>
             {% else %}
-              <span class="pl-badge pl-badge--neutral">{{ planting.status|capfirst }}</span>
+              <span class="badge-base badge-neutral">{{ planting.status|capfirst }}</span>
             {% endif %}
 
             {% if planting.season %}
-              <span class="pl-badge pl-badge--outline">{{ planting.get_season_display }}</span>
+              <span class="badge-base badge-outline">{{ planting.get_season_display }}</span>
             {% endif %}
           </div>
 
           {% if role == 'admin' or role == 'technician' %}
-          <p class="pl-owner">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <p class="flex items-start gap-2 mb-3 text-sm text-[var(--color-text)] break-words">
+            <svg class="h-4 w-4 shrink-0 mt-0.5 text-[var(--color-brand)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
-            <span><strong>Owner:</strong> {{ planting.field.owner.user.get_full_name|default:planting.field.owner.user.username }}</span>
+            <span><strong class="font-semibold text-[var(--color-text-primary)]">Owner:</strong> {{ planting.field.owner.user.get_full_name|default:planting.field.owner.user.username }}</span>
           </p>
           {% endif %}
 
-          <p class="pl-variety">{{ planting.variety.name }}</p>
+          <p class="text-sm text-[var(--color-text-secondary)] mb-4">{{ planting.variety.name }}</p>
 
           <!-- Dates and growth -->
-          <dl class="pl-kv">
+          <dl class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-[var(--color-border)]">
             <div>
-              <dt>Planting Date</dt>
-              <dd>{{ planting.planting_date|date:"M d, Y" }}</dd>
+              <dt class="text-[var(--text-xs)] font-semibold tracking-wider uppercase text-[var(--color-text-secondary)]">Planting Date</dt>
+              <dd class="mt-0.5 text-[0.9375rem] font-semibold text-[var(--color-text-primary)]">{{ planting.planting_date|date:"M d, Y" }}</dd>
             </div>
             <div>
-              <dt>Expected Harvest</dt>
+              <dt class="text-[var(--text-xs)] font-semibold tracking-wider uppercase text-[var(--color-text-secondary)]">Expected Harvest</dt>
               {% if planting.expected_harvest_date %}
-              <dd>{{ planting.expected_harvest_date|date:"M d, Y" }}</dd>
+              <dd class="mt-0.5 text-[0.9375rem] font-semibold text-[var(--color-text-primary)]">{{ planting.expected_harvest_date|date:"M d, Y" }}</dd>
               {% else %}
-              <dd class="is-empty">Not set</dd>
+              <dd class="mt-0.5 text-[0.9375rem] font-normal text-[var(--color-text-muted)]">Not set</dd>
               {% endif %}
             </div>
             <div>
-              <dt>Growth Duration</dt>
-              <dd>{{ planting.variety.average_growth_days }} days</dd>
+              <dt class="text-[var(--text-xs)] font-semibold tracking-wider uppercase text-[var(--color-text-secondary)]">Growth Duration</dt>
+              <dd class="mt-0.5 text-[0.9375rem] font-semibold text-[var(--color-text-primary)]">{{ planting.variety.average_growth_days }} days</dd>
             </div>
           </dl>
 
           <!-- Analytics -->
-          <div class="pl-stats">
-            <p class="pl-stat">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <div class="flex flex-wrap gap-x-6 gap-y-2 mt-4 pt-4 border-t border-[var(--color-border)]">
+            <p class="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+              <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              <span><strong>{{ planting.detections.count }}</strong> detection{{ planting.detections.count|pluralize }}</span>
+              <span><strong class="font-semibold text-[var(--color-text-primary)]">{{ planting.detections.count }}</strong> detection{{ planting.detections.count|pluralize }}</span>
             </p>
-            <p class="pl-stat">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <p class="inline-flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
+              <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
               </svg>
-              <span><strong>{{ planting.yield_predictions.count }}</strong> yield prediction{{ planting.yield_predictions.count|pluralize }}</span>
+              <span><strong class="font-semibold text-[var(--color-text-primary)]">{{ planting.yield_predictions.count }}</strong> yield prediction{{ planting.yield_predictions.count|pluralize }}</span>
             </p>
           </div>
 
           {% if planting.notes %}
-          <dl class="pl-notes">
-            <dt>Notes</dt>
-            <dd>{{ planting.notes }}</dd>
+          <dl class="mt-4 pl-3.5 border-l-[3px] border-[var(--color-border-strong)]">
+            <dt class="text-[var(--text-xs)] font-semibold tracking-wider uppercase text-[var(--color-text-secondary)]">Notes</dt>
+            <dd class="mt-0.5 text-sm leading-relaxed text-[var(--color-text)] whitespace-pre-line break-words">{{ planting.notes }}</dd>
           </dl>
           {% endif %}
+          
         </div>
 
         <!-- Actions -->
-        <div class="pl-side">
+        <div class="grid grid-cols-2 gap-2 w-full lg:grid-cols-1 lg:w-32 lg:flex-none">
           <a href="{% url 'polls:planting_edit' planting.pk %}"
              class="btn btn-secondary"
              aria-label="Edit planting {{ planting.pk }}">Edit</a>
 
           <a href="{% url 'polls:planting_delete' planting.pk %}"
              data-open-delete="true"
-             data-delete-label="Planting #{{ planting.pk }} · {{ planting.field.name }}"
-             data-delete-subtitle="{{ planting.variety.code|default:'No variety' }} · Planted {{ planting.planting_date|date:'M d, Y' }}"
+             data-delete-label="Planting #{{ planting.pk }} in {{ planting.field.name }}"
+             data-delete-subtitle="{{ planting.variety.code|default:'No variety' }} planted {{ planting.planting_date|date:'M d, Y' }}"
              aria-label="Archive planting {{ planting.pk }}"
-             class="btn btn-secondary pl-btn-warn">Archive</a>
+             class="btn btn-secondary btn-warn">Archive</a>
         </div>
 
       </div>
@@ -395,13 +411,15 @@
 
   {% else %}
 
-  <!-- Empty state -->
-  <div class="agri-card pl-panel pl-empty">
-    <div class="pl-empty__icon" aria-hidden="true">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- =========================================================
+       EMPTY STATE
+       ========================================================= -->
+  <div class="agri-card pl-empty">
+    <span class="pl-empty-icon" aria-hidden="true">
+      <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-    </div>
+    </span>
 
     {% if search or variety_filter or season_filter or status_filter or field_filter %}
     <h2>No Planting Records Found</h2>
@@ -411,10 +429,10 @@
     <h2>No Planting Records Yet</h2>
     <p>Create your first planting cycle to start tracking crop health, disease detections, and yield predictions.</p>
     <a href="{% url 'polls:planting_create' %}" class="btn btn-primary btn-lg">
-      <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
       </svg>
-      Create Your First Planting
+      <span>Create Your First Planting</span>
     </a>
     {% endif %}
   </div>

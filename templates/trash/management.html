@@ -1,131 +1,200 @@
 ﻿{% extends 'base.html' %}
-{% block title %}Trash & Archive - AgriScan{% endblock %}
+{% block title %}Trash & Archive · AgriScan+{% endblock %}
+
+{% block styles %}
+<style>
+  .tr-head { display: flex; flex-direction: column; gap: 1.25rem; padding: 1.25rem; margin-bottom: 1.5rem; }
+  .tr-head-main { display: flex; align-items: flex-start; gap: 0.75rem; min-width: 0; }
+  .tr-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; color: var(--color-danger-text); background: var(--color-danger-soft); border: 1px solid var(--color-danger-border); border-radius: var(--radius-sm); }
+  .tr-title { margin: 0; }
+  .tr-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
+  .tr-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  @media (min-width: 640px) {
+    .tr-head { padding: 1.5rem; }
+    .tr-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  }
+  @media (min-width: 1024px) {
+    .tr-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+  }
+
+  .tr-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
+  @media (min-width: 640px) { .tr-filters { padding: 1.5rem; } }
+  .tr-filters form { display: grid; gap: 1rem; }
+  .tr-search-row { display: flex; flex-direction: column; gap: 0.5rem; }
+  .tr-search { position: relative; flex: 1; min-width: 0; }
+  .tr-search > svg { position: absolute; left: 0.75rem; top: 50%; width: 1rem; height: 1rem; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .tr-search input { padding-left: 2.5rem; }
+  .tr-kbd { display: none; position: absolute; right: 0.625rem; top: 50%; transform: translateY(-50%); padding: 0.125rem 0.375rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-xs); font-size: var(--text-xs); pointer-events: none; }
+  @media (min-width: 640px) {
+    .tr-search-row { flex-direction: row; }
+  }
+  @media (min-width: 1024px) {
+    .tr-kbd { display: inline-block; }
+    .tr-search input { padding-right: 5rem; }
+  }
+
+  /* Sidebar Nav */
+  .tr-sidebar { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-md); box-shadow: var(--shadow-sm); padding: 0.5rem; position: sticky; top: 5rem; }
+  @media (min-width: 640px) { .tr-sidebar { border-radius: var(--radius-lg); } }
+  .tr-sidebar-title { padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--color-border); margin-bottom: 0.25rem; }
+  .tr-sidebar-link { display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border-radius: var(--radius-sm); font-size: var(--text-sm); font-weight: 500; transition: background var(--transition-base), color var(--transition-base); color: var(--color-text); text-decoration: none; }
+  .tr-sidebar-link:hover { background: var(--color-overlay); }
+  .tr-sidebar-link.is-active { background: var(--color-brand-light); color: var(--color-success-text); font-weight: 600; }
+  .tr-sidebar-count { font-size: var(--text-xs); padding: 0.125rem 0.5rem; border-radius: var(--radius-full); border: 1px solid var(--color-border); background: var(--color-overlay); color: var(--color-text-secondary); }
+  .tr-sidebar-link.is-active .tr-sidebar-count { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .tr-sidebar-count-warn { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .tr-sidebar-link.is-active .tr-sidebar-count-warn { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+
+  /* Table specifics */
+  .tr-check { justify-content: center; min-width: 2.75rem; }
+  .data-table th.tr-th-check { width: 3.5rem; padding-inline: 0.5rem; text-align: center; }
+  .data-table td.tr-td-check { padding-inline: 0.5rem; text-align: center; }
+  .data-table tbody tr.tr-row { cursor: pointer; }
+  .data-table tbody tr.tr-row.is-selected { background: var(--color-brand-light); border-color: var(--color-brand-border); }
+  @media (min-width: 1024px) {
+    .data-table tbody tr.tr-row.is-selected,
+    .data-table tbody tr.tr-row.is-selected:hover { background: var(--color-brand-light); }
+  }
+
+  .tr-section-header { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.875rem 1rem; background: var(--color-overlay); border-bottom: 1px solid var(--color-border); }
+  .tr-section-title { font-size: var(--text-sm); font-weight: 600; color: var(--color-text-primary); }
+  .tr-section-count { font-size: var(--text-xs); background: var(--color-overlay); color: var(--color-text); padding: 0.125rem 0.5rem; border-radius: var(--radius-full); border: 1px solid var(--color-border); font-weight: 500; }
+  
+  .tr-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: var(--text-xs); }
+  .tr-bulk-count { font-weight: 600; color: var(--color-success-text); }
+
+  .tr-badge { display: inline-flex; align-items: center; padding: 0.125rem 0.5rem; border-radius: var(--radius-xs); font-size: var(--text-xs); font-weight: 500; border: 1px solid; }
+  .tr-badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
+  .tr-badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
+  .tr-badge-danger { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
+  .tr-badge-info { background: var(--color-info-soft); border-color: var(--color-info-border); color: var(--color-info-text); }
+  .tr-badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
+
+  .tr-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-xs); color: var(--color-text-muted); }
+
+  .tr-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
+  @media (min-width: 640px) { .tr-empty { padding: 3rem; } }
+  .tr-empty-icon { display: inline-flex; align-items: center; justify-content: center; width: 3.5rem; height: 3.5rem; margin-bottom: 1.25rem; color: var(--color-text-secondary); background: var(--color-overlay); border: 1px solid var(--color-border-strong); border-radius: var(--radius-full); }
+  .tr-empty p { max-width: 28rem; margin: 0 auto 1.5rem; color: var(--color-text-secondary); }
+</style>
+{% endblock %}
 
 {% block content %}
-<section class="page-container space-y-6">
+<section class="page-container min-w-0 space-y-6">
 
   <!-- Page Header -->
-  <div class="agri-card p-4 sm:p-5 lg:p-6">
-    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-      <div>
-        <h1 class="text-xl font-semibold tracking-tight text-[var(--color-text-primary)] sm:text-2xl flex items-center gap-2">
-          <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--color-danger-soft)] text-[var(--color-danger)]" aria-hidden="true">
-            <svg class="h-6 w-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-            </svg>
-          </div>
-          Trash &amp; Archive
-        </h1>
-        <p class="mt-1 text-sm text-[var(--color-text-secondary)]">Restore archived records or permanently delete them to free up storage space.</p>
-      </div>
-      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[var(--radius-sm)] text-xs font-medium border self-start lg:self-auto
-        {% if total_archived > 0 %}bg-[var(--color-danger-soft)] border-[var(--color-danger-border)] text-[var(--color-danger-text)]{% else %}bg-[var(--color-success-soft)] border-[var(--color-success-border)] text-[var(--color-success-text)]{% endif %}">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+  <header class="agri-card tr-head">
+    <div class="tr-head-main">
+      <span class="tr-icon" aria-hidden="true">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
         </svg>
+      </span>
+      <div class="min-w-0">
+        <h1 class="tr-title">Trash & Archive</h1>
+        <p class="tr-lead">Restore archived records or permanently delete them to free up storage space.</p>
+      </div>
+    </div>
+
+    <div class="tr-head-actions">
+      <span class="inline-flex items-center justify-center gap-2 min-h-[var(--btn-h)] px-3.5 text-[var(--color-text)] bg-[var(--color-overlay)] border border-[var(--color-border-strong)] rounded-[var(--radius-sm)] text-sm font-semibold whitespace-nowrap
+        {% if total_archived > 0 %}bg-[var(--color-danger-soft)] border-[var(--color-danger-border)] text-[var(--color-danger-text)]{% else %}bg-[var(--color-success-soft)] border-[var(--color-success-border)] text-[var(--color-success-text)]{% endif %}">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
         {{ total_archived }} archived item{{ total_archived|pluralize }}
       </span>
     </div>
+  </header>
 
-    <!-- Filter & Search Bar -->
-    <div class="mt-5 pt-5 border-t border-[var(--color-border)]">
-      <form method="get" action="{% url 'polls:trash_management' %}" class="space-y-2">
-        <input type="hidden" name="section" value="{{ section }}">
-        <input type="hidden" name="sort" value="{{ sort }}">
-        <input type="hidden" name="order" value="{{ order }}">
-        <div class="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
-          <div class="relative flex-1">
-            <input id="trash-search" type="text" name="search" value="{{ search }}"
-                   placeholder="Search archived records… (Ctrl+K)"
-                   autocomplete="off"
-                   class="form-input text-sm w-full"/>
-          </div>
-          <button type="submit" class="btn btn-primary">
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            Search
-          </button>
-          {% if search %}
-          <a href="{% url 'polls:trash_management' %}?section={{ section }}&sort={{ sort }}&order={{ order }}"
-             class="btn btn-secondary text-sm py-2">
-            Clear
-          </a>
-          {% endif %}
+  <!-- Filter & Search Bar -->
+  <div class="agri-card tr-filters no-print">
+    <form method="get" action="{% url 'polls:trash_management' %}">
+      <input type="hidden" name="section" value="{{ section }}">
+      <input type="hidden" name="sort" value="{{ sort }}">
+      <input type="hidden" name="order" value="{{ order }}">
+      <div class="tr-search-row">
+        <div class="tr-search">
+          <label for="trash-search" class="sr-only-agri">Search archived records</label>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input id="trash-search" type="search" name="search" value="{{ search }}" placeholder="Search archived records..." autocomplete="off">
+          <kbd class="tr-kbd" aria-hidden="true">Ctrl K</kbd>
         </div>
-      </form>
-    </div>
+        <button type="submit" data-loading class="btn btn-primary">Search</button>
+        {% if search %}
+        <a href="{% url 'polls:trash_management' %}?section={{ section }}&sort={{ sort }}&order={{ order }}" class="btn btn-secondary">Clear</a>
+        {% endif %}
+      </div>
+    </form>
   </div>
 
   <div class="flex flex-col lg:flex-row gap-6">
 
     <!-- Sidebar Navigation -->
+    {% url 'polls:trash_management' as trash_url %}
     <aside class="lg:w-56 flex-shrink-0">
-      <div class="agri-card overflow-hidden sticky top-4 p-2 space-y-1">
-        <div class="px-3 py-2 border-b border-[var(--color-border)] mb-1">
-          <p class="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Filter by Type</p>
+      <div class="tr-sidebar">
+        <div class="tr-sidebar-title">
+          <p class="text-[var(--text-xs)] font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">Filter by Type</p>
         </div>
         <nav class="space-y-0.5">
-          {% url 'polls:trash_management' as trash_url %}
           <a href="{{ trash_url }}?section=all{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'all' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'all' %}is-active{% endif %}">
             <span>All</span>
-            <span class="text-xs bg-[var(--color-overlay)] text-[var(--color-text-secondary)] px-2 py-0.5 rounded-full border border-[var(--color-border)]">{{ total_archived }}</span>
+            <span class="tr-sidebar-count">{{ total_archived }}</span>
           </a>
           <a href="{{ trash_url }}?section=variety{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'variety' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'variety' %}is-active{% endif %}">
             <span>Varieties</span>
-            {% if counts.variety %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.variety }}</span>{% endif %}
+            {% if counts.variety %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.variety }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=field{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'field' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'field' %}is-active{% endif %}">
             <span>Fields</span>
-            {% if counts.field %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.field }}</span>{% endif %}
+            {% if counts.field %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.field }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=planting{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'planting' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'planting' %}is-active{% endif %}">
             <span>Plantings</span>
-            {% if counts.planting %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.planting }}</span>{% endif %}
+            {% if counts.planting %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.planting }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=detection{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'detection' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'detection' %}is-active{% endif %}">
             <span>Detections</span>
-            {% if counts.detection %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.detection }}</span>{% endif %}
+            {% if counts.detection %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.detection }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=yield{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'yield' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'yield' %}is-active{% endif %}">
             <span>Yields</span>
-            {% if counts.yield %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.yield }}</span>{% endif %}
+            {% if counts.yield %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.yield }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=harvest{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'harvest' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'harvest' %}is-active{% endif %}">
             <span>Harvests</span>
-            {% if counts.harvest %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.harvest }}</span>{% endif %}
+            {% if counts.harvest %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.harvest }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=season_log{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'season_log' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'season_log' %}is-active{% endif %}">
             <span>Season Logs</span>
-            {% if counts.season_log %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.season_log }}</span>{% endif %}
+            {% if counts.season_log %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.season_log }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=announcement{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'announcement' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'announcement' %}is-active{% endif %}">
             <span>Announcements</span>
-            {% if counts.announcement %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.announcement }}</span>{% endif %}
+            {% if counts.announcement %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.announcement }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=audit{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'audit' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'audit' %}is-active{% endif %}">
             <span>Settings Audit</span>
-            {% if counts.audit %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.audit }}</span>{% endif %}
+            {% if counts.audit %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.audit }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=knowledge{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'knowledge' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'knowledge' %}is-active{% endif %}">
             <span>Knowledge Base</span>
-            {% if counts.knowledge %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.knowledge }}</span>{% endif %}
+            {% if counts.knowledge %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.knowledge }}</span>{% endif %}
           </a>
           <a href="{{ trash_url }}?section=treatment{% if search %}&search={{ search }}{% endif %}&sort={{ sort }}&order={{ order }}"
-             class="flex items-center justify-between px-3 py-2 rounded-[var(--radius-sm)] text-sm font-medium transition-colors {% if section == 'treatment' %}bg-[var(--color-brand-light)] text-[var(--color-success-text)] font-semibold{% else %}text-[var(--color-text)] hover:bg-[var(--color-overlay)]{% endif %}">
+             class="tr-sidebar-link {% if section == 'treatment' %}is-active{% endif %}">
             <span>Treatments</span>
-            {% if counts.treatment %}<span class="text-xs bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] px-2 py-0.5 rounded-full border border-[var(--color-warning-border)]">{{ counts.treatment }}</span>{% endif %}
+            {% if counts.treatment %}<span class="tr-sidebar-count tr-sidebar-count-warn">{{ counts.treatment }}</span>{% endif %}
           </a>
         </nav>
       </div>
@@ -135,7 +204,7 @@
     <div class="flex-1 min-w-0 space-y-4">
 
       <!-- Result summary -->
-      <div class="flex items-center justify-between text-xs text-[var(--color-text-secondary)] px-1">
+      <div class="flex items-center justify-between text-[var(--text-xs)] text-[var(--color-text-secondary)] px-1">
         <p>
           Showing <span class="font-semibold text-[var(--color-text-primary)]">{{ total_displayed }}</span> result{{ total_displayed|pluralize }}
           {% if search %} for "<span class="font-semibold text-[var(--color-text-primary)]">{{ search }}</span>"{% endif %}
@@ -144,20 +213,25 @@
       </div>
 
       {% if total_archived == 0 %}
-      <div class="agri-card p-12 text-center">
-        <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-brand-light)] text-[var(--color-success-text)] mb-3">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div class="agri-card tr-empty">
+        <span class="tr-empty-icon" aria-hidden="true">
+          <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
           </svg>
-        </div>
-        <h3 class="text-base font-semibold text-[var(--color-text-primary)]">Trash is empty</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] mt-1">No archived records found in the system.</p>
+        </span>
+        <h2>Trash is empty</h2>
+        <p>No archived records found in the system.</p>
       </div>
 
       {% elif total_displayed == 0 %}
-      <div class="agri-card p-12 text-center">
-        <h3 class="text-base font-semibold text-[var(--color-text-primary)]">No results found</h3>
-        <p class="text-sm text-[var(--color-text-secondary)] mt-1">Try a different search term or select another category from the sidebar.</p>
+      <div class="agri-card tr-empty">
+        <span class="tr-empty-icon" aria-hidden="true">
+          <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+        </span>
+        <h2>No results found</h2>
+        <p>Try a different search term or select another category from the sidebar.</p>
       </div>
 
       {% else %}
@@ -165,13 +239,13 @@
       <!-- Rice Varieties Table -->
       {% if trash.varieties %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="variety" data-trash-label="Rice Varieties">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Rice Varieties</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.varieties|length }}</span>
+            <span class="tr-section-title">Rice Varieties</span>
+            <span class="tr-section-count">{{ trash.varieties|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -179,32 +253,28 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Code</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Name</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Growth Days</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Code</th>
+                <th scope="col">Name</th>
+                <th scope="col">Growth Days</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.varieties %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.code }}</td>
-                <td class="px-4 py-3 text-[var(--color-text)]">{{ obj.name }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.average_growth_days }} days</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="variety" pk=obj.pk obj_name=obj.code %}</td>
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Code" class="td-primary">{{ obj.code }}</td>
+                <td data-label="Name">{{ obj.name }}</td>
+                <td data-label="Growth Days">{{ obj.average_growth_days }} days</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="variety" pk=obj.pk obj_name=obj.code %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -216,13 +286,13 @@
       <!-- Fields Table -->
       {% if trash.fields %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="field" data-trash-label="Fields">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Fields</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.fields|length }}</span>
+            <span class="tr-section-title">Fields</span>
+            <span class="tr-section-count">{{ trash.fields|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -230,32 +300,28 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Field Name</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Owner</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Area</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Field Name</th>
+                <th scope="col">Owner</th>
+                <th scope="col">Area</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.fields %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.name }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.owner.user.get_full_name|default:obj.owner.user.username }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.area_hectares }} ha</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="field" pk=obj.pk obj_name=obj.name %}</td>
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Field Name" class="td-primary">{{ obj.name }}</td>
+                <td data-label="Owner">{{ obj.owner.user.get_full_name|default:obj.owner.user.username }}</td>
+                <td data-label="Area">{{ obj.area_hectares }} ha</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="field" pk=obj.pk obj_name=obj.name %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -267,13 +333,13 @@
       <!-- Plantings Table -->
       {% if trash.plantings %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="planting" data-trash-label="Planting Records">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Planting Records</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.plantings|length }}</span>
+            <span class="tr-section-title">Planting Records</span>
+            <span class="tr-section-count">{{ trash.plantings|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -281,32 +347,28 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Field</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Variety</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Planted</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Field</th>
+                <th scope="col">Variety</th>
+                <th scope="col">Planted</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.plantings %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.field.name }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.variety.code|default:"--" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.planting_date|date:"M d, Y" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="planting" pk=obj.pk obj_name=obj.field.name %}</td>
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Field" class="td-primary">{{ obj.field.name }}</td>
+                <td data-label="Variety">{{ obj.variety.code|default:"--" }}</td>
+                <td data-label="Planted">{{ obj.planting_date|date:"M d, Y" }}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="planting" pk=obj.pk obj_name=obj.field.name %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -318,13 +380,13 @@
       <!-- Harvests Table -->
       {% if trash.harvests %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="harvest" data-trash-label="Harvest Records">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Harvest Records</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.harvests|length }}</span>
+            <span class="tr-section-title">Harvest Records</span>
+            <span class="tr-section-count">{{ trash.harvests|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -332,34 +394,30 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Field</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Variety</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Harvest Date</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Yield</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Field</th>
+                <th scope="col">Variety</th>
+                <th scope="col">Harvest Date</th>
+                <th scope="col">Yield</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.harvests %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.planting.field.name }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.planting.variety.code|default:'--' }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.harvest_date|date:'M d, Y' }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.yield_tons_per_ha }} t/ha</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:'M d, Y'|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model='harvest' pk=obj.pk obj_name=obj.planting.field.name %}</td>
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Field" class="td-primary">{{ obj.planting.field.name }}</td>
+                <td data-label="Variety">{{ obj.planting.variety.code|default:'--' }}</td>
+                <td data-label="Harvest Date">{{ obj.harvest_date|date:'M d, Y' }}</td>
+                <td data-label="Yield">{{ obj.yield_tons_per_ha }} t/ha</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:'M d, Y'|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model='harvest' pk=obj.pk obj_name=obj.planting.field.name %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -371,13 +429,13 @@
       <!-- Detections Table -->
       {% if trash.detections %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="detection" data-trash-label="Detection Records">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Detection Records</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.detections|length }}</span>
+            <span class="tr-section-title">Detection Records</span>
+            <span class="tr-section-count">{{ trash.detections|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -385,48 +443,44 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Disease</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Field</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Severity</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Confidence</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Detected</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Disease</th>
+                <th scope="col">Field</th>
+                <th scope="col">Severity</th>
+                <th scope="col">Confidence</th>
+                <th scope="col">Detected</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.detections %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.disease.name|default:"Unknown" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.planting.field.name|default:"--" }}</td>
-                <td class="px-4 py-3">
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Disease" class="td-primary">{{ obj.disease.name|default:"Unknown" }}</td>
+                <td data-label="Field">{{ obj.planting.field.name|default:"--" }}</td>
+                <td data-label="Severity">
                   {% if obj.severity_pct is not None %}
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if obj.severity_pct >= 60 %}bg-[var(--color-danger-soft)] text-[var(--color-danger-text)] border border-[var(--color-danger-border)]{% elif obj.severity_pct >= 30 %}bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] border border-[var(--color-warning-border)]{% else %}bg-[var(--color-success-soft)] text-[var(--color-success-text)] border border-[var(--color-success-border)]{% endif %}">
+                  <span class="tr-badge {% if obj.severity_pct >= 60 %}tr-badge-danger{% elif obj.severity_pct >= 30 %}tr-badge-warning{% else %}tr-badge-success{% endif %}">
                     {{ obj.severity_pct }}%
                   </span>
                   {% else %}
-                  <span class="text-[var(--color-text-muted)] text-xs">--</span>
+                  <span class="tr-mono">--</span>
                   {% endif %}
                 </td>
-                <td class="px-4 py-3">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {% if obj.confidence_pct >= 80 %}bg-[var(--color-success-soft)] text-[var(--color-success-text)] border border-[var(--color-success-border)]{% elif obj.confidence_pct >= 50 %}bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] border border-[var(--color-warning-border)]{% else %}bg-[var(--color-danger-soft)] text-[var(--color-danger-text)] border border-[var(--color-danger-border)]{% endif %}">
+                <td data-label="Confidence">
+                  <span class="tr-badge {% if obj.confidence_pct >= 80 %}tr-badge-success{% elif obj.confidence_pct >= 50 %}tr-badge-warning{% else %}tr-badge-danger{% endif %}">
                     {{ obj.confidence_pct|default:"?" }}%
                   </span>
                 </td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)] text-xs">{{ obj.created_at|date:"M d, Y" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="detection" pk=obj.pk obj_name=obj.disease.name|default:"Detection" %}</td>
+                <td data-label="Detected">{{ obj.created_at|date:"M d, Y" }}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="detection" pk=obj.pk obj_name=obj.disease.name|default:"Detection" %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -438,13 +492,13 @@
       <!-- Treatments Table -->
       {% if trash.treatments %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="treatment" data-trash-label="Treatment Recommendations">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Treatment Recommendations</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.treatments|length }}</span>
+            <span class="tr-section-title">Treatment Recommendations</span>
+            <span class="tr-section-count">{{ trash.treatments|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -452,32 +506,28 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Disease</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Short Text</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Priority</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Disease</th>
+                <th scope="col">Short Text</th>
+                <th scope="col">Priority</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.treatments %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.disease.name|default:"Unknown" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.short_text|truncatechars:40 }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)] font-medium">{{ obj.priority }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="treatment" pk=obj.pk obj_name=obj.disease.name|default:"Treatment" %}</td>
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Disease" class="td-primary">{{ obj.disease.name|default:"Unknown" }}</td>
+                <td data-label="Short Text">{{ obj.short_text|truncatechars:40 }}</td>
+                <td data-label="Priority">{{ obj.priority }}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="treatment" pk=obj.pk obj_name=obj.disease.name|default:"Treatment" %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -489,13 +539,13 @@
       <!-- Yield Predictions Table -->
       {% if trash.yields %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="yield" data-trash-label="Yield Predictions">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Yield Predictions</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.yields|length }}</span>
+            <span class="tr-section-title">Yield Predictions</span>
+            <span class="tr-section-count">{{ trash.yields|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -503,34 +553,30 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Field</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Variety</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Predicted Yield</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Created</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Field</th>
+                <th scope="col">Variety</th>
+                <th scope="col">Predicted Yield</th>
+                <th scope="col">Created</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.yields %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.planting.field.name|default:"--" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.planting.variety.code|default:"--" }}</td>
-                <td class="px-4 py-3 font-semibold text-[var(--color-success-text)]">{{ obj.predicted_yield_tons_per_ha|default:"?" }} t/ha</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)] text-xs">{{ obj.created_at|date:"M d, Y" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="yield" pk=obj.pk obj_name=obj.planting.field.name|default:"Yield" %}</td>
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Field" class="td-primary">{{ obj.planting.field.name|default:"--" }}</td>
+                <td data-label="Variety">{{ obj.planting.variety.code|default:"--" }}</td>
+                <td data-label="Predicted Yield" class="font-semibold text-[var(--color-success-text)]">{{ obj.predicted_yield_tons_per_ha|default:"?" }} t/ha</td>
+                <td data-label="Created">{{ obj.created_at|date:"M d, Y" }}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="yield" pk=obj.pk obj_name=obj.planting.field.name|default:"Yield" %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -542,13 +588,13 @@
       <!-- Season Logs Table -->
       {% if trash.season_logs %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="season_log" data-trash-label="Season Logs">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Season Logs</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.season_logs|length }}</span>
+            <span class="tr-section-title">Season Logs</span>
+            <span class="tr-section-count">{{ trash.season_logs|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -556,44 +602,40 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Season</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Field</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Farmer</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Stage</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Activities</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Season</th>
+                <th scope="col">Field</th>
+                <th scope="col">Farmer</th>
+                <th scope="col">Stage</th>
+                <th scope="col">Activities</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.season_logs %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.season_label }}</td>
-                <td class="px-4 py-3 text-[var(--color-text)]">{{ obj.field.name }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.farmer.user.get_full_name|default:obj.farmer.user.username }}</td>
-                <td class="px-4 py-3">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                    {% if obj.current_stage == 'harvested' %}bg-[var(--color-success-soft)] text-[var(--color-success-text)] border border-[var(--color-success-border)]
-                    {% elif obj.current_stage == 'harvest_ready' %}bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] border border-[var(--color-warning-border)]
-                    {% elif obj.current_stage == 'growing' %}bg-[var(--color-info-soft)] text-[var(--color-info-text)] border border-[var(--color-info-border)]
-                    {% else %}bg-[var(--color-overlay)] text-[var(--color-text)] border border-[var(--color-border)]{% endif %}">
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Season" class="td-primary">{{ obj.season_label }}</td>
+                <td data-label="Field">{{ obj.field.name }}</td>
+                <td data-label="Farmer">{{ obj.farmer.user.get_full_name|default:obj.farmer.user.username }}</td>
+                <td data-label="Stage">
+                  <span class="tr-badge
+                    {% if obj.current_stage == 'harvested' %}tr-badge-success
+                    {% elif obj.current_stage == 'harvest_ready' %}tr-badge-warning
+                    {% elif obj.current_stage == 'growing' %}tr-badge-info
+                    {% else %}tr-badge-neutral{% endif %}">
                     {{ obj.get_current_stage_display }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.activities.count }} activit{{ obj.activities.count|pluralize:"y,ies" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="season_log" pk=obj.pk obj_name=obj.season_label %}</td>
+                <td data-label="Activities">{{ obj.activities.count }} activit{{ obj.activities.count|pluralize:"y,ies" }}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="season_log" pk=obj.pk obj_name=obj.season_label %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -605,13 +647,13 @@
       <!-- Announcements Table -->
       {% if trash.announcements %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="announcement" data-trash-label="Announcements">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Announcements</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.announcements|length }}</span>
+            <span class="tr-section-title">Announcements</span>
+            <span class="tr-section-count">{{ trash.announcements|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -619,42 +661,38 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Title</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Priority</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Audience</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Created By</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Title</th>
+                <th scope="col">Priority</th>
+                <th scope="col">Audience</th>
+                <th scope="col">Created By</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.announcements %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)] max-w-xs truncate">{{ obj.title }}</td>
-                <td class="px-4 py-3">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                    {% if obj.priority == 'urgent' %}bg-[var(--color-danger-soft)] text-[var(--color-danger-text)] border border-[var(--color-danger-border)]
-                    {% elif obj.priority == 'warning' %}bg-[var(--color-warning-soft)] text-[var(--color-warning-text)] border border-[var(--color-warning-border)]
-                    {% elif obj.priority == 'advisory' %}bg-[var(--color-success-soft)] text-[var(--color-success-text)] border border-[var(--color-success-border)]
-                    {% else %}bg-[var(--color-info-soft)] text-[var(--color-info-text)] border border-[var(--color-info-border)]{% endif %}">
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Title" class="td-primary max-w-xs truncate">{{ obj.title }}</td>
+                <td data-label="Priority">
+                  <span class="tr-badge
+                    {% if obj.priority == 'urgent' %}tr-badge-danger
+                    {% elif obj.priority == 'warning' %}tr-badge-warning
+                    {% elif obj.priority == 'advisory' %}tr-badge-success
+                    {% else %}tr-badge-info{% endif %}">
                     {{ obj.get_priority_display }}
                   </span>
                 </td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)] text-xs capitalize">{{ obj.get_target_audience_display }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-secondary)]">{{ obj.created_by.user.get_full_name|default:obj.created_by.user.username }}</td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="announcement" pk=obj.pk obj_name=obj.title %}</td>
+                <td data-label="Audience" class="capitalize">{{ obj.get_target_audience_display }}</td>
+                <td data-label="Created By">{{ obj.created_by.user.get_full_name|default:obj.created_by.user.username }}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="announcement" pk=obj.pk obj_name=obj.title %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -666,13 +704,13 @@
       <!-- Settings Audit Table -->
       {% if trash.audits %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="audit" data-trash-label="Settings Audit">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Settings Audit</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.audits|length }}</span>
+            <span class="tr-section-title">Settings Audit</span>
+            <span class="tr-section-count">{{ trash.audits|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -680,48 +718,44 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">When</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Who</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Changes</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">When</th>
+                <th scope="col">Who</th>
+                <th scope="col">Changes</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.audits %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 text-[var(--color-text)] text-xs whitespace-nowrap">{{ obj.changed_at|date:"M d, Y H:i" }}</td>
-                <td class="px-4 py-3 text-[var(--color-text)]">
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="When" class="whitespace-nowrap">{{ obj.changed_at|date:"M d, Y H:i" }}</td>
+                <td data-label="Who">
                   {% if obj.changed_by %}
                     {{ obj.changed_by.get_full_name|default:obj.changed_by.username }}
                   {% else %}
                     <span class="text-[var(--color-text-muted)] italic">(system)</span>
                   {% endif %}
                 </td>
-                <td class="px-4 py-3 text-[var(--color-text)]">
+                <td data-label="Changes">
                   {% if obj.details.changes %}
-                    <ul class="list-disc list-inside space-y-0.5 text-xs">
+                    <ul class="list-disc list-inside space-y-0.5 text-[var(--text-xs)]">
                       {% for key, diff in obj.details.changes.items %}
                         <li><span class="font-medium text-[var(--color-text-primary)]">{{ key }}</span>: {{ diff.from }} &rarr; {{ diff.to }}</li>
                       {% endfor %}
                     </ul>
                   {% else %}
-                    <span class="text-xs text-[var(--color-text-muted)] italic">(No details)</span>
+                    <span class="text-[var(--text-xs)] text-[var(--color-text-muted)] italic">(No details)</span>
                   {% endif %}
                 </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="audit" pk=obj.pk obj_name="Audit #"|add:obj.pk %}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="audit" pk=obj.pk obj_name="Audit #"|add:obj.pk %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -733,13 +767,13 @@
       <!-- Knowledge Base Table -->
       {% if trash.knowledge %}
       <div class="agri-card overflow-hidden" data-trash-table data-trash-model="knowledge" data-trash-label="Knowledge Base Entries">
-        <div class="px-5 py-3.5 bg-[var(--color-overlay)] border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+        <div class="tr-section-header">
           <div class="flex items-center gap-2">
-            <span class="text-sm font-semibold text-[var(--color-text-primary)]">Knowledge Base Entries</span>
-            <span class="text-xs bg-[var(--color-border)] text-[var(--color-text)] px-2 py-0.5 rounded-full font-medium">{{ trash.knowledge|length }}</span>
+            <span class="tr-section-title">Knowledge Base Entries</span>
+            <span class="tr-section-count">{{ trash.knowledge|length }}</span>
           </div>
-          <div class="trash-bulk-toolbar hidden items-center gap-2 text-xs">
-            <span class="trash-bulk-count text-[var(--color-success-text)] font-semibold">0 selected</span>
+          <div class="tr-bulk hidden">
+            <span class="tr-bulk-count">0 selected</span>
             <button type="button" class="trash-bulk-action btn btn-secondary btn-sm" data-trash-action="restore">Restore</button>
             {% if is_admin %}
             <button type="button" class="trash-bulk-action btn btn-danger btn-sm" data-trash-action="purge">Delete</button>
@@ -747,38 +781,34 @@
           </div>
         </div>
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-[var(--color-border)] text-sm">
-            <thead class="bg-[var(--color-canvas)]">
+          <table class="data-table">
+            <thead>
               <tr>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-10">
-                  <input type="checkbox" class="trash-select-all h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" title="Select all" />
-                </th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider w-16">ID</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Name</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Category</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Status</th>
-                <th scope="col" class="px-4 py-3 text-left text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Archived</th>
-                <th scope="col" class="px-4 py-3 text-right text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Actions</th>
+                <th scope="col" class="tr-th-check no-print"><label class="tr-check"><input type="checkbox" class="trash-select-all"><span class="sr-only-agri">Select all</span></label></th>
+                <th scope="col">ID</th>
+                <th scope="col">Name</th>
+                <th scope="col">Category</th>
+                <th scope="col">Status</th>
+                <th scope="col">Archived</th>
+                <th scope="col" class="text-right no-print">Actions</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-[var(--color-border)] bg-[var(--color-surface)]">
+            <tbody>
               {% for obj in trash.knowledge %}
-              <tr class="trash-row hover:bg-[var(--color-overlay)] transition-colors">
-                <td class="px-4 py-3">
-                  <input type="checkbox" class="trash-row-cb h-4 w-4 rounded border-[var(--color-border)] text-[var(--color-brand)] focus:ring-[var(--color-brand)] cursor-pointer" value="{{ obj.pk }}" />
-                </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] font-mono text-xs">#{{ obj.pk }}</td>
-                <td class="px-4 py-3 font-medium text-[var(--color-text-primary)]">{{ obj.name }}</td>
-                <td class="px-4 py-3 text-[var(--color-text)]">{{ obj.get_category_display }}</td>
-                <td class="px-4 py-3 text-[var(--color-text)]">
+              <tr class="tr-row">
+                <td class="tr-td-check no-print" data-label="Select"><label class="tr-check"><input type="checkbox" class="trash-row-cb" value="{{ obj.pk }}"><span class="sr-only-agri">Select</span></label></td>
+                <td data-label="ID" class="tr-mono">#{{ obj.pk }}</td>
+                <td data-label="Name" class="td-primary">{{ obj.name }}</td>
+                <td data-label="Category">{{ obj.get_category_display }}</td>
+                <td data-label="Status">
                   {% if obj.is_published %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[var(--color-success-soft)] text-[var(--color-success-text)] border border-[var(--color-success-border)]">Published</span>
+                    <span class="tr-badge tr-badge-success">Published</span>
                   {% else %}
-                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-[var(--color-overlay)] text-[var(--color-text)] border border-[var(--color-border)]">Draft</span>
+                    <span class="tr-badge tr-badge-neutral">Draft</span>
                   {% endif %}
                 </td>
-                <td class="px-4 py-3 text-[var(--color-text-muted)] text-xs">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
-                <td class="px-4 py-3 text-right">{% include 'trash/_actions.html' with model="knowledge" pk=obj.pk obj_name=obj.name %}</td>
+                <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
+                <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="knowledge" pk=obj.pk obj_name=obj.name %}</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -804,8 +834,8 @@
       var rowCbs = getRowCbs(section);
       var checked = Array.prototype.filter.call(rowCbs, function (cb) { return cb.checked; });
       var count = checked.length;
-      var toolbar = section.querySelector('.trash-bulk-toolbar');
-      var countEl = section.querySelector('.trash-bulk-count');
+      var toolbar = section.querySelector('.tr-bulk');
+      var countEl = section.querySelector('.tr-bulk-count');
       var selectAll = section.querySelector('.trash-select-all');
 
       if (toolbar) toolbar.classList.toggle('hidden', count === 0);
@@ -816,9 +846,9 @@
         selectAll.indeterminate = count > 0 && count < rowCbs.length;
       }
 
-      section.querySelectorAll('.trash-row').forEach(function (row) {
+      section.querySelectorAll('.tr-row').forEach(function (row) {
         var cb = row.querySelector('.trash-row-cb');
-        row.classList.toggle('bg-[var(--color-brand-light)]', cb && cb.checked);
+        row.classList.toggle('is-selected', cb && cb.checked);
       });
     }
 
@@ -899,7 +929,7 @@
         if (e.target.classList.contains('trash-row-cb')) updateSection(section);
       });
 
-      section.querySelectorAll('.trash-row').forEach(function (row) {
+      section.querySelectorAll('.tr-row').forEach(function (row) {
         row.addEventListener('click', function (e) {
           if (e.target.closest('a, button, input, label')) return;
           var cb = row.querySelector('.trash-row-cb');
