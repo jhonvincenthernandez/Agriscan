@@ -386,12 +386,19 @@
           <h2 class="text-sm font-bold uppercase tracking-wide text-[var(--color-text-primary)]">
             {% if language == 'tl' %}Nilalaman{% else %}Contents{% endif %}
           </h2>
-          <span class="text-xs font-semibold text-[var(--color-text-muted)]">10</span>
+          <span class="text-xs font-semibold text-[var(--color-text-muted)]">12</span>
         </div>
 
         <nav class="help-toc-nav grid gap-1 text-sm" aria-label="{% if language == 'tl' %}Nilalaman ng guide{% else %}Guide contents{% endif %}">
           <a class="help-toc-link px-3 py-2" href="#start">
             {% if language == 'tl' %}Pagsisimula{% else %}Getting Started{% endif %}
+          </a>
+          
+          <a class="help-toc-link px-3 py-2" href="#scan-guide">
+            {% if language == 'tl' %}Mabilis na Gabay sa Scan{% else %}Quick Scan Guide{% endif %}
+          </a>
+          <a class="help-toc-link px-3 py-2" href="#yield-guide">
+            {% if language == 'tl' %}Mabilis na Gabay sa Yield{% else %}Quick Yield Guide{% endif %}
           </a>
           <a class="help-toc-link px-3 py-2" href="#access">
             {% if language == 'tl' %}Access ayon sa role{% else %}Access by role{% endif %}
@@ -460,6 +467,9 @@
           </div>
         </div>
       </div>
+
+      {% include 'partials/_scan_guide.html' %}
+      {% include 'partials/_yield_guide.html' %}
 
       <div id="access" class="help-panel help-panel--interactive help-scroll-target p-5 sm:p-6">
         <h2 class="text-xl font-bold text-[var(--color-text-primary)]">

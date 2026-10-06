@@ -1290,9 +1290,13 @@
 
         /* ---------- SHARED TTS HELPER ---------- */
         (function () {
-          function emit(speaking) {
+          var activeOwner = null;
+
+          function emit(speaking, owner) {
             if (window.agriscanTTS) window.agriscanTTS.isSpeaking = speaking;
-            window.dispatchEvent(new CustomEvent("agriscan-tts-change", { detail: { speaking: speaking } }));
+            window.dispatchEvent(new CustomEvent("agriscan-tts-change", {
+              detail: { speaking: speaking, owner: owner || null }
+            }));
           }
 
           if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
@@ -1305,31 +1309,58 @@
           window.agriscanTTS = {
             isSupported: true,
             isSpeaking: false,
+            owner: null,
 
-            speak: function (text, lang) {
+            speak: function (text, lang, owner) {
               if (!text) return;
+              var previousOwner = activeOwner;
+              activeOwner = null;
+              window.agriscanTTS.owner = null;
+              if (previousOwner) emit(false, previousOwner);
               synth.cancel();
+              activeOwner = owner || null;
+              window.agriscanTTS.owner = activeOwner;
 
               var utter = new SpeechSynthesisUtterance(text);
+              var utterOwner = activeOwner;
               utter.lang = lang || "tl-PH";
               utter.rate = 0.9;
               utter.pitch = 1;
               utter.volume = 1;
-              utter.onstart = function () { emit(true); };
-              utter.onend = function () { emit(false); };
-              utter.onerror = function () { emit(false); };
+              utter.onstart = function () {
+                if (activeOwner === utterOwner) emit(true, utterOwner);
+              };
+              utter.onend = function () {
+                if (activeOwner !== utterOwner) return;
+                activeOwner = null;
+                window.agriscanTTS.owner = null;
+                emit(false, utterOwner);
+              };
+              utter.onerror = function () {
+                if (activeOwner !== utterOwner) return;
+                activeOwner = null;
+                window.agriscanTTS.owner = null;
+                emit(false, utterOwner);
+              };
 
               synth.speak(utter);
             },
 
-            stop: function () {
+            stop: function (owner) {
+              if (owner && activeOwner && owner !== activeOwner) return;
               synth.cancel();
-              emit(false);
+              var stoppedOwner = activeOwner;
+              activeOwner = null;
+              window.agriscanTTS.owner = null;
+              emit(false, stoppedOwner);
             }
           };
 
           /* Do not keep talking after the user leaves the page */
-          window.addEventListener("pagehide", function () { synth.cancel(); });
+          window.addEventListener("pagehide", function () {
+            synth.cancel();
+            activeOwner = null;
+          });
         })();
       })();
     </script>

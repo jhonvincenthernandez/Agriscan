@@ -9,7 +9,7 @@ AgriScan+ is a Django-based, web-first rice farm management system with AI-assis
 - Predict yield using farm and planting context
 - Manage fields, plantings, treatments, harvests, and logs
 - Enforce role-based access for Admin, Technician, and Farmer users
-- Provide reports and analytics for decision support
+- Provide factual harvest reports and analytics for decision support
 
 ## Tech Stack
 
@@ -49,6 +49,11 @@ python manage.py runserver
 ```
 
 Open: http://127.0.0.1:8000
+
+For production deployment and updates, see
+[deployment.md](./deployment.md). The documented CloudPanel/Gunicorn update
+sequence is currently manual; it should not be described as CI/CD until an
+automated pipeline with protected deployment secrets is configured.
 
 ## Frontend CSS (Tailwind Watch)
 
@@ -139,6 +144,10 @@ Fallback behavior:
 - Historical production-aware prediction flow for Linear Regression
 - Real-time historical yield calculation in form UX
 
+Prediction results are estimates and remain available through the dedicated Yield
+Prediction workflow. They are not mixed into the factual harvest summary or
+harvest-based report totals.
+
 Formula used in UI and validation flow:
 
 $$
@@ -150,6 +159,28 @@ $$
 - Field CRUD with ownership controls
 - Planting records linked to fields and varieties
 - Farm size auto-updates through model signal workflow
+
+### Reports and Analytics
+
+The Reports page uses active `HarvestRecord` data for its production metrics
+within the selected date range, barangay filter, and role scope. Its summary
+statistics are:
+
+- Total Harvest Records
+- Total Harvest Area (ha)
+- Total Production (tons)
+- Average Actual Yield (tons/ha)
+
+Detailed report sections include actual yield by rice variety, rice production by
+barangay, monthly detection breakdown, disease frequency, and detection details.
+CSV and PDF exports use the same harvest summary and section definitions as the
+Reports page. Disease frequency excludes unclassified or rejected scans, while
+full detection details retain active records, including unclassified records,
+for traceability.
+
+Model metadata such as model version, model accuracy, detectable classes, and
+last scan belongs to Dashboard > System Information rather than the
+harvest-focused Reports summary.
 
 ### Role-Based Access Control (RBAC)
 

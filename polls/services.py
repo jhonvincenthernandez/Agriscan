@@ -1704,6 +1704,7 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
 
     labels = list_detection_classes()
     last_detection = get_last_detection_time()
+    active_model = _get_active_model_version()
     detections_count = 0
     yield_count = 0
     healthy_count = 0
@@ -1870,6 +1871,11 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
     return {
         "detectable_classes": len(labels),
         "model_version": get_model_version_label(),
+        "model_accuracy": (
+            float(active_model.accuracy)
+            if active_model and active_model.accuracy
+            else None
+        ),
         "last_sync": timezone.localtime(last_detection).strftime("%b %d, %Y %I:%M %p") if last_detection else None,
         "tip": get_tip_of_the_day(),
         "detections_count": detections_count,

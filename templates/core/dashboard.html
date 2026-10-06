@@ -1416,6 +1416,17 @@
               </div>
 
               <div class="dash-sysinfo__row">
+                <dt>Model Accuracy</dt>
+                <dd>
+                  {% if model_accuracy is not None %}
+                    {{ model_accuracy|floatformat:"2" }}%
+                  {% else %}
+                    Not set
+                  {% endif %}
+                </dd>
+              </div>
+
+              <div class="dash-sysinfo__row">
                 <dt>Detectable Classes</dt>
                 <dd>{{ detectable_classes|default:"Not set" }}</dd>
               </div>

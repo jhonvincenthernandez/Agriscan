@@ -35,27 +35,180 @@
 {% endcomment %}
 
 <!-- ── Global Export Modal ──────────────────────────────────────────────── -->
+<style>
+  #global-export-modal {
+    background: rgba(15, 23, 42, 0.52);
+    padding: 0.75rem;
+  }
+
+  .gem-card {
+    width: min(100%, 34rem);
+    max-height: min(90vh, 48rem);
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-lg);
+    padding: 1rem;
+  }
+
+  .gem-title {
+    color: var(--color-text-primary);
+    font-size: var(--text-lg);
+  }
+
+  .gem-subtitle,
+  .gem-label,
+  .gem-help-text {
+    color: var(--color-text-secondary);
+  }
+
+  .gem-section-label {
+    color: var(--color-text-muted);
+    font-size: var(--text-xs);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .gem-option,
+  .gem-choice {
+    min-height: 2.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: border-color var(--transition-base), background-color var(--transition-base), box-shadow var(--transition-base);
+  }
+
+  .gem-option {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .gem-choice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .gem-option:hover,
+  .gem-choice:hover {
+    border-color: var(--color-border-strong);
+    background: var(--color-overlay);
+  }
+
+  .gem-option:focus-within,
+  .gem-choice:focus-within,
+  .gem-format:focus-within {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px var(--color-brand-light);
+  }
+
+  .gem-input {
+    width: 100%;
+    min-height: 2.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 0.625rem 0.75rem;
+  }
+
+  .gem-input:focus-visible,
+  .gem-button:focus-visible,
+  .gem-action-link:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  .gem-format {
+    flex: 1 1 0%;
+    min-height: 2.75rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    padding: 0.75rem;
+  }
+
+  .gem-format.gem-active-csv {
+    border-color: var(--color-success-border);
+    background: var(--color-success-soft);
+  }
+
+  .gem-format.gem-active-pdf {
+    border-color: var(--color-danger-border);
+    background: var(--color-danger-soft);
+  }
+
+  .gem-button {
+    min-height: 2.75rem;
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    padding: 0.625rem 1rem;
+    transition: background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base);
+  }
+
+  .gem-feedback {
+    display: none;
+    align-items: flex-start;
+    gap: 0.625rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--color-danger-border);
+    border-radius: var(--radius-md);
+    background: var(--color-danger-soft);
+    color: var(--color-danger-text);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    padding: 0.75rem;
+  }
+
+  .gem-feedback.is-visible {
+    display: flex;
+  }
+
+  #gem-download-btn.gem-pdf {
+    background: var(--color-danger);
+  }
+
+  #gem-download-btn.gem-pdf:hover {
+    background: var(--color-danger-hover);
+  }
+
+  @media (min-width: 640px) {
+    #global-export-modal {
+      padding: 1rem;
+    }
+
+    .gem-card {
+      padding: 1.5rem;
+    }
+  }
+</style>
+
 <div id="global-export-modal"
      role="dialog" aria-modal="true" aria-labelledby="gem-title"
      style="display:none; position:fixed; inset:0; z-index:9999; align-items:center; justify-content:center; padding:1rem;">
 
   <!-- Backdrop -->
-  <div style="position:absolute; inset:0; background:rgba(0,0,0,0.45);" onclick="closeExportModal()"></div>
+  <div style="position:absolute; inset:0;" onclick="closeExportModal()"></div>
 
   <!-- Card -->
-  <div style="position:relative; width:100%; max-width:28rem; max-height:90vh; overflow-y:auto;
-              background:#fff; border-radius:1rem; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); padding:1.5rem;">
+  <div class="gem-card" style="position:relative;" tabindex="-1">
 
     <!-- Header -->
     <div class="flex items-center justify-between mb-5">
       <div>
-        <h2 id="gem-title" class="text-lg font-bold text-gray-900">Export Records</h2>
-        <p id="gem-subtitle" class="text-sm text-gray-500 mt-0.5">Choose format, date range, and columns.</p>
+        <h2 id="gem-title" class="gem-title font-bold">Export Records</h2>
+        <p id="gem-subtitle" class="gem-subtitle mt-1 text-sm">Choose format, date range, and columns.</p>
       </div>
       <button type="button" onclick="closeExportModal()"
-              class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+              id="gem-close-btn" class="gem-button text-[var(--color-text-muted)] hover:bg-[var(--color-overlay)]"
               aria-label="Close">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
         </svg>
       </button>
@@ -63,51 +216,51 @@
 
     <!-- ── Mode 1 only: Format selector (CSV / PDF) ── -->
     <div id="gem-fmt-block">
-      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Format</p>
-      <div class="flex gap-2 mb-5">
+      <p class="gem-section-label mb-2">Format</p>
+      <div class="flex flex-col gap-2 mb-5 sm:flex-row">
         <label id="gem-csv-label"
-               class="flex-1 flex items-center gap-2 p-3 rounded-lg border-2 border-green-500 bg-green-50 cursor-pointer">
+               class="gem-format flex items-center gap-2">
           <input type="radio" name="gem_fmt" value="csv" checked class="text-green-600" id="gem-fmt-csv">
-          <span class="text-sm font-medium text-green-800">CSV</span>
-          <span class="text-xs text-green-600 ml-auto">Excel</span>
+          <span class="text-sm font-medium text-[var(--color-success-text)]">CSV</span>
+          <span class="gem-help-text ml-auto text-xs">Excel</span>
         </label>
         <label id="gem-pdf-label"
-               class="flex-1 flex items-center gap-2 p-3 rounded-lg border-2 border-gray-200 cursor-pointer hover:border-red-300 transition">
+               class="gem-format flex items-center gap-2">
           <input type="radio" name="gem_fmt" value="pdf" class="text-red-600" id="gem-fmt-pdf">
-          <span class="text-sm font-medium text-gray-800">PDF</span>
-          <span class="text-xs text-gray-500 ml-auto">Print</span>
+          <span class="text-sm font-medium text-[var(--color-text)]">PDF</span>
+          <span class="gem-help-text ml-auto text-xs">Print</span>
         </label>
       </div>
     </div>
 
     <!-- ── Mode 1 only: Date Range ── -->
     <div id="gem-date-block">
-      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+      <p class="gem-section-label mb-2">
         Date Range <span class="text-gray-400 normal-case font-normal">(optional)</span>
       </p>
-      <div class="flex gap-2 mb-5">
+      <div class="grid grid-cols-1 gap-3 mb-5 sm:grid-cols-2">
         <div class="flex-1">
-          <label class="text-xs text-gray-500 mb-1 block">From</label>
+          <label for="gem-start-date" class="gem-label mb-1 block text-xs">From</label>
           <input type="date" id="gem-start-date"
-                 class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                 class="gem-input text-sm">
         </div>
         <div class="flex-1">
-          <label class="text-xs text-gray-500 mb-1 block">To</label>
+          <label for="gem-end-date" class="gem-label mb-1 block text-xs">To</label>
           <input type="date" id="gem-end-date"
-                 class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                 class="gem-input text-sm">
         </div>
       </div>
     </div>
 
     <!-- ── Barangay Filter with Autocomplete (optional, controlled by config) ── -->
     <div id="gem-barangay-section" style="display:none;" class="mb-5">
-      <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+      <p class="gem-section-label mb-2">
         Barangay <span class="text-gray-400 normal-case font-normal">(optional)</span>
       </p>
       <input type="text" id="gem-barangay"
              list="gem-barangay-list"
              placeholder="Search or select..."
-             class="w-full text-sm border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
+             class="gem-input text-sm">
       <datalist id="gem-barangay-list">
         <!-- populated by loadBarangayOptions() -->
       </datalist>
@@ -116,16 +269,16 @@
     <!-- ── Mode 1: Column checkboxes ── -->
     <div id="gem-cols-section">
       <div class="flex items-center justify-between mb-2">
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+        <p class="gem-section-label">
           Columns <span class="text-gray-400 normal-case font-normal">(CSV only)</span>
         </p>
         <div class="flex gap-2">
-          <button type="button" onclick="gemSetItems(true)"  class="text-xs text-blue-600 hover:underline">All</button>
+          <button type="button" onclick="gemSetItems(true)" class="gem-action-link min-h-11 px-2 text-xs text-[var(--color-info-text)] hover:underline">All</button>
           <span class="text-gray-300">|</span>
-          <button type="button" onclick="gemSetItems(false)" class="text-xs text-gray-500 hover:underline">None</button>
+          <button type="button" onclick="gemSetItems(false)" class="gem-action-link min-h-11 px-2 text-xs text-[var(--color-text-secondary)] hover:underline">None</button>
         </div>
       </div>
-      <div id="gem-cols-grid" class="grid grid-cols-2 gap-1 mb-5">
+      <div id="gem-cols-grid" class="grid grid-cols-1 gap-1 mb-5 sm:grid-cols-2">
         <!-- filled by openExportModal() in cols mode -->
       </div>
     </div>
@@ -133,11 +286,11 @@
     <!-- ── Mode 2: Section checkboxes ── -->
     <div id="gem-sections-section" style="display:none;">
       <div class="flex items-center justify-between mb-3">
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Include Sections</p>
+        <p class="gem-section-label">Include Sections</p>
         <div class="flex gap-2">
-          <button type="button" onclick="gemSetItems(true)"  class="text-xs text-blue-600 hover:underline">Select All</button>
+          <button type="button" onclick="gemSetItems(true)" class="gem-action-link min-h-11 px-2 text-xs text-[var(--color-info-text)] hover:underline">Select All</button>
           <span class="text-gray-300">|</span>
-          <button type="button" onclick="gemSetItems(false)" class="text-xs text-gray-500 hover:underline">Clear All</button>
+          <button type="button" onclick="gemSetItems(false)" class="gem-action-link min-h-11 px-2 text-xs text-[var(--color-text-secondary)] hover:underline">Clear All</button>
         </div>
       </div>
       <div id="gem-sections-list" class="space-y-2 mb-5">
@@ -145,15 +298,22 @@
       </div>
     </div>
 
+    <div id="gem-feedback" class="gem-feedback" role="alert" aria-live="assertive" aria-atomic="true" tabindex="-1">
+      <svg class="mt-0.5 h-4 w-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3.75m0 3h.008M10.29 3.86l-7.1 12.25A1.5 1.5 0 004.49 18.36h15.02a1.5 1.5 0 001.3-2.25l-7.1-12.25a1.5 1.5 0 00-2.6 0z"/>
+      </svg>
+      <span id="gem-feedback-text"></span>
+    </div>
+
     <!-- Actions -->
-    <div class="flex gap-3 pt-3 border-t border-gray-100">
+    <div class="flex flex-col gap-3 pt-3 border-t border-[var(--color-border)] sm:flex-row">
       <button type="button" onclick="closeExportModal()"
-              class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition text-sm font-medium">
+              class="gem-button flex-1 border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-overlay)]">
         Cancel
       </button>
       <button type="button" id="gem-download-btn" onclick="confirmExportModal()"
-              class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium flex items-center justify-center gap-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              class="gem-button flex-1 bg-[var(--color-brand)] text-white hover:bg-[var(--color-brand-hover)] flex items-center justify-center gap-2">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                 d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
         </svg>
@@ -167,6 +327,31 @@
 (function () {
   // ── Internal state ────────────────────────────────────────────────────────
   var _cfg = {};  // current config passed to openExportModal()
+  var _lastFocusedElement = null;
+
+  function gemShowFeedback(message, focusSelector) {
+    var feedback = document.getElementById('gem-feedback');
+    var feedbackText = document.getElementById('gem-feedback-text');
+    if (!feedback || !feedbackText) return;
+
+    feedbackText.textContent = message;
+    feedback.classList.add('is-visible');
+    if (focusSelector) {
+      var target = document.querySelector(focusSelector);
+      if (target) target.focus();
+    } else {
+      feedback.focus();
+    }
+  }
+
+  function gemClearFeedback() {
+    var feedback = document.getElementById('gem-feedback');
+    var feedbackText = document.getElementById('gem-feedback-text');
+    if (!feedback || !feedbackText) return;
+
+    feedbackText.textContent = '';
+    feedback.classList.remove('is-visible');
+  }
 
   // ── Load barangay options from API ────────────────────────────────────────
   function loadBarangayOptions() {
@@ -201,6 +386,7 @@
   // ── Public API ────────────────────────────────────────────────────────────
   window.openExportModal = function (cfg) {
     _cfg = cfg || {};
+    gemClearFeedback();
     var isSections = Array.isArray(_cfg.sections) && _cfg.sections.length > 0;
     
     // Load barangay options only if needed for this export
@@ -245,21 +431,21 @@
         list.innerHTML = '';
         _cfg.sections.forEach(function (sec) {
           var lbl = document.createElement('label');
-          lbl.className = 'flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer transition';
+          lbl.className = 'gem-choice cursor-pointer';
           var cb = document.createElement('input');
           cb.type      = 'checkbox';
           cb.name      = 'gem_section';
           cb.value     = sec.value;
           cb.checked   = sec.checked !== false;
-          cb.className = 'w-4 h-4 rounded text-blue-600 border-gray-300 flex-shrink-0';
+          cb.className = 'h-4 w-4 shrink-0 rounded text-[var(--color-brand)]';
           var wrap = document.createElement('div');
           var span = document.createElement('span');
-          span.className   = 'text-sm font-medium text-gray-800';
+          span.className   = 'text-sm font-medium text-[var(--color-text)]';
           span.textContent = sec.label;
           wrap.appendChild(span);
           if (sec.desc) {
             var p = document.createElement('p');
-            p.className   = 'text-xs text-gray-500';
+            p.className   = 'gem-help-text text-xs';
             p.textContent = sec.desc;
             wrap.appendChild(p);
           }
@@ -301,15 +487,15 @@
         var cols = _cfg.cols || [];
         cols.forEach(function (col) {
           var lbl = document.createElement('label');
-          lbl.className = 'flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer text-sm';
+          lbl.className = 'gem-option cursor-pointer text-sm';
           var cb = document.createElement('input');
           cb.type      = 'checkbox';
           cb.name      = 'gem_col';
           cb.value     = col.value;
           cb.checked   = col.checked !== false;
-          cb.className = 'w-3.5 h-3.5 rounded text-green-600';
+          cb.className = 'h-4 w-4 shrink-0 rounded text-[var(--color-brand)]';
           var span = document.createElement('span');
-          span.className   = 'text-gray-700';
+          span.className   = 'text-[var(--color-text)]';
           span.textContent = col.label;
           lbl.appendChild(cb);
           lbl.appendChild(span);
@@ -320,9 +506,12 @@
 
     var modal = document.getElementById('global-export-modal');
     if (modal) {
+      _lastFocusedElement = document.activeElement;
       modal.style.display = 'flex';
       modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+      var firstFocusable = modal.querySelector('button, input, [tabindex="0"]');
+      if (firstFocusable) firstFocusable.focus();
     }
   };
 
@@ -332,6 +521,10 @@
       modal.style.display = 'none';
       modal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      if (_lastFocusedElement && typeof _lastFocusedElement.focus === 'function') {
+        _lastFocusedElement.focus();
+      }
+      _lastFocusedElement = null;
     }
   };
 
@@ -349,7 +542,7 @@
       var checked = Array.from(document.querySelectorAll('#gem-sections-list input[name="gem_section"]:checked'))
                         .map(function (c) { return c.value; });
       if (checked.length === 0) {
-        alert('Please select at least one section to export.');
+        gemShowFeedback('Please select at least one section to export.', '#gem-sections-list input[name="gem_section"]');
         return;
       }
       // Read format from the radio (user may have switched it)
@@ -376,7 +569,7 @@
       var cols = Array.from(document.querySelectorAll('#gem-cols-grid input[name="gem_col"]:checked'))
                      .map(function (c) { return c.value; });
       if (fmtVal === 'csv' && cols.length === 0) {
-        alert('Please select at least one column.');
+        gemShowFeedback('Please select at least one column.', '#gem-cols-grid input[name="gem_col"]');
         return;
       }
       var url    = fmtVal === 'csv' ? (_cfg.csvUrl || '') : (_cfg.pdfUrl || '');
@@ -420,27 +613,17 @@
     if (labelEl) labelEl.textContent = 'Download';
 
     if (csvLabel) {
-      csvLabel.className = csvLabel.className
-        .replace(/border-(?:green|red|gray)-\d+/g, '').replace(/bg-(?:green|red|gray)-\d+/g, '').trim()
-        + (isCsv ? ' border-green-500 bg-green-50' : ' border-gray-200 bg-white');
+      csvLabel.classList.toggle('gem-active-csv', isCsv);
     }
     if (pdfLabel) {
-      pdfLabel.className = pdfLabel.className
-        .replace(/border-(?:green|red|gray)-\d+/g, '').replace(/bg-(?:green|red|gray)-\d+/g, '').trim()
-        + (!isCsv ? ' border-red-500 bg-red-50' : ' border-gray-200 bg-white');
+      pdfLabel.classList.toggle('gem-active-pdf', !isCsv);
     }
   }
 
   function gemSetBtnColor(fmt) {
     var btn = document.getElementById('gem-download-btn');
     if (!btn) return;
-    btn.className = btn.className
-      .replace(/bg-(?:green|red)-600/g, '').replace(/hover:bg-(?:green|red)-700/g, '').trim();
-    if (fmt === 'pdf') {
-      btn.classList.add('bg-red-600', 'hover:bg-red-700');
-    } else {
-      btn.classList.add('bg-green-600', 'hover:bg-green-700');
-    }
+    btn.classList.toggle('gem-pdf', fmt === 'pdf');
   }
 
   document.addEventListener('change', function (e) {
@@ -452,8 +635,25 @@
   // Escape key
   document.addEventListener('keydown', function (e) {
     var modal = document.getElementById('global-export-modal');
-    if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
+    if (!modal || modal.style.display !== 'flex') return;
+    if (e.key === 'Escape') {
       closeExportModal();
+      return;
+    }
+    if (e.key !== 'Tab') return;
+    var focusable = Array.from(modal.querySelectorAll('button, input, [tabindex="0"]'))
+      .filter(function (element) {
+        return !element.disabled && element.offsetParent !== null;
+      });
+    if (focusable.length === 0) return;
+    var first = focusable[0];
+    var last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
     }
   });
 })();

@@ -780,9 +780,9 @@ def reports(request):
     - Custom date range filtering
     - Export to PDF/CSV
     - Role-based data access
-    - Performance metrics
+    - Verified harvest-yield analytics
     """
-    from django.db.models import Count, Avg, Q
+    from django.db.models import Count, Avg, Q, Sum
     from datetime import timedelta, datetime
     import calendar
     
@@ -817,7 +817,7 @@ def reports(request):
     export_format = request.GET.get('export')
     if export_format in ['pdf', 'csv']:
         # Parse which sections the user selected (default: all)
-        all_sections = ['summary', 'monthly', 'diseases', 'varieties', 'barangay', 'detections', 'yields']
+        all_sections = ['summary', 'monthly', 'diseases', 'varieties', 'barangay', 'detections']
         requested = request.GET.getlist('sections')
         sections = set(requested) if requested else set(all_sections)
         return _export_report(request, export_format, start_date, end_date, role, user_profile, sections)
@@ -870,39 +870,45 @@ def reports(request):
         timezone.datetime.combine(end_date, timezone.datetime.max.time())
     )
     
-    # Average yield per variety - group by actual variety FK, not model_meta string
-    yield_qs = YieldPrediction.objects.filter(
+    # Actual harvested yield per variety is the primary production metric.
+    harvest_qs = HarvestRecord.objects.filter(
         is_active=True,
-        created_at__gte=start_date_dt,
-        created_at__lte=end_date_dt
+        harvest_date__gte=start_date,
+        harvest_date__lte=end_date,
     )
     if role == 'farmer':
-        yield_qs = yield_qs.filter(planting__field__owner=user_profile)
-    yield_qs = _apply_barangay_filter(yield_qs, barangay_filter, 'planting__field__barangay')
+        harvest_qs = harvest_qs.filter(planting__field__owner=user_profile)
+    harvest_qs = _apply_barangay_filter(harvest_qs, barangay_filter, 'planting__field__barangay')
 
-    variety_stats = (
-        yield_qs
-        .filter(planting__variety__isnull=False)   # exclude unlinked / no-variety records
+    actual_variety_stats = (
+        harvest_qs
+        .filter(planting__variety__isnull=False)
         .values('planting__variety__code', 'planting__variety__name')
         .annotate(
-            avg_sacks=Avg('predicted_sacks_per_ha'),
-            avg_tons=Avg('predicted_yield_tons_per_ha'),
-            count=Count('id'),
+            avg_tons=Avg('yield_tons_per_ha'),
+            total_area_ha=Sum('area_harvested_ha'),
+            total_production_tons=Sum('actual_yield_tons'),
+            farmer_count=Count('planting__field__owner', distinct=True),
+            record_count=Count('id'),
         )
-        .order_by('-avg_sacks')[:10]
+        .order_by('-avg_tons')
     )
-    variety_yields = []
-    for stat in variety_stats:
+    actual_variety_yields = []
+    for stat in actual_variety_stats:
         code = stat['planting__variety__code'] or stat['planting__variety__name'] or 'Unknown'
-        variety_yields.append({
+        avg_tons = float(stat['avg_tons'] or 0)
+        avg_sacks = round(avg_tons * 20, 2)
+        actual_variety_yields.append({
             'variety': code,
-            'avg_sacks': round(float(stat['avg_sacks'] or 0), 2),
-            'avg_tons': round(float(stat['avg_tons'] or 0), 2),
-            'count': stat['count'],
+            'avg_sacks': avg_sacks,
+            'avg_tons': round(avg_tons, 2),
+            'total_area_ha': round(float(stat['total_area_ha'] or 0), 2),
+            'total_production_tons': round(float(stat['total_production_tons'] or 0), 2),
+            'farmer_count': stat['farmer_count'],
+            'count': stat['record_count'],
         })
 
-    # Count unlinked predictions separately so they stay visible in the summary
-    unlinked_count = yield_qs.filter(planting__variety__isnull=True).count()
+    unlinked_actual_count = harvest_qs.filter(planting__variety__isnull=True).count()
 
     barangay_qs, barangay_summary_rows = services.get_barangay_production_summary(
         request=request,
@@ -938,9 +944,12 @@ def reports(request):
     barangay_totals['total_area_ha'] = round(barangay_totals['total_area_ha'], 2)
     barangay_totals['total_production_tons'] = round(barangay_totals['total_production_tons'], 2)
 
-    # Model accuracy metrics - filtered by role and date range
-    active_model = services._get_active_model_version()
-    model_accuracy = float(active_model.accuracy) if active_model and active_model.accuracy else None
+    harvest_totals = harvest_qs.aggregate(
+        record_count=Count('id'),
+        total_area_ha=Sum('area_harvested_ha'),
+        total_production_tons=Sum('actual_yield_tons'),
+        avg_yield_tons_per_ha=Avg('yield_tons_per_ha'),
+    )
 
     detection_total_qs = DetectionRecord.objects.filter(
         is_active=True,
@@ -994,15 +1003,19 @@ def reports(request):
 
     context = {
         'monthly_data': monthly_data,
-        'variety_yields': variety_yields,
+        'actual_variety_yields': actual_variety_yields,
+        'unlinked_actual_count': unlinked_actual_count,
         'barangay_summary': barangay_summary,
         'barangay_totals': barangay_totals,
-        'unlinked_yield_count': unlinked_count,
         'disease_freq': disease_freq,
         'unclassified_count': unclassified_count,
-        'model_accuracy': model_accuracy,
+        'total_harvest_records': harvest_totals['record_count'] or 0,
+        'total_harvest_area_ha': round(float(harvest_totals['total_area_ha'] or 0), 2),
+        'total_production_tons': round(float(harvest_totals['total_production_tons'] or 0), 2),
+        'average_actual_yield_tons_per_ha': round(
+            float(harvest_totals['avg_yield_tons_per_ha'] or 0), 2
+        ),
         'total_detections': total_detections,
-        'total_yields': yield_qs.count(),
         'healthy_count': healthy_count,
         'diseased_count': diseased_count,
         'total_plantings': total_plantings,
@@ -1037,13 +1050,13 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
     BEST PRACTICE: Export reports to PDF or CSV format.
     Supports role-based data filtering with timezone-aware queries.
     `sections` is a set of section keys to include:
-      summary | monthly | diseases | varieties | detections | yields
+      summary | monthly | diseases | varieties | barangay | detections
     If None, all sections are included.
     """
-    from django.db.models import Count, Avg
+    from django.db.models import Count, Avg, Sum
     import csv
 
-    ALL_SECTIONS = {'summary', 'monthly', 'diseases', 'varieties', 'barangay', 'detections', 'yields'}
+    ALL_SECTIONS = {'summary', 'monthly', 'diseases', 'varieties', 'barangay', 'detections'}
     if not sections:
         sections = ALL_SECTIONS
     barangay_filter = _get_export_barangay_filter(request)
@@ -1066,23 +1079,57 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         detection_qs = detection_qs.filter(user=user_profile)
     detection_qs = _apply_barangay_filter(detection_qs, barangay_filter, 'planting__field__barangay')
 
-    yield_qs = YieldPrediction.objects.filter(
-        is_active=True,
-        created_at__gte=start_date_dt,
-        created_at__lte=end_date_dt
-    ).select_related('planting__variety', 'planting__field')
-    if role == 'farmer':
-        yield_qs = yield_qs.filter(planting__field__owner=user_profile)
-    yield_qs = _apply_barangay_filter(yield_qs, barangay_filter, 'planting__field__barangay')
-
     # ── Pre-compute shared stats ──────────────────────────────────────────
     total_detections   = detection_qs.count()
     healthy_count      = detection_qs.filter(disease__name__iexact='healthy').count()
     diseased_count     = total_detections - healthy_count
 
-    total_yields       = yield_qs.count()
-    avg_yield_val      = yield_qs.aggregate(v=Avg('predicted_sacks_per_ha'))['v']
-    avg_yield          = round(float(avg_yield_val or 0), 2)
+    actual_harvest_qs = HarvestRecord.objects.filter(
+        is_active=True,
+        harvest_date__gte=start_date,
+        harvest_date__lte=end_date,
+    ).select_related('planting__variety', 'planting__field')
+    if role == 'farmer':
+        actual_harvest_qs = actual_harvest_qs.filter(planting__field__owner=user_profile)
+    actual_harvest_qs = _apply_barangay_filter(
+        actual_harvest_qs, barangay_filter, 'planting__field__barangay'
+    )
+    actual_variety_stats = (
+        actual_harvest_qs
+        .filter(planting__variety__isnull=False)
+        .values('planting__variety__code', 'planting__variety__name')
+        .annotate(
+            avg_tons=Avg('yield_tons_per_ha'),
+            total_area_ha=Sum('area_harvested_ha'),
+            total_production_tons=Sum('actual_yield_tons'),
+            farmer_count=Count('planting__field__owner', distinct=True),
+            count=Count('id'),
+        )
+        .order_by('-avg_tons')
+    )
+    actual_harvest_summary = actual_harvest_qs.aggregate(
+        record_count=Count('id'),
+        total_area_ha=Sum('area_harvested_ha'),
+        total_production_tons=Sum('actual_yield_tons'),
+        avg_yield_tons_per_ha=Avg('yield_tons_per_ha'),
+    )
+    actual_variety_rows = []
+    for stat in actual_variety_stats:
+        code = stat['planting__variety__code'] or stat['planting__variety__name'] or '—'
+        avg_tons = float(stat['avg_tons'] or 0)
+        avg_sacks = round(avg_tons * 20, 2)
+        actual_variety_rows.append({
+            'variety': code,
+            'avg_sacks': avg_sacks,
+            'avg_tons': round(avg_tons, 2),
+            'total_area_ha': round(float(stat['total_area_ha'] or 0), 2),
+            'total_production_tons': round(float(stat['total_production_tons'] or 0), 2),
+            'farmer_count': stat['farmer_count'],
+            'count': stat['count'],
+        })
+    unlinked_actual_export_count = actual_harvest_qs.filter(
+        planting__variety__isnull=True
+    ).count()
 
     # Monthly breakdown
     from datetime import timedelta
@@ -1118,25 +1165,6 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         models.Q(disease__name__iexact='Unknown')
     ).count()
 
-    # Variety yield breakdown — exclude unlinked records (no variety FK)
-    variety_stats = (
-        yield_qs
-        .filter(planting__variety__isnull=False)
-        .values('planting__variety__code', 'planting__variety__name')
-        .annotate(avg_sacks=Avg('predicted_sacks_per_ha'), avg_tons=Avg('predicted_yield_tons_per_ha'), count=Count('id'))
-        .order_by('-avg_sacks')
-    )
-    variety_rows = []
-    for stat in variety_stats:
-        code = stat['planting__variety__code'] or stat['planting__variety__name'] or '—'
-        variety_rows.append({
-            'variety': code,
-            'avg_sacks': round(float(stat['avg_sacks'] or 0), 2),
-            'avg_tons': round(float(stat['avg_tons'] or 0), 2),
-            'count': stat['count'],
-        })
-    unlinked_export_count = yield_qs.filter(planting__variety__isnull=True).count()
-
     _, barangay_rows = services.get_barangay_production_summary(
         request=request,
         user_profile=user_profile,
@@ -1156,10 +1184,6 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         }
         for row in barangay_rows
     ]
-
-    # ── Model accuracy ────────────────────────────────────────────────────
-    active_model   = services._get_active_model_version()
-    model_accuracy = float(active_model.accuracy) if active_model and active_model.accuracy else None
 
     generated_at = timezone.now().strftime('%Y-%m-%d %H:%M:%S')
     generated_by = request.user.get_full_name() or request.user.username
@@ -1185,25 +1209,17 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         w.writerow(['Generated By', generated_by])
         w.writerow([])
 
-        # ── Section 1: Detection Summary ──
+        # ── Section 1: Harvest Summary ──
         if 'summary' in sections:
-            w.writerow(['=== DETECTION SUMMARY ==='])
+            w.writerow(['=== HARVEST SUMMARY ==='])
             w.writerow(['Metric', 'Value'])
-            w.writerow(['Total Detections', total_detections])
-            w.writerow(['Healthy Crops', healthy_count])
-            w.writerow(['Diseased Crops', diseased_count])
-            w.writerow(['CNN Model Accuracy (%)', model_accuracy])
+            w.writerow(['Total Harvest Records', actual_harvest_summary['record_count'] or 0])
+            w.writerow(['Total Harvest Area (ha)', round(float(actual_harvest_summary['total_area_ha'] or 0), 2)])
+            w.writerow(['Total Production (tons)', round(float(actual_harvest_summary['total_production_tons'] or 0), 2)])
+            w.writerow(['Average Actual Yield (tons/ha)', round(float(actual_harvest_summary['avg_yield_tons_per_ha'] or 0), 2)])
             w.writerow([])
 
-        # ── Section 2: Yield Summary ──
-        if 'summary' in sections:
-            w.writerow(['=== YIELD PREDICTION SUMMARY ==='])
-            w.writerow(['Metric', 'Value'])
-            w.writerow(['Total Predictions', total_yields])
-            w.writerow(['Average Predicted Yield (sacks/ha)', avg_yield])
-            w.writerow([])
-
-        # ── Section 3: Monthly Breakdown ──
+        # ── Section 2: Monthly Breakdown ──
         if 'monthly' in sections:
             w.writerow(['=== MONTHLY DETECTION BREAKDOWN ==='])
             w.writerow(['Month', 'Healthy', 'Diseased', 'Total'])
@@ -1223,12 +1239,15 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
 
         # ── Section 5: Variety Yield ──
         if 'varieties' in sections:
-            w.writerow(['=== AVERAGE YIELD PER VARIETY (linked records only) ==='])
-            if unlinked_export_count:
-                w.writerow([f'Note: {unlinked_export_count} prediction(s) excluded — no variety linked'])
-            w.writerow(['Variety', 'Avg Sacks/ha', 'Avg Tons/ha', 'Prediction Count'])
-            for row in variety_rows:
-                w.writerow([row['variety'], row['avg_sacks'], row['avg_tons'], row['count']])
+            w.writerow(['=== AVERAGE ACTUAL YIELD PER VARIETY (active harvest records) ==='])
+            if unlinked_actual_export_count:
+                w.writerow([f'Note: {unlinked_actual_export_count} harvest record(s) excluded — no variety linked'])
+            w.writerow(['Variety', 'Area (ha)', 'Production (tons)', 'Avg Sacks/ha', 'Avg Tons/ha', 'Harvest Records', 'Farmers'])
+            for row in actual_variety_rows:
+                w.writerow([
+                    row['variety'], row['total_area_ha'], row['total_production_tons'],
+                    row['avg_sacks'], row['avg_tons'], row['count'], row['farmer_count'],
+                ])
             w.writerow([])
 
         # ── Section 6: Barangay Production Summary ──
@@ -1248,10 +1267,10 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
                 ])
             w.writerow([])
 
-        # ── Section 7: Detection Details (all rows, no arbitrary cap) ──
+        # ── Section 7: Detection Details (all active rows, no arbitrary cap) ──
         if 'detections' in sections:
             det_total = detection_qs.count()
-            w.writerow([f'=== DETECTION DETAILS ({det_total} records) ==='])
+            w.writerow([f'=== DETECTION DETAILS ({det_total} active records; includes unclassified) ==='])
             w.writerow(['Date', 'Disease', 'Confidence (%)', 'Severity (%)', 'Field', 'Source'])
             for det in detection_qs.order_by('-created_at'):
                 field_name = det.planting.field.name if det.planting and det.planting.field else 'N/A'
@@ -1264,24 +1283,6 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
                     det.source or '',
                 ])
             w.writerow([])
-
-        # ── Section 8: Yield Details (all rows) ──
-        if 'yields' in sections:
-            yld_total = yield_qs.count()
-            w.writerow([f'=== YIELD PREDICTION DETAILS ({yld_total} records) ==='])
-            w.writerow(['Date', 'Variety', 'Field', 'Sacks/ha', 'Total Sacks', 'Total Tons', 'Harvest Date'])
-            for rec in yield_qs.order_by('-created_at'):
-                variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
-                field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
-                w.writerow([
-                    rec.created_at.strftime('%Y-%m-%d %H:%M'),
-                    variety,
-                    field,
-                    rec.predicted_sacks_per_ha or '',
-                    rec.total_sacks or '',
-                    rec.total_tons or '',
-                    rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '',
-                ])
 
         return response
 
@@ -1342,17 +1343,15 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
         elems.append(Paragraph(f'<b>Prepared by:</b> {generated_by}', META))
         elems.append(Spacer(1, 10))
 
-        # ── Section 1: KPI Summary ──
+        # ── Section 1: Harvest Summary ──
         if 'summary' in sections:
             elems.append(Paragraph('1. Summary Statistics', H2))
             kpi_data = [
                 ['Metric', 'Value'],
-                ['Total Detections',              str(total_detections)],
-                ['  Healthy Crops',               str(healthy_count)],
-                ['  Diseased Crops',              str(diseased_count)],
-                ['CNN Model Accuracy',            f'{model_accuracy}%'],
-                ['Total Yield Predictions',       str(total_yields)],
-                ['Average Predicted Yield (sacks/ha)', str(avg_yield)],
+                ['Total Harvest Records', str(actual_harvest_summary['record_count'] or 0)],
+                ['Total Harvest Area (ha)', f"{float(actual_harvest_summary['total_area_ha'] or 0):.2f}"],
+                ['Total Production (tons)', f"{float(actual_harvest_summary['total_production_tons'] or 0):.2f}"],
+                ['Average Actual Yield (tons/ha)', f"{float(actual_harvest_summary['avg_yield_tons_per_ha'] or 0):.2f}"],
             ]
             kpi_table = Table(kpi_data, colWidths=[4.5*inch, 2*inch])
             kpi_table.setStyle(header_style(BLUE))
@@ -1384,18 +1383,23 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
             elems.append(dis_table)
             elems.append(Spacer(1, 10))
 
-        # ── Section 4: Variety Yield ──
+        # ── Section 4: Actual Variety Yield ──
         if 'varieties' in sections:
-            suffix = f' ({unlinked_export_count} unlinked excluded)' if unlinked_export_count else ''
-            elems.append(Paragraph(f'4. Average Yield per Rice Variety{suffix}', H2))
-            var_data = [['Variety', 'Avg Sacks/ha', 'Avg Tons/ha', 'Predictions']]
-            for row in variety_rows:
-                var_data.append([row['variety'], str(row['avg_sacks']), str(row['avg_tons']), str(row['count'])])
-            if len(var_data) == 1:
-                var_data.append(['No yield data in range', '', '', ''])
-            var_table = Table(var_data, colWidths=[3*inch, 1.7*inch, 1.7*inch, 1.5*inch])
-            var_table.setStyle(header_style(YELLOW))
-            elems.append(var_table)
+            suffix = f' ({unlinked_actual_export_count} unlinked harvests excluded)' if unlinked_actual_export_count else ''
+            elems.append(Paragraph(f'4. Average Actual Yield per Rice Variety{suffix}', H2))
+            actual_var_data = [['Variety', 'Area (ha)', 'Production (t)', 'Avg Sacks/ha', 'Avg Tons/ha', 'Harvests', 'Farmers']]
+            for row in actual_variety_rows:
+                actual_var_data.append([
+                    row['variety'], f"{row['total_area_ha']:.2f}", f"{row['total_production_tons']:.2f}",
+                    str(row['avg_sacks']), str(row['avg_tons']), str(row['count']),
+                    str(row['farmer_count'])
+                ])
+            if len(actual_var_data) == 1:
+                actual_var_data.append(['No actual harvest data in range', '', '', '', '', '', ''])
+            actual_var_table = Table(actual_var_data, colWidths=[1.3*inch, 0.65*inch, 0.85*inch, 0.8*inch, 0.7*inch, 0.6*inch, 0.6*inch])
+            actual_var_table.setStyle(header_style(YELLOW))
+            elems.append(actual_var_table)
+            elems.append(Spacer(1, 8))
 
         if 'barangay' in sections:
             elems.append(Paragraph('5. Barangay Production Summary', H2))
@@ -1416,13 +1420,13 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
             elems.append(bar_table)
 
         # ── Page Break → Detail Tables (only if detail sections selected) ──
-        if 'detections' in sections or 'yields' in sections:
+        if 'detections' in sections:
             elems.append(PageBreak())
 
         # ── Section 6: Detection Details ──
         if 'detections' in sections:
             det_total = detection_qs.count()
-            elems.append(Paragraph(f'5. Detection Details ({det_total} records)', H2))
+            elems.append(Paragraph(f'6. Detection Details ({det_total} active records; includes unclassified)', H2))
             det_data = [['Date', 'Disease', 'Confidence', 'Severity', 'Field']]
             for det in detection_qs.order_by('-created_at'):
                 field_name = det.planting.field.name if det.planting and det.planting.field else 'N/A'
@@ -1437,26 +1441,6 @@ def _export_report(request, format_type, start_date, end_date, role, user_profil
             det_table.setStyle(header_style(GREEN))
             elems.append(det_table)
             elems.append(Spacer(1, 10))
-
-        # ── Section 7: Yield Details ──
-        if 'yields' in sections:
-            yld_total = yield_qs.count()
-            elems.append(Paragraph(f'6. Yield Prediction Details ({yld_total} records)', H2))
-            yld_data = [['Date', 'Variety', 'Field', 'Sacks/ha', 'Total Sacks', 'Harvest Date']]
-            for rec in yield_qs.order_by('-created_at'):
-                variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
-                field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
-                yld_data.append([
-                    rec.created_at.strftime('%Y-%m-%d'),
-                    variety[:16],
-                    field[:20],
-                    str(rec.predicted_sacks_per_ha or '-'),
-                    str(rec.total_sacks or '-'),
-                    rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '-',
-                ])
-            yld_table = Table(yld_data, colWidths=[1.4*inch, 1.6*inch, 2*inch, 1.2*inch, 1.2*inch, 1.4*inch])
-            yld_table.setStyle(header_style(BLUE))
-            elems.append(yld_table)
 
         doc.build(elems)
         buffer.seek(0)

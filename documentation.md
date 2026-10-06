@@ -16,7 +16,7 @@ AgriScan+ is a web-based agricultural decision support system built for rice pro
 - Yield prediction using planting and field context
 - Field, planting, harvest, and seasonal activity management
 - Role-based operations for administrators, technicians, and farmers
-- Notifications, announcements, and reporting support
+- Notifications, announcements, and factual harvest reporting support
 
 The system is designed for practical deployment in local government or extension settings while retaining structured records suitable for research and model improvement.
 
@@ -197,7 +197,38 @@ Key model entities:
 - YieldPrediction
 - HarvestRecord
 
-### 6.7 Notification and Announcements
+### 6.7 Reports and Analytics
+
+Responsibilities:
+
+- Present verified actual harvest data for the selected period.
+- Apply role-based visibility and optional barangay filtering consistently.
+- Summarize total harvest records, harvested area, actual production, and
+  average actual yield.
+- Break down actual yield by rice variety and production by barangay.
+- Provide monthly detection totals, disease frequency, and full detection
+  details.
+- Export the same report sections to CSV and PDF.
+
+Report data rules:
+
+- Production metrics use active `HarvestRecord` rows and are not derived from
+  `YieldPrediction` rows.
+- `Average Actual Yield` is the average stored `yield_tons_per_ha` value in the
+  selected harvest records.
+- Disease frequency excludes healthy, unknown, and `Unknown/Not Rice` records
+  from the ranking and identifies excluded counts.
+- Detection Details retain active detections, including unclassified records,
+  so the exported record list remains traceable.
+- Model metadata is shown in Dashboard > System Information, not in the
+  harvest-focused Reports summary.
+
+The Yield Prediction workflow remains separate because predicted yield is an
+estimate and multiple prediction snapshots may exist for one planting. This
+prevents forecast values from being mistaken for verified production or being
+double-counted in historical harvest reporting.
+
+### 6.8 Notification and Announcements
 
 Responsibilities:
 
@@ -263,7 +294,9 @@ Key model entities:
    - Ensemble requires both canopy image and tabular inputs.
 5. Selected model returns predicted tons per hectare.
 6. System computes total production estimate.
-7. Prediction is saved for historical reporting.
+7. Prediction is saved for the dedicated prediction workflow and future
+   analysis; it is not treated as verified harvest production in the Reports
+   summary.
 
 ### Workflow C: Harvest Finalization
 
@@ -271,6 +304,15 @@ Key model entities:
 2. System computes actual tons per hectare.
 3. Planting status is synchronized to harvested.
 4. Historical datasets become available for analytics and retraining.
+
+### Workflow D: Factual Reporting
+
+1. User selects a date range and, where permitted, a barangay filter.
+2. The system applies role-based visibility and active-record filtering.
+3. Harvest summary metrics are calculated from actual harvest records.
+4. Variety and barangay production tables are generated from the same harvest
+   scope.
+5. CSV and PDF exports repeat the selected sections and factual scope.
 
 ---
 
