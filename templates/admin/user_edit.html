@@ -39,8 +39,8 @@
         @{{ edit_user.username }}{% if edit_user.email %} · {{ edit_user.email }}{% endif %}
       </p>
       <p class="text-xs text-gray-400 mt-1">
-        Joined {{ edit_user.date_joined|date:"M d, Y" }}
-        {% if edit_user.last_login %} · Last login {{ edit_user.last_login|date:"M d, Y" }}
+        Joined <time datetime="{{ edit_user.date_joined|date:'c' }}" title="{{ edit_user.date_joined|date:'F d, Y, h:i A' }}">{{ edit_user.date_joined|date:"M d, Y, h:i A" }}</time>
+        {% if edit_user.last_login %} · Last login <time datetime="{{ edit_user.last_login|date:'c' }}" title="{{ edit_user.last_login|date:'F d, Y, h:i A' }}">{{ edit_user.last_login|date:"M d, Y, h:i A" }}</time>
         {% else %} · Never logged in{% endif %}
       </p>
     </div>

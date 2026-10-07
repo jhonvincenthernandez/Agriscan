@@ -300,10 +300,16 @@
           </td>
 
           <td data-label="Activity">
-            <div class="um-activity">Joined {{ user.date_joined|date:"M d, Y" }}</div>
+            <div class="um-activity">
+              <time datetime="{{ user.date_joined|date:'c' }}" title="{{ user.date_joined|date:'F d, Y, h:i A' }}">
+                Joined {{ user.date_joined|date:"M d, Y, h:i A" }}
+              </time>
+            </div>
             <div class="um-activity">
               {% if user.last_login %}
-                Seen {{ user.last_login|date:"M d, Y" }}
+                <time datetime="{{ user.last_login|date:'c' }}" title="{{ user.last_login|date:'F d, Y, h:i A' }}">
+                  Last login {{ user.last_login|date:"M d, Y, h:i A" }}
+                </time>
               {% else %}
                 Never logged in
               {% endif %}
