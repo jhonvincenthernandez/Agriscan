@@ -55,6 +55,9 @@ For production deployment and updates, see
 sequence is currently manual; it should not be described as CI/CD until an
 automated pipeline with protected deployment secrets is configured.
 
+For the terminal-only administrator creation workflow, see
+[create-admin.md](./create-admin.md).
+
 ## Frontend CSS (Tailwind Watch)
 
 For development, run Tailwind in watch mode in a separate terminal so template/style changes compile automatically.
