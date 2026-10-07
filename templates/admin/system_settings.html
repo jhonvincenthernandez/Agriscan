@@ -263,6 +263,15 @@
                 {% endif %}
               </div>
             </label>
+            <div class="mt-2 text-[var(--text-xs)] leading-relaxed {% if email_configuration.ready %}text-[var(--color-success-text)]{% else %}text-[var(--color-warning-text)]{% endif %}" role="status">
+              {% if not email_configuration.enabled %}
+                Email delivery is disabled by this setting.
+              {% elif email_configuration.ready %}
+                Email delivery is configured and ready. Messages are sent in the background after saving.
+              {% else %}
+                Email delivery is enabled, but SMTP configuration is incomplete. Check the server environment settings.
+              {% endif %}
+            </div>
             {% if form.email_enabled.errors %}
               <p class="mt-1.5 form-error flex items-center gap-1">
                 <svg class="h-3.5 w-3.5 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
@@ -447,7 +456,8 @@
       'Updating AI thresholds...',
       'Saving audit trail...',
     ];
-    const TIMINGS = [200, 300, 400, 300, 200];
+    const TIMINGS = [300, 350, 400, 350, 300];
+    const MIN_VISIBLE_DURATION = 1800;
 
     document.addEventListener('DOMContentLoaded', function () {
       const form = document.getElementById('system-settings-form');
@@ -456,6 +466,8 @@
 
       let timers = [];
       let longWaitTimer = null;
+      let closeTimer = null;
+      let loaderStartedAt = 0;
 
       function getModal() {
         return document.getElementById('system-settings-loader');
@@ -522,6 +534,7 @@
         modal.style.display = 'flex';
         document.body.classList.add('loader-open');
         submitButton.disabled = true;
+        loaderStartedAt = performance.now();
 
         setStep(0);
 
@@ -543,13 +556,24 @@
 
       function stop() {
         const modal = getModal();
+        if (!modal || modal.style.display === 'none') return;
+
+        const elapsed = performance.now() - loaderStartedAt;
+        const remaining = Math.max(0, MIN_VISIBLE_DURATION - elapsed);
+        if (remaining > 0) {
+          if (closeTimer) clearTimeout(closeTimer);
+          closeTimer = setTimeout(stop, remaining);
+          return;
+        }
+
         timers.forEach(clearTimeout);
         timers = [];
         if (longWaitTimer) {
           clearTimeout(longWaitTimer);
           longWaitTimer = null;
         }
-        if (modal) modal.style.display = 'none';
+        closeTimer = null;
+        modal.style.display = 'none';
         document.body.classList.remove('loader-open');
         submitButton.disabled = false;
       }

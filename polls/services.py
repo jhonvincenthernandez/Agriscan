@@ -1921,6 +1921,88 @@ from typing import Set
 
 _ANNOUNCEMENT_EMAIL_QUEUE_LOCK = threading.Lock()
 _QUEUED_ANNOUNCEMENT_EMAIL_IDS: Set[int] = set()
+_NOTIFICATION_EMAIL_QUEUE_LOCK = threading.Lock()
+_QUEUED_NOTIFICATION_EMAIL_IDS: Set[int] = set()
+
+
+def _send_notification_email_background(notification_pk: int) -> None:
+    """Send one notification email outside the request thread."""
+    from django.db import close_old_connections
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        close_old_connections()
+        from .models import Notification
+
+        notification = (
+            Notification.objects
+            .select_related("recipient__user", "related_detection", "related_yield")
+            .filter(pk=notification_pk)
+            .first()
+        )
+        if notification is not None:
+            send_notification_email(notification)
+        else:
+            logger.warning(
+                "Notification row not found for background email: pk=%s",
+                notification_pk,
+            )
+    except Exception:
+        logger.exception(
+            "Background notification email send failed for Notification pk=%s",
+            notification_pk,
+        )
+    finally:
+        close_old_connections()
+        with _NOTIFICATION_EMAIL_QUEUE_LOCK:
+            _QUEUED_NOTIFICATION_EMAIL_IDS.discard(notification_pk)
+
+
+def queue_notification_email_send(notification_pk: int) -> bool:
+    """Queue one notification email after its database row has been committed."""
+    logger = logging.getLogger(__name__)
+
+    try:
+        notification_pk = int(notification_pk)
+    except (TypeError, ValueError):
+        logger.warning("Invalid notification primary key: %r", notification_pk)
+        return False
+
+    with _NOTIFICATION_EMAIL_QUEUE_LOCK:
+        if notification_pk in _QUEUED_NOTIFICATION_EMAIL_IDS:
+            return False
+        _QUEUED_NOTIFICATION_EMAIL_IDS.add(notification_pk)
+
+    try:
+        worker = threading.Thread(
+            target=_send_notification_email_background,
+            args=(notification_pk,),
+            name=f"notification-email-{notification_pk}",
+            daemon=True,
+        )
+        worker.start()
+        return True
+    except Exception:
+        with _NOTIFICATION_EMAIL_QUEUE_LOCK:
+            _QUEUED_NOTIFICATION_EMAIL_IDS.discard(notification_pk)
+        logger.exception(
+            "Failed to start notification email worker for Notification pk=%s",
+            notification_pk,
+        )
+        return False
+
+
+def schedule_notification_email_send(notification_pk: int) -> None:
+    """Start notification email delivery only after the current transaction commits."""
+    from django.db import transaction
+
+    def queue_after_commit() -> None:
+        queue_notification_email_send(notification_pk)
+
+    transaction.on_commit(
+        queue_after_commit
+    )
 
 
 def get_user_announcements(user_profile, limit=None, unread_only=False):
@@ -2425,21 +2507,51 @@ def _emails_are_enabled() -> bool:
     Check whether outgoing email is enabled and SMTP is configured.
     """
 
-    if not get_email_enabled():
+    status = get_email_configuration_status()
+    if not status["enabled"]:
         return False
 
-    required = (
-        "EMAIL_HOST",
-        "EMAIL_PORT",
-        "EMAIL_HOST_USER",
-        "EMAIL_HOST_PASSWORD",
-        "DEFAULT_FROM_EMAIL",
-    )
+    if status["missing_settings"]:
+        logging.getLogger(__name__).error(
+            "Email delivery skipped: SMTP configuration incomplete; missing=%s",
+            ",".join(status["missing_settings"]),
+        )
+        return False
 
-    return all(
-        bool(getattr(settings, key, ""))
-        for key in required
-    )
+    return True
+
+
+def get_email_configuration_status() -> Dict[str, Any]:
+    """Return safe diagnostics for the effective outgoing email configuration."""
+
+    required_settings = {
+        "EMAIL_HOST": getattr(settings, "EMAIL_HOST", ""),
+        "EMAIL_PORT": getattr(settings, "EMAIL_PORT", ""),
+        "EMAIL_HOST_USER": getattr(settings, "EMAIL_HOST_USER", ""),
+        "EMAIL_HOST_PASSWORD": getattr(settings, "EMAIL_HOST_PASSWORD", ""),
+        "DEFAULT_FROM_EMAIL": getattr(settings, "DEFAULT_FROM_EMAIL", ""),
+    }
+    missing_settings = [
+        name for name, value in required_settings.items() if not bool(value)
+    ]
+    enabled = get_email_enabled()
+    smtp_configured = not missing_settings
+
+    status = {
+        "enabled": enabled,
+        "smtp_configured": smtp_configured,
+        "ready": enabled and smtp_configured,
+        "backend": getattr(
+            settings,
+            "EMAIL_BACKEND",
+            "django.core.mail.backends.smtp.EmailBackend",
+        ),
+        "missing_settings": missing_settings,
+        "host": required_settings["EMAIL_HOST"] or None,
+        "port": required_settings["EMAIL_PORT"] or None,
+        "from_email": required_settings["DEFAULT_FROM_EMAIL"] or None,
+    }
+    return status
 
 
 def _app_url(path: str) -> str:
@@ -2480,6 +2592,11 @@ def send_notification_email(notification) -> bool:
         )
 
         if not recipient_email:
+            logger.warning(
+                "Notification email skipped: recipient has no email | notification_id=%s user_id=%s",
+                getattr(notification, "pk", None),
+                getattr(notification.recipient.user, "pk", None),
+            )
             return False
 
         type_icons = {
@@ -2544,10 +2661,17 @@ def send_notification_email(notification) -> bool:
             )
 
         elif notification.type == "system":
-            body += (
-                f"View system settings: "
-                f"{_app_url('/system-settings/')}\n\n"
-            )
+            recipient_role = getattr(notification.recipient, "role", "")
+            if recipient_role == "admin":
+                body += (
+                    f"View system settings: "
+                    f"{_app_url('/system-settings/')}\n\n"
+                )
+            else:
+                body += (
+                    "This update was sent for your awareness. "
+                    "System settings are managed by administrators.\n\n"
+                )
 
         body += (
             "---\n"
@@ -2566,17 +2690,16 @@ def send_notification_email(notification) -> bool:
 
         if sent_count == 1:
             logger.info(
-                "Email sent to %s for notification type=%s",
-                recipient_email,
+                "Notification email sent | notification_id=%s type=%s",
+                getattr(notification, "pk", None),
                 notification.type,
             )
             return True
 
         logger.warning(
-            "Email backend returned sent_count=%s "
-            "for notification pk=%s",
+            "Email backend returned unexpected sent_count=%s | notification_id=%s",
             sent_count,
-            notification.pk,
+            getattr(notification, "pk", None),
         )
         return False
 

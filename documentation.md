@@ -239,9 +239,26 @@ Responsibilities:
    - Immediate announcement publish: in-app advisory notification + email send
    - Scheduled announcement publish: in-app advisory notification only (no email)
    - Scheduled advisory notifications are dispatched when publish time is due
+   - Notification emails use the same post-commit background worker pattern as
+     announcement emails, so notification creation does not wait for SMTP
+     delivery
+   - When Email Notifications is disabled, in-app notifications remain enabled
+     and outgoing email is skipped
+   - System Settings links are role-aware: only administrators receive the
+     restricted settings URL; farmers and technicians receive an awareness
+     message instead
 - Operational note:
    - Due scheduled dispatch is request-driven in the current simple deployment
    - With low/no traffic, due advisory creation may occur on the next incoming request
+   - The lightweight worker is process-local and non-durable; use Celery/RQ with
+     Redis for guaranteed retries across Gunicorn restarts
+
+System Settings interface:
+
+- The save loader shows staged progress with a minimum visible duration to avoid
+  a flashing animation on fast responses.
+- Email readiness and configuration guidance are displayed in the Email
+  Notifications section rather than in the save loader.
 
 Key model entities:
 

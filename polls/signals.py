@@ -146,7 +146,7 @@ def notify_disease_detected(sender, instance, created, **kwargs):
         )
         # Send email alert to the farmer (only if EMAIL_ENABLED=True in settings)
         from . import services as _svc
-        _svc.send_notification_email(notif)
+        _svc.schedule_notification_email_send(notif.pk)
 
         # ── Escalation: severity ≥70% → also alert all admin & technician staff ──
         if severity >= 70:
@@ -252,7 +252,7 @@ def notify_yield_drop(sender, instance, created, **kwargs):
                 related_yield=instance,
             )
             from . import services as _svc
-            _svc.send_notification_email(notif)
+            _svc.schedule_notification_email_send(notif.pk)
         else:
             # No historical baseline — alert if yield is critically low (<2 tons/ha)
             LOW_YIELD_THRESHOLD = 2.0
@@ -272,7 +272,7 @@ def notify_yield_drop(sender, instance, created, **kwargs):
                 related_yield=instance,
             )
             from . import services as _svc
-            _svc.send_notification_email(notif)
+            _svc.schedule_notification_email_send(notif.pk)
 
     except Exception:
         logger.exception("Failed to create yield drop notification for YieldPrediction pk=%s", instance.pk)
@@ -428,10 +428,21 @@ def notify_new_knowledge_entry(sender, instance, created, **kwargs):
         ]
 
         if notifs:
-            created_notifs = Notification.objects.bulk_create(notifs, ignore_conflicts=True)
             from . import services as _svc
-            for n in created_notifs:
-                _svc.send_notification_email(n)
+            created_notifs = [
+                Notification.objects.create(
+                    recipient=notification.recipient,
+                    type=notification.type,
+                    title=notification.title,
+                    message=notification.message,
+                    related_detection=notification.related_detection,
+                    related_yield=notification.related_yield,
+                    related_announcement=notification.related_announcement,
+                )
+                for notification in notifs
+            ]
+            for notification in created_notifs:
+                _svc.schedule_notification_email_send(notification.pk)
 
     except Exception:
         logger.exception(
@@ -492,10 +503,21 @@ def notify_new_treatment(sender, instance, created, **kwargs):
         ]
 
         if notifs:
-            created_notifs = Notification.objects.bulk_create(notifs, ignore_conflicts=True)
             from . import services as _svc
-            for n in created_notifs:
-                _svc.send_notification_email(n)
+            created_notifs = [
+                Notification.objects.create(
+                    recipient=notification.recipient,
+                    type=notification.type,
+                    title=notification.title,
+                    message=notification.message,
+                    related_detection=notification.related_detection,
+                    related_yield=notification.related_yield,
+                    related_announcement=notification.related_announcement,
+                )
+                for notification in notifs
+            ]
+            for notification in created_notifs:
+                _svc.schedule_notification_email_send(notification.pk)
 
     except Exception:
         logger.exception(
@@ -564,10 +586,31 @@ def notify_system_setting_changes(sender, instance, created, **kwargs):
         ]
 
         if notifs:
-            created_notifs = Notification.objects.bulk_create(notifs, ignore_conflicts=True)
+            from django.db import transaction
             from . import services as _svc
-            for n in created_notifs:
-                _svc.send_notification_email(n)
+            created_notifs = [
+                Notification.objects.create(
+                    recipient=notification.recipient,
+                    type=notification.type,
+                    title=notification.title,
+                    message=notification.message,
+                    related_detection=notification.related_detection,
+                    related_yield=notification.related_yield,
+                    related_announcement=notification.related_announcement,
+                )
+                for notification in notifs
+            ]
+
+            notification_ids = [
+                notification.pk
+                for notification in created_notifs
+                if notification.pk
+            ]
+            def queue_emails() -> None:
+                for notification_id in notification_ids:
+                    _svc.queue_notification_email_send(notification_id)
+
+            transaction.on_commit(queue_emails)
 
     except Exception:
         logger.exception(

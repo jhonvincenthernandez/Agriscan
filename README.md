@@ -188,9 +188,38 @@ harvest-focused Reports summary.
 - Technician: operational access across farmers
 - Farmer: own data only
 
-### Announcement Delivery Policy (Current)
+### Notification and Announcement Delivery Policy (Current)
 
-Current implementation is intentionally simple (no Celery/Redis worker):
+Current implementation is intentionally simple (no Celery/Redis worker). Email work
+is started after a successful database commit in a lightweight background thread,
+so settings saves and notification creation do not wait for SMTP delivery:
+
+- System Settings updates create in-app notifications immediately.
+- Notification email delivery runs in the background after commit.
+- Announcement email delivery follows the same background pattern.
+- When Email Notifications is disabled, in-app notifications continue to work
+  while outgoing email is skipped.
+- System Settings links are included only for administrator recipients; farmers
+  and technicians receive an awareness message because the page is
+  administrator-only.
+
+Because these threads are process-local and non-durable, a Gunicorn restart or
+process crash can interrupt an email. Use Celery + Redis (or another durable
+worker) when guaranteed delivery and retries are required.
+
+Email troubleshooting:
+
+- The System Settings page shows whether email delivery is disabled, ready, or
+  missing SMTP configuration.
+- Detailed failures remain available in the Django/Gunicorn error logs without
+  exposing SMTP credentials.
+
+System Settings UX:
+
+- The save loader uses staged progress steps and remains visible for a minimum
+  display interval so fast responses do not make the animation flash.
+- Email readiness is shown in the Email Notifications section, not inside the
+  visual save loader.
 
 - Immediate Publish:
   - sends announcement email (if email is enabled and SMTP is configured)

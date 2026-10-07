@@ -6,7 +6,8 @@ urlpatterns = [
     # ============================================================================
     # AUTHENTICATION & USER MANAGEMENT
     # ============================================================================
-    path('', views.login, name='login'),
+    path('', views.login, name='root_login'),
+    path('login/', views.login, name='login'),
     path('register/', views.register, name='register'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile, name='profile'),

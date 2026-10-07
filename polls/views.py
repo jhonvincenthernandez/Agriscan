@@ -309,7 +309,7 @@ def register(request):
             from django.contrib.auth.models import User as _User
             from . import services as _svc
             # Tagalog: para walang hardcoded localhost, gamitin ang base URL mula .env.
-            admin_users_url = _svc._app_url('/admin-users/')
+            admin_users_url = _svc._app_url('/manage-users/')
             admin_emails = list(
                 _User.objects.filter(profile__role='admin', is_active=True)
                 .exclude(email='')
@@ -3507,6 +3507,7 @@ def system_settings(request):
     current_confidence_threshold = services.get_detection_confidence_threshold()
     current_yield_cnn_enabled = services.get_yield_cnn_enabled()
     current_email_enabled = services.get_email_enabled()
+    email_configuration = services.get_email_configuration_status()
 
     recommended_defaults = getattr(settings, "SYSTEM_SETTING_DEFAULTS", {})
 
@@ -3520,6 +3521,7 @@ def system_settings(request):
         "recommended_email_enabled": recommended_defaults.get("email_enabled", False),
         "current_yield_cnn_enabled": current_yield_cnn_enabled,
         "current_email_enabled": current_email_enabled,
+        "email_configuration": email_configuration,
         "audits": audits,
     }
     return render(request, "admin/system_settings.html", context)

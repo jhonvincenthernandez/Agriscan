@@ -241,4 +241,3 @@ YIELD_CNN_CHECKPOINT_PATH = os.environ.get(
 )
 YIELD_CNN_DEVICE = os.environ.get('YIELD_CNN_DEVICE', 'cpu')
 YIELD_CNN_MAE_OVERRIDE = os.environ.get('YIELD_CNN_MAE_OVERRIDE', '0.25')
-
