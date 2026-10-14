@@ -267,8 +267,8 @@
 
   <!-- REAL TABLE -->
   <div id="yields-table" class="hidden">
-    <div class="data-table-wrap">
-      <table class="data-table" aria-label="Yield records">
+    <div class="data-table-wrap" tabindex="0" role="region" aria-label="Yield records table, scroll horizontally to see all columns">
+      <table class="data-table data-table--xwide" aria-label="Yield records">
         <thead>
           <tr>
             {% with sb=sort_by p=request.GET.search v=request.GET.variety df=request.GET.date_filter ps=request.GET.page_size %}
@@ -350,7 +350,7 @@
               {% if record.planting and record.planting.variety %}
                 <span class="yr-code">{{ record.planting.variety.code }}</span>
               {% else %}
-                <span class="yr-muted">None</span>
+                <span class="data-empty">Not set</span>
               {% endif %}
             </td>
 
@@ -358,7 +358,7 @@
               {% if record.planting and record.planting.field %}
                 <span class="font-semibold text-[var(--color-text-primary)]">{{ record.planting.field.name }}</span>
               {% else %}
-                <span class="yr-muted">None</span>
+                <span class="data-empty">Not set</span>
               {% endif %}
             </td>
 
@@ -366,7 +366,7 @@
               {% if record.model_version %}
                 <span class="font-mono text-[var(--text-sm)]">{{ record.model_version }}</span>
               {% else %}
-                <span class="yr-muted">None</span>
+                <span class="data-empty">Not set</span>
               {% endif %}
             </td>
 
@@ -374,7 +374,7 @@
               {% if record.planting and record.planting.planting_date %}
                 {{ record.planting.planting_date|date:'M d, Y' }}
               {% else %}
-                <span class="yr-muted">None</span>
+                <span class="data-empty">Not set</span>
               {% endif %}
             </td>
 
@@ -383,7 +383,7 @@
                 <span class="font-semibold text-[var(--color-text-primary)]">{{ record.predicted_yield_tons_per_ha }}</span>
                 <span class="text-[var(--text-xs)] text-[var(--color-text-secondary)]">t/ha</span>
               {% else %}
-                <span class="yr-muted">—</span>
+                <span class="data-empty"><span class="sr-only-agri">Not available</span><span aria-hidden="true">—</span></span>
               {% endif %}
             </td>
 
@@ -393,7 +393,7 @@
               {% elif record.total_tons %}
                 <span class="font-medium text-[var(--color-text-primary)]">{{ record.total_tons }} t</span>
               {% else %}
-                <span class="yr-muted">—</span>
+                <span class="data-empty"><span class="sr-only-agri">Not available</span><span aria-hidden="true">—</span></span>
               {% endif %}
             </td>
 
@@ -401,7 +401,7 @@
               {% if record.area_hectares %}
                 <span>{{ record.area_hectares }} ha</span>
               {% else %}
-                <span class="yr-muted">—</span>
+                <span class="data-empty"><span class="sr-only-agri">Not available</span><span aria-hidden="true">—</span></span>
               {% endif %}
             </td>
 
@@ -421,7 +421,7 @@
                   <span class="badge-base badge-neutral">{{ record.get_yield_readiness_display }}</span>
                 {% endif %}
               {% else %}
-                <span class="yr-muted">None</span>
+                <span class="data-empty">Not set</span>
               {% endif %}
             </td>
 
@@ -431,7 +431,7 @@
               {% elif record.harvest_date %}
                 {{ record.harvest_date|date:'M d, Y' }}
               {% else %}
-                <span class="yr-muted">None</span>
+                <span class="data-empty">Not set</span>
               {% endif %}
             </td>
 

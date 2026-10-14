@@ -20,6 +20,7 @@
   .badge-neutral { background: var(--color-overlay); border-color: var(--color-border-strong); color: var(--color-text); }
   .badge-outline { background: var(--color-surface); border-color: var(--color-border-strong); color: var(--color-text-secondary); }
   .badge-solid   { background: var(--color-brand); border-color: var(--color-brand); color: #ffffff; }
+  .badge-success { background: var(--color-success-soft); border-color: var(--color-success-border); color: var(--color-success-text); }
   .badge-danger  { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
   .badge-warning { background: var(--color-warning-soft); border-color: var(--color-warning-border); color: var(--color-warning-text); }
 
@@ -62,28 +63,46 @@
   }
 
   /* View switch: cards below 1024px (current design), table from 1024px */
-  .pl-table-view { display: none; margin-bottom: 2rem; }
+  .pl-table-view { display: none; margin-bottom: 2rem; min-width: 0; max-width: 100%; }
   .pl-card-view { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 1024px) {
     .pl-table-view { display: block; }
     .pl-card-view { display: none; }
   }
 
+  /* Dense 12-column table: contain scroll inside the card, never the page */
+  .pl-table-view .data-table-wrap { max-width: 100%; }
+  .pl-table-view .data-table-wrap:focus-visible { outline: 2px solid var(--color-brand); outline-offset: 2px; }
+  @media (min-width: 1024px) {
+    .pl-table-view .data-table { min-width: 62rem; border-collapse: separate; border-spacing: 0; }
+    .pl-table-view .data-table th,
+    .pl-table-view .data-table td { padding: 0.625rem 0.75rem; font-size: 0.8125rem; }
+    .pl-table-view .data-table th { white-space: normal; line-height: 1.35; }
+    .pl-table-view .col-actions { min-width: 9.5rem; text-align: right; }
+    .pl-table-view .td-actions { position: static; background: transparent; box-shadow: none; }
+  }
+
+  /* Progressive disclosure: hide low-priority columns on small laptops, show on wide screens */
+  @media (min-width: 1024px) and (max-width: 1279.98px) {
+    .pl-table-view .col-prio-low { display: none; }
+  }
+
   .pl-muted { color: var(--color-text-muted); font-style: italic; }
-  .pl-num { text-align: right; font-variant-numeric: tabular-nums; }
-  .pl-name { color: var(--color-text-primary); font-weight: 600; }
+  .pl-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pl-name { color: var(--color-text-primary); font-weight: 600; overflow-wrap: anywhere; }
   .pl-sub { display: block; margin-top: 0.125rem; color: var(--color-text-secondary); font-size: var(--text-sm); }
-  .pl-date { white-space: nowrap; }
+  .pl-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
   .pl-notes {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
-    max-width: 16rem;
+    max-width: 10rem;
     overflow: hidden;
     color: var(--color-text-secondary);
     font-size: var(--text-sm);
   }
-  .pl-actions { display: inline-flex; gap: 0.5rem; }
+  .pl-actions { display: inline-flex; flex-wrap: nowrap; gap: 0.375rem; }
+  .pl-actions .btn-sm { min-height: 2rem; padding-top: 0.25rem; padding-bottom: 0.25rem; white-space: nowrap; }
 
   .pl-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
   @media (min-width: 640px) { .pl-empty { padding: 3rem; } }
@@ -232,7 +251,7 @@
 
   <!-- TABLE VIEW (desktop and laptop, 1024px+) -->
   <div class="pl-table-view">
-    <div class="data-table-wrap">
+    <div class="data-table-wrap" tabindex="0" role="region" aria-label="Planting cycles table, scroll horizontally to see all columns">
       <table class="data-table">
         <caption class="sr-only-agri">{% if role == 'farmer' %}My planting cycles{% else %}All planting cycles{% endif %}</caption>
         <thead>
@@ -244,11 +263,11 @@
             <th scope="col">Status</th>
             <th scope="col">Planting Date</th>
             <th scope="col">Expected Harvest</th>
-            <th scope="col" class="pl-num">Growth</th>
-            <th scope="col" class="pl-num">Detections</th>
-            <th scope="col" class="pl-num">Yield Predictions</th>
-            <th scope="col">Notes</th>
-            <th scope="col" class="pl-num">Actions</th>
+            <th scope="col" class="pl-num col-prio-low">Growth</th>
+            <th scope="col" class="pl-num">Detect</th>
+            <th scope="col" class="pl-num">Yield</th>
+            <th scope="col" class="col-prio-low">Notes</th>
+            <th scope="col" class="col-actions">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -262,22 +281,22 @@
               <span class="pl-name">{{ planting.variety.code }}</span>
               <span class="pl-sub">{{ planting.variety.name }}</span>
             </td>
-            <td>{% if planting.season %}<span class="badge-base badge-outline">{{ planting.get_season_display }}</span>{% else %}<span class="pl-muted">Not set</span>{% endif %}</td>
+            <td>{% if planting.season %}<span class="badge-base badge-outline">{{ planting.get_season_display }}</span>{% else %}<span class="data-empty">Not set</span>{% endif %}</td>
             <td>
               {% if planting.status == 'planned' %}<span class="badge-base badge-neutral">Planned</span>
-              {% elif planting.status == 'ongoing' %}<span class="agri-badge"><span class="h-2 w-2 rounded-full bg-[var(--color-brand)]" aria-hidden="true"></span>Ongoing</span>
+              {% elif planting.status == 'ongoing' %}<span class="badge-base badge-success">Ongoing</span>
               {% elif planting.status == 'harvested' %}<span class="badge-base badge-solid">Harvested</span>
               {% elif planting.status == 'failed' %}<span class="badge-base badge-danger">Failed</span>
               {% elif planting.status == 'cancelled' %}<span class="badge-base badge-warning">Cancelled</span>
               {% else %}<span class="badge-base badge-neutral">{{ planting.status|capfirst }}</span>{% endif %}
             </td>
             <td class="pl-date">{{ planting.planting_date|date:"M d, Y" }}</td>
-            <td class="pl-date">{% if planting.expected_harvest_date %}{{ planting.expected_harvest_date|date:"M d, Y" }}{% else %}<span class="pl-muted">Not set</span>{% endif %}</td>
-            <td class="pl-num">{{ planting.variety.average_growth_days }} days</td>
+            <td class="pl-date">{% if planting.expected_harvest_date %}{{ planting.expected_harvest_date|date:"M d, Y" }}{% else %}<span class="data-empty">Not set</span>{% endif %}</td>
+            <td class="pl-num col-prio-low">{{ planting.variety.average_growth_days }} days</td>
             <td class="pl-num">{{ planting.detections.count }}</td>
             <td class="pl-num">{{ planting.yield_predictions.count }}</td>
-            <td>{% if planting.notes %}<span class="pl-notes" title="{{ planting.notes }}">{{ planting.notes }}</span>{% else %}<span class="pl-muted">None</span>{% endif %}</td>
-            <td class="td-actions">
+            <td class="col-prio-low">{% if planting.notes %}<span class="pl-notes" title="{{ planting.notes }}">{{ planting.notes }}</span>{% else %}<span class="data-empty">Not set</span>{% endif %}</td>
+            <td class="td-actions col-actions">
               <span class="pl-actions">
                 <a href="{% url 'polls:planting_edit' planting.pk %}" class="btn btn-secondary btn-sm" aria-label="Edit planting {{ planting.pk }}">Edit</a>
                 <a href="{% url 'polls:planting_delete' planting.pk %}"
@@ -314,7 +333,7 @@
             {% if planting.status == 'planned' %}
               <span class="badge-base badge-neutral">Planned</span>
             {% elif planting.status == 'ongoing' %}
-              <span class="agri-badge"><span class="h-2 w-2 rounded-full bg-[var(--color-brand)]" aria-hidden="true"></span>Ongoing</span>
+              <span class="badge-base badge-success">Ongoing</span>
             {% elif planting.status == 'harvested' %}
               <span class="badge-base badge-solid">Harvested</span>
             {% elif planting.status == 'failed' %}

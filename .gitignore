@@ -76,6 +76,8 @@ docs/_build/
 
 # Keep only main docs in repo root
 *.md
+!/.agents/**/*.md
+!/AGENTS.md
 !/README.md
 !/documentation.md
 

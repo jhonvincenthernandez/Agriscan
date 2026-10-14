@@ -242,7 +242,7 @@
           <h2 class="rp-section-title">Monthly Detection Summary</h2>
           <p class="rp-section-lead">Detection counts by month for the selected period.</p>
         </div>
-        <div class="data-table-wrap">
+        <div class="data-table-wrap" tabindex="0" role="region" aria-label="Report table, scroll horizontally to see all columns">
           <table class="data-table">
             <thead>
               <tr>
@@ -294,7 +294,7 @@
     </div>
 
     {% if disease_freq %}
-    <div class="data-table-wrap">
+    <div class="data-table-wrap" tabindex="0" role="region" aria-label="Report table, scroll horizontally to see all columns">
       <table class="data-table">
         <thead>
           <tr>
@@ -309,7 +309,7 @@
           {% for item in disease_freq %}
           <tr>
             <td data-label="#" class="text-[var(--color-text-muted)] font-mono">{{ forloop.counter }}</td>
-            <td data-label="Disease" class="td-primary">{{ item.disease__name|default:"Unknown" }}</td>
+            <td data-label="Disease" class="td-primary">{% if item.disease__name %}{{ item.disease__name }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</td>
             <td data-label="Detections" class="text-right font-semibold">{{ item.count }}</td>
             <td data-label="% of Diseased" class="text-right">{{ item.pct }}%</td>
             <td data-label="Share">
@@ -353,7 +353,7 @@
       </div>
     </div>
 
-    <div class="data-table-wrap">
+    <div class="data-table-wrap" tabindex="0" role="region" aria-label="Report table, scroll horizontally to see all columns">
       <table class="data-table">
         <thead>
           <tr>
@@ -411,7 +411,7 @@
       </div>
     </div>
 
-    <div class="data-table-wrap">
+    <div class="data-table-wrap" tabindex="0" role="region" aria-label="Report table, scroll horizontally to see all columns">
       <table class="data-table">
         <thead>
           <tr>
@@ -426,7 +426,7 @@
         <tbody>
           {% for row in barangay_summary %}
           <tr>
-            <td data-label="Barangay" class="td-primary">{{ row.barangay|default:"Unknown" }}</td>
+            <td data-label="Barangay" class="td-primary">{% if row.barangay %}{{ row.barangay }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</td>
             <td data-label="Farmers" class="text-right">{{ row.farmer_count }}</td>
             <td data-label="Area (ha)" class="text-right">{{ row.total_area_ha|floatformat:"2" }}</td>
             <td data-label="Production (tons)" class="text-right">{{ row.total_production_tons|floatformat:"2" }}</td>

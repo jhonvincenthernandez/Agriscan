@@ -209,8 +209,8 @@
   </div>
 
   <!-- TABLE (desktop and laptop) / CARDS (mobile and tablet) -->
-  <div class="data-table-wrap">
-    <table class="data-table" aria-label="Detection records">
+  <div class="data-table-wrap" tabindex="0" role="region" aria-label="Detection records table, scroll horizontally to see all columns">
+    <table class="data-table data-table--wide" aria-label="Detection records">
       <thead>
         <tr>
           {% with sb=sort_by p=request.GET.search d=request.GET.disease v=request.GET.variety df=request.GET.date_filter ps=request.GET.page_size %}
@@ -276,35 +276,35 @@
           <td data-label="Image">
             {% if detection.image_path %}
             <img src="{{ media_url }}{{ detection.image_path }}" alt="Detection {{ detection.pk }}" class="dr-thumb" loading="lazy">
-            {% else %}<span class="dr-muted">No image</span>{% endif %}
+            {% else %}<span class="data-empty">No image</span>{% endif %}
           </td>
 
-          <td data-label="Disease" class="td-primary">{{ detection.disease|default:'Unknown' }}</td>
+          <td data-label="Disease" class="td-primary">{% if detection.disease %}{{ detection.disease }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</td>
 
           <td data-label="Variety">
-            {% if detection.planting and detection.planting.variety %}<span class="dr-code">{{ detection.planting.variety.code }}</span>{% else %}<span class="dr-muted">None</span>{% endif %}
+            {% if detection.planting and detection.planting.variety %}<span class="dr-code">{{ detection.planting.variety.code }}</span>{% else %}<span class="data-empty">Not set</span>{% endif %}
           </td>
 
           <td data-label="Confidence">
             {% if detection.confidence_pct %}
             <span class="dr-conf {% if detection.confidence_pct >= 80 %}dr-conf--high{% elif detection.confidence_pct >= 60 %}dr-conf--mid{% else %}dr-conf--low{% endif %}">{{ detection.confidence_pct }}%</span>
-            {% else %}<span class="dr-muted">None</span>{% endif %}
+            {% else %}<span class="data-empty">Not set</span>{% endif %}
           </td>
 
           <td data-label="Severity">
             {% if detection.severity_pct is not None %}
             <span class="dr-badge {% if detection.severity_pct >= 70 %}dr-badge--danger{% elif detection.severity_pct >= 40 %}dr-badge--warning{% elif detection.severity_pct > 0 %}{% else %}dr-badge--success{% endif %}">{{ detection.severity_pct }}%</span>
-            {% else %}<span class="dr-muted">None</span>{% endif %}
+            {% else %}<span class="data-empty">Not set</span>{% endif %}
           </td>
 
           <td data-label="Status">
             {% if detection.planting %}
             <span class="dr-badge {% if detection.planting.status == 'harvested' or detection.planting.status == 'ongoing' %}dr-badge--success{% elif detection.planting.status == 'failed' %}dr-badge--danger{% endif %}">{{ detection.planting.get_status_display|default:detection.planting.status }}</span>
-            {% else %}<span class="dr-muted">None</span>{% endif %}
+            {% else %}<span class="data-empty">Not set</span>{% endif %}
           </td>
 
           <td data-label="Field">
-            {% if detection.planting and detection.planting.field %}{{ detection.planting.field.name }}{% else %}<span class="dr-muted">None</span>{% endif %}
+            {% if detection.planting and detection.planting.field %}{{ detection.planting.field.name }}{% else %}<span class="data-empty">Not set</span>{% endif %}
           </td>
 
           <td data-label="Created" class="dr-nowrap">{{ detection.created_at|date:'Y-m-d H:i' }}</td>

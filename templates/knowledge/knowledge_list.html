@@ -185,7 +185,7 @@
   {% if entries %}
 
   <!-- TABLE -->
-  <div class="data-table-wrap">
+  <div class="data-table-wrap" tabindex="0" role="region" aria-label="Knowledge entries table, scroll horizontally to see all columns">
     <table class="data-table" aria-label="Knowledge entries">
       <thead>
         <tr>
@@ -235,7 +235,7 @@
             {% if entry.description %}
             <span class="kb-desc">{{ entry.description|truncatechars:140 }}</span>
             {% else %}
-            <span class="kb-muted">None</span>
+            <span class="data-empty">Not set</span>
             {% endif %}
           </td>
 

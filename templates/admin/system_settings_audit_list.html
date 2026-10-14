@@ -47,6 +47,7 @@
   /* Table specifics */
   .al-check { justify-content: center; min-width: 2.75rem; }
   .data-table th.al-th-check { width: 3.5rem; padding-inline: 0.5rem; text-align: center; }
+  .data-table th.al-th-actions { text-align: right; }
   .data-table td.al-td-check { padding-inline: 0.5rem; text-align: center; }
   .data-table tbody tr.al-row { cursor: pointer; }
   .data-table tbody tr.al-row.is-selected { background: var(--color-brand-light); border-color: var(--color-brand-border); }
@@ -66,6 +67,16 @@
   .al-bulk { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
   .al-bulk[hidden] { display: none; }
   .al-bulk-count { font-weight: 600; margin-right: auto; }
+
+  /* Actions: equal buttons on the right side in all views */
+  .al-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; width: 100%; margin-left: auto; }
+  .al-actions .btn { width: auto; min-width: 6.75rem; justify-content: center; white-space: nowrap; }
+  .al-actions .btn svg { flex: none; }
+  @media (min-width: 1024px) {
+    .data-table td.td-actions { min-width: 11rem; vertical-align: middle; }
+    .al-actions { flex-direction: row; align-items: center; justify-content: flex-end; width: auto; }
+    .al-actions .btn { width: auto; min-width: 6.75rem; }
+  }
 
   /* Empty State */
   .al-empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 2.5rem 1.25rem; }
@@ -176,7 +187,7 @@
   </div>
 
   <!-- Audit Log Table -->
-  <div class="data-table-wrap">
+  <div class="data-table-wrap" tabindex="0" role="region" aria-label="Audit logs table, scroll horizontally to see all columns">
     <table class="data-table" aria-label="Audit logs">
       <thead>
         <tr>
@@ -186,7 +197,7 @@
           <th scope="col">When</th>
           <th scope="col">Who</th>
           <th scope="col">Changes</th>
-          <th scope="col" class="text-right no-print">Actions</th>
+          <th scope="col" class="al-th-actions no-print">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -223,7 +234,7 @@
             {% endif %}
           </td>
           <td data-label="Actions" class="td-actions no-print">
-            <div class="flex flex-wrap items-center gap-2 justify-end">
+            <div class="al-actions">
               <a href="{% url 'polls:system_settings_audit_revert' entry.pk %}"
                  data-open-delete="true"
                  data-delete-type="revert"

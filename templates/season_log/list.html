@@ -185,8 +185,8 @@
        SEASON LOGS TABLE
        ========================================================= -->
   {% if logs %}
-  <div class="data-table-wrap">
-    <table class="data-table">
+  <div class="data-table-wrap" tabindex="0" role="region" aria-label="Season logs table, scroll horizontally to see all columns">
+    <table class="data-table data-table--wide">
       <thead>
         <tr>
           <th scope="col">Field</th>
@@ -214,7 +214,7 @@
             {% if log.field.barangay %}
             <span class="text-[var(--color-text-primary)]">{{ log.field.barangay }}</span>
             {% else %}
-            <span class="text-[var(--color-text-muted)] italic">—</span>
+            <span class="data-empty"><span class="sr-only-agri">Not available</span><span aria-hidden="true">—</span></span>
             {% endif %}
           </td>
           
@@ -222,7 +222,7 @@
             {% if log.variety %}
             <span class="font-semibold">{{ log.variety.code }}</span>
             {% else %}
-            <span class="text-[var(--color-text-muted)] italic">None</span>
+            <span class="data-empty">Not set</span>
             {% endif %}
             <span class="block text-[var(--text-xs)] text-[var(--color-text-secondary)] mt-0.5">{{ log.field.area_hectares }} ha</span>
           </td>
@@ -259,7 +259,7 @@
             {% if log.date_planted %}
             <span>{{ log.date_planted|date:"M d, Y" }}</span>
             {% else %}
-            <span class="text-[var(--color-text-muted)] italic">Not yet</span>
+            <span class="data-empty">Not yet</span>
             {% endif %}
           </td>
 
@@ -267,7 +267,7 @@
             {% if log.date_harvested %}
             <span>{{ log.date_harvested|date:"M d, Y" }}</span>
             {% else %}
-            <span class="text-[var(--color-text-muted)] italic">Not yet</span>
+            <span class="data-empty">Not yet</span>
             {% endif %}
           </td>
 
@@ -281,7 +281,7 @@
             <span class="block text-[var(--text-xs)] text-[var(--color-text-secondary)] mt-0.5">₱{{ log.gross_income|floatformat:"0" }}</span>
             {% endif %}
             {% else %}
-            <span class="text-[var(--color-text-muted)] italic">—</span>
+            <span class="data-empty"><span class="sr-only-agri">Not available</span><span aria-hidden="true">—</span></span>
             {% endif %}
           </td>
 

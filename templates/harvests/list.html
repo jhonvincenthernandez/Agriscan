@@ -258,7 +258,7 @@
   </div>
 
   <!-- TABLE -->
-  <div class="data-table-wrap">
+  <div class="data-table-wrap" tabindex="0" role="region" aria-label="Harvest records table, scroll horizontally to see all columns">
     <table class="data-table" aria-label="Harvest records">
       <thead>
         <tr>
@@ -314,7 +314,7 @@
             {% if r.planting.variety %}
               <span class="hr-code">{{ r.planting.variety.code }}</span>
             {% else %}
-              <span class="hr-muted">None</span>
+              <span class="data-empty">Not set</span>
             {% endif %}
           </td>
 
@@ -322,7 +322,7 @@
             {% if r.planting.season %}
               <span class="badge-base badge-outline">{{ r.planting.get_season_display|default:r.planting.season|capfirst }}</span>
             {% else %}
-              <span class="hr-muted">None</span>
+              <span class="data-empty">Not set</span>
             {% endif %}
           </td>
 

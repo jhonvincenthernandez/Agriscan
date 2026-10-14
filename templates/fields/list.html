@@ -225,8 +225,8 @@
 
   <!-- TABLE VIEW (desktop and laptop, 1024px+) -->
   <div class="fl-table-view">
-    <div class="data-table-wrap">
-      <table class="data-table">
+    <div class="data-table-wrap" tabindex="0" role="region" aria-label="Fields table, scroll horizontally to see all columns">
+      <table class="data-table data-table--wide">
         <caption class="sr-only-agri">{% if role == 'farmer' %}My fields{% else %}All fields{% endif %}</caption>
         <thead>
           <tr>
@@ -248,10 +248,7 @@
             <td class="td-primary">
               <span class="fl-name">{{ field.name }}</span>
               {% if field.has_active_planting %}
-              <span class="fl-sub"><span class="agri-badge">
-                <span class="h-2 w-2 rounded-full bg-[var(--color-brand)]" aria-hidden="true"></span>
-                Active Crop
-              </span></span>
+              <span class="fl-sub"><span class="badge-base badge-success">Active Crop</span></span>
               {% endif %}
             </td>
             <td>
@@ -261,14 +258,14 @@
                 <span class="fl-sub">{{ field.municipality }}{% if field.municipality and field.province %} · {% endif %}{{ field.province }}</span>
                 {% endif %}
               {% else %}
-                <span class="fl-muted">Not specified</span>
+                <span class="data-empty">Not set</span>
               {% endif %}
             </td>
             {% if role != 'farmer' %}
             <td>{{ field.owner.user.get_full_name|default:field.owner.user.username }}</td>
             {% endif %}
-            <td>{% if field.soil_type %}{{ field.get_soil_type_display }}{% else %}<span class="fl-muted">Unknown</span>{% endif %}</td>
-            <td>{% if field.ecosystem_type %}{{ field.get_ecosystem_type_display }}{% else %}<span class="fl-muted">Unknown</span>{% endif %}</td>
+            <td>{% if field.soil_type %}{{ field.get_soil_type_display }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</td>
+            <td>{% if field.ecosystem_type %}{{ field.get_ecosystem_type_display }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</td>
             <td>
               {% if field.flood_prone %}
               <span class="badge-danger">Flood-prone</span>
@@ -282,7 +279,7 @@
               {% if field.gps_lat and field.gps_lon %}
               <span class="fl-mono">{{ field.gps_lat|floatformat:6 }}, {{ field.gps_lon|floatformat:6 }}</span>
               {% else %}
-              <span class="fl-muted">None</span>
+              <span class="data-empty">Not set</span>
               {% endif %}
             </td>
             <td class="td-actions">
@@ -317,10 +314,7 @@
               {{ field.name }}
             </h2>
             {% if field.has_active_planting %}
-            <span class="agri-badge">
-              <span class="h-2 w-2 rounded-full bg-[var(--color-brand)]" aria-hidden="true"></span>
-              Active Crop
-            </span>
+            <span class="badge-base badge-success">Active Crop</span>
             {% endif %}
           </div>
 
@@ -356,14 +350,14 @@
             <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m0-18C8 6 5 9 5 13a7 7 0 0014 0c0-4-3-7-7-10z"/>
             </svg>
-            <span class="truncate">Soil: {% if field.soil_type %}{{ field.get_soil_type_display }}{% else %}Unknown{% endif %}</span>
+            <span class="truncate">Soil: {% if field.soil_type %}{{ field.get_soil_type_display }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</span>
           </span>
 
           <span class="badge-neutral">
             <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3c4.5 2.5 7 6.2 7 10a7 7 0 11-14 0c0-3.8 2.5-7.5 7-10z"/>
             </svg>
-            <span class="truncate">Ecosystem: {% if field.ecosystem_type %}{{ field.get_ecosystem_type_display }}{% else %}Unknown{% endif %}</span>
+            <span class="truncate">Ecosystem: {% if field.ecosystem_type %}{{ field.get_ecosystem_type_display }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</span>
           </span>
 
           {% if field.flood_prone %}

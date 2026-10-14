@@ -212,7 +212,7 @@
        NOTIFICATIONS TABLE
        ========================================================= -->
   {% if notifications %}
-  <div class="data-table-wrap">
+  <div class="data-table-wrap" tabindex="0" role="region" aria-label="Notifications table, scroll horizontally to see all columns">
     <table class="data-table">
       <thead>
         <tr>
@@ -307,7 +307,7 @@
               </a>
               {% endif %}
               {% if not notif.related_detection and not notif.related_yield and not notif.related_announcement %}
-              <span class="text-sm text-[var(--color-text-muted)] italic">None</span>
+              <span class="data-empty">Not set</span>
               {% endif %}
             </div>
           </td>

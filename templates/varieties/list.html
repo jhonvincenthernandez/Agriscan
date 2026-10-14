@@ -223,7 +223,7 @@
   {% endif %}
 
   <!-- TABLE (desktop and laptop) / CARDS (mobile and tablet) -->
-  <div class="data-table-wrap">
+  <div class="data-table-wrap" tabindex="0" role="region" aria-label="Rice varieties table, scroll horizontally to see all columns">
     <table class="data-table">
       <caption class="sr-only-agri">Rice varieties</caption>
       <thead>
@@ -296,7 +296,7 @@
           </td>
 
           <td data-label="Avg Yield" class="vr-nowrap">
-            {% if variety.average_yield_t_ha %}{{ variety.average_yield_t_ha }} t/ha{% else %}<span class="vr-muted">Not set</span>{% endif %}
+            {% if variety.average_yield_t_ha %}{{ variety.average_yield_t_ha }} t/ha{% else %}<span class="data-empty">Not set</span>{% endif %}
           </td>
 
           <td data-label="Resistance">
