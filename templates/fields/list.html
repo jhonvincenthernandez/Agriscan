@@ -35,6 +35,21 @@
     line-height: 1.25rem;
   }
 
+  .badge-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    max-width: 100%;
+    padding: 0.125rem 0.625rem;
+    border: 1px solid var(--color-success-border);
+    border-radius: var(--radius-full);
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 1.25rem;
+  }
+
   .btn-warn {
     color: var(--color-warning-text) !important;
     border-color: var(--color-warning-border) !important;
@@ -277,7 +292,7 @@
               {% if field.flood_prone %}
               <span class="badge-danger">Flood-prone</span>
               {% else %}
-              <span class="badge-neutral">Not flood-prone</span>
+              <span class="badge-success">Not flood-prone</span>
               {% endif %}
             </td>
             <td class="fl-num">{{ field.area_hectares }} ha</td>
@@ -373,6 +388,13 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v4m0 4h.01M10.3 3.6L2.7 17a2 2 0 001.7 3h15.2a2 2 0 001.7-3L13.7 3.6a2 2 0 00-3.4 0z"/>
             </svg>
             Flood-prone
+          </span>
+          {% else %}
+          <span class="badge-success">
+            <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+            </svg>
+            Not flood-prone
           </span>
           {% endif %}
         </div>
