@@ -1469,7 +1469,7 @@ def detections_list(request):
     variety_filter = request.GET.get("variety")
     search = request.GET.get("search", "").strip()
     date_filter = request.GET.get("date_filter")
-    sort = request.GET.get("sort", "-severity_pct")
+    sort = request.GET.get("sort", "-created_at")
     page = request.GET.get("page", 1)
     _ALLOWED_PAGE_SIZES = {10, 25, 50, 100}
     try:
@@ -1480,7 +1480,7 @@ def detections_list(request):
         page_size = 25
 
     # Filter by role: farmers see only their data, technicians/admins see all
-    qs = DetectionRecord.objects.filter(is_active=True).select_related("disease", "model_version", "planting__field", "planting__variety")
+    qs = DetectionRecord.objects.filter(is_active=True).select_related("disease", "model_version", "planting__field", "planting__variety", "planting__field__owner", "planting__field__owner__user")
     qs = filter_queryset_by_role(request, qs)
     
     if disease_filter:
@@ -1532,7 +1532,7 @@ def detections_list(request):
         "planting__status", "-planting__status",
     }
     if sort not in allowed_sorts:
-        sort = "-severity_pct"
+        sort = "-created_at"
     qs = qs.order_by(sort)
 
     paginator = Paginator(qs, page_size)
@@ -1779,7 +1779,7 @@ def yield_records_list(request):
     variety_filter = request.GET.get("variety")
     search = request.GET.get("search", "").strip()
     date_filter = request.GET.get("date_filter")
-    sort = request.GET.get("sort", "-predicted_yield_tons_per_ha")
+    sort = request.GET.get("sort", "-created_at")
     page = request.GET.get("page", 1)
     _ALLOWED_PAGE_SIZES = {10, 25, 50, 100}
     try:
@@ -1799,6 +1799,8 @@ def yield_records_list(request):
     qs = YieldPrediction.objects.filter(is_active=True).select_related(
         "detection", "detection__planting__field",
         "planting__variety", "planting__field",
+        "planting__field__owner", "planting__field__owner__user",
+        "detection__planting__field__owner", "detection__planting__field__owner__user",
     )
     role = user_profile.role if user_profile else 'farmer'
     if role not in ('admin', 'technician'):
@@ -1856,7 +1858,7 @@ def yield_records_list(request):
         "planting__field__name", "-planting__field__name",
     }
     if sort not in allowed_sorts:
-        sort = "-predicted_yield_tons_per_ha"
+        sort = "-created_at"
     qs = qs.order_by(sort)
 
     paginator = Paginator(qs, page_size)
@@ -3036,7 +3038,8 @@ def harvests_list(request):
 
     role = user_profile.role
     qs = HarvestRecord.objects.select_related(
-        'planting', 'planting__field', 'planting__variety'
+        'planting', 'planting__field', 'planting__variety',
+        'planting__field__owner', 'planting__field__owner__user'
     ).filter(is_active=True).order_by('-harvest_date')
 
     if role not in ['admin', 'technician']:
@@ -4277,7 +4280,7 @@ def treatments_list(request):
     disease_filter = request.GET.get('disease', '')
     search_query = request.GET.get('q', '')
     status_filter = request.GET.get('status', 'all')
-    sort_by = request.GET.get('sort', 'disease__name')
+    sort_by = request.GET.get('sort', '-priority')
     
     # Base queryset: include inactive, exclude archived (deleted_at set).
     treatments = TreatmentRecommendation.all_objects.select_related('disease').filter(deleted_at__isnull=True)
@@ -4314,7 +4317,7 @@ def treatments_list(request):
         'pk', '-pk',
     }
     if sort_by not in allowed_sorts:
-        sort_by = 'disease__name'
+        sort_by = '-priority'
     treatments = treatments.order_by(sort_by)
     
     # Pagination

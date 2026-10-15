@@ -866,6 +866,9 @@
         .data-table tbody tr:first-child td:first-child { border-top: 0; }
         .data-table td[data-label]::before { content: none; }
         .data-table td.td-actions { white-space: nowrap; text-align: right; vertical-align: middle; }
+        /* Actions label on the right side in every table, aligned with the buttons */
+        .data-table th.col-actions,
+        .data-table td.col-actions { text-align: right; }
         /* Utility alignment helpers win over the base left alignment */
         .data-table th.text-right { text-align: right; }
         .data-table th.text-center { text-align: center; }

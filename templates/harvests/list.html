@@ -64,6 +64,7 @@
   .hr-muted { color: var(--color-text-muted); font-style: italic; }
   .hr-num { text-align: right; font-variant-numeric: tabular-nums; }
   .hr-code { display: inline-flex; padding: 0.125rem 0.5rem; color: var(--color-success-text); background: var(--color-success-soft); border: 1px solid var(--color-success-border); border-radius: var(--radius-xs); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-sm); font-weight: 600; }
+  .hr-quality { display: inline-block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
   .hr-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
   
   .hr-check { justify-content: center; min-width: 2.75rem; }
@@ -271,6 +272,7 @@
               <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-planting__field__name' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
             </a>
           </th>
+          {% if is_admin or is_technician %}<th scope="col">Owner</th>{% endif %}
           <th scope="col" aria-sort="{% if sort_by == 'planting__variety__code' %}ascending{% elif sort_by == '-planting__variety__code' %}descending{% else %}none{% endif %}">
             <a class="hr-sort{% if sort_by == 'planting__variety__code' or sort_by == '-planting__variety__code' %} is-active{% endif %}" href="?sort={% if sort_by == 'planting__variety__code' %}-planting__variety__code{% else %}planting__variety__code{% endif %}{% if request.GET.search %}&search={{ request.GET.search|urlencode }}{% endif %}{% if request.GET.field %}&field={{ request.GET.field|urlencode }}{% endif %}{% if request.GET.variety %}&variety={{ request.GET.variety|urlencode }}{% endif %}{% if request.GET.season %}&season={{ request.GET.season|urlencode }}{% endif %}{% if request.GET.year %}&year={{ request.GET.year|urlencode }}{% endif %}{% if page_size %}&page_size={{ page_size }}{% endif %}">
               Variety
@@ -296,7 +298,7 @@
             </a>
           </th>
           <th scope="col">Quality</th>
-          <th scope="col" class="hr-num no-print">Actions</th>
+          <th scope="col" class="col-actions no-print">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -309,6 +311,9 @@
           <td data-label="Field" class="td-primary">
             <span class="font-semibold text-[var(--color-text-primary)]">{{ r.planting.field.name }}</span>
           </td>
+          {% if is_admin or is_technician %}
+          <td data-label="Owner">{% if r.planting.field.owner %}{{ r.planting.field.owner.user.get_full_name|default:r.planting.field.owner.user.username }}{% else %}<span class="data-empty">Not set</span>{% endif %}</td>
+          {% endif %}
 
           <td data-label="Variety">
             {% if r.planting.variety %}
@@ -345,7 +350,7 @@
             {% elif r.grain_quality == 'under_grade' %}
               <span class="badge-base badge-danger">Under Grade</span>
             {% else %}
-              <span class="badge-base badge-warning">{{ r.grain_quality|default:'Not assessed' }}</span>
+              <span class="badge-base badge-warning hr-quality" title="{{ r.grain_quality }}">{{ r.grain_quality|default:'Not assessed' }}</span>
             {% endif %}
           </td>
 

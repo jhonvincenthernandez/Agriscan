@@ -170,9 +170,9 @@
         <div>
           <label for="det-sort-filter" class="sr-only-agri">Sort detection records</label>
           <select id="det-sort-filter" name="sort" data-autosubmit class="form-select">
-            <option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest</option>
+            <option value="-created_at" {% if request.GET.sort == '-created_at' or not request.GET.sort %}selected{% endif %}>Newest</option>
             <option value="created_at" {% if request.GET.sort == 'created_at' %}selected{% endif %}>Oldest</option>
-            <option value="-severity_pct" {% if request.GET.sort == '-severity_pct' or not request.GET.sort %}selected{% endif %}>Severity (Highest)</option>
+            <option value="-severity_pct" {% if request.GET.sort == '-severity_pct' %}selected{% endif %}>Severity (Highest)</option>
             <option value="severity_pct" {% if request.GET.sort == 'severity_pct' %}selected{% endif %}>Severity (Lowest)</option>
             <option value="-confidence_pct" {% if request.GET.sort == '-confidence_pct' %}selected{% endif %}>Confidence (Highest)</option>
             <option value="confidence_pct" {% if request.GET.sort == 'confidence_pct' %}selected{% endif %}>Confidence (Lowest)</option>
@@ -218,6 +218,7 @@
             <label class="dr-check"><input type="checkbox" id="select-all-cb"><span class="sr-only-agri">Select all detection records on this page</span></label>
           </th>
           <th scope="col">Image</th>
+          {% if is_admin or is_technician %}<th scope="col">Owner</th>{% endif %}
             <th scope="col" aria-sort="{% if sb == 'disease__name' %}ascending{% elif sb == '-disease__name' %}descending{% else %}none{% endif %}">
               <a class="dr-sort{% if sb == 'disease__name' or sb == '-disease__name' %} is-active{% endif %}" href="?sort={% if sb == 'disease__name' %}-disease__name{% else %}disease__name{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if d %}&amp;disease={{ d|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
                 Disease
@@ -260,7 +261,7 @@
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'created_at' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
               </a>
             </th>
-          <th scope="col" class="dr-num no-print">Actions</th>
+          <th scope="col" class="col-actions no-print">Actions</th>
           {% endwith %}
         </tr>
       </thead>
@@ -279,6 +280,9 @@
             {% else %}<span class="data-empty">No image</span>{% endif %}
           </td>
 
+          {% if is_admin or is_technician %}
+          <td data-label="Owner">{% if detection.planting and detection.planting.field and detection.planting.field.owner %}{{ detection.planting.field.owner.user.get_full_name|default:detection.planting.field.owner.user.username }}{% else %}<span class="data-empty">Not set</span>{% endif %}</td>
+          {% endif %}
           <td data-label="Disease" class="td-primary">{% if detection.disease %}{{ detection.disease }}{% else %}<span class="data-empty">Unknown</span>{% endif %}</td>
 
           <td data-label="Variety">
