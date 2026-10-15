@@ -70,6 +70,13 @@
   .yr-stage--solid { color: #ffffff; background: var(--color-brand); border-color: var(--color-brand); }
   .yr-model { display: inline-block; max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
   .yr-actions { display: inline-flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+  /* Dense wide table: match plantings density so 13 columns fit large screens */
+  @media (min-width: 1024px) {
+    #yields-table .data-table--xwide { min-width: 54rem; }
+    #yields-table .data-table th,
+    #yields-table .data-table td { padding: 0.625rem 0.75rem; font-size: 0.8125rem; }
+    #yields-table .data-table th { white-space: normal; line-height: 1.35; }
+  }
   
   .yr-check { justify-content: center; min-width: 2.75rem; }
   .data-table th.yr-th-check { width: 3.5rem; padding-inline: 0.5rem; text-align: center; }
@@ -312,13 +319,13 @@
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'predicted_yield_tons_per_ha' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
               </a>
             </th>
-            <th scope="col" class="yr-num" aria-sort="{% if sb == 'predicted_total_production_tons' %}ascending{% elif sb == '-predicted_total_production_tons' %}descending{% else %}none{% endif %}">
+            <th scope="col" class="yr-num col-prio-low" aria-sort="{% if sb == 'predicted_total_production_tons' %}ascending{% elif sb == '-predicted_total_production_tons' %}descending{% else %}none{% endif %}">
               <a class="yr-sort{% if sb == 'predicted_total_production_tons' or sb == '-predicted_total_production_tons' %} is-active{% endif %}" href="?sort={% if sb == '-predicted_total_production_tons' %}predicted_total_production_tons{% else %}-predicted_total_production_tons{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
                 Production
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'predicted_total_production_tons' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
               </a>
             </th>
-            <th scope="col" class="yr-num" aria-sort="{% if sb == 'area_hectares' %}ascending{% elif sb == '-area_hectares' %}descending{% else %}none{% endif %}">
+            <th scope="col" class="yr-num col-prio-low" aria-sort="{% if sb == 'area_hectares' %}ascending{% elif sb == '-area_hectares' %}descending{% else %}none{% endif %}">
               <a class="yr-sort{% if sb == 'area_hectares' or sb == '-area_hectares' %} is-active{% endif %}" href="?sort={% if sb == 'area_hectares' %}-area_hectares{% else %}area_hectares{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
                 Area
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == '-area_hectares' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
@@ -336,7 +343,7 @@
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == '-estimated_harvest_date' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
               </a>
             </th>
-            <th scope="col" aria-sort="{% if sb == 'created_at' %}ascending{% elif sb == '-created_at' %}descending{% else %}none{% endif %}">
+            <th scope="col" class="col-prio-low" aria-sort="{% if sb == 'created_at' %}ascending{% elif sb == '-created_at' %}descending{% else %}none{% endif %}">
               <a class="yr-sort{% if sb == 'created_at' or sb == '-created_at' %} is-active{% endif %}" href="?sort={% if sb == '-created_at' %}created_at{% else %}-created_at{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
                 Created
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'created_at' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
@@ -397,7 +404,7 @@
               {% endif %}
             </td>
 
-            <td data-label="Production" class="yr-num">
+            <td data-label="Production" class="yr-num col-prio-low">
               {% if record.predicted_total_production_tons %}
                 <span class="font-medium text-[var(--color-text-primary)]">{{ record.predicted_total_production_tons }} t</span>
               {% elif record.total_tons %}
@@ -407,7 +414,7 @@
               {% endif %}
             </td>
 
-            <td data-label="Area" class="yr-num">
+            <td data-label="Area" class="yr-num col-prio-low">
               {% if record.area_hectares %}
                 <span>{{ record.area_hectares }} ha</span>
               {% else %}
@@ -447,7 +454,7 @@
               {% endif %}
             </td>
 
-            <td data-label="Created">
+            <td data-label="Created" class="col-prio-low">
               {{ record.created_at|date:'M d, Y H:i' }}
             </td>
 

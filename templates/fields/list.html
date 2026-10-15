@@ -80,8 +80,15 @@
   }
 
   /* View switch: cards below 1024px (current design), table from 1024px */
-  .fl-table-view { display: none; margin-bottom: 2rem; }
+  .fl-table-view { display: none; margin-bottom: 2rem; min-width: 0; max-width: 100%; }
   .fl-card-view { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+  /* Dense wide table: match plantings density so 10 columns fit large screens */
+  @media (min-width: 1024px) {
+    .fl-table-view .data-table--wide { min-width: 52rem; }
+    .fl-table-view .data-table th,
+    .fl-table-view .data-table td { padding: 0.625rem 0.75rem; font-size: 0.8125rem; }
+    .fl-table-view .data-table th { white-space: normal; line-height: 1.35; }
+  }
   @media (min-width: 640px) { .fl-card-view { gap: 1.5rem; } }
   @media (min-width: 768px) { .fl-card-view { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (min-width: 1024px) {
@@ -90,7 +97,7 @@
   }
 
   .fl-muted { color: var(--color-text-muted); font-style: italic; }
-  .fl-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-sm); white-space: nowrap; }
+  .fl-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--text-sm); white-space: nowrap; display: inline-block; max-width: 11rem; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
   .fl-num { text-align: right; font-variant-numeric: tabular-nums; }
   .fl-name { color: var(--color-text-primary); font-weight: 600; }
   .fl-sub { display: block; margin-top: 0.125rem; color: var(--color-text-secondary); font-size: var(--text-sm); }
@@ -238,7 +245,7 @@
             <th scope="col">Flood Risk</th>
             <th scope="col" class="fl-num">Area</th>
             <th scope="col" class="fl-num">Plantings</th>
-            <th scope="col">GPS</th>
+            <th scope="col" class="col-prio-low">GPS</th>
             <th scope="col" class="col-actions no-print">Actions</th>
           </tr>
         </thead>
@@ -275,14 +282,14 @@
             </td>
             <td class="fl-num">{{ field.area_hectares }} ha</td>
             <td class="fl-num"><span class="fl-count">{{ field.plantings.count }}</span></td>
-            <td>
+            <td class="col-prio-low">
               {% if field.gps_lat and field.gps_lon %}
-              <span class="fl-mono">{{ field.gps_lat|floatformat:6 }}, {{ field.gps_lon|floatformat:6 }}</span>
+              <span class="fl-mono" title="{{ field.gps_lat|floatformat:6 }}, {{ field.gps_lon|floatformat:6 }}">{{ field.gps_lat|floatformat:6 }}, {{ field.gps_lon|floatformat:6 }}</span>
               {% else %}
               <span class="data-empty">Not set</span>
               {% endif %}
             </td>
-            <td class="td-actions">
+            <td class="td-actions col-actions no-print">
               <span class="fl-actions">
                 <a href="{% url 'polls:field_edit' field.pk %}" class="btn btn-secondary btn-sm" aria-label="Edit {{ field.name }}">Edit</a>
                 <a href="{% url 'polls:field_delete' field.pk %}"
