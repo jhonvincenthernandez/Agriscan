@@ -38,7 +38,7 @@ Daily farm work for your own records:
 Support and monitoring across farmers:
 
 - Review detections, plantings, fields, and logs
-- Add technician notes and treatment guidance
+- Confirm treatment guidance and update records within allowed fields
 - Use knowledge base as reference
 - View reports and analytics within allowed scope
 
@@ -60,9 +60,9 @@ If you cannot find a menu, it is often a role restriction. Check the section for
 
 1. Open the application address in your browser.
 2. Select Register.
-3. Fill in username, password, contact details, role request, and farm location if required.
+3. Fill in username, password, contact details, and farm location if required. New accounts default to the Farmer role.
 4. Submit the form.
-5. Wait for approval if your organization requires admin approval.
+5. Wait for admin approval. Accounts remain pending until an admin approves them.
 
 If registration needs approval, you cannot access full features until an admin approves the account.
 
@@ -169,7 +169,7 @@ The scan detail page also provides the option to open Yield Prediction from that
 
 ### 5.5 Run Yield Prediction
 
-Path: Tools then Yield Prediction
+Path: Yield Prediction
 
 Choose one model mode:
 
@@ -232,10 +232,10 @@ Report production metrics come from active harvest records only. Disease frequen
 
 ### 5.9 Use Knowledge Base and Treatments
 
-Path: Knowledge or Treatments
+Path: Knowledge
 
 - Open Knowledge to read pest, disease, and nutrient deficiency articles with symptoms and management notes.
-- Open the linked treatment suggestion from a detection detail page for the specific recommended action.
+- Open the linked treatment suggestion from a detection detail page for the specific recommended action. Treatment management pages are restricted to Technician and Admin roles.
 - Ask a technician if the case is severe or unclear.
 
 ## 6. Technician Guide
@@ -245,7 +245,7 @@ Path: Knowledge or Treatments
 1. Open Dashboard and check system wide alerts.
 2. Filter Detections by location and date.
 3. Review a farmer planting and scan history.
-4. Add a recommended action or note to a Detection record.
+4. Update the Detection record within allowed fields or confirm the linked treatment recommendation.
 5. Use Knowledge Base articles as reference for farmer advice.
 
 ### 6.2 Review Workflow
@@ -255,8 +255,8 @@ Path: Knowledge or Treatments
 3. Open Detection Detail.
 4. Inspect the leaf image and AI output including confidence and severity.
 5. Check planting and field context for planting date, variety, and season.
-6. Add a technician note or confirm the linked treatment recommendation.
-7. Create a follow up task or inform the farmer about next steps.
+6. Update the Detection record within allowed fields or confirm the linked treatment recommendation.
+7. Inform the farmer about next steps.
 
 ### 6.3 Field and Log Review
 
@@ -345,7 +345,7 @@ Path: Trash
 
 Each detection shows:
 
-- Disease label, for example Blast, Bacterial Leaf Blight, Brown Spot, or Healthy
+- Disease label, for example Leaf Blast, Neck Blast, Bacterial Leaf Blight, Brown Spot, Narrow Brown Spot, Tungro, or Healthy
 - Confidence percentage from the model
 - Severity level for treatment intensity
 - Treatment suggestion and linked knowledge article
@@ -399,9 +399,9 @@ Each prediction shows:
 
 - Predicted yield in tons per hectare
 - Total production estimate in tons (area multiplied by predicted yield)
-- Sacks equivalent (20 kg sacks)
+- Sacks equivalent (50 kg sacks, 20 sacks per ton)
 - Confidence percentage from 55 to 95 percent
-- Harvest readiness status such as READY, NEEDS MORE TIME, or PAST OPTIMUM
+- Crop maturity stage based on growth progress: Early Stage (0 to 40 days), Vegetative (41 to 65 days), Reproductive (66 to 85 days), Ripening (86 to 100 days), or Harvest Ready (100 plus days)
 - Harvest date estimate where available
 
 Higher confidence usually means more complete inputs: known planting record, historical yield data, good canopy photo, and recent health status from detection.
@@ -423,7 +423,7 @@ Predictions remain available through this workflow. They remain separate from ha
 - CNN yield model is currently disabled: ask the admin to turn on Enable CNN Yield Model in System Settings.
 - Ensemble requires CNN to be enabled: the ensemble needs the CNN prediction as one input, so CNN must be on first.
 - Canopy image is required: upload a valid image file for CNN and Ensemble.
-- Field area must be greater than 0: enter a valid area above 0.01 hectares.
+- Field area must be greater than 0: enter a valid area with a form minimum of 0.01 hectares.
 - Missing required fields: select a planting record, or fill variety, area, dates, and growth days manually.
 
 ## 10. Harvest Records in Detail
@@ -565,7 +565,7 @@ The most common reasons are blurry photos, dark photos, overexposed photos, or p
 No. Use Harvest records for verified production. Predictions are planning estimates only.
 
 **What is the difference between Linear, CNN, and Ensemble**
-Linear uses farm table data. CNN uses canopy image plus field context. Ensemble blends both outputs with weights based on model error.Lower error gets higher weight.
+Linear uses farm table data. CNN uses canopy image plus field context. Ensemble blends both outputs with weights based on model error. Lower error gets higher weight.
 
 **What should I send when asking for support**
 Send the page name, your role, the exact error message, and what you already tried. This speeds up support.
@@ -581,7 +581,7 @@ When contacting support, include:
 - Exact error message
 - Steps you already tried
 
-Support contact configured for this deployment: DA San Teodoro Rice support channel. Use the Contact DA Support button inside the Help page when available.
+For support, use the Contact DA Support button inside the Help page. It opens a prefilled support request. Include page opened, role used, exact error, and steps already tried.
 
 ## 17. Responsible Use Notes
 
@@ -593,7 +593,14 @@ Support contact configured for this deployment: DA San Teodoro Rice support chan
 
 ## 18. Quick Reference Paths
 
+Use the navigation bar first. Use these paths when a link fails, when bookmarking, or when reporting an issue to support. Append each path to the server address, for example https://your-domain.com/login/.
+
+If a path returns permission denied, it usually means the page is outside your role. Farmers see personal scope only.
+
+### Available to all logged in roles with role based scope
+
 - Login: /login/
+- Register: /register/
 - Dashboard: /dashboard/
 - Help: /help/
 - Scan: /scan/
@@ -607,11 +614,15 @@ Support contact configured for this deployment: DA San Teodoro Rice support chan
 - Season Log: /season-log/
 - Reports: /reports/
 - Knowledge: /knowledge/
-- Treatments: /treatments/
-- Varieties: /varieties/
+- Varieties: /varieties/ (view for all roles, manage for Technician and Admin)
 - Notifications: /notifications/
 - Announcements: /announcements/
 - Profile: /profile/
-- Trash: /trash/
-- Manage Users: /manage-users/
-- System Settings: /system-settings/
+- Change Password: /change-password/
+
+### Restricted by role
+
+- Treatments: /treatments/ (Technician and Admin)
+- Trash and Archive: /trash/ (Technician and Admin)
+- Manage Users: /manage-users/ (Admin)
+- System Settings: /system-settings/ (Admin)
