@@ -80,6 +80,8 @@ docs/_build/
 !/AGENTS.md
 !/README.md
 !/documentation.md
+!/USER_MANUAL.md
+
 
 # Model files (large binary files)
 models/*.h5
