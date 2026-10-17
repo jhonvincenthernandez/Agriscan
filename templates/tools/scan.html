@@ -302,7 +302,7 @@
                 <svg class="h-4 w-4 text-[var(--color-brand)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 12c0 5.591 3.824 10.291 9 11.622C17.176 22.291 21 17.591 21 12c0-1.041-.133-2.051-.382-3.016z"/>
                 </svg>
-                <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">Recommended Treatment</h3>
+                <h3 class="text-sm font-semibold text-[var(--color-text-primary)]">{% if result.disease == UNKNOWN_LABEL %}Retake Guidance{% else %}Recommended Treatment{% endif %}</h3>
               </div>
             </div>
             <div class="p-4">
@@ -310,8 +310,8 @@
             </div>
           </div>
 
-          <!-- COMPLETE TREATMENT GUIDE -->
-          {% if detailed_treatment and detection_record %}
+          <!-- COMPLETE TREATMENT GUIDE (disease and healthy results only) -->
+          {% if detailed_treatment and detection_record and result.disease != UNKNOWN_LABEL %}
           <a href="{% url 'polls:detections_detail' detection_record.pk %}" class="btn btn-primary btn-block">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z"/>
