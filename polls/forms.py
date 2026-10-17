@@ -60,9 +60,9 @@ def get_health_choices(user=None):
             field_name = det.planting.field.name if det.planting and det.planting.field else "Unknown"
 
             if det.disease and det.severity_pct is not None:
-                label = f"🦠 {det.disease.name} ({det.severity_pct}%) - {date_str} - {field_name} [ID:{det.pk}]"
+                label = f" {det.disease.name} ({det.severity_pct}%) - {date_str} - {field_name} [ID:{det.pk}]"
             else:
-                label = f"✅ Healthy - {date_str} - {field_name} [ID:{det.pk}]"
+                label = f" Healthy - {date_str} - {field_name} [ID:{det.pk}]"
 
             choices.append((str(det.pk), label))
 
@@ -74,9 +74,9 @@ def get_health_choices(user=None):
     # Fallback if no detections found
     return [
         ("", "-- Select Health Status --"),
-        ("0", "✅ Healthy (No disease detected)"),
-        ("0.5", "⚠️ Moderate disease presence"),
-        ("1.0", "🔴 Severe disease detected"),
+        ("0", " Healthy (No disease detected)"),
+        ("0.5", " Moderate disease presence"),
+        ("1.0", " Severe disease detected"),
     ]
 
 DEFAULT_VARIETIES = (
@@ -1102,7 +1102,7 @@ class PlantingRecordForm(forms.ModelForm):
                 self.fields['field'].disabled = True
                 self.fields['field'].queryset = all_fields
                 self.fields['field'].help_text = (
-                    '⚠️ Field cannot be changed for existing planting records. '
+                    ' Field cannot be changed for existing planting records. '
                     'This protects data integrity of related detections and yield predictions.'
                 )
                 # Add visual styling to indicate it's disabled
@@ -1723,7 +1723,7 @@ class AnnouncementForm(forms.ModelForm):
                         "w-full px-4 py-2 border border-gray-300 rounded-lg "
                         "focus:ring-2 focus:ring-green-500 focus:border-transparent"
                     ),
-                    "placeholder": "e.g., ⚠️ Brown Spot Alert in San Nicolas",
+                    "placeholder": "e.g.,  Brown Spot Alert in San Nicolas",
                 }
             ),
             "content": forms.Textarea(
@@ -1830,7 +1830,7 @@ class AnnouncementForm(forms.ModelForm):
 
         help_texts = {
             "title": (
-                'Short, descriptive title (e.g., "⚠️ Brown Spot Alert"). '
+                'Short, descriptive title (e.g., " Brown Spot Alert"). '
                 "You can use emojis!"
             ),
             "content": (

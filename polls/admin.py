@@ -291,7 +291,7 @@ class AnnouncementAdmin(admin.ModelAdmin):
 		("Email (Future Use)", {
 			"fields": ("send_email", "email_sent"),
 			"classes": ("collapse",),
-			"description": "⚠️ Email integration is prepared but commented out. See ANNOUNCEMENT_SYSTEM_IMPLEMENTATION.md to activate."
+			"description": " Email integration is prepared but commented out. See ANNOUNCEMENT_SYSTEM_IMPLEMENTATION.md to activate."
 		}),
 		("Metadata", {
 			"fields": ("created_by", "created_at", "updated_at", "read_stats"),

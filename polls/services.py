@@ -288,11 +288,11 @@ class YieldPredictionResult:
     def _format_readiness(self, readiness: str) -> str:
         """Format readiness stage for display."""
         mapping = {
-            'early': '🌱 Early Stage (Vegetative)',
-            'vegetative': '🌿 Vegetative Growth',
-            'reproductive': '🌾 Reproductive Stage',
-            'ripening': '🌾 Ripening',
-            'harvest_ready': '✅ Harvest Ready',
+            'early': ' Early Stage (Vegetative)',
+            'vegetative': ' Vegetative Growth',
+            'reproductive': ' Reproductive Stage',
+            'ripening': ' Ripening',
+            'harvest_ready': ' Harvest Ready',
         }
         return mapping.get(readiness, readiness)
 
@@ -824,7 +824,7 @@ def classify_leaf_image(
                 confidence_pct=0,
                 severity_pct=0,
                 severity_label="N/A",
-                treatment=f"❌ {reason}\n\n"
+                treatment=f" {reason}\n\n"
                          "Please retake photo with:\n"
                          "✓ Clear rice leaf visible\n"
                          "✓ Natural daylight (avoid flash)\n"
@@ -866,7 +866,7 @@ def classify_leaf_image(
             confidence_pct=confidence,
             severity_pct=0,
             severity_label="N/A",
-            treatment=f"⚠️ Low confidence ({confidence}%)\n\n"
+            treatment=f" Low confidence ({confidence}%)\n\n"
                      "Image quality too low or not a rice leaf.\n"
                      "Please retake photo with:\n"
                      "✓ Clear rice leaf in frame\n"
@@ -886,7 +886,7 @@ def classify_leaf_image(
             confidence_pct=confidence,
             severity_pct=0,
             severity_label="N/A",
-            treatment="⚠️ Image ambiguous - model cannot classify confidently\n\n"
+            treatment=" Image ambiguous - model cannot classify confidently\n\n"
                      "Possible issues:\n"
                      "• Multiple diseases present\n"
                      "• Poor image quality\n"
@@ -1121,7 +1121,11 @@ def _predict_yield_ensemble(
     
     return (tons_per_ha_ensemble, ensemble_conf)
 
-
+    # Architecture adapted from r1wtn/rice_yield_CNN
+    # https://github.com/r1wtn/rice_yield_CNN (Apache-2.0)
+    # Modified by the Agriscan team: wrapped in a builder function
+    # for lazy torch import.
+    # Third-party component, not claimed by the authors of Agriscan.
 def _build_rice_yield_cnn(torch_mod):
     nn = torch_mod.nn
 
@@ -1280,7 +1284,7 @@ def _predict_yield_cnn_tons_per_ha(image_file: Any) -> float:
     model, device = _ensure_yield_cnn_model()
     torch = _TORCH
 
-    # Tagalog: I-match ang preprocess sa reference implementation (512x512, mean/std=0.5).
+    # Preprocessing follows r1wtn/rice_yield_CNN (Apache-2.0): 512x512, mean/std = 0.5.
     img = Image.open(image_file).convert("RGB").resize((512, 512))
     arr = np.asarray(img).astype(np.float32) / 255.0
     arr = (arr - np.float32(0.5)) / np.float32(0.5)
