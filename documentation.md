@@ -70,7 +70,9 @@ AgriScan+ uses three role classes defined in profile records:
 2. Business layer
    - Django views, forms, services, decorators, and model-level validation.
 3. AI inference layer
-   - TensorFlow or TFLite model artifacts for disease and yield logic.
+   - TensorFlow Lite model artifact for disease detection.
+   - scikit-learn/joblib model for Linear Regression yield prediction.
+   - Optional PyTorch model and checkpoint for CNN yield prediction and ensemble mode.
 4. Data layer
    - Relational database via Django ORM and media storage for uploaded files.
 
@@ -84,25 +86,40 @@ Client request -> Django routing and auth -> business validation -> DB read or w
 
 ### Core
 
-- Python 3.10+
+- Python 3.10+ recommended; the current local virtual environment uses Python 3.13.7
 - Django
 - MySQL via mysqlclient
-- TensorFlow and TensorFlow Lite artifacts
+- Gunicorn for the production application server
+- TensorFlow and TensorFlow Lite artifacts for disease detection
 
 ### Data and ML utilities
 
 - numpy
 - pandas
 - scikit-learn
+- joblib
 - pillow
-- opencv-python
+- Optional PyTorch and torchvision for the CNN yield path
 
 ### Reporting and tools
 
 - reportlab
-- matplotlib
-- seaborn
-- jupyter
+
+### Development and research tools
+
+The broader development environment may also include the following tools. They
+support model preparation, exploratory analysis, visualization, and notebook
+experimentation, but they are not required by the deployed Django request path:
+
+- matplotlib for training and evaluation plots
+- seaborn for statistical visualizations and confusion matrices
+- jupyter for interactive notebooks and experiment tracking
+
+The broader historical requirements list Flask and opencv-python as optional
+development or legacy packages. They are not current AgriScan production
+dependencies: the Django application does not import Flask, and its image
+quality checks use Pillow and NumPy rather than OpenCV. Install them only when
+a separate training, experimentation, or legacy script still depends on them.
 
 ---
 
@@ -344,7 +361,7 @@ Key model entities:
 
 - Validate uploads by type and size.
 - Keep secrets in environment variables.
-- Enforce HTTPS and secure host configuration in production.
+- Use HTTPS and secure host configuration in the production VPS deployment.
 
 ### Settings governance pattern
 
@@ -367,16 +384,19 @@ Key model entities:
 
 ### Baseline setup
 
-1. Create and activate virtual environment.
+1. Create and activate the production virtual environment on the VPS.
 2. Install dependencies from requirements.txt.
-3. Apply migrations.
-4. Create superuser.
-5. Run server and validate module access by role.
+3. Configure environment variables and the MySQL-compatible database.
+4. Apply migrations and collect static files.
+5. Run the configured Gunicorn service behind NGINX and validate module access by role.
 
-### Suggested production improvements
+### Production deployment status and operations
 
-- Use process supervision and reverse proxy in production.
-- Keep regular database backup and media backup routines.
+- The application is hosted on a production VPS using the configured Django
+  runtime, Gunicorn application server, NGINX reverse proxy, and environment
+  based settings.
+- Keep regular database and media backup routines at the server or hosting
+  level.
 - Monitor application logs and model-related runtime errors.
 
 ---
@@ -409,4 +429,4 @@ AgriScan+ provides a complete digital workflow for rice disease and yield decisi
 ---
 
 Document owner: AgriScan+ Development Team  
-Last updated: 2026-04-17
+Last updated: 2026-10-23

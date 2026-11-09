@@ -113,3 +113,5 @@ src/
 
 # Dataset and training data (not required at runtime in production hosting)
 dataset/
+
+*.zip

@@ -40,7 +40,7 @@
   .um-selects { display: grid; gap: 0.5rem; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 640px) {
     .um-search-row { flex-direction: row; }
-    .um-selects { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .um-selects { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   }
   @media (min-width: 1024px) {
     .um-kbd { display: inline-block; }
@@ -204,6 +204,18 @@
             {% endfor %}
           </select>
         </div>
+
+        <div>
+          <label for="um-sort" class="sr-only-agri">Sort users</label>
+          <select id="um-sort" name="sort" onchange="this.form.submit()" class="form-select">
+            <option value="-last_login" {% if sort_by == '-last_login' %}selected{% endif %}>Last login: newest</option>
+            <option value="last_login" {% if sort_by == 'last_login' %}selected{% endif %}>Last login: oldest</option>
+            <option value="-date_joined" {% if sort_by == '-date_joined' %}selected{% endif %}>Date joined: newest</option>
+            <option value="date_joined" {% if sort_by == 'date_joined' %}selected{% endif %}>Date joined: oldest</option>
+            <option value="username" {% if sort_by == 'username' %}selected{% endif %}>Username: A-Z</option>
+            <option value="-username" {% if sort_by == '-username' %}selected{% endif %}>Username: Z-A</option>
+          </select>
+        </div>
       </div>
     </form>
   </div>
@@ -216,20 +228,20 @@
       <thead>
         <tr>
           <th scope="col">
-            <a href="?sort={% if sort_by == 'username' %}-username{% else %}username{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'username' or sort_by == '-username' %}is-active{% endif %}">
+            <a href="?sort={% if sort_by == 'username' %}-username{% else %}username{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}&page_size={{ page_size }}" class="um-sort {% if sort_by == 'username' or sort_by == '-username' %}is-active{% endif %}">
               Full Name
               <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-username' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
             </a>
           </th>
           <th scope="col">Username</th>
           <th scope="col">
-            <a href="?sort={% if sort_by == 'role' %}-role{% else %}role{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'role' or sort_by == '-role' %}is-active{% endif %}">
+            <a href="?sort={% if sort_by == 'role' %}-role{% else %}role{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}&page_size={{ page_size }}" class="um-sort {% if sort_by == 'role' or sort_by == '-role' %}is-active{% endif %}">
               Role
               <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-role' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
             </a>
           </th>
           <th scope="col">
-            <a href="?sort={% if sort_by == 'status' %}-status{% else %}status{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'status' or sort_by == '-status' %}is-active{% endif %}">
+            <a href="?sort={% if sort_by == 'status' %}-status{% else %}status{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}&page_size={{ page_size }}" class="um-sort {% if sort_by == 'status' or sort_by == '-status' %}is-active{% endif %}">
               Status
               <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-status' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
             </a>
@@ -237,9 +249,9 @@
           <th scope="col">Email</th>
           <th scope="col">Location</th>
           <th scope="col">
-            <a href="?sort={% if sort_by == 'date_joined' %}-date_joined{% else %}date_joined{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="um-sort {% if sort_by == 'date_joined' or sort_by == '-date_joined' %}is-active{% endif %}">
+            <a href="?sort={% if sort_by == 'last_login' %}-last_login{% else %}last_login{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}&page_size={{ page_size }}" class="um-sort {% if sort_by == 'last_login' or sort_by == '-last_login' %}is-active{% endif %}">
               Activity
-              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-date_joined' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
+              <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sort_by == '-last_login' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
             </a>
           </th>
           <th scope="col" class="text-right">Actions</th>
