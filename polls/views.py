@@ -248,6 +248,13 @@ def dashboard(request):
 def login(request):
     if request.user.is_authenticated:
         return redirect("polls:dashboard")
+
+    next_url = request.POST.get("next") or request.GET.get("next")
+    if request.method == "GET" and request.GET.get("next"):
+        messages.warning(
+            request,
+            "Your session expired due to inactivity. Please log in again.",
+        )
     
     if request.method == "POST":
         username = request.POST.get("username")
@@ -277,11 +284,17 @@ def login(request):
             auth_login(request, user)
             request.session[ONBOARDING_MODAL_SESSION_KEY] = True
             messages.success(request, f"Welcome, {user.username}!")
+            if next_url and url_has_allowed_host_and_scheme(
+                url=next_url,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return redirect(next_url)
             return redirect("polls:dashboard")
         else:
             messages.error(request, "Invalid username or password.")
     
-    return render(request, "auth/login.html")
+    return render(request, "auth/login.html", {"next": next_url})
 
 
 @login_required(login_url=reverse_lazy('polls:login'))

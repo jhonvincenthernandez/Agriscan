@@ -103,6 +103,11 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# Apply one inactivity timeout to every authenticated role.
+# The timer refreshes after each request so active users stay signed in.
+SESSION_COOKIE_AGE = _env_int('SESSION_COOKIE_AGE', 10)
+SESSION_SAVE_EVERY_REQUEST = True
+
 ROOT_URLCONF = 'mysite.urls'
 
 TEMPLATES = [

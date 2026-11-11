@@ -32,6 +32,7 @@
           <!-- Login Form -->
           <form method="post" class="au-form" data-auth-form>
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next|default:'' }}" />
 
           <div class="au-field">
             <label for="username" class="au-label">Username</label>
