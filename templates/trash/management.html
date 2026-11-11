@@ -610,8 +610,7 @@
                 <th scope="col">Season</th>
                 <th scope="col">Field</th>
                 <th scope="col">Farmer</th>
-                <th scope="col">Stage</th>
-                <th scope="col">Activities</th>
+                <th scope="col">Status Updates</th>
                 <th scope="col">Archived</th>
                 <th scope="col" class="text-right no-print">Actions</th>
               </tr>
@@ -624,16 +623,7 @@
                 <td data-label="Season" class="td-primary">{{ obj.season_label }}</td>
                 <td data-label="Field">{{ obj.field.name }}</td>
                 <td data-label="Farmer">{{ obj.farmer.user.get_full_name|default:obj.farmer.user.username }}</td>
-                <td data-label="Stage">
-                  <span class="tr-badge
-                    {% if obj.current_stage == 'harvested' %}tr-badge-success
-                    {% elif obj.current_stage == 'harvest_ready' %}tr-badge-warning
-                    {% elif obj.current_stage == 'growing' %}tr-badge-info
-                    {% else %}tr-badge-neutral{% endif %}">
-                    {{ obj.get_current_stage_display }}
-                  </span>
-                </td>
-                <td data-label="Activities">{{ obj.activities.count }} activit{{ obj.activities.count|pluralize:"y,ies" }}</td>
+                <td data-label="Status updates">{{ obj.checkins.count }} update{{ obj.checkins.count|pluralize }}</td>
                 <td data-label="Archived">{{ obj.deleted_at|date:"M d, Y"|default:"--" }}</td>
                 <td data-label="Actions" class="td-actions no-print">{% include 'trash/_actions.html' with model="season_log" pk=obj.pk obj_name=obj.season_label %}</td>
               </tr>

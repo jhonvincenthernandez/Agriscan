@@ -3,6 +3,7 @@ import csv
 import json
 from io import BytesIO
 import logging
+from decimal import Decimal
 
 
 from django.conf import settings
@@ -33,7 +34,7 @@ from .forms import (
     RegistrationForm,
     RiceVarietyForm,
     SeasonLogForm,
-    FarmActivityForm,
+    CropStatusCheckInForm,
     SiteSettingForm,
     KnowledgeEntryForm,
 )
@@ -43,7 +44,7 @@ from .models import (
     Profile,
     RiceVariety,
     SeasonLog,
-    FarmActivity,
+    CropStatusCheckIn,
     Field,
     PlantingRecord,
     HarvestRecord,
@@ -2973,9 +2974,19 @@ def planting_edit(request, pk: int):
     if request.method == 'POST':
         form = PlantingRecordForm(request.POST, instance=planting, user=request.user)
         if form.is_valid():
-            form.save()
-            messages.success(request, f"Planting record for '{planting.field.name}' updated successfully!")
-            return redirect('polls:plantings_list')
+            from django.db import IntegrityError, transaction
+            try:
+                with transaction.atomic():
+                    planting = form.save()
+                    _sync_linked_season_log(planting)
+            except IntegrityError:
+                form.add_error(
+                    None,
+                    "These planting details would create a duplicate Season Log.",
+                )
+            else:
+                messages.success(request, f"Planting record for '{planting.field.name}' updated successfully!")
+                return redirect('polls:plantings_list')
     else:
         form = PlantingRecordForm(instance=planting, user=request.user)
     
@@ -2988,6 +2999,78 @@ def planting_edit(request, pk: int):
         'today': timezone.now().date(),
     }
     return render(request, 'plantings/form.html', context)
+
+
+def _sync_linked_season_log(planting):
+    """Keep the linked Season Log's planting-owned fields current."""
+    season_log = getattr(planting, 'season_log', None)
+    if not season_log:
+        return
+
+    actual_harvest_date = planting.actual_harvest_date
+    if actual_harvest_date is None:
+        active_harvest = HarvestRecord.all_objects.filter(
+            planting_id=planting.pk,
+            is_active=True,
+        ).order_by('-harvest_date', '-pk').first()
+        if active_harvest:
+            actual_harvest_date = active_harvest.harvest_date
+            PlantingRecord.objects.filter(pk=planting.pk).update(
+                status='harvested',
+                actual_harvest_date=actual_harvest_date,
+            )
+            planting.status = 'harvested'
+            planting.actual_harvest_date = actual_harvest_date
+
+    season_log.field = planting.field
+    season_log.variety = planting.variety
+    season_log.season_year = planting.planting_date.year
+    season_log.season_type = planting.season
+    season_log.date_started = planting.planting_date
+    season_log.date_planted = planting.planting_date
+    season_log.date_harvested = planting.expected_harvest_date
+    active_harvest = HarvestRecord.all_objects.filter(
+        planting_id=planting.pk,
+        is_active=True,
+    ).order_by('-harvest_date', '-pk').first()
+    season_log.actual_yield_sacks = (
+        active_harvest.actual_yield_tons * Decimal('20')
+        if active_harvest else None
+    )
+    season_log.save(update_fields=[
+        'field',
+        'variety',
+        'season_year',
+        'season_type',
+        'date_started',
+        'date_planted',
+        'date_harvested',
+        'actual_yield_sacks',
+    ])
+
+
+def _link_matching_planting(season_log):
+    """Link an unlinked Season Log only when its planting match is unambiguous."""
+    if season_log.planting_id:
+        return season_log.planting
+
+    matches = PlantingRecord.objects.filter(
+        field_id=season_log.field_id,
+        planting_date__year=season_log.season_year,
+        season=season_log.season_type,
+        is_active=True,
+        season_log__isnull=True,
+    )
+    if season_log.variety_id:
+        matches = matches.filter(variety_id=season_log.variety_id)
+
+    planting = matches.order_by('-planting_date', '-pk').first()
+    if not planting or matches.count() != 1:
+        return None
+
+    season_log.planting = planting
+    season_log.save(update_fields=['planting'])
+    return planting
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
@@ -6030,7 +6113,7 @@ def season_log_list(request):
     role    = profile.role
 
     qs = SeasonLog.objects.filter(is_active=True).select_related(
-        'farmer__user', 'field', 'variety'
+        'farmer__user', 'field', 'variety', 'planting'
     )
 
     if role == 'farmer':
@@ -6040,7 +6123,6 @@ def season_log_list(request):
     search     = request.GET.get('search', '').strip()
     year_f     = request.GET.get('year', '')
     season_f   = request.GET.get('season', '')
-    stage_f    = request.GET.get('stage', '')
     variety_f  = request.GET.get('variety', '')
 
     if search:
@@ -6057,14 +6139,15 @@ def season_log_list(request):
         qs = qs.filter(season_year=year_f)
     if season_f:
         qs = qs.filter(season_type=season_f)
-    if stage_f:
-        qs = qs.filter(current_stage=stage_f)
     if variety_f:
         qs = qs.filter(variety__pk=variety_f)
 
     # ── Stats (for header cards) ─────────────────────────────────────────
     total_count    = qs.count()
-    harvested_qs   = qs.filter(current_stage='harvested', actual_yield_sacks__isnull=False)
+    harvested_qs   = qs.filter(
+        planting__status='harvested',
+        actual_yield_sacks__isnull=False,
+    )
     avg_yield      = harvested_qs.aggregate(avg=Avg('actual_yield_sacks'))['avg']
     total_income   = harvested_qs.aggregate(s=Sum('gross_income'))['s']
 
@@ -6115,19 +6198,16 @@ def season_log_list(request):
         'search':     search,
         'year_f':     year_f,
         'season_f':   season_f,
-        'stage_f':    stage_f,
         'variety_f':  variety_f,
         'years':      years,
         'varieties':  varieties,
         'season_choices': SeasonLog.SEASON_CHOICES,
-        'stage_choices':  SeasonLog.STAGE_CHOICES,
     })
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
 def season_log_detail(request, pk):
-    """Full timeline of a single season — all activities in chronological order."""
-    from django.db.models import Sum
+    """Show the season summary and crop-status check-in history."""
 
     profile = request.user.profile
     log     = get_object_or_404(SeasonLog, pk=pk, is_active=True)
@@ -6137,28 +6217,11 @@ def season_log_detail(request, pk):
         messages.error(request, "You don't have permission to view this log.")
         return redirect('polls:season_log_list')
 
-    activities = log.activities.select_related(
-        'detection_record__disease'
-    ).order_by('activity_date', 'created_at')
-
-    # Cost summary
-    cost_summary = activities.aggregate(
-        total_input  = Sum('input_cost'),
-        total_labor  = Sum('labor_cost'),
-    )
-    total_cost = (
-        float(cost_summary['total_input']  or 0) +
-        float(cost_summary['total_labor']  or 0)
-    )
-
-    # Problems summary
-    problems = activities.exclude(problem_severity='none').exclude(problem_observed='')
-
-    # Activity type breakdown
-    from django.db.models import Count
-    activity_breakdown = activities.values('activity_type').annotate(
-        cnt=Count('id')
-    ).order_by('-cnt')
+    checkins = log.checkins.all()
+    latest_checkin = checkins.first()
+    problems = checkins.filter(pk=latest_checkin.pk) if (
+        latest_checkin and (latest_checkin.issues or latest_checkin.issue != 'none')
+    ) else checkins.none()
 
     # Barangay-level variety adoption
     if log.variety:
@@ -6173,11 +6236,9 @@ def season_log_detail(request, pk):
 
     return render(request, 'season_log/detail.html', {
         'log':               log,
-        'activities':        activities,
+        'checkins':          checkins,
+        'latest_checkin':    latest_checkin,
         'problems':          problems,
-        'cost_summary':      cost_summary,
-        'total_cost':        total_cost,
-        'activity_breakdown': activity_breakdown,
         'same_variety_count': same_variety_count,
         'role':              profile.role,
     })
@@ -6192,6 +6253,20 @@ def _build_plantings_json(farmer):
     qs = PlantingRecord.objects.filter(
         field__owner=farmer, is_active=True, season_log__isnull=True
     ).select_related('field', 'variety').order_by('-planting_date')
+    existing_seasons = SeasonLog.objects.filter(
+        farmer=farmer,
+        is_active=True,
+    ).values_list('field_id', 'season_year', 'season_type')
+    from django.db.models import Q
+    duplicate_planting_filters = Q()
+    for field_id, season_year, season_type in existing_seasons:
+        duplicate_planting_filters |= Q(
+            field_id=field_id,
+            planting_date__year=season_year,
+            season=season_type,
+        )
+    if duplicate_planting_filters:
+        qs = qs.exclude(duplicate_planting_filters)
     data = {}
     for p in qs:
         data[str(p.pk)] = {
@@ -6206,8 +6281,10 @@ def _build_plantings_json(farmer):
             'status_display': p.get_status_display() if hasattr(p, 'get_status_display') else p.status,
             'date_started':  p.planting_date.isoformat() if p.planting_date else '',
             'date_planted':  p.planting_date.isoformat() if p.planting_date else '',
-            'date_harvested': (p.actual_harvest_date or p.expected_harvest_date).isoformat()
-                              if (p.actual_harvest_date or p.expected_harvest_date) else '',
+            'expected_harvest_date': p.expected_harvest_date.isoformat()
+                                     if p.expected_harvest_date else '',
+            'actual_harvest_date': p.actual_harvest_date.isoformat()
+                                   if p.actual_harvest_date else '',
         }
     return json.dumps(data)
 
@@ -6259,12 +6336,33 @@ def season_log_create(request):
         if form.is_valid():
             log        = form.save(commit=False)
             log.farmer = target_profile if target_profile else profile
+            if SeasonLog.objects.filter(
+                farmer=log.farmer,
+                field=log.field,
+                season_year=log.season_year,
+                season_type=log.season_type,
+                is_active=True,
+            ).exists():
+                form.add_error(
+                    None,
+                    "A season log for this field, year, and season type already exists.",
+                )
+                return render(request, 'season_log/form.html', {
+                    'form': form, 'form_title': 'New Season Log',
+                    'subtitle': 'Start a new crop season journal', 'is_create': True,
+                    'role': profile.role, 'is_staff': is_staff,
+                    'profiles': profiles_with_fields, 'target_profile': target_profile,
+                    'target_has_fields': target_has_fields,
+                    'plantings_json': _build_plantings_json(target_profile),
+                })
             # Link the chosen PlantingRecord (non-model field — apply manually)
             chosen_planting = form.cleaned_data.get('planting')
             if chosen_planting:
                 log.planting = chosen_planting
             try:
                 log.save()
+                if chosen_planting:
+                    _sync_linked_season_log(chosen_planting)
                 _push_recent_activity(request, f"Created season log: {log.season_label} @ {log.field}")
                 messages.success(request, f"Season log created: {log.season_label} @ {log.field.name}")
                 return redirect('polls:season_log_detail', pk=log.pk)
@@ -6306,11 +6404,30 @@ def season_log_edit(request, pk):
     # For admin/tech: the log already has a farmer; pass their profile
     target_profile = log.farmer
 
+    matching_planting = _link_matching_planting(log)
+    if matching_planting:
+        _sync_linked_season_log(matching_planting)
+        log.refresh_from_db()
+
+    if log.planting_id:
+        _sync_linked_season_log(
+            PlantingRecord.objects.get(pk=log.planting_id)
+        )
+        log.refresh_from_db()
+
     if request.method == 'POST':
         form = SeasonLogForm(request.POST, instance=log, owner_profile=target_profile)
         if form.is_valid():
             try:
-                form.save()
+                log = form.save()
+                matching_planting = _link_matching_planting(log)
+                if matching_planting:
+                    _sync_linked_season_log(matching_planting)
+                if log.planting_id:
+                    _sync_linked_season_log(
+                        PlantingRecord.objects.get(pk=log.planting_id)
+                    )
+                    log.refresh_from_db()
                 messages.success(request, "Season log updated.")
                 return redirect('polls:season_log_detail', pk=log.pk)
             except IntegrityError:
@@ -6350,8 +6467,8 @@ def season_log_delete(request, pk):
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
-def activity_create(request, season_pk):
-    """Add a farm activity to a season log."""
+def crop_checkin_create(request, season_pk):
+    """Record a short crop-status check-in for a season."""
     profile    = request.user.profile
     season_log = get_object_or_404(SeasonLog, pk=season_pk, is_active=True)
 
@@ -6360,110 +6477,70 @@ def activity_create(request, season_pk):
         return redirect('polls:season_log_list')
 
     if request.method == 'POST':
-        form = FarmActivityForm(request.POST, season_log=season_log, owner_profile=profile)
+        form = CropStatusCheckInForm(request.POST)
         if form.is_valid():
-            activity            = form.save(commit=False)
-            activity.season_log = season_log
-            activity.save()
-
-            # ── Auto-advance season stage based on activity type ──────────
-            stage_map = {
-                'land_prep':    'land_prep',
-                'seedbed':      'land_prep',
-                'transplanting':'planting',
-                'fertilizer':   'growing',
-                'pesticide':    'growing',
-                'fungicide':    'growing',
-                'herbicide':    'growing',
-                'foliar':       'growing',
-                'irrigation':   'growing',
-                'scouting':     'growing',
-                'disease_obs':  'growing',
-                'harvest':      'harvested',
-            }
-            STAGE_ORDER = ['planning', 'land_prep', 'planting', 'growing', 'harvest_ready', 'harvested']
-            desired_stage = stage_map.get(activity.activity_type)
-            if desired_stage:
-                current_idx = STAGE_ORDER.index(season_log.current_stage) if season_log.current_stage in STAGE_ORDER else 0
-                desired_idx = STAGE_ORDER.index(desired_stage)
-                update_fields = []
-                if desired_idx > current_idx:
-                    season_log.current_stage = desired_stage
-                    update_fields.append('current_stage')
-                if activity.activity_type == 'harvest':
-                    if activity.activity_date and not season_log.date_harvested:
-                        season_log.date_harvested = activity.activity_date
-                        update_fields.append('date_harvested')
-                if update_fields:
-                    season_log.save(update_fields=update_fields)
-
-            _push_recent_activity(request, f"Logged activity: {activity.title[:40]}")
-            messages.success(request, f"Activity logged: {activity.get_activity_type_display()}")
+            checkin = form.save(commit=False)
+            checkin.season_log = season_log
+            checkin.planting = season_log.planting
+            checkin.save()
+            messages.success(request, "Crop status updated.")
             return redirect('polls:season_log_detail', pk=season_pk)
     else:
-        form = FarmActivityForm(
-            season_log=season_log,
-            owner_profile=profile,
-            initial={'activity_date': timezone.now().date()}
-        )
+        form = CropStatusCheckInForm()
 
-    return render(request, 'season_log/activity_form.html', {
+    return render(request, 'season_log/checkin_form.html', {
         'form':       form,
         'season_log': season_log,
-        'form_title': 'Log Farm Activity',
-        'is_create':  True,
+        'form_title': 'Update Crop Status',
         'role':       profile.role,
     })
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
-def activity_edit(request, pk):
-    """Edit a farm activity log entry."""
-    profile  = request.user.profile
-    activity = get_object_or_404(FarmActivity, pk=pk)
-    log      = activity.season_log
-
-    if profile.role == 'farmer' and log.farmer != profile:
+def crop_checkin_edit(request, pk):
+    """Edit a crop-status check-in owned by the current farmer or staff."""
+    profile = request.user.profile
+    checkin = get_object_or_404(
+        CropStatusCheckIn.objects.select_related('season_log'),
+        pk=pk,
+    )
+    if profile.role == 'farmer' and checkin.season_log.farmer != profile:
         messages.error(request, "You don't have permission.")
         return redirect('polls:season_log_list')
 
     if request.method == 'POST':
-        form = FarmActivityForm(request.POST, instance=activity,
-                                season_log=log, owner_profile=profile)
+        form = CropStatusCheckInForm(request.POST, instance=checkin)
         if form.is_valid():
             form.save()
-            messages.success(request, "Activity updated.")
-            return redirect('polls:season_log_detail', pk=log.pk)
+            messages.success(request, "Crop status updated.")
+            return redirect('polls:season_log_detail', pk=checkin.season_log_id)
     else:
-        form = FarmActivityForm(instance=activity, season_log=log, owner_profile=profile)
+        form = CropStatusCheckInForm(instance=checkin)
 
-    return render(request, 'season_log/activity_form.html', {
-        'form':       form,
-        'season_log': log,
-        'activity':   activity,
-        'form_title': 'Edit Activity',
-        'is_create':  False,
-        'role':       profile.role,
+    return render(request, 'season_log/checkin_form.html', {
+        'form': form,
+        'season_log': checkin.season_log,
+        'form_title': 'Edit Crop Status',
+        'role': profile.role,
     })
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
-def activity_delete(request, pk):
-    """Delete a farm activity entry."""
-    profile  = request.user.profile
-    activity = get_object_or_404(FarmActivity, pk=pk)
-    log      = activity.season_log
-
-    if profile.role == 'farmer' and log.farmer != profile:
+def crop_checkin_delete(request, pk):
+    """Permanently delete a crop-status check-in after global confirmation."""
+    profile = request.user.profile
+    checkin = get_object_or_404(
+        CropStatusCheckIn.objects.select_related('season_log'),
+        pk=pk,
+    )
+    if profile.role == 'farmer' and checkin.season_log.farmer != profile:
         messages.error(request, "You don't have permission.")
         return redirect('polls:season_log_list')
-
     if request.method == 'POST':
-        log_pk = log.pk
-        activity.delete()
-        messages.success(request, "Activity entry deleted.")
-        return redirect('polls:season_log_detail', pk=log_pk)
-    return redirect('polls:season_log_detail', pk=log.pk)
+        season_log = checkin.season_log
+        checkin.delete()
+        messages.success(request, "Crop status update permanently deleted.")
+    return redirect('polls:season_log_detail', pk=checkin.season_log_id)
 
 
 @login_required(login_url=reverse_lazy('polls:login'))

@@ -77,7 +77,7 @@
           {% if role == 'admin' %}<span class="badge-base badge-neutral">Admin</span>{% endif %}
           {% if role == 'technician' %}<span class="badge-base badge-neutral">Technician</span>{% endif %}
         </div>
-        <p class="sl-lead">Complete history of every crop season: planting, activities, problems, and harvest.</p>
+        <p class="sl-lead">Complete history of every crop season: planting, crop status, problems, and harvest.</p>
       </div>
     </div>
 
@@ -127,7 +127,7 @@
           <kbd class="sl-kbd" aria-hidden="true">Ctrl K</kbd>
         </div>
         <button type="submit" data-loading class="btn btn-primary">Search</button>
-        {% if search or year_f or season_f or stage_f or variety_f %}
+        {% if search or year_f or season_f or variety_f %}
         <a href="{% url 'polls:season_log_list' %}" class="btn btn-secondary">Clear</a>
         {% endif %}
       </div>
@@ -148,15 +148,6 @@
             <option value="">All Seasons</option>
             {% for val, label in season_choices %}
             <option value="{{ val }}" {% if season_f == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div>
-          <label for="f-stage" class="sr-only-agri">Stage</label>
-          <select id="f-stage" name="stage" data-autosubmit class="form-select">
-            <option value="">All Stages</option>
-            {% for val, label in stage_choices %}
-            <option value="{{ val }}" {% if stage_f == val %}selected{% endif %}>{{ label }}</option>
             {% endfor %}
           </select>
         </div>
@@ -193,9 +184,6 @@
           <th scope="col">Barangay</th>
           <th scope="col">Variety / Area</th>
           <th scope="col">Season</th>
-          <th scope="col">Stage</th>
-          <th scope="col">Planted</th>
-          <th scope="col">Harvested</th>
           <th scope="col">Yield</th>
           <th scope="col" class="text-center">Activities</th>
           {% if role != 'farmer' %}<th scope="col">Farmer</th>{% endif %}
@@ -204,7 +192,6 @@
       </thead>
       <tbody>
         {% for log in logs %}
-        {% with stage=log.current_stage %}
         <tr>
           <td data-label="Field" class="td-primary">
             <span class="font-semibold text-[var(--color-text-primary)]">{{ log.field.name }}</span>
@@ -237,38 +224,10 @@
               Wet
               {% else %}
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-              3rd
+              {{ log.get_season_type_display }}
               {% endif %}
               {{ log.season_year }}
             </span>
-          </td>
-
-          <td data-label="Stage">
-            {% if stage == 'harvested' %}
-            <span class="badge-base badge-solid">{{ log.get_current_stage_display }}</span>
-            {% elif stage == 'harvest_ready' %}
-            <span class="badge-base badge-warning">{{ log.get_current_stage_display }}</span>
-            {% elif stage == 'growing' %}
-            <span class="badge-base badge-success">{{ log.get_current_stage_display }}</span>
-            {% else %}
-            <span class="badge-base badge-neutral">{{ log.get_current_stage_display }}</span>
-            {% endif %}
-          </td>
-
-          <td data-label="Planted">
-            {% if log.date_planted %}
-            <span>{{ log.date_planted|date:"M d, Y" }}</span>
-            {% else %}
-            <span class="data-empty">Not yet</span>
-            {% endif %}
-          </td>
-
-          <td data-label="Harvested">
-            {% if log.date_harvested %}
-            <span>{{ log.date_harvested|date:"M d, Y" }}</span>
-            {% else %}
-            <span class="data-empty">Not yet</span>
-            {% endif %}
           </td>
 
           <td data-label="Yield">
@@ -285,8 +244,8 @@
             {% endif %}
           </td>
 
-          <td data-label="Activities" class="text-center">
-            <span class="badge-base badge-neutral">{{ log.activities.count }} activit{{ log.activities.count|pluralize:"y,ies" }}</span>
+          <td data-label="Status updates" class="text-center">
+            <span class="badge-base badge-neutral">{{ log.checkins.count }} update{{ log.checkins.count|pluralize }}</span>
           </td>
 
           {% if role != 'farmer' %}
@@ -301,17 +260,23 @@
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                 <span class="hidden sm:inline">Timeline</span>
               </a>
-              <a href="{% url 'polls:activity_create' log.pk %}" class="btn btn-secondary btn-sm" title="Log activity">
+              <a href="{% url 'polls:crop_checkin_create' log.pk %}" class="btn btn-secondary btn-sm" title="Update crop status">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 <span class="hidden sm:inline">Activity</span>
               </a>
               <a href="{% url 'polls:season_log_edit' log.pk %}" class="btn btn-secondary btn-sm" title="Edit season" aria-label="Edit {{ log.field.name }} season">
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
               </a>
+              <a href="{% url 'polls:season_log_delete' log.pk %}"
+                 data-open-delete="true"
+                 data-delete-label="{{ log.season_label }}"
+                 data-delete-subtitle="Archive this season log?"
+                 aria-label="Archive {{ log.season_label }}"
+                 title="Archive season"
+                 class="btn btn-secondary btn-sm btn-warn">Archive</a>
             </span>
           </td>
         </tr>
-        {% endwith %}
         {% endfor %}
       </tbody>
     </table>

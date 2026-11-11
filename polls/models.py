@@ -1395,19 +1395,67 @@ class HarvestRecord(SoftDeleteModel):
         from .models import YieldPrediction  # local import to avoid circular
         YieldPrediction.objects.filter(planting=self.planting).update(actual_harvest_date=self.harvest_date)
 
+        try:
+            season_log = self.planting.season_log
+        except SeasonLog.DoesNotExist:
+            return
+        season_log.date_harvested = self.harvest_date
+        season_log.actual_yield_sacks = self.actual_yield_tons * Decimal('20')
+        season_log.save(update_fields=['date_harvested', 'actual_yield_sacks'])
+
+    def _sync_related_state(self):
+        planting = PlantingRecord.objects.filter(pk=self.planting_id).first()
+        if not planting:
+            return
+
+        active_harvest = HarvestRecord.all_objects.filter(
+            planting_id=self.planting_id,
+            is_active=True,
+        ).exclude(pk=self.pk).first()
+        if active_harvest:
+            PlantingRecord.objects.filter(pk=planting.pk).update(
+                status='harvested',
+                actual_harvest_date=active_harvest.harvest_date,
+            )
+            planting.status = 'harvested'
+            planting.actual_harvest_date = active_harvest.harvest_date
+        else:
+            PlantingRecord.objects.filter(pk=planting.pk).update(
+                status='ongoing',
+                actual_harvest_date=None,
+            )
+            planting.status = 'ongoing'
+            planting.actual_harvest_date = None
+
+        YieldPrediction.objects.filter(planting_id=planting.pk).update(
+            actual_harvest_date=planting.actual_harvest_date
+        )
+
+        try:
+            season_log = planting.season_log
+        except SeasonLog.DoesNotExist:
+            return
+
+        season_log.date_harvested = planting.actual_harvest_date
+        season_log.actual_yield_sacks = (
+            active_harvest.actual_yield_tons * Decimal('20')
+            if active_harvest else None
+        )
+        season_log.save(update_fields=['date_harvested', 'actual_yield_sacks'])
+
+    def delete(self, using=None, keep_parents=False, hard=False):
+        if hard:
+            return self.purge()
+
+        self.is_active = False
+        self.deleted_at = timezone.now()
+        models.Model.save(self, update_fields=['is_active', 'deleted_at'])
+        self._sync_related_state()
+
     def purge(self):
         """Permanently delete this harvest record."""
-        planting_id = self.planting_id
-
-        # ASSUMPTION: A planting with a deleted harvest should be selectable again.
-        # Revert status and clear harvest date for that planting.
-        PlantingRecord.objects.filter(pk=planting_id).update(
-            status='ongoing',
-            actual_harvest_date=None,
-        )
-        YieldPrediction.objects.filter(planting_id=planting_id).update(actual_harvest_date=None)
-
         super().hard_delete()
+        self._sync_related_state()
 
     def __str__(self):
         return f"Harvest {self.harvest_date} ({self.yield_tons_per_ha} t/ha)"
@@ -1729,7 +1777,7 @@ class SeasonLog(SoftDeleteModel, TimeStampedModel):
     
     Captures the full story of a single rice crop cycle:
     - What was planted, on what area, in which season
-    - What activities were done (land prep → planting → fertilizing → harvest)
+    - Crop status updates and harvest outcomes
     - What problems were encountered and how they were resolved
     - What was the actual harvest (sacks/tons + income)
     
@@ -1738,18 +1786,8 @@ class SeasonLog(SoftDeleteModel, TimeStampedModel):
     """
 
     SEASON_CHOICES = [
-        ('dry',   'Dry Season / 1st Crop (Enero–Mayo)'),
-        ('wet',   'Wet Season / 2nd Crop (Hunyo–Oktubre)'),
-        ('3rd',   '3rd Crop (Nobyembre–Disyembre)'),
-    ]
-
-    STAGE_CHOICES = [
-        ('planning',     'Planning'),
-        ('land_prep',    'Land Preparation'),
-        ('planting',     'Planting'),
-        ('growing',      'Growing / Maintenance'),
-        ('harvest_ready','Harvest Ready'),
-        ('harvested',    'Harvested'),
+        ('dry', 'Dry Season'),
+        ('wet', 'Wet Season'),
     ]
 
     # ── Core links ─────────────────────────────────────────────────────────
@@ -1797,9 +1835,7 @@ class SeasonLog(SoftDeleteModel, TimeStampedModel):
         max_digits=12, decimal_places=2, null=True, blank=True,
         help_text="Net income = gross - expenses (auto-calculated)")
 
-    # ── Status & notes ────────────────────────────────────────────────────
-    current_stage = models.CharField(max_length=20, choices=STAGE_CHOICES,
-                                     default='planning')
+    # ── Notes ──────────────────────────────────────────────────────────────
     summary_notes = models.TextField(blank=True,
                                      help_text="Overall notes for this season")
     is_active     = models.BooleanField(default=True, db_index=True)
@@ -1870,134 +1906,60 @@ class SeasonLog(SoftDeleteModel, TimeStampedModel):
 
     @property
     def season_label(self):
-        labels = {'dry': 'Dry Season', 'wet': 'Wet Season', '3rd': '3rd Season'}
+        labels = {'dry': 'Dry Season', 'wet': 'Wet Season'}
         return f"{labels.get(self.season_type, self.season_type)} {self.season_year}"
 
     def __str__(self):
         return f"{self.farmer} — {self.season_label} @ {self.field}"
 
 
-class FarmActivity(TimeStampedModel):
-    """Individual activity log entry within a SeasonLog.
-    
-    Records every significant farm action the farmer took:
-    - Land preparation (plowing, harrowing, leveling)
-    - Fertilizer application (kind, amount, cost)
-    - Pesticide/fungicide spraying (product, dosage, target pest/disease)
-    - Irrigation events
-    - Scouting / disease observation
-    - Harvest activities
-    - Problems encountered + what was done
-    
-    This feeds:
-    1. Farmer's personal history/journal
-    2. DA analytics — what practices farmers actually follow
-    3. Cost-of-production tracking
-    4. Season comparison across years
-    """
+class CropStatusCheckIn(TimeStampedModel):
+    """Short crop-condition update linked to one season and planting."""
 
-    ACTIVITY_CHOICES = [
-        (' Crop Establishment', [
-            ('land_prep',     'Land Preparation (Plowing/Harrowing)'),
-            ('seedbed',       'Seedbed / Nursery Preparation'),
-            ('transplanting', 'Transplanting / Direct Seeding'),
-        ]),
-        ('Water Management', [
-            ('irrigation',    'Irrigation'),
-            ('drainage',      'Drainage'),
-        ]),
-        ('Crop Nutrition', [
-            ('fertilizer',    'Fertilizer Application'),
-            ('foliar',        'Foliar / Micronutrient Spray'),
-        ]),
-        ('Crop Protection', [
-            ('pesticide',     'Pesticide / Insecticide Application'),
-            ('fungicide',     'Fungicide Application'),
-            ('herbicide',     'Herbicide / Weeding'),
-        ]),
-        ('Monitoring', [
-            ('scouting',      'Field Scouting / Crop Inspection'),
-            ('disease_obs',   'Disease / Pest Observation'),
-        ]),
-        ('Harvest & Post-Harvest', [
-            ('harvest',       'Harvest'),
-            ('drying',        'Drying'),
-            ('milling',       'Milling'),
-            ('selling',       'Selling / Marketing'),
-        ]),
-        ('General', [
-            ('labor',         'Labor / Hired Help'),
-            ('equipment',     'Equipment Use / Repair'),
-            ('other',         'Other'),
-        ]),
+    STATUS_CHOICES = [
+        ('healthy', 'Healthy'),
+        ('needs_attention', 'Needs attention'),
+        ('ready_to_harvest', 'Ready to harvest'),
+        ('harvested', 'Harvested'),
+    ]
+    ISSUE_CHOICES = [
+        ('none', 'No problem'),
+        ('pest', 'Pest'),
+        ('disease', 'Disease'),
+        ('water', 'Water problem'),
+        ('nutrient', 'Nutrient problem'),
+        ('other', 'Other'),
     ]
 
-    PROBLEM_SEVERITY = [
-        ('none',    'No Problem'),
-        ('minor',   'Minor'),
-        ('moderate','Moderate'),
-        ('severe',  'Severe'),
-    ]
-
-    # ── Link ──────────────────────────────────────────────────────────────
-    season_log      = models.ForeignKey(SeasonLog, on_delete=models.CASCADE,
-                                        related_name='activities')
-
-    # ── Activity details ──────────────────────────────────────────────────
-    activity_date   = models.DateField()
-    activity_type   = models.CharField(max_length=30, choices=ACTIVITY_CHOICES)
-    title           = models.CharField(max_length=160,
-                                       help_text="Short summary (e.g. 'Applied Urea 45-0-0, 1 bag/ha')")
-    description     = models.TextField(blank=True,
-                                       help_text="Detailed notes, observations, dosage, etc.")
-
-    # ── Cost tracking ─────────────────────────────────────────────────────
-    input_cost      = models.DecimalField(max_digits=10, decimal_places=2,
-                                          null=True, blank=True,
-                                          help_text="Cost of materials/inputs (PHP)")
-    labor_cost      = models.DecimalField(max_digits=10, decimal_places=2,
-                                          null=True, blank=True,
-                                          help_text="Labor cost (PHP)")
-
-    # ── Problem tracking ──────────────────────────────────────────────────
-    problem_observed     = models.CharField(max_length=200, blank=True,
-                                             help_text="What problem was seen (pest, disease, etc.)")
-    problem_severity     = models.CharField(max_length=10, choices=PROBLEM_SEVERITY,
-                                             default='none')
-    action_taken         = models.TextField(blank=True,
-                                             help_text="What was done to address the problem")
-    detection_record     = models.ForeignKey(DetectionRecord, on_delete=models.SET_NULL,
-                                              null=True, blank=True,
-                                              related_name='farm_activities',
-                                              help_text="Link to AI scan if available")
-
-    # ── Workers ───────────────────────────────────────────────────────────
-    workers_count   = models.PositiveSmallIntegerField(default=0,
-                                                        help_text="Number of laborers/workers")
+    season_log = models.ForeignKey(
+        SeasonLog, on_delete=models.CASCADE, related_name='checkins'
+    )
+    planting = models.ForeignKey(
+        PlantingRecord, on_delete=models.CASCADE, related_name='crop_checkins',
+        null=True, blank=True
+    )
+    status = models.CharField(max_length=24, choices=STATUS_CHOICES)
+    issue = models.CharField(max_length=20, choices=ISSUE_CHOICES, default='none')
+    issues = models.JSONField(default=list, blank=True)
+    notes = models.TextField(blank=True)
 
     class Meta:
-        ordering = ['activity_date']
+        ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['season_log', 'activity_date']),
-            models.Index(fields=['activity_type']),
+            models.Index(fields=['season_log', '-created_at']),
+            models.Index(fields=['planting', '-created_at']),
         ]
-        verbose_name = "Farm Activity"
-        verbose_name_plural = "Farm Activities"
-
-    @property
-    def total_cost(self):
-        ic = float(self.input_cost or 0)
-        lc = float(self.labor_cost or 0)
-        return ic + lc if (ic or lc) else None
 
     def __str__(self):
-        return f"[{self.activity_date}] {self.get_activity_type_display()} — {self.title[:60]}"
+        return f"{self.get_status_display()} - {self.season_log}"
+
+    def get_issue_displays(self):
+        labels = dict(self.ISSUE_CHOICES)
+        values = self.issues or ([self.issue] if self.issue != 'none' else [])
+        return [labels[value] for value in values if value in labels and value != 'none']
 
 
 # FUTURE EXTENSIONS (placeholders):
 # - AccuracyMetrics model for CNN evaluation over time.
 # - ExportJob model for tracking generated CSV/PDF reports.
 # - APIKey model for external system integrations.
-
-
-

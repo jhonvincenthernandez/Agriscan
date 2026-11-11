@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django import forms
 from django.conf import settings
+from django.db.models import Q
 
 from .models import (
     DetectionRecord,
@@ -13,7 +14,7 @@ from .models import (
     DiseaseType,
     RiceVariety,
     SeasonLog,
-    FarmActivity,
+    CropStatusCheckIn,
     Field,
     PlantingRecord,
     KnowledgeBaseEntry,
@@ -2082,7 +2083,7 @@ class AnnouncementForm(forms.ModelForm):
         return instance
 
 
-# ── Shared Tailwind CSS widget classes (used by RiceVarietyForm, SeasonLogForm, FarmActivityForm) ──
+# ── Shared Tailwind CSS widget classes ──
 _INPUT    = "w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
 _SELECT   = "w-full px-4 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 focus:border-transparent"
 _TEXTAREA = "w-full px-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent resize-y min-h-[80px]"
@@ -2319,6 +2320,19 @@ class SeasonLogForm(forms.ModelForm):
         }),
         help_text='Select a planting to auto-fill Season Year, Field, Variety, and Dates.',
     )
+    actual_harvest_date = forms.DateField(
+        required=False,
+        label='Actual Harvest Date',
+        input_formats=['%Y-%m-%d'],
+        widget=forms.DateInput(
+            format='%Y-%m-%d',
+            attrs={
+                'class': _INPUT,
+                'type': 'date',
+                'readonly': 'readonly',
+            },
+        ),
+    )
 
     class Meta:
         model  = SeasonLog
@@ -2350,9 +2364,13 @@ class SeasonLogForm(forms.ModelForm):
             'date_planted': forms.DateInput(attrs={
                 'class': _INPUT, 'type': 'date',
             }),
-            'date_harvested': forms.DateInput(attrs={
-                'class': _INPUT, 'type': 'date',
-            }),
+            'date_harvested': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={
+                    'class': _INPUT,
+                    'type': 'date',
+                },
+            ),
             'actual_yield_sacks': forms.NumberInput(attrs={
                 'class': _INPUT,
                 'step': '0.5',
@@ -2381,7 +2399,7 @@ class SeasonLogForm(forms.ModelForm):
             'season_type':       'Season Type',
             'date_started':      'Planting Date',
             'date_planted':      'Planting Date',
-            'date_harvested':    'Harvest Date',
+            'date_harvested':    'Expected Harvest Date',
             'actual_yield_sacks':'Actual Harvest (sacks)',
             'price_per_sack':    'Selling Price / Sack (PHP)',
             'total_expenses':    'Total Expenses (PHP)',
@@ -2392,9 +2410,9 @@ class SeasonLogForm(forms.ModelForm):
         planting_id = None
         if self.is_bound:
             planting_id = self.data.get('planting') or None
-        elif self.initial.get('planting'):
+        if not planting_id and self.initial.get('planting'):
             planting_id = getattr(self.initial.get('planting'), 'pk', self.initial.get('planting'))
-        elif self.instance and getattr(self.instance, 'planting_id', None):
+        if not planting_id and self.instance and getattr(self.instance, 'planting_id', None):
             planting_id = self.instance.planting_id
 
         if not planting_id:
@@ -2424,6 +2442,19 @@ class SeasonLogForm(forms.ModelForm):
                 is_active=True,
                 season_log__isnull=True,
             ).exclude(status__in=['harvested', 'failed', 'cancelled'])
+            existing_seasons = SeasonLog.objects.filter(
+                farmer=owner_profile,
+                is_active=True,
+            ).values_list('field_id', 'season_year', 'season_type')
+            duplicate_planting_filters = Q()
+            for field_id, season_year, season_type in existing_seasons:
+                duplicate_planting_filters |= Q(
+                    field_id=field_id,
+                    planting_date__year=season_year,
+                    season=season_type,
+                )
+            if duplicate_planting_filters:
+                qs = qs.exclude(duplicate_planting_filters)
 
             instance_planting_id = getattr(getattr(self, 'instance', None), 'planting_id', None)
             if instance_planting_id:
@@ -2438,13 +2469,21 @@ class SeasonLogForm(forms.ModelForm):
         self.fields['variety'].required  = False
         self.fields['date_planted'].required  = False
         self.fields['date_harvested'].required = False
+        self.fields['actual_harvest_date'].widget.attrs['readonly'] = 'readonly'
         self.fields['actual_yield_sacks'].required = False
         self.fields['price_per_sack'].required  = False
         self.fields['total_expenses'].required = False
 
         planting = self._resolve_planting_source()
         if planting:
-            planting_harvest_date = planting.actual_harvest_date or planting.expected_harvest_date
+            # Linked planting data is authoritative. These fields are displayed
+            # as read-only and may be omitted by the browser when disabled.
+            for field_name in (
+                'field', 'variety', 'season_year', 'season_type',
+                'date_started', 'date_planted', 'date_harvested',
+            ):
+                self.fields[field_name].required = False
+
             planting_year = planting.planting_date.year if planting.planting_date else None
             planting_values = {
                 'field': planting.field_id,
@@ -2453,11 +2492,33 @@ class SeasonLogForm(forms.ModelForm):
                 'season_type': planting.season,
                 'date_started': planting.planting_date,
                 'date_planted': planting.planting_date,
-                'date_harvested': planting_harvest_date,
+                'date_harvested': planting.expected_harvest_date,
             }
             for field_name, value in planting_values.items():
                 self.fields[field_name].initial = value
                 self.fields[field_name].disabled = True
+            self.fields['actual_yield_sacks'].disabled = True
+            self.fields['actual_yield_sacks'].initial = (
+                HarvestRecord.all_objects.filter(
+                    planting_id=planting.pk,
+                    is_active=True,
+                ).order_by('-harvest_date', '-pk')
+                .values_list('actual_yield_tons', flat=True)
+                .first()
+            )
+            if self.fields['actual_yield_sacks'].initial is not None:
+                self.fields['actual_yield_sacks'].initial *= Decimal('20')
+            actual_harvest_date = planting.actual_harvest_date
+            if actual_harvest_date is None:
+                active_harvest = HarvestRecord.all_objects.filter(
+                    planting_id=planting.pk,
+                    is_active=True,
+                ).order_by('-harvest_date', '-pk').first()
+                actual_harvest_date = (
+                    active_harvest.harvest_date if active_harvest else None
+                )
+            self.fields['actual_harvest_date'].initial = actual_harvest_date
+            self.fields['actual_harvest_date'].widget.attrs['readonly'] = 'readonly'
 
         # Default date_started to today if not already set (e.g. on create)
         if not planting and not self.initial.get('date_started') and not self.data.get('date_started'):
@@ -2469,108 +2530,83 @@ class SeasonLogForm(forms.ModelForm):
         planting = cleaned_data.get('planting') or self._resolve_planting_source()
 
         if planting:
+            actual_harvest_date = planting.actual_harvest_date
+            if actual_harvest_date is None:
+                active_harvest = HarvestRecord.all_objects.filter(
+                    planting_id=planting.pk,
+                    is_active=True,
+                ).order_by('-harvest_date', '-pk').first()
+                actual_harvest_date = (
+                    active_harvest.harvest_date if active_harvest else None
+                )
+            active_harvest = HarvestRecord.all_objects.filter(
+                planting_id=planting.pk,
+                is_active=True,
+            ).order_by('-harvest_date', '-pk').first()
             cleaned_data['field'] = planting.field
             cleaned_data['variety'] = planting.variety
             cleaned_data['season_year'] = planting.planting_date.year if planting.planting_date else cleaned_data.get('season_year')
             cleaned_data['season_type'] = planting.season
             cleaned_data['date_started'] = planting.planting_date
             cleaned_data['date_planted'] = planting.planting_date
-            cleaned_data['date_harvested'] = planting.actual_harvest_date or planting.expected_harvest_date
+            cleaned_data['date_harvested'] = planting.expected_harvest_date
+            cleaned_data['actual_harvest_date'] = actual_harvest_date
+            cleaned_data['actual_yield_sacks'] = (
+                active_harvest.actual_yield_tons * Decimal('20')
+                if active_harvest else None
+            )
 
         return cleaned_data
 
 
-class FarmActivityForm(forms.ModelForm):
-    """Form for logging an individual farm activity within a season."""
+class CropStatusCheckInForm(forms.ModelForm):
+    """Short farmer check-in for the current crop condition."""
+
+    issues = forms.MultipleChoiceField(
+        choices=CropStatusCheckIn.ISSUE_CHOICES[1:],
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label='Any problem?',
+    )
 
     class Meta:
-        model  = FarmActivity
-        fields = [
-            'activity_date', 'activity_type', 'title', 'description',
-            'input_cost', 'labor_cost',
-            'problem_observed', 'problem_severity', 'action_taken',
-            'detection_record', 'workers_count',
-        ]
+        model = CropStatusCheckIn
+        fields = ['status', 'notes']
         widgets = {
-            'activity_date': forms.DateInput(attrs={
-                'class': _INPUT, 'type': 'date',
-            }),
-            'activity_type': forms.Select(attrs={
-                'class': _SELECT,
-            }),
-            'title': forms.TextInput(attrs={
-                'class': _INPUT,
-                'placeholder': "e.g. Applied Urea 45-0-0, 1 bag/ha",
-            }),
-            'description': forms.Textarea(attrs={
-                'class': _TEXTAREA,
-                'rows': 3,
-                'placeholder': 'Detailed notes, dosage, observations…',
-            }),
-            'input_cost': forms.NumberInput(attrs={
-                'class': _INPUT, 'step': '0.01',
-                'placeholder': 'Material/input cost (PHP)',
-            }),
-            'labor_cost': forms.NumberInput(attrs={
-                'class': _INPUT, 'step': '0.01',
-                'placeholder': 'Labor cost (PHP)',
-            }),
-            'problem_observed': forms.TextInput(attrs={
-                'class': _INPUT,
-                'placeholder': 'e.g. Brown spot on lower leaves',
-            }),
-            'problem_severity': forms.Select(attrs={
-                'class': _SELECT,
-            }),
-            'action_taken': forms.Textarea(attrs={
+            'status': forms.Select(attrs={'class': _SELECT}),
+            'notes': forms.Textarea(attrs={
                 'class': _TEXTAREA,
                 'rows': 2,
-                'placeholder': 'What did you do to address it?',
-            }),
-            'detection_record': forms.Select(attrs={
-                'class': _SELECT,
-            }),
-            'workers_count': forms.NumberInput(attrs={
-                'class': _INPUT, 'min': 0,
-                'placeholder': 'Number of workers',
+                'placeholder': 'Optional note',
             }),
         }
         labels = {
-            'activity_date':    'Date',
-            'activity_type':    'Activity Type',
-            'title':            'Activity Summary',
-            'description':      'Detailed Notes',
-            'input_cost':       'Input/Material Cost (PHP)',
-            'labor_cost':       'Labor Cost (PHP)',
-            'problem_observed': 'Problem Observed',
-            'problem_severity': 'Severity',
-            'action_taken':     'Action Taken',
-            'detection_record': 'Link to AI Scan (optional)',
-            'workers_count':    'Workers / Laborers',
+            'status': 'Crop status',
+            'notes': 'Note (optional)',
         }
 
-    def __init__(self, *args, season_log=None, owner_profile=None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['description'].required  = False
-        self.fields['input_cost'].required   = False
-        self.fields['labor_cost'].required   = False
-        self.fields['problem_observed'].required = False
-        self.fields['action_taken'].required  = False
-        self.fields['workers_count'].required = False
+        if self.instance and self.instance.pk:
+            self.initial['issues'] = self.instance.issues or (
+                [] if self.instance.issue == 'none' else [self.instance.issue]
+            )
 
-        # Filter detection records to those belonging to this season's field/owner
-        if season_log:
-            self.fields['detection_record'].queryset = DetectionRecord.objects.filter(
-                planting__field=season_log.field, is_active=True
-            ).order_by('-created_at')
-        elif owner_profile:
-            self.fields['detection_record'].queryset = DetectionRecord.objects.filter(
-                user=owner_profile, is_active=True
-            ).order_by('-created_at')
-        else:
-            self.fields['detection_record'].queryset = DetectionRecord.objects.none()
-        self.fields['detection_record'].required = False
-        self.fields['detection_record'].empty_label = "— No AI scan linked —"
+    def clean(self):
+        cleaned_data = super().clean()
+        status = cleaned_data.get('status')
+        issues = cleaned_data.get('issues') or []
+
+        if status not in ('needs_attention', 'ready_to_harvest') and issues:
+            self.add_error(
+                'issues',
+                'Select problems only when the crop status needs attention or is ready to harvest.',
+            )
+        cleaned_data['issues'] = issues
+        self.instance.issues = issues
+        self.instance.issue = issues[0] if issues else 'none'
+
+        return cleaned_data
 
 
 class SiteSettingForm(forms.ModelForm):

@@ -149,16 +149,16 @@ urlpatterns = [
     path('api/barangays/', views.api_get_barangays, name='api_get_barangays'),
 
     # ============================================================================
-    # SEASON FARM LOG — Farmer activity journal & history
+    # SEASON FARM LOG — Crop status check-ins & history
     # static paths first, then parameterised
     # ============================================================================
     path('season-log/', views.season_log_list, name='season_log_list'),
     path('season-log/create/', views.season_log_create, name='season_log_create'),
     path('season-log/barangay-stats/', views.season_log_barangay_stats, name='season_log_barangay_stats'),
-    path('season-log/activity/<int:pk>/edit/', views.activity_edit, name='activity_edit'),
-    path('season-log/activity/<int:pk>/delete/', views.activity_delete, name='activity_delete'),
     path('season-log/<int:pk>/', views.season_log_detail, name='season_log_detail'),
     path('season-log/<int:pk>/edit/', views.season_log_edit, name='season_log_edit'),
     path('season-log/<int:pk>/delete/', views.season_log_delete, name='season_log_delete'),
-    path('season-log/<int:season_pk>/activity/add/', views.activity_create, name='activity_create'),
+    path('season-log/<int:season_pk>/check-in/', views.crop_checkin_create, name='crop_checkin_create'),
+    path('season-log/check-in/<int:pk>/edit/', views.crop_checkin_edit, name='crop_checkin_edit'),
+    path('season-log/check-in/<int:pk>/delete/', views.crop_checkin_delete, name='crop_checkin_delete'),
 ]

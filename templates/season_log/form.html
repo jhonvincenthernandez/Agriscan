@@ -1,4 +1,4 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% block title %}{{ form_title }} · AgriScan+{% endblock %}
 
 {% block styles %}
@@ -228,23 +228,6 @@
           </div>
         </div>
         
-        {% if not is_create and log %}
-        <div class="mt-4 flex items-center gap-3 flex-wrap">
-          <span class="text-sm font-medium text-[var(--color-text-muted)]">Current Stage:</span>
-          {% with s=log.current_stage %}
-          <span class="badge-base {% if s == 'planning' %}badge-neutral{% elif s == 'land_prep' %}badge-warning{% elif s == 'planting' %}badge-info{% elif s == 'growing' %}badge-success{% elif s == 'harvest_ready' %}badge-warning{% elif s == 'harvested' %}badge-success{% else %}badge-neutral{% endif %}">
-            {% if s == 'planning' %}Planning
-            {% elif s == 'land_prep' %}Land Preparation
-            {% elif s == 'planting' %}Planting
-            {% elif s == 'growing' %}Growing
-            {% elif s == 'harvest_ready' %}Harvest Ready
-            {% elif s == 'harvested' %}Harvested
-            {% else %}{{ log.get_current_stage_display }}{% endif %}
-          </span>
-          {% endwith %}
-          <span class="text-xs text-[var(--color-text-muted)]">— auto-updated when you log activities</span>
-        </div>
-        {% endif %}
       </div>
 
       <!-- Sections 2–5 + submit: only show when farmer is known AND has fields -->
@@ -282,7 +265,12 @@
           <div>
             <label for="{{ form.date_harvested.id_for_label }}" class="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{{ form.date_harvested.label }}</label>
             {{ form.date_harvested }}
-            <p class="form-help mt-1">Fill after harvest</p>
+            <p class="form-help mt-1">Auto-filled from the linked planting record</p>
+          </div>
+          <div>
+            <label for="{{ form.actual_harvest_date.id_for_label }}" class="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{{ form.actual_harvest_date.label }}</label>
+            {{ form.actual_harvest_date }}
+            <p class="form-help mt-1">Read-only. Synchronized from the linked planting record.</p>
           </div>
         </div>
         {{ form.date_planted.as_hidden }}
@@ -298,7 +286,7 @@
           <div>
             <label for="{{ form.actual_yield_sacks.id_for_label }}" class="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{{ form.actual_yield_sacks.label }}</label>
             {{ form.actual_yield_sacks }}
-            <p class="form-help mt-1">1 sack = 50 kg</p>
+            <p class="form-help mt-1">Synchronized from Harvest Information. 1 sack = 50 kg.</p>
           </div>
           <div>
             <label for="{{ form.price_per_sack.id_for_label }}" class="block text-sm font-medium text-[var(--color-text-primary)] mb-1">{{ form.price_per_sack.label }}</label>
@@ -339,8 +327,9 @@
         <a href="{% url 'polls:season_log_delete' log.pk %}"
            data-open-delete="true"
            data-delete-label="{{ log.season_label }}"
-           data-delete-subtitle="{{ log.field.name }}"
-           class="btn btn-secondary btn-warn sm:ml-auto w-full sm:w-auto">
+           data-delete-subtitle="Archive this season log?"
+           aria-label="Archive season log {{ log.season_label }}"
+           class="btn btn-secondary btn-sm btn-warn sm:ml-auto w-full sm:w-auto">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           <span>Archive</span>
         </a>
@@ -461,6 +450,7 @@
   const startField = document.getElementById('id_date_started');
   const dtPlant  = document.getElementById('id_date_planted');
   const dtHarv   = document.getElementById('id_date_harvested');
+  const dtActual = document.getElementById('id_actual_harvest_date');
   const summary  = document.getElementById('planting-summary');
   const summarySeason = document.getElementById('summary-season');
   const summaryStatus = document.getElementById('summary-status');
@@ -500,7 +490,8 @@
     setValue(seasonField, data.season);
     setValue(startField, data.date_started);
     setValue(dtPlant, data.date_planted);
-    setValue(dtHarv, data.date_harvested);
+    setValue(dtHarv, data.expected_harvest_date);
+    setValue(dtActual, data.actual_harvest_date);
   };
 
   if (!picker) return;

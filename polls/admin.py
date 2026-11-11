@@ -358,9 +358,9 @@ class UserNotificationAdmin(admin.ModelAdmin):
 
 @admin.register(models.SeasonLog)
 class SeasonLogAdmin(admin.ModelAdmin):
-	list_display = ("farmer", "field", "season_label", "current_stage",
+	list_display = ("farmer", "field", "season_label",
 	                "actual_yield_sacks", "gross_income", "created_at")
-	list_filter  = ("season_year", "season_type", "current_stage")
+	list_filter = ("season_year", "season_type")
 	search_fields = ("farmer__user__username", "field__name", "field__barangay",
 	                 "variety__code")
 	readonly_fields = ("gross_income", "net_income", "actual_yield_tons")
@@ -370,13 +370,12 @@ class SeasonLogAdmin(admin.ModelAdmin):
 	season_label.short_description = "Season"
 
 
-@admin.register(models.FarmActivity)
-class FarmActivityAdmin(admin.ModelAdmin):
-	list_display = ("season_log", "activity_date", "activity_type", "title",
-	                "problem_severity", "total_cost")
-	list_filter  = ("activity_type", "problem_severity", "activity_date")
-	search_fields = ("title", "description", "problem_observed",
-	                 "season_log__field__name", "season_log__farmer__user__username")
+@admin.register(models.CropStatusCheckIn)
+class CropStatusCheckInAdmin(admin.ModelAdmin):
+	list_display = ("season_log", "status", "issue", "created_at")
+	list_filter = ("status", "issue", "created_at")
+	search_fields = ("notes", "season_log__field__name",
+	                 "season_log__farmer__user__username")
 
 
 @admin.register(models.SiteSetting)
