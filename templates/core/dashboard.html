@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Dashboard · AgriScan+{% endblock %}
 
@@ -571,6 +572,36 @@
   .dash-sk-card { padding: 1.125rem; }
   .dash-sk-line { display: block; height: 0.75rem; border-radius: var(--radius-xs); }
   .dash-sk-value { display: block; height: 1.75rem; width: 4.5rem; border-radius: var(--radius-xs); }
+
+  .onboarding-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.58);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    isolation: isolate;
+  }
+
+  .onboarding-modal__panel {
+    width: min(100%, 32rem);
+    max-height: calc(100vh - 2rem);
+    overflow: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  body.onboarding-modal-open { overflow: hidden; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .onboarding-modal { backdrop-filter: none; -webkit-backdrop-filter: none; }
+  }
 </style>
 {% endblock %}
 
@@ -1464,6 +1495,93 @@
 
 
 {% block scripts %}
+{% if show_onboarding_modal %}
+<script>
+(function () {
+  function initializeOnboardingModal() {
+    var modal = document.getElementById('onboarding-modal');
+    var panel = document.getElementById('onboarding-panel');
+    var checkbox = document.getElementById('onboarding-dont-show');
+    if (!modal || !panel) return;
+  var focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+  var firstFocusable = panel.querySelector(focusableSelector);
+  var lastFocused = document.activeElement;
+  document.body.classList.add('onboarding-modal-open');
+
+  if (firstFocusable) firstFocusable.focus();
+
+  function closeModal() {
+    document.body.classList.remove('onboarding-modal-open');
+    modal.remove();
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  }
+
+  function savePreference() {
+    var body = new URLSearchParams();
+    if (checkbox && checkbox.checked) body.set('dont_show_again', '1');
+    return fetch("{% url 'polls:dismiss_onboarding_guide' %}", {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': '{{ csrf_token }}',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: body.toString(),
+    });
+  }
+
+  document.getElementById('onboarding-not-now').addEventListener('click', function () {
+    savePreference().then(closeModal).catch(function () {
+      closeModal();
+    });
+  });
+  document.getElementById('onboarding-help').addEventListener('click', function (event) {
+    var link = event.currentTarget;
+    event.preventDefault();
+    savePreference().then(function () {
+      window.location.href = link.href;
+    }).catch(function () {
+      window.location.href = link.href;
+    });
+  });
+  document.getElementById('onboarding-pdf').addEventListener('click', function (event) {
+    var link = event.currentTarget;
+    event.preventDefault();
+    savePreference().then(function () {
+      window.open(link.href, '_blank', 'noopener');
+      closeModal();
+    }).catch(function () {
+      window.open(link.href, '_blank', 'noopener');
+      closeModal();
+    });
+  });
+
+  panel.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+      savePreference().then(closeModal).catch(closeModal);
+      return;
+    }
+
+    if (event.key !== 'Tab') return;
+    var focusable = panel.querySelectorAll(focusableSelector);
+    if (!focusable.length) return;
+    if (event.shiftKey && document.activeElement === focusable[0]) {
+      event.preventDefault();
+      focusable[focusable.length - 1].focus();
+    } else if (!event.shiftKey && document.activeElement === focusable[focusable.length - 1]) {
+      event.preventDefault();
+      focusable[0].focus();
+    }
+  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeOnboardingModal);
+  } else {
+    initializeOnboardingModal();
+  }
+})();
+</script>
+{% endif %}
 <!-- ============================================================
      DASHBOARD JSON DATA
      ============================================================ -->
@@ -2257,4 +2375,26 @@
   }
 })();
 </script>
+{% endblock %}
+
+{% block modals %}
+{% if show_onboarding_modal %}
+<div id="onboarding-modal" class="onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+  <div id="onboarding-panel" class="onboarding-modal__panel p-6" tabindex="-1">
+    <h2 id="onboarding-title" class="text-xl font-bold text-[var(--color-text-primary)]">Welcome to AgriScan+</h2>
+    <p class="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+      Would you like to learn how to use AgriScan+?
+    </p>
+    <label class="mt-4 flex items-start gap-3 text-sm text-[var(--color-text)]">
+      <input id="onboarding-dont-show" type="checkbox" class="mt-1 h-4 w-4 rounded border-gray-300">
+      <span>Do not show this welcome guide again</span>
+    </label>
+    <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-end">
+      <button type="button" id="onboarding-not-now" class="btn btn-secondary">Not now</button>
+      <a href="{% url 'polls:help_guide' %}?lang=tl" id="onboarding-help" class="btn btn-secondary">Open Help &amp; User Guide</a>
+      <a href="{% static 'polls/docs/AgriScan+_User_Manual.pdf' %}" id="onboarding-pdf" class="btn btn-primary" target="_blank" rel="noopener">View PDF Manual</a>
+    </div>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

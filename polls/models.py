@@ -289,6 +289,10 @@ class Profile(TimeStampedModel):
         default=True,  # Auto-approve by default (can change to False for manual approval)
         help_text="Admin must approve before user can login"
     )
+    onboarding_guide_dismissed = models.BooleanField(
+        default=False,
+        help_text="Do not show the welcome guide modal after sign-in.",
+    )
 
     def __str__(self):
         return f"{self.user.get_username()} ({self.role})"

@@ -1389,6 +1389,12 @@ class AdminUserEditForm(forms.Form):
         widget=forms.CheckboxInput(attrs={'class': _CHECKBOX}),
         help_text='Check to approve pending user accounts.'
     )
+    reset_onboarding_guide = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': _CHECKBOX}),
+        label='Show welcome guide again on next sign-in',
+        help_text='Check this only when you want to reset the user onboarding preference.',
+    )
     reset_password = forms.CharField(
         required=False,
         widget=forms.PasswordInput(attrs={
@@ -1467,7 +1473,11 @@ class AdminUserEditForm(forms.Form):
         profile.phone = self.cleaned_data.get('phone', '')
         profile.location = self.cleaned_data.get('location', '')
         profile.is_approved = self.cleaned_data.get('is_approved', True)
-        profile.save()
+        if self.cleaned_data.get('reset_onboarding_guide', False):
+            profile.onboarding_guide_dismissed = False
+            profile.save(update_fields=['role', 'phone', 'location', 'is_approved', 'onboarding_guide_dismissed', 'updated_at'])
+        else:
+            profile.save()
         
         return self.user
 

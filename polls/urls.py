@@ -17,6 +17,7 @@ urlpatterns = [
     # DASHBOARD & REPORTS
     # ============================================================================
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('dashboard/onboarding/dismiss/', views.dismiss_onboarding_guide, name='dismiss_onboarding_guide'),
     path('help/', views.help_guide, name='help_guide'),
     path('reports/', views.reports, name='reports'),
     

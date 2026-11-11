@@ -57,6 +57,7 @@ from .decorators import admin_only, technician_or_admin, role_required, filter_q
 
 
 RECENT_ACTIVITY_SESSION_KEY = "polls_recent_activity"
+ONBOARDING_MODAL_SESSION_KEY = "polls_onboarding_modal_pending"
 logger = logging.getLogger(__name__)
 
 
@@ -235,6 +236,9 @@ def dashboard(request):
         "is_admin": role == 'admin',
         "is_technician": role == 'technician',
         "role": role,
+        "show_onboarding_modal": request.session.pop(ONBOARDING_MODAL_SESSION_KEY, False)
+        and bool(user_profile)
+        and not user_profile.onboarding_guide_dismissed,
         **metrics,
     }
 
@@ -271,12 +275,29 @@ def login(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             auth_login(request, user)
+            request.session[ONBOARDING_MODAL_SESSION_KEY] = True
             messages.success(request, f"Welcome, {user.username}!")
             return redirect("polls:dashboard")
         else:
             messages.error(request, "Invalid username or password.")
     
     return render(request, "auth/login.html")
+
+
+@login_required(login_url=reverse_lazy('polls:login'))
+def dismiss_onboarding_guide(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required."}, status=405)
+
+    profile = getattr(request.user, "profile", None)
+    if profile is None:
+        return JsonResponse({"error": "Profile not found."}, status=404)
+
+    if request.POST.get("dont_show_again") == "1":
+        profile.onboarding_guide_dismissed = True
+        profile.save(update_fields=["onboarding_guide_dismissed", "updated_at"])
+
+    return JsonResponse({"ok": True})
 
 
 def register(request):

@@ -231,7 +231,23 @@
       </div>
     </div>
 
-    <!-- Section 4: Contact & Personal Details -->
+    <!-- Section 4: Onboarding -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 bg-slate-50/60 border-b border-gray-200">
+        <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Onboarding</h2>
+      </div>
+      <div class="p-6">
+        <label for="{{ form.reset_onboarding_guide.id_for_label }}" class="flex items-start gap-3 cursor-pointer">
+          {{ form.reset_onboarding_guide }}
+          <span>
+            <span class="block text-sm font-medium text-gray-700">{{ form.reset_onboarding_guide.label }}</span>
+            <span class="block mt-1 text-xs text-gray-500">{{ form.reset_onboarding_guide.help_text }}</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Section 5: Contact & Personal Details -->
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div class="px-6 py-4 bg-slate-50/60 border-b border-gray-200 flex items-center justify-between">
         <h2 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Contact & Personal Details</h2>

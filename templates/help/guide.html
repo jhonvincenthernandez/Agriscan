@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Help & User Guide · AgriScan+{% endblock %}
 
 {% block extra_head %}
@@ -332,7 +333,16 @@
         </p>
       </div>
 
-      <div class="flex flex-wrap gap-2 lg:justify-end shrink-0" aria-label="Language">
+      <div class="flex flex-wrap gap-2 lg:justify-end shrink-0" aria-label="Help resources and language">
+        <a
+          href="{% static 'polls/docs/AgriScan+_User_Manual.pdf' %}"
+          class="btn btn-secondary help-language-btn"
+          target="_blank"
+          rel="noopener"
+        >
+          {% if language == 'tl' %}Tingnan ang PDF manual{% else %}View PDF manual{% endif %}
+        </a>
+
         <a
           href="?lang=tl"
           class="btn btn-secondary help-language-btn {% if language == 'tl' %}is-active{% endif %}"
