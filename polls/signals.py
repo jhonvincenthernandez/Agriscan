@@ -92,89 +92,167 @@ def update_farm_size_on_field_delete(sender, instance, **kwargs):
 # REAL-TIME NOTIFICATION SIGNALS
 # ============================================================================
 
+def _active_staff_profiles():
+    """Return active admin and technician profiles for staff-facing alerts."""
+    from .models import Profile
+
+    return (
+        Profile.objects
+        .select_related('user')
+        .filter(role__in=['admin', 'technician'], user__is_active=True)
+    )
+
+
+def _create_staff_notifications(
+    *,
+    alert_type,
+    title,
+    message,
+    related_detection=None,
+    related_yield=None,
+    exclude_profile_ids=None,
+    send_email=False,
+):
+    """Create in-app notifications for every active admin and technician.
+
+    Staff notifications reuse the same related detection or yield record as the
+    farmer alert so the notifications page can link directly to the record for
+    review. Profiles listed in ``exclude_profile_ids`` are skipped to avoid
+    sending the same event twice to one user.
+
+    Returns:
+        list: Created Notification rows.
+    """
+    from .models import Notification
+    from . import services as _svc
+
+    staff_profiles = _active_staff_profiles()
+    excluded_ids = {pk for pk in (exclude_profile_ids or []) if pk}
+    if excluded_ids:
+        staff_profiles = staff_profiles.exclude(pk__in=excluded_ids)
+
+    created_notifications = []
+    for staff in staff_profiles:
+        notification = Notification.objects.create(
+            recipient=staff,
+            type=alert_type,
+            title=title,
+            message=message,
+            related_detection=related_detection,
+            related_yield=related_yield,
+        )
+        created_notifications.append(notification)
+        if send_email and staff.user.email:
+            _svc.schedule_notification_email_send(notification.pk)
+
+    return created_notifications
+
+
 @receiver(post_save, sender='polls.DetectionRecord')
 def notify_disease_detected(sender, instance, created, **kwargs):
     """
-    BEST PRACTICE: Auto-create in-app Notification when a disease is detected.
+    Auto-create in-app Notifications when a disease is detected.
 
-    Triggers when:
-    - A new DetectionRecord is saved (created=True)
-    - The detection has a disease (not None) and the disease is not 'Healthy'
-    - The detection belongs to a user (farmer/technician profile)
+    Recipients:
+    - The field owner (farmer) receives the actionable alert.
+    - All active admins and technicians receive a review alert for every
+      non-healthy detection, not only critical ones.
 
-    Does NOT notify for healthy scans (no alert needed).
-    Does NOT notify for duplicate saves (created=False).
+    Critical detections (70% severity or higher) also send an immediate staff
+    email. Healthy scans and duplicate saves are ignored.
     """
     if not created:
         return
 
     try:
         from .models import Notification
+        from . import services as _svc
 
-        # Prefer the field owner (farmer) as recipient — they need to act on the alert.
+        disease = instance.disease
+        if not disease:
+            return  # No disease recorded - skip
+
+        disease_name = disease.name
+        if 'healthy' in disease_name.lower():
+            return  # Healthy scan - no alert needed
+
+        # Prefer the field owner (farmer) as the actionable recipient.
         # Fall back to the scanner (technician/farmer) if no field owner is linked.
         recipient = None
         if instance.planting and instance.planting.field and instance.planting.field.owner:
             recipient = instance.planting.field.owner
         if not recipient:
             recipient = instance.user
-        if not recipient:
-            return  # No user linked — skip
-
-        disease = instance.disease
-        if not disease:
-            return  # No disease recorded — skip
-
-        disease_name = disease.name
-        if 'healthy' in disease_name.lower():
-            return  # Healthy scan — no alert needed
 
         severity = instance.severity_pct or 0
         severity_label = "High" if severity >= 70 else "Moderate" if severity >= 40 else "Low"
 
-        notif = Notification.objects.create(
-            recipient=recipient,
-            type='disease',
-            title=f'Disease Detected: {disease_name}',
+        if recipient:
+            notif = Notification.objects.create(
+                recipient=recipient,
+                type='disease',
+                title=f'Disease Detected: {disease_name}',
+                message=(
+                    f'A scan on your field detected {disease_name} '
+                    f'with {severity:.0f}% severity ({severity_label}). '
+                    f'Immediate treatment is recommended. '
+                    f'Check the scan record for detailed treatment advice.'
+                ),
+                related_detection=instance,
+            )
+            # Send email alert to the farmer (only if EMAIL_ENABLED=True in settings)
+            _svc.schedule_notification_email_send(notif.pk)
+
+        field = instance.planting.field if instance.planting else None
+        field_name = field.name if field else 'Unknown Field'
+        farmer_name = (
+            (recipient.user.get_full_name() or recipient.user.username)
+            if recipient else 'Unknown Farmer'
+        )
+        location_parts = [
+            part for part in (
+                field.barangay if field else '',
+                field.municipality if field else '',
+                field.province if field else '',
+            ) if part
+        ]
+        location_text = f" ({', '.join(location_parts)})" if location_parts else ''
+
+        # Every disease detection is visible to staff so they can review it.
+        _create_staff_notifications(
+            alert_type='disease',
+            title=f'Disease Detected: {disease_name} ({severity:.0f}% severity)',
             message=(
-                f'A scan on your field detected {disease_name} '
-                f'with {severity:.0f}% severity ({severity_label}). '
-                f'Immediate treatment is recommended. '
-                f'Check the scan record for detailed treatment advice.'
+                f'A scan on {farmer_name}\'s field "{field_name}"{location_text} '
+                f'detected {disease_name} with {severity:.0f}% severity ({severity_label}). '
+                f'Please review the detection record and follow up with the farmer.'
             ),
             related_detection=instance,
+            exclude_profile_ids=[recipient.pk] if recipient else [],
         )
-        # Send email alert to the farmer (only if EMAIL_ENABLED=True in settings)
-        from . import services as _svc
-        _svc.schedule_notification_email_send(notif.pk)
 
-        # ── Escalation: severity ≥70% → also alert all admin & technician staff ──
+        # Critical detections also trigger an immediate staff email.
         if severity >= 70:
             from .models import Profile
-            from . import services as _svc
+
             staff_profiles = Profile.objects.select_related('user').filter(
                 role__in=['admin', 'technician'],
                 user__is_active=True,
             ).exclude(user__email='')
-
-            farmer_name = recipient.user.get_full_name() or recipient.user.username
-            field_name = (
-                instance.planting.field.name
-                if instance.planting and instance.planting.field
-                else 'Unknown Field'
-            )
+            if recipient:
+                staff_profiles = staff_profiles.exclude(pk=recipient.pk)
 
             for staff in staff_profiles:
                 _svc.send_plain_email(
                     recipient_email=staff.user.email,
-                    subject=f'[CRITICAL ALERT] {disease_name} — {severity:.0f}% Severity',
+                    subject=f'[CRITICAL ALERT] {disease_name} - {severity:.0f}% Severity',
                     body=(
                         f"Hello {staff.user.get_full_name() or staff.user.username},\n\n"
                         f"A CRITICAL disease detection requires your attention.\n\n"
                         f"Disease  : {disease_name}\n"
                         f"Severity : {severity:.0f}% ({severity_label})\n"
                         f"Farmer   : {farmer_name}\n"
-                        f"Field    : {field_name}\n\n"
+                        f"Field    : {field_name}{location_text}\n\n"
                         f"Please review and follow up with the farmer immediately.\n"
                         f"View detection records: {_svc._app_url('/detections/')}\n\n"
                         f"---\nAgriScan+ System"
@@ -188,33 +266,31 @@ def notify_disease_detected(sender, instance, created, **kwargs):
 @receiver(post_save, sender='polls.YieldPrediction')
 def notify_yield_drop(sender, instance, created, **kwargs):
     """
-    BEST PRACTICE: Auto-create in-app Notification when a significant yield drop
-    is predicted compared to historical yield.
+    Auto-create in-app Notifications when a significant yield drop is predicted.
 
-    Triggers when:
-    - A new YieldPrediction is saved (created=True)
-    - The prediction has a planting linked to a farmer profile
-    - Predicted yield is at least 20% below the historical average
+    Recipients:
+    - The planting owner (farmer) receives the actionable alert.
+    - All active admins and technicians receive a review alert so they can
+      validate the prediction and follow up with the farmer.
 
-    Threshold: ≥20% drop from the historical average yield (from HarvestRecord history) is considered significant.
+    Threshold: at least 20% below the historical average, or below 2.0 tons/ha
+    when no historical baseline exists.
     """
     if not created:
         return
 
     try:
         from .models import Notification
+        from . import services as _svc
 
-        # Determine recipient — prefer the planting owner, else the detection user
+        # Determine recipient - prefer the planting owner, else the detection user.
         recipient = None
         if instance.planting and instance.planting.field and instance.planting.field.owner:
             recipient = instance.planting.field.owner
         elif instance.detection and instance.detection.user:
             recipient = instance.detection.user
 
-        if not recipient:
-            return  # No one to notify
-
-        # Only alert on meaningful yield drop vs historical baseline
+        # Only alert on meaningful yield drop vs historical baseline.
         predicted = instance.predicted_yield_tons_per_ha
         if not predicted:
             return
@@ -236,43 +312,72 @@ def notify_yield_drop(sender, instance, created, **kwargs):
             drop_pct = (historical_f - predicted_f) / historical_f * 100
 
             if drop_pct < 20:
-                return  # Less than 20% drop — no alert needed
+                return  # Less than 20% drop - no alert needed
 
-            notif = Notification.objects.create(
-                recipient=recipient,
-                type='yield_drop',
-                title=f'Yield Drop Alert: {drop_pct:.0f}% Below Historical',
-                message=(
-                    f'Your predicted yield is {predicted_f:.2f} tons/ha, '
-                    f'which is {drop_pct:.0f}% lower than your historical average '
-                    f'of {historical_f:.2f} tons/ha. '
-                    f'This may be due to disease impact or unfavorable conditions. '
-                    f'Consider consulting a DA technician for advice.'
-                ),
-                related_yield=instance,
+            title = f'Yield Drop Alert: {drop_pct:.0f}% Below Historical'
+            message = (
+                f'Your predicted yield is {predicted_f:.2f} tons/ha, '
+                f'which is {drop_pct:.0f}% lower than your historical average '
+                f'of {historical_f:.2f} tons/ha. '
+                f'This may be due to disease impact or unfavorable conditions. '
+                f'Consider consulting a DA technician for advice.'
             )
-            from . import services as _svc
-            _svc.schedule_notification_email_send(notif.pk)
+            staff_summary = (
+                f'{drop_pct:.0f}% below the historical average of '
+                f'{historical_f:.2f} tons/ha'
+            )
         else:
-            # No historical baseline — alert if yield is critically low (<2 tons/ha)
+            # No historical baseline - alert if yield is critically low (<2 tons/ha).
             LOW_YIELD_THRESHOLD = 2.0
             if predicted_f >= LOW_YIELD_THRESHOLD:
                 return
 
+            title = f'Low Yield Prediction: {predicted_f:.2f} tons/ha'
+            message = (
+                f'Your predicted yield of {predicted_f:.2f} tons/ha is critically low '
+                f'(below {LOW_YIELD_THRESHOLD} tons/ha). '
+                f'No historical baseline is available for your planting record. '
+                f'Please consult a DA technician for guidance.'
+            )
+            staff_summary = (
+                f'critically low (below {LOW_YIELD_THRESHOLD} tons/ha) with no '
+                f'historical baseline'
+            )
+
+        if recipient:
             notif = Notification.objects.create(
                 recipient=recipient,
                 type='yield_drop',
-                title=f'Low Yield Prediction: {predicted_f:.2f} tons/ha',
-                message=(
-                    f'Your predicted yield of {predicted_f:.2f} tons/ha is critically low '
-                    f'(below {LOW_YIELD_THRESHOLD} tons/ha). '
-                    f'No historical baseline is available for your planting record. '
-                    f'Please consult a DA technician for guidance.'
-                ),
+                title=title,
+                message=message,
                 related_yield=instance,
             )
-            from . import services as _svc
             _svc.schedule_notification_email_send(notif.pk)
+
+        field = None
+        if instance.planting:
+            field = instance.planting.field
+        elif instance.detection and instance.detection.planting:
+            field = instance.detection.planting.field
+        field_name = field.name if field else 'Unknown Field'
+        farmer_name = (
+            (recipient.user.get_full_name() or recipient.user.username)
+            if recipient else 'Unknown Farmer'
+        )
+
+        # Send the same alert to admins and technicians so they can review it.
+        _create_staff_notifications(
+            alert_type='yield_drop',
+            title=title,
+            message=(
+                f'A yield prediction for {farmer_name}\'s field "{field_name}" '
+                f'is {staff_summary}. Predicted yield: {predicted_f:.2f} tons/ha. '
+                f'Please review the yield record and follow up with the farmer.'
+            ),
+            related_yield=instance,
+            exclude_profile_ids=[recipient.pk] if recipient else [],
+            send_email=True,
+        )
 
     except Exception:
         logger.exception("Failed to create yield drop notification for YieldPrediction pk=%s", instance.pk)

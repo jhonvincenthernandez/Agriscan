@@ -84,6 +84,27 @@
     .sn-message-cell {
       width: auto;
     }
+
+    /* Small screens: give the full alert message the whole card width.
+       Stack the label above the text instead of squeezing both into one row. */
+    .data-table td.sn-message-cell {
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: flex-start;
+      gap: 0.25rem;
+      text-align: left;
+    }
+    .data-table td.sn-message-cell::before {
+      flex: none;
+      max-width: none;
+    }
+    .sn-message-cell .sn-message-text {
+      display: block;
+      overflow: visible;
+      -webkit-line-clamp: unset;
+      white-space: pre-line;
+      line-height: 1.6;
+    }
   }
 
   /* Type Icons */
