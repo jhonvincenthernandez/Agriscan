@@ -3663,12 +3663,17 @@ def system_settings_audit_list(request):
     date_to = request.GET.get("date_to")
 
     if search:
-        audits_qs = audits_qs.filter(
+        search_filter = (
             models.Q(changed_by__username__icontains=search)
             | models.Q(changed_by__first_name__icontains=search)
             | models.Q(changed_by__last_name__icontains=search)
             | models.Q(details__icontains=search)
         )
+        try:
+            search_filter |= models.Q(pk=int(search))
+        except (TypeError, ValueError):
+            pass
+        audits_qs = audits_qs.filter(search_filter)
 
     if user_id:
         audits_qs = audits_qs.filter(changed_by__id=user_id)
@@ -5453,6 +5458,8 @@ def notifications_list(request):
     - A disease is detected on a scan
     - A yield drop is predicted vs historical baseline
     - A new Announcement is published (bell alert)
+    - A knowledge entry or treatment recommendation is published
+    - System settings are updated
 
     Supports:
     - Filter by type (role-aware)
@@ -5474,6 +5481,8 @@ def notifications_list(request):
         'related_detection__disease',
         'related_yield__planting__field',
         'related_announcement',
+        'related_knowledge',
+        'related_site_setting_audit',
     )
 
     # Role-aware type visibility.

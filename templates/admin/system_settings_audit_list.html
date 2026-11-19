@@ -136,7 +136,7 @@
         <div class="al-search">
           <label for="audit-search" class="sr-only-agri">Search audit logs</label>
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input id="audit-search" type="search" name="search" value="{{ search_query }}" placeholder="Search user, field, values..." autocomplete="off">
+          <input id="audit-search" type="search" name="search" value="{{ search_query }}" placeholder="Search ID, user, field, values..." autocomplete="off">
           <kbd class="al-kbd" aria-hidden="true">Ctrl K</kbd>
         </div>
 
@@ -206,7 +206,10 @@
           <td class="al-td-check no-print" data-label="Select">
             <label class="al-check"><input type="checkbox" class="row-cb" value="{{ entry.pk }}"><span class="sr-only-agri">Select audit {{ entry.pk }}</span></label>
           </td>
-          <td data-label="When" class="whitespace-nowrap">{{ entry.changed_at|date:'M d, Y H:i' }}</td>
+          <td data-label="When" class="whitespace-nowrap">
+            <span class="text-[var(--text-xs)] text-[var(--color-text-muted)]">#{{ entry.pk }}</span><br>
+            {{ entry.changed_at|date:'M d, Y H:i' }}
+          </td>
           <td data-label="Who" class="td-primary">
             {% if entry.changed_by %}
               <span class="font-medium">{{ entry.changed_by.get_full_name|default:entry.changed_by.username }}</span>

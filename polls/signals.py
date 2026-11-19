@@ -528,6 +528,7 @@ def notify_new_knowledge_entry(sender, instance, created, **kwargs):
                 type='knowledge',
                 title=title,
                 message=message,
+                related_knowledge=instance,
             )
             for profile in profiles
         ]
@@ -543,6 +544,9 @@ def notify_new_knowledge_entry(sender, instance, created, **kwargs):
                     related_detection=notification.related_detection,
                     related_yield=notification.related_yield,
                     related_announcement=notification.related_announcement,
+                    related_knowledge=notification.related_knowledge,
+                    related_treatment=notification.related_treatment,
+                    related_site_setting_audit=notification.related_site_setting_audit,
                 )
                 for notification in notifs
             ]
@@ -603,6 +607,7 @@ def notify_new_treatment(sender, instance, created, **kwargs):
                 type='treatment',
                 title=title,
                 message=message,
+                related_treatment=instance,
             )
             for profile in profiles
         ]
@@ -618,6 +623,9 @@ def notify_new_treatment(sender, instance, created, **kwargs):
                     related_detection=notification.related_detection,
                     related_yield=notification.related_yield,
                     related_announcement=notification.related_announcement,
+                    related_knowledge=notification.related_knowledge,
+                    related_treatment=notification.related_treatment,
+                    related_site_setting_audit=notification.related_site_setting_audit,
                 )
                 for notification in notifs
             ]
@@ -686,6 +694,7 @@ def notify_system_setting_changes(sender, instance, created, **kwargs):
                 type='system',
                 title=title,
                 message=message,
+                related_site_setting_audit=instance,
             )
             for profile in profiles
         ]
@@ -702,6 +711,9 @@ def notify_system_setting_changes(sender, instance, created, **kwargs):
                     related_detection=notification.related_detection,
                     related_yield=notification.related_yield,
                     related_announcement=notification.related_announcement,
+                    related_knowledge=notification.related_knowledge,
+                    related_treatment=notification.related_treatment,
+                    related_site_setting_audit=notification.related_site_setting_audit,
                 )
                 for notification in notifs
             ]

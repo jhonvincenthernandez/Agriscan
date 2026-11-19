@@ -327,7 +327,41 @@
                 Announcement #{{ notif.related_announcement.pk }}
               </a>
               {% endif %}
-              {% if not notif.related_detection and not notif.related_yield and not notif.related_announcement %}
+              {% if notif.related_knowledge_id %}
+                {% if notif.related_knowledge and notif.related_knowledge.is_active %}
+                  {% if notif.related_knowledge.is_published %}
+                  <a href="{% url 'polls:knowledge_detail' notif.related_knowledge_id %}" class="sn-related-link">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5A4.5 4.5 0 003 9.5v9A4.5 4.5 0 017.5 14c1.746 0 3.332.477 4.5 1.253m0-9C13.168 5.477 14.754 5 16.5 5A4.5 4.5 0 0121 9.5v9a4.5 4.5 0 00-4.5-4.5c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    Knowledge Entry #{{ notif.related_knowledge_id }}
+                  </a>
+                  {% else %}
+                  <span class="data-empty">Unpublished</span>
+                  {% endif %}
+                {% else %}
+                <span class="data-empty">Archived</span>
+                {% endif %}
+              {% endif %}
+              {% if notif.related_treatment_id %}
+              <a href="{% url 'polls:treatments_edit' notif.related_treatment_id %}" class="sn-related-link">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a4 4 0 00-5.656-5.656l-8.486 8.485a2 2 0 102.829 2.829l8.485-8.486a1 1 0 00-1.414-1.414l-8.485 8.485"/></svg>
+                Treatment #{{ notif.related_treatment_id }}
+              </a>
+              {% endif %}
+              {% if notif.related_site_setting_audit_id %}
+                {% if notif.related_site_setting_audit and notif.related_site_setting_audit.is_active %}
+                  {% if notif.recipient.role == 'admin' %}
+                  <a href="{% url 'polls:system_settings_audit_list' %}?search={{ notif.related_site_setting_audit_id }}" class="sn-related-link">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317a1 1 0 011.35-.936l1.49.596a1 1 0 00.77 0l1.49-.596a1 1 0 011.35.936l.072 1.58a1 1 0 00.562.84l1.36.68a1 1 0 01.454 1.34l-.596 1.49a1 1 0 000 .77l.596 1.49a1 1 0 01-.454 1.34l-1.36.68a1 1 0 00-.562.84l-.072 1.58a1 1 0 01-1.35.936l-1.49-.596a1 1 0 00-.77 0l-1.49.596a1 1 0 01-1.35-.936l-.072-1.58a1 1 0 00-.562-.84l-1.36-.68a1 1 0 01-.454-1.34l.596-1.49a1 1 0 000-.77l-.596-1.49a1 1 0 01.454-1.34l1.36-.68a1 1 0 00.562-.84l.072-1.58z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Settings Audit #{{ notif.related_site_setting_audit_id }}
+                  </a>
+                  {% else %}
+                  <span class="data-empty">Admin only</span>
+                  {% endif %}
+                {% else %}
+                <span class="data-empty">Archived</span>
+                {% endif %}
+              {% endif %}
+              {% if not notif.related_detection and not notif.related_yield and not notif.related_announcement and not notif.related_knowledge_id and not notif.related_treatment_id and not notif.related_site_setting_audit_id %}
               <span class="data-empty">Not set</span>
               {% endif %}
             </div>

@@ -1466,7 +1466,7 @@ class HarvestRecord(SoftDeleteModel):
 
 
 class Notification(TimeStampedModel):
-    """Real-time alerts (disease detection, yield drop, announcement bell alerts)."""
+    """Real-time alerts for detections, yield drops, announcements, and content updates."""
     TYPE_CHOICES = (
         ("disease", "Disease Detected"),
         ("yield_drop", "Yield Decrease"),
@@ -1484,6 +1484,18 @@ class Notification(TimeStampedModel):
     related_yield = models.ForeignKey(YieldPrediction, on_delete=models.SET_NULL, null=True, blank=True)
     related_announcement = models.ForeignKey(
         'Announcement', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='bell_notifications',
+    )
+    related_knowledge = models.ForeignKey(
+        'KnowledgeBaseEntry', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='bell_notifications',
+    )
+    related_treatment = models.ForeignKey(
+        'TreatmentRecommendation', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='bell_notifications',
+    )
+    related_site_setting_audit = models.ForeignKey(
+        'SiteSettingAudit', on_delete=models.SET_NULL, null=True, blank=True,
         related_name='bell_notifications',
     )
 
