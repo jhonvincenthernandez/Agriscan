@@ -308,7 +308,7 @@
 
           <!-- Related -->
           <td data-label="Related">
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2" {% if not notif.is_read %}data-mark-read-url="{% url 'polls:notification_mark_read' notif.pk %}"{% endif %}>
               {% if notif.related_detection %}
               <a href="{% url 'polls:detections_list' %}?search={{ notif.related_detection.pk }}" class="sn-related-link">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -425,17 +425,22 @@
 <script>
   const CSRF_TOKEN = '{{ csrf_token }}';
 
-  function markNotifRead(btn) {
-    const url = btn.dataset.markReadUrl;
-    const notifId = btn.dataset.notifId;
-
-    fetch(url, {
+  function postMarkRead(url) {
+    return fetch(url, {
       method: 'POST',
       headers: {
         'X-CSRFToken': CSRF_TOKEN,
         'Content-Type': 'application/json',
       },
-    })
+      keepalive: true,
+    });
+  }
+
+  function markNotifRead(btn) {
+    const url = btn.dataset.markReadUrl;
+    const notifId = btn.dataset.notifId;
+
+    postMarkRead(url)
       .then(response => response.json())
       .then(data => {
         if (!data.success) return;
@@ -462,5 +467,48 @@
         window.location.reload();
       });
   }
+
+  document.addEventListener('click', function (event) {
+    const link = event.target.closest('.sn-related-link');
+    if (!link) return;
+
+    const container = link.closest('[data-mark-read-url]');
+    if (!container) return;
+
+    const url = container.dataset.markReadUrl;
+    const modifiedClick = (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      (link.target && link.target !== '_self')
+    );
+
+    if (modifiedClick) {
+      postMarkRead(url).catch(() => {});
+      return;
+    }
+
+    event.preventDefault();
+    const destination = link.href;
+    postMarkRead(url)
+      .catch(() => {})
+      .finally(() => {
+        window.location.assign(destination);
+      });
+  });
+
+  document.addEventListener('auxclick', function (event) {
+    if (event.button !== 1) return;
+
+    const link = event.target.closest('.sn-related-link');
+    if (!link) return;
+
+    const container = link.closest('[data-mark-read-url]');
+    if (!container) return;
+
+    postMarkRead(container.dataset.markReadUrl).catch(() => {});
+  });
 </script>
 {% endblock %}
