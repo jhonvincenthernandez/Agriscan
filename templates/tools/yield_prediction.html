@@ -262,7 +262,7 @@
 
             <!-- CANOPY -->
             <div id="field-canopy_image">
-              {% include 'partials/forms/_field.html' with field=form.canopy_image %}
+              {% include 'partials/forms/_image_upload.html' with input_id="id_canopy_image" input_name=form.canopy_image.html_name field_label="Canopy Image" field_badge="Required for CNN or Ensemble" help_text=form.canopy_image.help_text help_id="help-canopy_image" errors=form.canopy_image.errors error_id="error-canopy_image" upload_title="Choose a canopy image" upload_hint="JPG or PNG. Select a file or drag and drop." required_message="Please choose a canopy image before running the prediction." preview_target="canopy_preview" preview_container_id="canopy_preview_container" preview_image_id="canopy_preview" preview_alt="Canopy image preview" %}
             </div>
 
             <!-- PLANTING -->
@@ -558,8 +558,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const canopyInput = document.getElementById('id_canopy_image');
     if (canopyInput) {
-      canopyInput.required = showCanopy;
       canopyInput.disabled = !showCanopy;
+      canopyInput.setAttribute('aria-required', showCanopy ? 'true' : 'false');
     }
 
     const showTabular = isLinear || isEnsemble;
@@ -1135,7 +1135,9 @@ document.addEventListener('DOMContentLoaded', function () {
   /* ---------- Submit: unlock fields so values post, start loader ---------- */
   const form = document.getElementById('yield-prediction-form');
   if (form) {
-    form.addEventListener('submit', function () {
+    form.addEventListener('submit', function (event) {
+      if (event.defaultPrevented) return;
+
       if (typeof YieldLoader !== 'undefined') {
         YieldLoader.start();
       }

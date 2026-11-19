@@ -184,36 +184,8 @@
             {% endif %}
           </div>
 
-          <!-- IMAGE INPUT -->
-          <div>
-            <label for="id_leaf_image" class="block">
-              {{ form.leaf_image.label }}
-              <span class="text-[var(--color-danger)]" aria-hidden="true">*</span>
-            </label>
-            <div class="mt-1.5">
-              <input id="id_leaf_image" name="{{ form.leaf_image.html_name }}" type="file" accept="image/*" data-preview-target="leaf_preview" class="form-input">
-            </div>
-            <p class="form-help mt-1.5">Use a clear JPG or PNG image with good lighting and visible leaf details.</p>
-            {% if form.leaf_image.errors %}
-            <div class="form-error mt-1.5" role="alert">
-              {% for err in form.leaf_image.errors %}
-                <p>{{ err }}</p>
-              {% endfor %}
-            </div>
-            {% endif %}
-          </div>
-
-          <!-- IMAGE PREVIEW -->
-          <div id="leaf_preview_container" class="{% if result_image_url %}block{% else %}hidden{% endif %}">
-            <div class="overflow-hidden rounded-[var(--radius-md)] border border-[var(--color-border)] bg-[var(--color-overlay)]">
-              <div class="border-b border-[var(--color-border)] bg-[var(--color-overlay)] px-3 py-2">
-                <p class="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">Image Preview</p>
-              </div>
-              <div class="p-2 sm:p-3">
-                <img id="leaf_preview" class="h-56 w-full rounded-[var(--radius-sm)] object-cover sm:h-64" src="{% if result_image_url %}{{ result_image_url }}{% endif %}" alt="Rice leaf image preview">
-              </div>
-            </div>
-          </div>
+          <!-- IMAGE INPUT + PREVIEW -->
+          {% include 'partials/forms/_image_upload.html' with input_id="id_leaf_image" input_name=form.leaf_image.html_name field_label=form.leaf_image.label field_required=True help_text="Use a clear JPG or PNG image with good lighting and visible leaf details." help_id="help-leaf_image" errors=form.leaf_image.errors error_id="error-leaf_image" upload_title="Choose a leaf image" upload_hint="JPG or PNG. Select a file or drag and drop." preview_target="leaf_preview" preview_container_id="leaf_preview_container" preview_image_id="leaf_preview" preview_url=result_image_url preview_alt="Rice leaf image preview" %}
 
           <!-- PRIMARY ACTION -->
           <button id="scan-submit-btn" type="submit" class="btn btn-primary btn-block">
@@ -855,25 +827,6 @@
         }
 
         clearImageError();
-
-        const previewContainer =
-          getElement('leaf_preview_container');
-
-        const previewImage =
-          getElement('leaf_preview');
-
-        if (previewContainer && previewImage) {
-
-          const reader = new FileReader();
-
-          reader.onload = function (event) {
-
-            previewImage.src = event.target.result;
-            previewContainer.classList.remove('hidden');
-          };
-
-          reader.readAsDataURL(file);
-        }
       });
     }
 
@@ -935,8 +888,36 @@
 
         if (previewContainer && previewImage) {
 
+          if (previewImage.dataset.objectUrl) {
+            URL.revokeObjectURL(previewImage.dataset.objectUrl);
+            delete previewImage.dataset.objectUrl;
+          }
+
           previewImage.src = imageData.dataUrl;
           previewContainer.classList.remove('hidden');
+        }
+
+        const uploadRoot =
+          fileInput.closest('[data-image-upload]');
+
+        const filename =
+          uploadRoot && uploadRoot.querySelector('[data-upload-filename]');
+
+        const filenameText =
+          uploadRoot && uploadRoot.querySelector('[data-upload-filename-text]');
+
+        if (filename && filenameText) {
+
+          const sizeInMb = file.size / (1024 * 1024);
+
+          filenameText.textContent =
+            file.name + ' (' +
+            (sizeInMb >= 1
+              ? sizeInMb.toFixed(1) + ' MB'
+              : Math.max(1, Math.round(file.size / 1024)) + ' KB') +
+            ')';
+
+          filename.classList.remove('hidden');
         }
 
         sessionStorage.removeItem('capturedImage');
