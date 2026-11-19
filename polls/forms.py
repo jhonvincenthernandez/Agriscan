@@ -5,6 +5,7 @@ from decimal import Decimal
 from django import forms
 from django.conf import settings
 from django.db.models import Q
+from django.db.models.functions import Lower
 
 from .models import (
     DetectionRecord,
@@ -19,6 +20,7 @@ from .models import (
     PlantingRecord,
     KnowledgeBaseEntry,
 )
+from . import services
 from django import forms as django_forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
@@ -1553,6 +1555,21 @@ class TreatmentRecommendationForm(forms.ModelForm):
             'Hindi puwedeng i-link ang draft/unpublished entries sa treatment.'
         ),
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only expose diseases that exist in the ML class_names.json
+        # classification, so legacy/test disease names cannot be selected.
+        allowed_label_lc = services.classification_disease_labels()
+        if allowed_label_lc:
+            self.fields['disease'].queryset = (
+                DiseaseType.objects
+                .annotate(name_lc=Lower('name'))
+                .filter(name_lc__in=allowed_label_lc)
+                .order_by('name')
+            )
+        else:
+            self.fields['disease'].queryset = DiseaseType.objects.all().order_by('name')
 
     class Meta:
         model = TreatmentRecommendation

@@ -4456,21 +4456,11 @@ def treatments_list(request):
     treatments_page = paginator.get_page(page)
     query_string = _build_query_string(request)
 
-    # Use canonical model labels for dropdown to avoid legacy/test disease names.
+    # Use canonical class_names.json labels for the disease dropdown so
+    # legacy/test disease names (e.g. Diseased, Test Leaf Blast, Tungros) do
+    # not appear as treatment targets.
     from .models import DiseaseType
-    model_labels = services.list_detection_classes()
-    excluded_labels = {
-        'healthy',
-        'healthy flowers',
-        'unknown/not rice',
-        'unknown',
-        'diseased',
-    }
-    allowed_label_lc = {
-        str(label).strip().lower()
-        for label in model_labels
-        if str(label).strip() and str(label).strip().lower() not in excluded_labels
-    }
+    allowed_label_lc = services.classification_disease_labels()
     if allowed_label_lc:
         diseases = (
             DiseaseType.objects

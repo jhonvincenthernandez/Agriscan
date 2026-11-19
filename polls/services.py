@@ -344,6 +344,34 @@ def list_detection_classes() -> Sequence[str]:
         return tuple(_pretty_label(lbl) for lbl in labels) or ("Diseased", "Healthy")
 
 
+# Disease labels present in class_names.json that are not treatable diseases.
+# These are exposed by the model but should not appear as treatment targets.
+CLASSIFICATION_EXCLUDED_LABELS = frozenset(
+    {
+        "healthy",
+        "healthy flowers",
+        "unknown/not rice",
+        "unknown",
+        "diseased",
+    }
+)
+
+
+def classification_disease_labels() -> set[str]:
+    """Return lowercase disease labels from class_names.json valid as treatment targets.
+
+    Mirrors :func:`list_detection_classes` so the treatment recommendation
+    disease options stay consistent with the ML disease classification.
+    """
+    labels = list_detection_classes()
+    return {
+        str(label).strip().lower()
+        for label in labels
+        if str(label).strip()
+        and str(label).strip().lower() not in CLASSIFICATION_EXCLUDED_LABELS
+    }
+
+
 def _ensure_tflite_interpreter() -> Tuple[tf.lite.Interpreter, List[Dict[str, Any]], List[Dict[str, Any]]]:  # type: ignore
     if tf is None:
         raise RuntimeError(
