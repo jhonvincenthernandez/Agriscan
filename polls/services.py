@@ -1878,10 +1878,10 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
         
         # Severity distribution — use classified_qs so rejected scans don't skew ranges
         severity_ranges = [
-            {'label': 'Low (0-25%)', 'min': 0, 'max': 25},
-            {'label': 'Moderate (26-50%)', 'min': 26, 'max': 50},
-            {'label': 'High (51-75%)', 'min': 51, 'max': 75},
-            {'label': 'Severe (76-100%)', 'min': 76, 'max': 100},
+            {'label': 'Low', 'range': '0-25%', 'min': 0, 'max': 25},
+            {'label': 'Moderate', 'range': '26-50%', 'min': 26, 'max': 50},
+            {'label': 'High', 'range': '51-75%', 'min': 51, 'max': 75},
+            {'label': 'Severe', 'range': '76-100%', 'min': 76, 'max': 100},
         ]
 
         for severity_range in severity_ranges:
@@ -1891,6 +1891,7 @@ def dashboard_metrics(user_profile=None, role='farmer') -> Dict[str, Any]:
             ).count()
             severity_distribution.append({
                 'label': severity_range['label'],
+                'range': severity_range['range'],
                 'count': count
             })
 

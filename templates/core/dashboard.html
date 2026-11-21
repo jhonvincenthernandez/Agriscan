@@ -1119,14 +1119,14 @@
 
             <div>
               <h3 class="dash-chart__title">Detection Trends</h3>
-              <p class="dash-chart__subtitle">Detection activity over time</p>
+              <p class="dash-chart__subtitle">Daily detections over the last 7 days</p>
             </div>
           </div>
         </div>
 
         <div class="dash-chart__body">
           <div class="dash-chart__wrap">
-            <canvas id="trendChart" role="img" aria-label="Line chart of detection activity over time"></canvas>
+            <canvas id="trendChart" role="img" aria-label="Line chart of daily detections over the last 7 days"></canvas>
             <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
               <span class="agri-skeleton" style="height:55%"></span>
               <span class="agri-skeleton" style="height:12%"></span>
@@ -1201,8 +1201,7 @@
                 {% endif %}
               </h3>
               <p class="dash-chart__subtitle">
-                Model-estimated yield in tons per hectare.
-                <a href="{% url 'polls:reports' %}">Actual harvest yield is in Reports</a>.
+                Model estimate in t/ha. <a href="{% url 'polls:reports' %}">Actual harvest in Reports</a>.
               </p>
             </div>
           </div>
@@ -2049,8 +2048,8 @@
       const labels = data.map((row) => row.date);
       const values = data.map((row) => Number(row.count || 0));
 
-      if (!labels.length) {
-        renderChartEmpty('trendChart', 'No trend data yet', 'Detection activity will appear here over time.');
+      if (!labels.length || !values.some((value) => value > 0)) {
+        renderChartEmpty('trendChart', 'No detections in the last 7 days', 'Scan a rice leaf to start the trend.');
         return;
       }
 
@@ -2068,7 +2067,7 @@
             pointBackgroundColor: PALETTE.brand,
             pointBorderColor: PALETTE.surface,
             pointBorderWidth: 1.5,
-            tension: 0.32,
+            tension: 0,
             fill: true,
             backgroundColor: function (context) {
               const chart = context.chart;
@@ -2099,7 +2098,7 @@
 
     severityChart: function () {
       const data = getArrayFromScript('dashboardSeverityData');
-      const labels = data.map((row) => row.label);
+      const labels = data.map((row) => [row.label, row.range || '']);
       const values = data.map((row) => Number(row.count || 0));
 
       if (!values.some((value) => value > 0)) {
@@ -2122,6 +2121,13 @@
         },
         options: baseOptions({
           scales: cartesianScales({
+            x: {
+              ticks: {
+                color: PALETTE.muted,
+                maxRotation: 0,
+                autoSkip: false
+              }
+            },
             y: { ticks: { color: PALETTE.muted, precision: 0, stepSize: 1, maxTicksLimit: 5 } }
           })
         })
@@ -2129,7 +2135,10 @@
 
       renderDataTable(
         document.querySelector('[data-chart-card="severityChart"]'),
-        'Severity distribution', labels, values, 'Detections'
+        'Severity distribution',
+        data.map((row) => `${row.label} (${row.range})`),
+        values,
+        'Detections'
       );
     },
 

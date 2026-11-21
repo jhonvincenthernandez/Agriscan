@@ -182,36 +182,52 @@ def dashboard(request):
         disease_stats = []
     
     # Detection trends (last 7 days)
-    # BEST PRACTICE: Use timezone-aware date ranges instead of __date lookup
-    # to avoid MySQL timezone conversion issues
-    today = timezone.now().date()
+    # Single aggregate query with per-day conditional counts. This replaces the
+    # previous N+1 loop (7 COUNT queries) and keeps exclusion rules identical to
+    # the dashboard KPI counters so the chart and cards cannot disagree.
+    # Timezone-aware day boundaries are used instead of __date lookups to avoid
+    # MySQL timezone conversion issues.
+    today = timezone.localdate()
+    trend_days = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
     trend_data = []
-    for i in range(6, -1, -1):
-        date = today - timedelta(days=i)
-        # Create timezone-aware start and end of day
-        start_of_day = timezone.make_aware(
-            timezone.datetime.combine(date, timezone.datetime.min.time())
+
+    if user_profile:
+        trend_qs = DetectionRecord.objects.filter(is_active=True).exclude(
+            planting__status__in=['harvested', 'failed', 'cancelled']
+        ).exclude(
+            models.Q(disease__isnull=True)
+            | models.Q(disease__name__iexact='Unknown/Not Rice')
+            | models.Q(disease__name__iexact='Unknown')
         )
-        end_of_day = timezone.make_aware(
-            timezone.datetime.combine(date, timezone.datetime.max.time())
-        )
-        
-        if user_profile:
-            trend_qs = DetectionRecord.objects.filter(
-                is_active=True,
-                created_at__gte=start_of_day,
-                created_at__lte=end_of_day
-            ).exclude(
-                disease__name__iexact='Unknown/Not Rice'
-            ).exclude(
-                disease__name__iexact='Unknown'
+        if role == 'farmer':
+            trend_qs = trend_qs.filter(user=user_profile)
+
+        day_aggregates = {}
+        for index, day in enumerate(trend_days):
+            start_of_day = timezone.make_aware(
+                timezone.datetime.combine(day, timezone.datetime.min.time())
             )
-            if role == 'farmer':
-                trend_qs = trend_qs.filter(user=user_profile)
-            count = trend_qs.count()
-        else:
-            count = 0
-        trend_data.append({'date': date.strftime('%m/%d'), 'count': count})
+            end_of_day = timezone.make_aware(
+                timezone.datetime.combine(day, timezone.datetime.max.time())
+            )
+            day_aggregates[f'day_{index}'] = Count(
+                'id',
+                filter=models.Q(created_at__gte=start_of_day, created_at__lte=end_of_day),
+            )
+
+        day_counts = trend_qs.aggregate(**day_aggregates)
+        trend_data = [
+            {
+                'date': day.strftime('%b %d'),
+                'count': day_counts.get(f'day_{index}', 0) or 0,
+            }
+            for index, day in enumerate(trend_days)
+        ]
+    else:
+        trend_data = [
+            {'date': day.strftime('%b %d'), 'count': 0}
+            for day in trend_days
+        ]
     
     # Get metrics
     metrics = services.dashboard_metrics(user_profile=user_profile, role=role)
