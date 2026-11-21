@@ -366,6 +366,13 @@
     line-height: 1.45;
     color: var(--color-text-muted);
   }
+  .dash-chart__subtitle a {
+    color: var(--color-brand);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .dash-chart__subtitle a:hover { color: var(--color-brand-hover); }
   .dash-chart__body {
     position: relative;
     flex: 1 1 auto;
@@ -1188,19 +1195,22 @@
             <div>
               <h3 class="dash-chart__title">
                 {% if is_admin or is_technician %}
-                  Average Yield by Barangay
+                  Average Predicted Yield by Barangay
                 {% else %}
-                  My Yield by Field
+                  My Predicted Yield by Field
                 {% endif %}
               </h3>
-              <p class="dash-chart__subtitle">Average recorded yield in tons per hectare</p>
+              <p class="dash-chart__subtitle">
+                Model-estimated yield in tons per hectare.
+                <a href="{% url 'polls:reports' %}">Actual harvest yield is in Reports</a>.
+              </p>
             </div>
           </div>
         </div>
 
         <div class="dash-chart__body">
           <div class="dash-chart__wrap">
-            <canvas id="yieldChart" role="img" aria-label="Bar chart of average yield"></canvas>
+            <canvas id="yieldChart" role="img" aria-label="Bar chart of average predicted yield"></canvas>
             <div class="dash-chart__skeleton" data-skeleton aria-hidden="true">
               <span class="agri-skeleton" style="height:60%"></span>
               <span class="agri-skeleton" style="height:14%"></span>
@@ -2139,7 +2149,7 @@
       }
 
       if (!labels.length) {
-        renderChartEmpty('yieldChart', 'No yield data yet', 'Submit a yield prediction to see averages here.');
+        renderChartEmpty('yieldChart', 'No predicted yield data yet', 'Submit a yield prediction to see averages here.');
         return;
       }
 
@@ -2148,7 +2158,7 @@
         data: {
           labels: labels,
           datasets: [{
-            label: 'Avg yield (tons/ha)',
+            label: 'Avg predicted yield (tons/ha)',
             data: values,
             backgroundColor: toRgba(PALETTE.brand, 0.85),
             hoverBackgroundColor: PALETTE.brandDeep,
@@ -2190,7 +2200,7 @@
 
       renderDataTable(
         document.querySelector('[data-chart-card="yieldChart"]'),
-        'Average yield', labels, values, 'Tons/ha'
+        'Average predicted yield', labels, values, 'Tons/ha'
       );
     },
 
