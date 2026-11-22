@@ -872,6 +872,7 @@ class TreatmentRecommendation(SoftDeleteModel, TimeStampedModel):
             {
                 'name': entry.name,
                 'category': entry.category,
+                'category_display': entry.get_category_display(),
                 'description': entry.description,
                 'symptoms': entry.symptoms,
                 'causes': entry.causes,
@@ -906,30 +907,30 @@ class TreatmentRecommendation(SoftDeleteModel, TimeStampedModel):
         The Quick Recommendation card changes colour and message based on how
         many Factors Favoring Disease the farmer checks.  Thresholds and
         messages are derived from this treatment's ``priority`` so that
-        high-priority diseases (e.g. Neck Blast P=9) escalate faster than
-        low-priority ones (e.g. Leaf Scald P=3).
+        high-priority diseases (for example Neck Blast P=9) escalate faster than
+        low-priority ones (for example Leaf Scald P=3).
 
-        Returns a list of dicts (index 0 = "0 checked", 1 = first threshold …)
-        consumed by the detail.html <script> block.
+        Returns a list of dicts (index 0 = "0 checked", 1 = first threshold,
+        and so forth) consumed by the detail.html <script> block.
         """
         p = self.priority or 5
 
         # High-priority disease: escalate at 1, 2, 3+ factors
         if p >= 8:
             return [
-                None,  # 0 checked — default blue card
+                None,  # 0 checked: default blue card
                 {
-                    'label':  '⚠️ 1 risk factor present — High-priority disease, stay alert!',
+                    'label':  '1 risk factor present. High-priority disease, stay alert!',
                     'detail': 'Monitor daily. High-priority diseases spread rapidly under favorable conditions.',
                     'bg':     'from-yellow-500 to-amber-600',
                 },
                 {
-                    'label':  '🚨 2 risk factors — Immediate action required!',
+                    'label':  '2 risk factors. Immediate action required!',
                     'detail': 'Apply recommended cultural practices NOW. Do not wait for further spread.',
                     'bg':     'from-orange-500 to-red-600',
                 },
                 {
-                    'label':  '🚨 Multiple risk factors — CRITICAL risk!',
+                    'label':  'Multiple risk factors. Critical risk!',
                     'detail': 'All risk conditions are present. Implement full IPM protocol immediately and contact a DA technician.',
                     'bg':     'from-red-600 to-rose-800',
                 },
@@ -939,17 +940,17 @@ class TreatmentRecommendation(SoftDeleteModel, TimeStampedModel):
             return [
                 None,
                 {
-                    'label':  '⚠️ 1 risk factor present — Monitor closely',
+                    'label':  '1 risk factor present. Monitor closely.',
                     'detail': 'One risk condition is present. Inspect your field regularly for early symptoms.',
                     'bg':     'from-blue-500 to-indigo-600',
                 },
                 {
-                    'label':  '⚠️ 2 risk factors — Apply preventive measures',
+                    'label':  '2 risk factors. Apply preventive measures.',
                     'detail': 'Conditions are becoming favorable. Apply cultural practices to prevent spread.',
                     'bg':     'from-yellow-500 to-amber-600',
                 },
                 {
-                    'label':  '🚨 Multiple risk factors — High risk! Take action now.',
+                    'label':  'Multiple risk factors. High risk, take action now.',
                     'detail': 'Multiple favorable conditions detected. Follow the full treatment recommendation above.',
                     'bg':     'from-red-500 to-rose-700',
                 },
@@ -959,17 +960,17 @@ class TreatmentRecommendation(SoftDeleteModel, TimeStampedModel):
             return [
                 None,
                 {
-                    'label':  'ℹ️ 1 risk factor noted',
+                    'label':  '1 risk factor noted.',
                     'detail': 'Mild disease risk. Continue good agronomic practices and monitor weekly.',
                     'bg':     'from-blue-500 to-indigo-600',
                 },
                 {
-                    'label':  '⚠️ 2 risk factors — Increase monitoring frequency',
+                    'label':  '2 risk factors. Increase monitoring frequency.',
                     'detail': 'Some favorable conditions present. Consider applying preventive cultural measures.',
                     'bg':     'from-blue-600 to-indigo-700',
                 },
                 {
-                    'label':  '⚠️ Multiple risk factors — Apply preventive treatment',
+                    'label':  'Multiple risk factors. Apply preventive treatment.',
                     'detail': 'Several risk conditions are present. Apply cultural practices as described above.',
                     'bg':     'from-yellow-500 to-amber-600',
                 },

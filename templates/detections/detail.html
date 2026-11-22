@@ -2,9 +2,277 @@
 
 {% block title %}Detection Details · AgriScan+{% endblock %}
 
+{% block styles %}
+<style>
+  /* Detection detail layout: cap the reading width on large screens */
+  .detection-page {
+    max-width: 1400px;
+    margin-inline: auto;
+  }
+
+  @media (min-width: 1280px) and (min-height: 860px) {
+    .detection-sidebar {
+      position: sticky;
+      top: calc(var(--header-h) + 1.5rem);
+      max-height: calc(100vh - var(--header-h) - 3rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+      scrollbar-color: var(--color-border-strong) transparent;
+      align-self: start;
+      padding-right: 0.25rem;
+      margin-right: -0.25rem;
+    }
+  }
+
+  /* Mobile reading order: summary, treatment guidance, then actions and support */
+  @media (max-width: 1023px) {
+    .detection-sidebar {
+      display: contents;
+    }
+
+    .detection-summary { order: 1; }
+    .detection-main { order: 2; }
+    .detection-quick-actions { order: 3; }
+    .detection-support { order: 4; }
+  }
+
+  /* Summary metric tiles */
+  .metric-tile {
+    border: 1px solid transparent;
+  }
+
+  .tone-success {
+    border-color: var(--color-success-border);
+    background: var(--color-success-soft);
+    color: var(--color-success-text);
+  }
+
+  .tone-warning {
+    border-color: var(--color-warning-border);
+    background: var(--color-warning-soft);
+    color: var(--color-warning-text);
+  }
+
+  .tone-danger {
+    border-color: var(--color-danger-border);
+    background: var(--color-danger-soft);
+    color: var(--color-danger-text);
+  }
+
+  /* Factor selection rows */
+  .factor-row {
+    position: relative;
+    min-height: 44px;
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-warning-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    transition:
+      background-color var(--transition-fast),
+      border-color var(--transition-fast),
+      box-shadow var(--transition-fast);
+  }
+
+  .factor-row:hover {
+    background: var(--color-warning-soft);
+  }
+
+  .factor-row[data-checked="true"],
+  .factor-row:has(.factor-checkbox:checked) {
+    background: #fef3c7;
+    border-color: var(--color-warning-text);
+    box-shadow: inset 0 0 0 1px var(--color-warning-text);
+  }
+
+  .factor-row:focus-within {
+    border-color: var(--color-warning-text);
+    box-shadow: inset 0 0 0 1px var(--color-warning-text);
+  }
+
+  .factor-checkbox-ui {
+    display: inline-flex;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.1rem;
+    border: 1.5px solid var(--color-warning-text);
+    border-radius: 4px;
+    background: var(--color-surface);
+    transition:
+      background-color var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .factor-checkbox:checked + .factor-checkbox-ui {
+    background: var(--color-warning-text);
+    border-color: var(--color-warning-text);
+  }
+
+  .factor-checkbox:checked + .factor-checkbox-ui::after {
+    content: "";
+    width: 0.33rem;
+    height: 0.62rem;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translateY(-0.05rem);
+  }
+
+  .factor-checkbox:focus-visible + .factor-checkbox-ui {
+    outline: 2px solid var(--color-warning-text);
+    outline-offset: 2px;
+  }
+
+  /* Compact knowledge list */
+  .knowledge-link {
+    transition:
+      background-color var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .knowledge-link:hover,
+  .knowledge-link:focus-visible {
+    background: var(--color-brand-light);
+    border-color: var(--color-brand-border);
+  }
+
+  .knowledge-link:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  /* Click-to-zoom image */
+  .image-trigger {
+    cursor: zoom-in;
+  }
+
+  .image-trigger:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: -2px;
+  }
+
+  .image-lightbox {
+    max-width: min(92vw, 1100px);
+    max-height: 92vh;
+    padding: 0;
+    border: none;
+    background: transparent;
+    overflow: visible;
+  }
+
+  .image-lightbox::backdrop {
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(2px);
+  }
+
+  .image-lightbox-panel {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .image-lightbox-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 86vh;
+    margin: 0 auto;
+    object-fit: contain;
+  }
+
+  .image-lightbox-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(15, 23, 42, 0.72);
+    color: #ffffff;
+    transition: background-color var(--transition-fast);
+  }
+
+  .image-lightbox-close:hover {
+    background: rgba(15, 23, 42, 0.92);
+  }
+
+  .image-lightbox-close:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+  }
+
+  /* Back to top */
+  .back-to-top {
+    position: fixed;
+    right: 1.5rem;
+    bottom: 1.5rem;
+    z-index: 40;
+    display: inline-flex;
+    width: 2.75rem;
+    height: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    border: 1px solid var(--color-border-strong);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-md);
+    transition:
+      background-color var(--transition-fast),
+      color var(--transition-fast),
+      border-color var(--transition-fast);
+  }
+
+  .back-to-top:hover {
+    background: var(--color-brand-light);
+    color: var(--color-brand);
+    border-color: var(--color-brand-border);
+  }
+
+  .back-to-top:focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  .back-to-top[hidden] {
+    display: none;
+  }
+
+  @media (max-width: 639px) {
+    .back-to-top {
+      right: 1rem;
+      bottom: 1rem;
+    }
+  }
+
+  @media print {
+    .detection-sidebar {
+      position: static !important;
+      max-height: none !important;
+      overflow: visible !important;
+      padding-right: 0 !important;
+      margin-right: 0 !important;
+    }
+
+    .knowledge-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <section
-  class="page-container min-w-0"
+  class="page-container detection-page min-w-0"
   aria-labelledby="detection-page-title"
 >
 
@@ -45,7 +313,7 @@
           </div>
 
           <div class="min-w-0">
-            <p class="text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-brand)]">
+            <p class="text-[length:var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-brand)]">
               Disease Detection
             </p>
 
@@ -56,7 +324,7 @@
               Detection Details &amp; Treatment
             </h1>
 
-            <p class="mt-1 max-w-2xl text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
+            <p class="mt-1 max-w-2xl text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               Review the detection result, severity, and recommended management strategies.
             </p>
           </div>
@@ -132,13 +400,13 @@
       Detection Detail Report
     </h2>
 
-    <p class="mt-1 text-[var(--text-sm)] text-[var(--color-text-secondary)]">
+    <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
       Detection ID: {{ detection.pk }}
       <span aria-hidden="true">•</span>
       {{ detection.disease.name|default:"Unknown" }}
     </p>
 
-    <p class="mt-1 text-[var(--text-sm)] text-[var(--color-text-secondary)]">
+    <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
       Generated:
       <span id="print-date"></span>
     </p>
@@ -148,20 +416,20 @@
   <!-- =========================================================
        MAIN CONTENT
        ========================================================= -->
-  <div class="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
+  <div id="detection-grid" class="flex min-w-0 flex-col gap-6 lg:grid lg:grid-cols-3">
 
 
     <!-- =======================================================
          LEFT COLUMN
          ======================================================= -->
-    <aside class="min-w-0 space-y-6 lg:col-span-1">
+    <aside class="detection-sidebar min-w-0 space-y-6 lg:col-span-1">
 
 
       <!-- =====================================================
            DETECTION SUMMARY
            ===================================================== -->
       <section
-        class="agri-card overflow-hidden"
+        class="agri-card detection-summary overflow-hidden"
         aria-labelledby="detection-summary-title"
       >
 
@@ -170,12 +438,40 @@
 
           {% if detection.image_path %}
 
-            <img
-              src="{{ media_url }}{{ detection.image_path }}"
-              alt="Rice leaf image analyzed for detection {{ detection.pk }}"
-              class="h-56 w-full object-contain sm:h-64 lg:h-72"
-              loading="lazy"
-            />
+            <button
+              type="button"
+              class="image-trigger group relative block w-full overflow-hidden text-left"
+              data-image-lightbox-trigger
+              aria-label="View full detection image"
+            >
+              <img
+                src="{{ media_url }}{{ detection.image_path }}"
+                alt="Rice leaf image analyzed for detection {{ detection.pk }}"
+                class="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                loading="lazy"
+              />
+
+              <span
+                class="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 text-[length:var(--text-xs)] font-medium text-white backdrop-blur-sm"
+              >
+                <svg
+                  class="h-3.5 w-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+                  />
+                </svg>
+
+                <span class="hidden sm:inline">View full image</span>
+              </span>
+            </button>
 
           {% else %}
 
@@ -199,7 +495,7 @@
                 />
               </svg>
 
-              <span class="mt-2 text-[var(--text-sm)]">
+              <span class="mt-2 text-[length:var(--text-sm)]">
                 No image available
               </span>
             </div>
@@ -218,94 +514,116 @@
 
 
           <!-- Disease -->
-          <div
-            class="rounded-[var(--radius-sm)] border p-4
-              {% if detection.disease.name == 'Healthy' %}
-                border-[var(--color-success-border)] bg-[var(--color-success-soft)]
-              {% elif detection.disease.name == UNKNOWN_LABEL %}
-                border-[var(--color-border)] bg-[var(--color-overlay)]
-              {% else %}
-                border-[var(--color-danger-border)] bg-[var(--color-danger-soft)]
-              {% endif %}"
-          >
-            <p
-              class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide
-                {% if detection.disease.name == 'Healthy' %}
-                  text-[var(--color-success-text)]
-                {% elif detection.disease.name == UNKNOWN_LABEL %}
-                  text-[var(--color-text-secondary)]
-                {% else %}
-                  text-[var(--color-danger-text)]
-                {% endif %}"
-            >
+          <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
+
+            <p class="mb-1 text-[length:var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
               Disease
             </p>
 
-            <p class="break-words text-lg font-bold text-[var(--color-text-primary)]">
-              {{ detection.disease.name|default:"Unknown" }}
-            </p>
+            <div class="flex items-start gap-2">
+
+              <span
+                class="mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full
+                  {% if detection.disease.name == 'Healthy' or detection.disease.name == 'Healthy Flowers' %}
+                    bg-[var(--color-success-text)]
+                  {% elif not detection.disease or detection.disease.name == UNKNOWN_LABEL or detection.disease.name == 'Unknown' %}
+                    bg-[var(--color-text-muted)]
+                  {% else %}
+                    bg-[var(--color-danger)]
+                  {% endif %}"
+                aria-hidden="true"
+              ></span>
+
+              <p class="break-words text-lg font-bold text-[var(--color-text-primary)]">
+                {{ detection.disease.name|default:"Unknown" }}
+              </p>
+
+            </div>
           </div>
 
 
           <!-- Metrics -->
+          {% with confidence=detection.confidence_pct|default:0 severity=detection.severity_pct|default:0 %}
           <div class="grid grid-cols-2 gap-3">
 
-            <div class="rounded-[var(--radius-sm)] border border-[var(--color-success-border)] bg-[var(--color-success-soft)] p-4">
-              <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-success-text)]">
+            <div
+              class="metric-tile rounded-[var(--radius-sm)] p-4
+                {% if confidence >= 70 %}
+                  tone-success
+                {% elif confidence >= 40 %}
+                  tone-warning
+                {% else %}
+                  tone-danger
+                {% endif %}"
+            >
+              <p class="metric-label mb-1 text-[length:var(--text-xs)] font-semibold uppercase tracking-wide">
                 Confidence
               </p>
 
-              <p class="text-lg font-bold text-[var(--color-success-text)]">
-                {{ detection.confidence_pct|default:"0" }}%
+              <p class="metric-value text-lg font-bold">
+                {{ confidence|floatformat:"-1" }}%
               </p>
             </div>
 
 
-            <div class="rounded-[var(--radius-sm)] border border-[var(--color-warning-border)] bg-[var(--color-warning-soft)] p-4">
-              <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-warning-text)]">
+            <div
+              class="metric-tile rounded-[var(--radius-sm)] p-4
+                {% if severity >= 70 %}
+                  tone-danger
+                {% elif severity >= 40 %}
+                  tone-warning
+                {% else %}
+                  tone-success
+                {% endif %}"
+            >
+              <p class="metric-label mb-1 text-[length:var(--text-xs)] font-semibold uppercase tracking-wide">
                 Severity
               </p>
 
-              <p class="text-lg font-bold text-[var(--color-warning-text)]">
-                {{ detection.severity_pct|default:"0" }}%
+              <p class="metric-value text-lg font-bold">
+                {{ severity }}%
               </p>
             </div>
 
           </div>
+          {% endwith %}
 
 
-          <!-- Field -->
-          {% if detection.planting %}
-          <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
+          <!-- Field and date -->
+          <div class="grid grid-cols-1 gap-3 {% if detection.planting %}sm:grid-cols-2{% endif %}">
 
-            <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
-              Field
-            </p>
+            {% if detection.planting %}
+            <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
 
-            <p class="break-words text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
-              {{ detection.planting.field.name }}
-            </p>
-
-            {% if detection.planting.field.area_hectares %}
-              <p class="mt-1.5 text-[var(--text-xs)] font-medium text-[var(--color-text-secondary)]">
-                {{ detection.planting.field.area_hectares }} hectares
+              <p class="mb-1 text-[length:var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                Field
               </p>
+
+              <p class="break-words text-[length:var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
+                {{ detection.planting.field.name }}
+              </p>
+
+              {% if detection.planting.field.area_hectares %}
+                <p class="mt-1.5 text-[length:var(--text-xs)] font-medium text-[var(--color-text-secondary)]">
+                  {{ detection.planting.field.area_hectares }} hectares
+                </p>
+              {% endif %}
+
+            </div>
             {% endif %}
 
-          </div>
-          {% endif %}
 
+            <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
 
-          <!-- Date -->
-          <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
+              <p class="mb-1 text-[length:var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                Detected On
+              </p>
 
-            <p class="mb-1 text-[var(--text-xs)] font-semibold uppercase tracking-wide text-[var(--color-text-muted)]">
-              Detected On
-            </p>
+              <p class="text-[length:var(--text-sm)] font-medium text-[var(--color-text-primary)]">
+                {{ detection.created_at|date:"F d, Y h:i A" }}
+              </p>
 
-            <p class="text-[var(--text-sm)] font-medium text-[var(--color-text-primary)]">
-              {{ detection.created_at|date:"F d, Y h:i A" }}
-            </p>
+            </div>
 
           </div>
 
@@ -317,7 +635,7 @@
            QUICK ACTIONS
            ===================================================== -->
       <section
-        class="agri-card p-4 sm:p-5"
+        class="agri-card detection-quick-actions p-4 sm:p-5"
         aria-labelledby="quick-actions-title"
       >
 
@@ -325,12 +643,12 @@
 
           <h2
             id="quick-actions-title"
-            class="text-[var(--text-sm)] font-semibold uppercase tracking-wide text-[var(--color-text-primary)]"
+            class="text-[length:var(--text-sm)] font-semibold uppercase tracking-wide text-[var(--color-text-primary)]"
           >
             Quick Actions
           </h2>
 
-          <span class="text-[var(--text-xs)] text-[var(--color-text-muted)]">
+          <span class="text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
             Detection #{{ detection.pk }}
           </span>
 
@@ -338,36 +656,6 @@
 
 
         <div class="space-y-2.5">
-
-          {% if not is_farmer %}
-          <a
-            href="{% url 'polls:detections_edit' detection.pk %}"
-            class="btn btn-secondary btn-block"
-          >
-           <svg
-              class="h-4 w-4 text-[var(--color-text-secondary)]"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 15a3 3 0 100-6 3 3 0 000 6z"
-              />
-            </svg>
-            <span>View Detection</span>
-          </a>
-          {% endif %}
-
 
           {% if detection.disease.name != UNKNOWN_LABEL %}
           <a
@@ -389,12 +677,37 @@
               />
             </svg>
 
-            <span>Yield Prediction Tool</span>
+            <span>Continue to Yield Prediction</span>
           </a>
 
-          <p class="px-1 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-muted)]">
+          <p class="px-1 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
             Uses this detection record as the starting point for yield prediction.
           </p>
+          {% endif %}
+
+
+          {% if not is_farmer %}
+          <a
+            href="{% url 'polls:detections_edit' detection.pk %}"
+            class="btn btn-secondary btn-block"
+          >
+            <svg
+              class="h-4 w-4 text-[var(--color-text-secondary)]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              />
+            </svg>
+
+            <span>Edit Detection</span>
+          </a>
           {% endif %}
 
         </div>
@@ -405,7 +718,7 @@
            SUPPORT
            ===================================================== -->
       <section
-        class="agri-card border-[var(--color-brand-border)] bg-[var(--color-brand-light)] p-5 sm:p-6"
+        class="agri-card detection-support border-[var(--color-brand-border)] bg-[var(--color-brand-light)] p-5 sm:p-6"
         aria-labelledby="support-title"
       >
 
@@ -444,7 +757,7 @@
               Need Help?
             </h2>
 
-            <p class="mt-2 text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
+            <p class="mt-2 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               For severe infections or when treatment is uncertain, contact your local DA field technician for professional guidance.
             </p>
 
@@ -453,7 +766,7 @@
               href="https://mail.google.com/mail/?view=cm&fs=1&to=santeodororice37@gmail.com&su=AgriScan%20Support%20Request&body=Hello%20DA%20Support%2C%0D%0A%0D%0AI%20need%20guidance%20for%20this%20rice%20detection.%0D%0A%0D%0ADetection%20ID%3A%20{{ detection.pk }}%0D%0ADisease%3A%20{{ detection.disease.name|default:'Unknown'|urlencode }}%0D%0ASeverity%3A%20{{ detection.severity_pct|default:0 }}%25%0D%0AField%3A%20{{ detection.planting.field.name|default:'Unknown'|urlencode }}%0D%0A%0D%0AThank%20you."
               target="_blank"
               rel="noopener noreferrer"
-              class="btn btn-primary mt-4 w-full sm:w-auto"
+              class="btn btn-secondary mt-4 w-full sm:w-auto"
             >
               <span>Contact DA Support</span>
 
@@ -483,7 +796,7 @@
     <!-- =======================================================
          RIGHT COLUMN
          ======================================================= -->
-    <main class="min-w-0 space-y-6 lg:col-span-2">
+    <main class="detection-main min-w-0 space-y-6 lg:col-span-2">
 
       {% if detailed_treatment %}
 
@@ -535,7 +848,7 @@
               <div class="flex flex-wrap items-center gap-2">
 
                 <span
-                  class="rounded-full px-2.5 py-1 text-[var(--text-xs)] font-semibold
+                  class="rounded-full px-2.5 py-1 text-[length:var(--text-xs)] font-semibold
                     {% if treatment_obj.priority >= 8 %}
                       bg-[var(--color-danger-soft)] text-[var(--color-danger-text)]
                     {% elif treatment_obj.priority >= 4 %}
@@ -544,17 +857,39 @@
                       bg-[var(--color-success-soft)] text-[var(--color-success-text)]
                     {% endif %}"
                 >
-                  Priority {{ treatment_obj.priority }}/10
+                  {% if treatment_obj.priority >= 8 %}
+                    High priority
+                  {% elif treatment_obj.priority >= 4 %}
+                    Medium priority
+                  {% else %}
+                    Low priority
+                  {% endif %}
+                  <span class="opacity-70">· {{ treatment_obj.priority }}/10</span>
                 </span>
 
 
                 {% if not is_farmer %}
                 <a
                   href="{% url 'polls:treatments_edit' treatment_obj.pk %}"
-                  class="text-[var(--text-xs)] font-medium text-[var(--color-brand)] underline underline-offset-2 transition-colors hover:text-[var(--color-brand-hover)]"
+                  class="btn btn-secondary btn-sm min-h-[44px]"
                   title="Edit this treatment record"
                 >
-                  Edit treatment
+                  <svg
+                    class="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
+                  </svg>
+
+                  <span>Edit</span>
                 </a>
                 {% endif %}
 
@@ -566,7 +901,7 @@
 
             <p
               id="quick-rec-base"
-              class="leading-relaxed text-[var(--color-text)]"
+              class="max-w-prose text-[length:var(--text-base)] leading-relaxed text-[var(--color-text)]"
             >
               {{ detailed_treatment.short_text }}
             </p>
@@ -575,7 +910,7 @@
             {% if detailed_treatment.factors_favoring %}
             <p
               id="quick-rec-prompt"
-              class="mt-2 flex items-start gap-1.5 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-muted)]"
+              class="mt-2 flex items-start gap-1.5 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]"
             >
               <svg
                 class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[var(--color-brand)]"
@@ -630,12 +965,12 @@
 
                   <p
                     id="qrn-label"
-                    class="text-[var(--text-sm)] font-semibold text-[var(--color-text-primary)]"
+                    class="text-[length:var(--text-sm)] font-semibold text-[var(--color-text-primary)]"
                   ></p>
 
                   <div
                     id="qrn-detail"
-                    class="mt-1 text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]"
+                    class="mt-1 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text)]"
                   ></div>
 
                 </div>
@@ -690,45 +1025,57 @@
                 Factors Favoring Disease
               </h2>
 
-              <span
-                id="factors-badge"
-                class="hidden w-fit rounded-full bg-[var(--color-surface)] px-2.5 py-1 text-[var(--text-xs)] font-semibold text-[var(--color-warning-text)] border border-[var(--color-warning-border)]"
-              >
-                <span id="factors-count">0</span>
-                factor<span id="factors-plural">s</span> present
-              </span>
+              <div class="flex flex-wrap items-center gap-2">
+
+                <span
+                  id="factors-badge"
+                  class="hidden w-fit rounded-full bg-[var(--color-surface)] px-2.5 py-1 text-[length:var(--text-xs)] font-semibold text-[var(--color-warning-text)] border border-[var(--color-warning-border)]"
+                >
+                  <span id="factors-count">0</span>
+                  factor<span id="factors-plural">s</span> present
+                </span>
+
+                <button
+                  type="button"
+                  id="factors-clear"
+                  class="hidden text-[length:var(--text-sm)] font-medium text-[var(--color-warning-text)] underline decoration-[var(--color-warning-border)] underline-offset-2 transition-colors hover:text-[var(--color-text-primary)]"
+                >
+                  Clear
+                </button>
+
+              </div>
 
             </div>
 
 
-            <p class="mb-4 text-[var(--text-xs)] leading-relaxed text-[var(--color-warning-text)]">
+            <p class="mb-4 max-w-prose text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               Select the factors currently present in your field to receive a more specific recommendation.
             </p>
 
 
             <div
               id="factors-list"
-              class="space-y-1.5"
+              class="space-y-2"
             >
 
               {% for item in detailed_treatment.factors_with_actions %}
                 {% if item.factor %}
 
-                <label
-                  class="factor-row -mx-2 flex cursor-pointer items-start gap-3 rounded-[var(--radius-sm)] px-2 py-2 transition-colors duration-150 hover:bg-amber-100/60"
-                >
+                <label class="factor-row flex cursor-pointer items-start gap-3">
 
                   <input
                     type="checkbox"
-                    class="factor-checkbox mt-0.5"
+                    class="factor-checkbox sr-only"
                     data-factor="{{ item.factor }}"
                     data-action="{{ item.action }}"
                     data-expected-result="{{ item.expected_result }}"
                     aria-label="Select factor: {{ item.factor }}"
                   />
 
+                  <span class="factor-checkbox-ui" aria-hidden="true"></span>
+
                   <span
-                    class="select-none text-[var(--text-sm)] leading-relaxed text-[var(--color-warning-text)]"
+                    class="select-none text-[length:var(--text-sm)] leading-relaxed text-[var(--color-warning-text)]"
                   >
                     {{ item.factor }}
                   </span>
@@ -788,23 +1135,23 @@
                 General Cultural Practices
               </h2>
 
-              <span class="rounded-full bg-[var(--color-brand-light)] px-2.5 py-1 text-[var(--text-xs)] font-medium text-[var(--color-brand)]">
+              <span class="rounded-full bg-[var(--color-brand-light)] px-2.5 py-1 text-[length:var(--text-xs)] font-medium text-[var(--color-brand)]">
                 Integrated Pest Management (IPM)
               </span>
 
             </div>
 
 
-            <p class="mb-3 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-secondary)]">
+            <p class="mb-3 max-w-prose text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
               These are general agronomic practices recommended for this disease.
               For field-specific actions, use the factor selections above.
             </p>
 
 
             <div
-              class="rounded-[var(--radius-sm)] border border-[var(--color-brand-border)] bg-[var(--color-brand-light)] p-4 text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]"
+              class="max-w-prose rounded-[var(--radius-sm)] border border-[var(--color-brand-border)] bg-[var(--color-brand-light)] p-4 text-[length:var(--text-base)] leading-relaxed text-[var(--color-text)]"
             >
-              {{ detailed_treatment.cultural_practices }}
+              {{ detailed_treatment.cultural_practices|linebreaksbr }}
             </div>
 
           </div>
@@ -857,7 +1204,7 @@
                 Chemical Control Guide
               </h2>
 
-              <span class="rounded-full bg-[var(--color-danger-soft)] px-2.5 py-1 text-[var(--text-xs)] font-medium text-[var(--color-danger-text)]">
+              <span class="rounded-full bg-[var(--color-danger-soft)] px-2.5 py-1 text-[length:var(--text-xs)] font-medium text-[var(--color-danger-text)]">
                 Only if Cultural IPM is Insufficient
               </span>
 
@@ -867,7 +1214,7 @@
             <div
               class="mb-3 rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] border-l-4 border-l-[var(--color-danger)] bg-[var(--color-danger-soft)] p-4"
             >
-              <p class="text-[var(--text-xs)] font-semibold leading-relaxed text-[var(--color-danger-text)]">
+              <p class="max-w-prose text-[length:var(--text-sm)] font-semibold leading-relaxed text-[var(--color-danger-text)]">
                 IMPORTANT: Always follow the registered product label instructions
                 and consult DA technicians before chemical application.
               </p>
@@ -875,9 +1222,9 @@
 
 
             <div
-              class="rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] bg-[var(--color-danger-soft)] p-4 text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]"
+              class="max-w-prose rounded-[var(--radius-sm)] border border-[var(--color-danger-border)] bg-[var(--color-danger-soft)] p-4 text-[length:var(--text-base)] leading-relaxed text-[var(--color-text)]"
             >
-              {{ detailed_treatment.chemical_control }}
+              {{ detailed_treatment.chemical_control|linebreaksbr }}
             </div>
 
           </div>
@@ -916,15 +1263,23 @@
           </div>
 
           <div class="min-w-0">
-            <h2
-              id="knowledge-reference-title"
-              class="text-lg font-bold text-[var(--color-text-primary)]"
-            >
-              Knowledge Reference
-            </h2>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2
+                id="knowledge-reference-title"
+                class="text-lg font-bold text-[var(--color-text-primary)]"
+              >
+                Knowledge Reference
+              </h2>
 
-            <p class="mt-1 text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
-              Review the approved knowledge guides associated with this treatment.
+              {% if detailed_treatment.knowledge_entries %}
+              <span class="rounded-full bg-[var(--color-overlay)] px-2 py-0.5 text-[length:var(--text-xs)] font-semibold text-[var(--color-text-secondary)]">
+                {{ detailed_treatment.knowledge_entries|length }}
+              </span>
+              {% endif %}
+            </div>
+
+            <p class="mt-1 max-w-prose text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
+              Approved guides linked to this treatment. Open a guide for the full symptoms, causes, and prevention details.
             </p>
           </div>
 
@@ -933,63 +1288,52 @@
 
         {% if detailed_treatment.knowledge_entries %}
 
-          <div class="space-y-3">
+          <ul class="knowledge-grid grid grid-cols-1 gap-2 sm:grid-cols-2">
 
             {% for kb in detailed_treatment.knowledge_entries %}
 
-            <article
-              class="rounded-[var(--radius-sm)] border border-[var(--color-border)] p-4 transition-colors duration-200 hover:border-[var(--color-brand-border)] hover:bg-[var(--color-brand-light)]"
-            >
-
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-
-                <div class="min-w-0">
-
-                  <h3 class="break-words font-semibold text-[var(--color-text-primary)]">
+            <li>
+              <a
+                href="{% url 'polls:knowledge_detail' kb.pk %}"
+                class="knowledge-link group flex min-h-[56px] items-center justify-between gap-3 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3"
+                title="{{ kb.name }}"
+              >
+                <span class="min-w-0">
+                  <span class="block truncate text-[length:var(--text-sm)] font-semibold text-[var(--color-text-primary)]">
                     {{ kb.name }}
-                  </h3>
+                  </span>
 
-                  <p class="mt-1 text-[var(--text-xs)] text-[var(--color-text-muted)]">
-                    {{ kb.category|title }}
-                  </p>
+                  <span class="mt-0.5 block truncate text-[length:var(--text-xs)] text-[var(--color-text-muted)]">
+                    {{ kb.category_display|default:kb.category }}
+                  </span>
+                </span>
 
-                </div>
-
-
-                <a
-                  href="{% url 'polls:knowledge_detail' kb.pk %}"
-                  class="btn btn-secondary btn-sm w-full sm:w-auto"
+                <svg
+                  class="h-4 w-4 flex-shrink-0 text-[var(--color-text-muted)] transition-transform duration-150 group-hover:translate-x-0.5 group-hover:text-[var(--color-brand)]"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
                 >
-                  <span>View Full Knowledge</span>
-
-                  <svg
-                    class="h-3.5 w-3.5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </a>
-
-              </div>
-            </article>
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </a>
+            </li>
 
             {% endfor %}
 
-          </div>
+          </ul>
 
         {% else %}
 
           <div class="rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4">
 
-            <p class="text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
+            <p class="text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
 
               {% if show_non_actionable_knowledge_hint %}
                 No Knowledge reference is required for this result category.
@@ -1012,14 +1356,14 @@
            ===================================================== -->
       {% if detailed_treatment.detailed_text %}
       <section
-        class="agri-card bg-[var(--color-overlay)] p-5 sm:p-6"
+        class="agri-card p-5 sm:p-6"
         aria-labelledby="additional-details-title"
       >
 
         <div class="flex items-start gap-3">
 
           <div
-            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
+            class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[var(--color-overlay)] text-[var(--color-text-secondary)]"
             aria-hidden="true"
           >
             <svg
@@ -1041,13 +1385,13 @@
 
             <h2
               id="additional-details-title"
-              class="mb-3 text-lg font-bold text-[var(--color-text-primary)]"
+              class="mb-3 text-[length:var(--text-md)] font-bold text-[var(--color-text-primary)]"
             >
               Additional Information
             </h2>
 
-            <div class="text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]">
-              {{ detailed_treatment.detailed_text }}
+            <div class="max-w-prose text-[length:var(--text-base)] leading-relaxed text-[var(--color-text)]">
+              {{ detailed_treatment.detailed_text|linebreaksbr }}
             </div>
 
           </div>
@@ -1094,7 +1438,7 @@
           No Detailed Treatment Available
         </h2>
 
-        <p class="mt-2 text-[var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
+        <p class="mt-2 text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
           Basic treatment information is shown in the detection record.
         </p>
 
@@ -1103,8 +1447,8 @@
         <div
           class="mt-5 rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-overlay)] p-4 text-left"
         >
-          <p class="whitespace-pre-line text-[var(--text-sm)] leading-relaxed text-[var(--color-text)]">
-            {{ detection.treatment_text }}
+          <p class="text-[length:var(--text-base)] leading-relaxed text-[var(--color-text)]">
+            {{ detection.treatment_text|linebreaksbr }}
           </p>
         </div>
         {% endif %}
@@ -1116,6 +1460,71 @@
     </main>
   </div>
 </section>
+
+
+{% if detection.image_path %}
+<dialog
+  id="detection-image-lightbox"
+  class="image-lightbox no-print"
+  aria-label="Detection image preview"
+>
+  <div class="image-lightbox-panel">
+
+    <button
+      type="button"
+      class="image-lightbox-close"
+      data-lightbox-close
+      aria-label="Close image preview"
+    >
+      <svg
+        class="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        />
+      </svg>
+    </button>
+
+    <img
+      src="{{ media_url }}{{ detection.image_path }}"
+      alt="Full-size rice leaf image for detection {{ detection.pk }}"
+      class="image-lightbox-image"
+    />
+
+  </div>
+</dialog>
+{% endif %}
+
+
+<button
+  type="button"
+  id="back-to-top"
+  class="back-to-top no-print"
+  aria-label="Back to top"
+  hidden
+>
+  <svg
+    class="h-5 w-5"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+  >
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="2"
+      d="M5 10l7-7m0 0l7 7m-7-7v18"
+    />
+  </svg>
+</button>
 
 
 <!-- =============================================================
@@ -1137,6 +1546,7 @@
   const badge = document.getElementById('factors-badge');
   const countEl = document.getElementById('factors-count');
   const pluralEl = document.getElementById('factors-plural');
+  const clearButton = document.getElementById('factors-clear');
 
   const card = document.getElementById('quick-rec-card');
   const baseText = document.getElementById('quick-rec-base');
@@ -1206,11 +1616,7 @@
 
       if (!row) return;
 
-      if (checkbox.checked) {
-        row.classList.add('bg-amber-100/80', 'ring-1', 'ring-[var(--color-warning-border)]');
-      } else {
-        row.classList.remove('bg-amber-100/80', 'ring-1', 'ring-[var(--color-warning-border)]');
-      }
+      row.dataset.checked = checkbox.checked ? 'true' : 'false';
     });
   }
 
@@ -1221,8 +1627,10 @@
       countEl.textContent = count;
       pluralEl.textContent = count === 1 ? '' : 's';
       badge.classList.remove('hidden');
+      if (clearButton) clearButton.classList.remove('hidden');
     } else {
       badge.classList.add('hidden');
+      if (clearButton) clearButton.classList.add('hidden');
     }
   }
 
@@ -1259,10 +1667,10 @@
 
     return `
       <div class="mt-3 border-t border-[var(--color-border)] pt-3">
-        <div class="text-[var(--text-xs)] font-semibold text-[var(--color-danger-text)]">
-          Severity ${escapeHtml(severityPct)}% — additional management may be needed.
+        <div class="text-[length:var(--text-xs)] font-semibold text-[var(--color-danger-text)]">
+          Severity ${escapeHtml(severityPct)}%: additional management may be needed.
         </div>
-        <div class="mt-1 text-[var(--text-xs)] leading-relaxed text-[var(--color-text-secondary)]">
+        <div class="mt-1 text-[length:var(--text-xs)] leading-relaxed text-[var(--color-text-secondary)]">
           ${escapeHtml(severityHighMsg)}
         </div>
         ${linksHtml}
@@ -1319,7 +1727,7 @@
         .map(function (part, index) {
           const separator = index > 0 ? 'border-t border-[var(--color-border)] pt-2.5 mt-2.5' : '';
           const actionHtml = part.action ? `<div class="font-semibold text-[var(--color-text-primary)]">• ${escapeHtml(part.action)}</div>` : '';
-          const resultHtml = part.result ? `<div class="pl-4 pt-1 text-[var(--color-text-muted)] text-[var(--text-xs)] italic">↳ ${escapeHtml(part.result)}</div>` : '';
+          const resultHtml = part.result ? `<div class="pl-4 pt-1 text-[var(--color-text-muted)] text-[length:var(--text-xs)] italic">↳ ${escapeHtml(part.result)}</div>` : '';
 
           return `<div class="${separator}">${actionHtml}${resultHtml}</div>`;
         })
@@ -1334,6 +1742,16 @@
     }
 
     notice.classList.remove('hidden');
+  }
+
+  if (clearButton) {
+    clearButton.addEventListener('click', function () {
+      checkboxes.forEach(function (checkbox) {
+        checkbox.checked = false;
+      });
+
+      updateRecommendation();
+    });
   }
 
   checkboxes.forEach(function (checkbox) {
@@ -1369,6 +1787,71 @@
       updatePrintDate();
     });
   });
+})();
+</script>
+
+
+<!-- =============================================================
+     IMAGE LIGHTBOX + BACK TO TOP
+     ============================================================= -->
+<script>
+(function () {
+  'use strict';
+
+  const lightbox = document.getElementById('detection-image-lightbox');
+  const lightboxTrigger = document.querySelector('[data-image-lightbox-trigger]');
+
+  if (lightbox && lightboxTrigger) {
+    function openLightbox() {
+      if (typeof lightbox.showModal === 'function') {
+        lightbox.showModal();
+      } else {
+        lightbox.setAttribute('open', '');
+      }
+    }
+
+    function closeLightbox() {
+      if (typeof lightbox.close === 'function') {
+        lightbox.close();
+      } else {
+        lightbox.removeAttribute('open');
+        lightboxTrigger.focus();
+      }
+    }
+
+    lightboxTrigger.addEventListener('click', openLightbox);
+
+    lightbox.querySelectorAll('[data-lightbox-close]').forEach(function (button) {
+      button.addEventListener('click', closeLightbox);
+    });
+
+    lightbox.addEventListener('click', function (event) {
+      if (event.target === lightbox) closeLightbox();
+    });
+
+    lightbox.addEventListener('close', function () {
+      lightboxTrigger.focus();
+    });
+  }
+
+  const backToTop = document.getElementById('back-to-top');
+
+  if (backToTop) {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const toggleBackToTop = function () {
+      backToTop.hidden = window.scrollY < 480;
+    };
+
+    window.addEventListener('scroll', toggleBackToTop, { passive: true });
+    toggleBackToTop();
+
+    backToTop.addEventListener('click', function () {
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion.matches ? 'auto' : 'smooth'
+      });
+    });
+  }
 })();
 </script>
 

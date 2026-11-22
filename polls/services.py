@@ -560,6 +560,7 @@ def get_detailed_treatment(label: str, severity_pct: int) -> dict:
         fallback_entries = [{
             'name': entry.name,
             'category': entry.category,
+            'category_display': entry.get_category_display(),
             'description': entry.description,
             'symptoms': entry.symptoms,
             'causes': entry.causes,
