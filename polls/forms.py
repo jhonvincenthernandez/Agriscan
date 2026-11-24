@@ -1571,6 +1571,20 @@ class TreatmentRecommendationForm(forms.ModelForm):
         else:
             self.fields['disease'].queryset = DiseaseType.objects.all().order_by('name')
 
+    def clean(self):
+        cleaned_data = super().clean()
+        severity_min = cleaned_data.get('severity_min')
+        severity_max = cleaned_data.get('severity_max')
+        if (
+            severity_min is not None
+            and severity_max is not None
+            and severity_min > severity_max
+        ):
+            raise forms.ValidationError(
+                'Minimum severity cannot exceed maximum severity.'
+            )
+        return cleaned_data
+
     class Meta:
         model = TreatmentRecommendation
         fields = [
@@ -1606,7 +1620,7 @@ class TreatmentRecommendationForm(forms.ModelForm):
             }),
             'short_text': forms.TextInput(attrs={
                 'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 sm:text-sm',
-                'placeholder': 'Quick summary for mobile/dashboard (max 200 characters)...',
+                'placeholder': 'Quick summary for the detection card (maximum 200 characters)',
                 'maxlength': '200'
             }),
             'detailed_text': forms.Textarea(attrs={
@@ -1657,7 +1671,7 @@ class TreatmentRecommendationForm(forms.ModelForm):
             'severity_high_msg': forms.Textarea(attrs={
                 'class': 'mt-1 block w-full rounded-md border-orange-300 bg-orange-50 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm',
                 'rows': '3',
-                'placeholder': 'IPM-based escalation message when severity ≥ threshold (e.g. "At this severity level, cultural control alone is insufficient. Apply recommended fungicide per DA guidelines and consult your local technician.")...'
+                'placeholder': 'IPM-based escalation message when severity reaches the threshold. For example: "At this severity level, cultural control alone is insufficient. Apply the recommended fungicide per DA guidelines and consult your local technician."'
             }),
             'priority': forms.NumberInput(attrs={
                 'type': 'range',
