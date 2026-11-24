@@ -792,6 +792,41 @@ class TreatmentRecommendation(SoftDeleteModel, TimeStampedModel):
     def __str__(self):
         return f"{self.disease.name}: {self.short_text}"[:80]
 
+    def clean(self):
+        """Reject overlapping active severity ranges for the same disease.
+
+        Inactive records are allowed to overlap because they act as archive
+        entries. Active records must have a non-overlapping severity range so
+        treatment selection is unambiguous.
+        """
+        super().clean()
+
+        if (
+            not self.is_active
+            or not self.disease_id
+            or self.severity_min is None
+            or self.severity_max is None
+            or self.severity_min > self.severity_max
+        ):
+            return
+
+        overlaps = type(self).objects.filter(
+            disease_id=self.disease_id,
+            severity_min__lte=self.severity_max,
+            severity_max__gte=self.severity_min,
+        )
+        if self.pk:
+            overlaps = overlaps.exclude(pk=self.pk)
+
+        conflict = overlaps.order_by('severity_min', 'pk').first()
+        if conflict:
+            raise ValidationError(
+                "Cannot save: this active severity range overlaps with "
+                f"'{conflict.short_text}' "
+                f"({conflict.severity_min}%-{conflict.severity_max}%, "
+                f"P{conflict.priority}). Deactivate or adjust that treatment first."
+            )
+
     def get_knowledge_entries(self):
         """Return the authoritative published knowledge entries for this treatment.
 

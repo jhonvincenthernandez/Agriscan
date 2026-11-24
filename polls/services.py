@@ -427,38 +427,15 @@ def _severity_bucket(severity_pct: int) -> str:
 
 def _treatment_for(label: str, severity_pct: int) -> str:
     """Get treatment recommendation based on disease and severity.
-    
-    Returns formatted treatment text with sections for quick scanning.
-    Falls back to DEFAULT_TREATMENTS if database lookup fails.
-    """
-    try:
-        from django.db.models import F
-        from .models import DiseaseType
 
-        disease = DiseaseType.objects.filter(name__iexact=label).first()
-        if disease:
-            # Mirror get_treatment_object() selection logic (short_text-only path)
-            match = (
-                disease.treatments.filter(
-                    severity_min__lte=severity_pct,
-                    severity_max__gte=severity_pct,
-                    is_active=True,
-                ).order_by(
-                    F('priority').desc(),      # most critical first
-                    F('severity_min').desc(),  # tiebreak: narrower range
-                    F('pk').desc(),            # tiebreak: latest added
-                ).first()
-                or disease.treatments.filter(is_active=True).order_by(
-                    F('severity_min').asc(),   # closest to low end (fallback approximation)
-                    F('priority').desc(),      # tiebreak: most critical
-                    F('pk').desc(),            # tiebreak: latest added
-                ).first()
-            )
-            if match:
-                return match.short_text
-    except (OperationalError, ProgrammingError):
-        pass
-    
+    Uses the same selection logic as get_treatment_object() so the short-text
+    and structured paths cannot drift apart. Falls back to DEFAULT_TREATMENTS
+    when no active database record exists.
+    """
+    match = get_treatment_object(label, severity_pct)
+    if match is not None:
+        return match.short_text
+
     # Fallback to default treatments
     key = label.strip().lower()
     for name, text in DEFAULT_TREATMENTS.items():
@@ -474,11 +451,13 @@ def get_treatment_object(label: str, severity_pct: int):
     """Return the best-matching TreatmentRecommendation ORM object (or None).
 
     Selection logic:
-    1. PRIMARY — active treatments whose severity range covers ``severity_pct``
-       → tiebreak: highest priority first, then widest min (most specific upper bound)
-    2. FALLBACK — no exact range match; pick the closest range by proximity
-       → annotate distance = how far severity_pct is from the nearest range edge
-       → among equally-close ranges, prefer higher priority
+    1. PRIMARY - active treatments whose severity range covers ``severity_pct``
+       -> tiebreak: highest priority, then narrowest range, then highest
+       ``severity_min``, then newest ``pk``.
+    2. FALLBACK - no exact range match; pick the closest range by proximity
+       -> annotate distance = how far severity_pct is from the nearest range edge
+       -> tiebreak: highest priority, then narrowest range, then highest
+       ``severity_min``, then newest ``pk``.
     3. None (caller should fall back to text-only display)
     """
     try:
@@ -487,24 +466,28 @@ def get_treatment_object(label: str, severity_pct: int):
 
         disease = DiseaseType.objects.filter(name__iexact=label).first()
         if disease:
-            # 1. Exact range match — tiebreak: highest priority → highest pk (latest added)
+            # 1. Exact range match - priority, then most specific range.
             exact = (
                 disease.treatments.filter(
                     severity_min__lte=severity_pct,
                     severity_max__gte=severity_pct,
                     is_active=True,
-                ).order_by(
+                )
+                .annotate(range_width=F('severity_max') - F('severity_min'))
+                .order_by(
                     F('priority').desc(),      # most critical first
-                    F('severity_min').desc(),  # tiebreak: narrower range
+                    F('range_width').asc(),    # narrowest applicable range first
+                    F('severity_min').desc(),  # prefer the higher band
                     F('pk').desc(),            # tiebreak: latest added
-                ).first()
+                )
+                .first()
             )
             if exact:
                 return exact
 
-            # 2. Fallback — closest range by distance to severity_pct edge
+            # 2. Fallback - closest range by distance to severity_pct edge
             #    distance = how far severity_pct is from the nearest range edge
-            #    tiebreak: highest priority → highest pk (latest added)
+            #    tiebreak: priority, then narrowest range, then newest pk.
             return (
                 disease.treatments.filter(is_active=True)
                 .annotate(
@@ -515,12 +498,15 @@ def get_treatment_object(label: str, severity_pct: int):
                              then=severity_pct - F('severity_max')),
                         default=Value(0),
                         output_field=IntegerField(),
-                    )
+                    ),
+                    range_width=F('severity_max') - F('severity_min'),
                 )
                 .order_by(
-                    F('distance').asc(),   # closest range edge first
-                    F('priority').desc(),  # tiebreak: most critical
-                    F('pk').desc(),        # tiebreak: latest added
+                    F('distance').asc(),      # closest range edge first
+                    F('priority').desc(),     # tiebreak: most critical
+                    F('range_width').asc(),   # tiebreak: narrowest range
+                    F('severity_min').desc(), # tiebreak: prefer the higher band
+                    F('pk').desc(),           # tiebreak: latest added
                 )
                 .first()
             )
