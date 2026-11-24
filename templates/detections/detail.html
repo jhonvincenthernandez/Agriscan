@@ -1010,6 +1010,7 @@
            ===================================================== -->
       {% if detailed_treatment.factors_favoring %}
       <section
+        id="sec-factors"
         class="agri-card border-[var(--color-warning-border)] border-l-4 border-l-[var(--color-warning-text)] bg-[var(--color-warning-soft)] p-5 sm:p-6"
         aria-labelledby="factors-title"
       >
@@ -1259,7 +1260,7 @@
            KNOWLEDGE REFERENCE
            ===================================================== -->
       <section
-        class="agri-card p-5 sm:p-6"
+        class="agri-card knowledge-section p-5 sm:p-6"
         aria-labelledby="knowledge-reference-title"
       >
 
@@ -1975,12 +1976,12 @@
   }
 
   .detection-sidebar {
-    margin-bottom: 10px !important;
+    margin-bottom: 8px !important;
   }
 
   .detection-sidebar > * + *,
   .detection-main > * + * {
-    margin-top: 10px !important;
+    margin-top: 8px !important;
   }
 
   .detection-quick-actions,
@@ -2003,7 +2004,7 @@
   }
 
   .agri-card {
-    padding: 12px !important;
+    padding: 10px !important;
     border-radius: 6px !important;
     break-inside: auto;
   }
@@ -2021,6 +2022,42 @@
   .metric-tile,
   .knowledge-grid li {
     break-inside: avoid;
+  }
+
+  #sec-factors,
+  #sec-cultural,
+  #sec-chemical,
+  .knowledge-section,
+  section[aria-labelledby="additional-details-title"] {
+    break-inside: avoid;
+  }
+
+  .detection-summary {
+    display: grid !important;
+    grid-template-columns: 58mm minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 0 !important;
+  }
+
+  .detection-summary > div:first-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+  }
+
+  .detection-summary > div:nth-child(2) {
+    min-width: 0 !important;
+    padding: 8px 0 8px 10px !important;
+  }
+
+  .detection-summary > div:nth-child(2) > * + * {
+    margin-top: 8px !important;
+  }
+
+  .detection-summary > div:first-child > div {
+    height: 100% !important;
+    min-height: 45mm !important;
   }
 
   .factor-checkbox:checked + .factor-checkbox-ui {
@@ -2045,8 +2082,9 @@
 
   .detection-summary .image-trigger {
     display: block !important;
-    max-width: 65mm;
-    margin: 0 auto;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
   }
 
   .detection-summary .image-trigger img {
@@ -2061,12 +2099,19 @@
   }
 
   .knowledge-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4px 8px !important;
+  }
+
+  .knowledge-section > div:first-child {
+    margin-bottom: 8px !important;
   }
 
   .knowledge-link {
     min-height: 0 !important;
-    padding: 6px 8px !important;
+    padding: 5px 6px !important;
+    font-size: 9pt !important;
+    line-height: 1.25 !important;
   }
 
   .knowledge-link span {
@@ -2091,8 +2136,8 @@
   .agri-card p,
   .agri-card li,
   .agri-card .max-w-prose {
-    font-size: 9.5pt !important;
-    line-height: 1.35 !important;
+    font-size: 9.2pt !important;
+    line-height: 1.32 !important;
   }
 
   a {
