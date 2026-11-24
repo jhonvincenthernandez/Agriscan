@@ -10,9 +10,10 @@
   .rp-title { margin: 0; }
   .rp-lead { margin: 0.375rem 0 0; color: var(--color-text-secondary); font-size: var(--text-sm); line-height: 1.55; }
   .rp-head-actions { display: flex; flex-direction: column; gap: 0.5rem; }
+  .rp-head-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
   @media (min-width: 640px) {
     .rp-head { padding: 1.5rem; }
-    .rp-head-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
+    .rp-head-buttons { flex-direction: row; flex-wrap: wrap; align-items: center; }
   }
   @media (min-width: 1024px) {
     .rp-head { flex-direction: row; align-items: flex-start; justify-content: space-between; }
@@ -20,7 +21,7 @@
   @media (min-width: 1280px) {
     .rp-head { padding: 2rem; }
     .rp-filters { padding: 2rem; }
-    .rp-head-actions { flex-wrap: nowrap; }
+    .rp-head-buttons { flex-wrap: nowrap; }
   }
 
   .rp-filters { padding: 1.25rem; margin-bottom: 1.5rem; }
@@ -80,11 +81,287 @@
   .badge-danger { background: var(--color-danger-soft); border-color: var(--color-danger-border); color: var(--color-danger-text); }
 
   /* Print overrides */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm;
+  }
+
   @media print {
-    canvas { max-height: 220px !important; page-break-inside: avoid; }
-    .grid { display: block !important; }
-    .grid > * { margin-bottom: 1rem; width: 100% !important; }
-    .lg\:grid-cols-2, .lg\:grid-cols-3 { columns: 1 !important; }
+    #print-header {
+      display: block !important;
+      margin: 0 0 8px !important;
+      padding: 0 0 6px !important;
+      border-bottom: 1px solid #d1d5db !important;
+    }
+
+    #print-header h1 {
+      font-size: 16pt !important;
+      line-height: 1.2 !important;
+    }
+
+    #print-header p {
+      font-size: 8.5pt !important;
+      line-height: 1.35 !important;
+    }
+
+    #print-footer {
+      display: block !important;
+      margin-top: 8px !important;
+      padding-top: 6px !important;
+      border-top: 1px solid #d1d5db !important;
+      color: #4b5563 !important;
+      font-size: 7.5pt !important;
+      line-height: 1.35 !important;
+      break-inside: avoid;
+    }
+
+    #print-footer p {
+      margin: 0 !important;
+    }
+
+    #print-footer p + p {
+      margin-top: 2px !important;
+    }
+
+    .page-container {
+      max-width: none !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .agri-card {
+      padding: 8px !important;
+      border-radius: 4px !important;
+      box-shadow: none !important;
+    }
+
+    .page-container > section {
+      margin-bottom: 8px !important;
+    }
+
+    #summary-heading {
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 0 4px !important;
+      overflow: visible !important;
+      clip: auto !important;
+      white-space: normal !important;
+      font-size: 11pt !important;
+      font-weight: 600 !important;
+      color: #111827 !important;
+      break-after: avoid;
+    }
+
+    .rp-stats-grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 6px !important;
+      max-width: none !important;
+      margin: 0 !important;
+    }
+
+    .rp-stat-card {
+      padding: 7px !important;
+      break-inside: avoid;
+    }
+
+    .rp-stat-label {
+      font-size: 6.8pt !important;
+      line-height: 1.25 !important;
+    }
+
+    .rp-stat-value {
+      margin-top: 3px !important;
+      font-size: 14pt !important;
+      line-height: 1.15 !important;
+    }
+
+    .rp-stat-sub {
+      margin-top: 2px !important;
+      font-size: 6.5pt !important;
+      line-height: 1.25 !important;
+    }
+
+    .rp-section-title {
+      font-size: 11pt !important;
+      line-height: 1.25 !important;
+      break-after: avoid;
+    }
+
+    .rp-section-lead {
+      font-size: 8pt !important;
+      line-height: 1.3 !important;
+      break-after: avoid;
+    }
+
+    .rp-block-head {
+      margin-bottom: 4px !important;
+      break-inside: avoid;
+      break-after: avoid;
+    }
+
+    .rp-keep-section,
+    .rp-keep-section .data-table-wrap {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .grid {
+      display: block !important;
+    }
+
+    .grid > * {
+      width: 100% !important;
+      margin-bottom: 8px !important;
+    }
+
+    .rp-chart-grid {
+      max-width: none !important;
+      margin: 0 !important;
+    }
+
+    .rp-chart-grid > *:last-child {
+      margin-bottom: 0 !important;
+    }
+
+    #monthly-chart-card {
+      break-inside: avoid;
+    }
+
+    #monthly-chart-real > div:first-child {
+      margin-bottom: 6px !important;
+    }
+
+    #monthly-chart-real .relative {
+      height: 55mm !important;
+    }
+
+    #monthlyChart {
+      max-height: 55mm !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    .badge-base {
+      padding: 1px 5px !important;
+      font-size: 7pt !important;
+      line-height: 1.25 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .data-table-wrap {
+      max-width: none !important;
+      width: 100% !important;
+      overflow: visible !important;
+      background: #ffffff !important;
+      border: 1px solid #d1d5db !important;
+      border-radius: 4px !important;
+      box-shadow: none !important;
+    }
+
+    .data-table {
+      display: table !important;
+      width: 100% !important;
+      table-layout: fixed !important;
+      border-collapse: collapse !important;
+    }
+
+    .data-table thead {
+      display: table-header-group !important;
+      position: static !important;
+      width: auto !important;
+      height: auto !important;
+      margin: 0 !important;
+      overflow: visible !important;
+      clip: auto !important;
+    }
+
+    .data-table tbody {
+      display: table-row-group !important;
+    }
+
+    .data-table tr {
+      display: table-row !important;
+      width: auto !important;
+      padding: 0 !important;
+      background: transparent !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      break-inside: avoid;
+    }
+
+    .data-table th,
+    .data-table td {
+      display: table-cell !important;
+      width: auto !important;
+    }
+
+    .data-table th {
+      padding: 4px 5px !important;
+      border: 1px solid #d1d5db !important;
+      background: #f3f4f6 !important;
+      color: #374151 !important;
+      font-size: 7pt !important;
+      font-weight: 600 !important;
+      line-height: 1.2 !important;
+      text-align: left !important;
+      white-space: normal !important;
+      vertical-align: bottom !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .data-table td {
+      padding: 4px 5px !important;
+      border: 1px solid #e5e7eb !important;
+      color: #111827 !important;
+      font-size: 7.2pt !important;
+      line-height: 1.25 !important;
+      text-align: left !important;
+      vertical-align: top !important;
+      overflow-wrap: break-word !important;
+    }
+
+    .data-table th.text-right,
+    .data-table td.text-right {
+      text-align: right !important;
+    }
+
+    .data-table th.text-center,
+    .data-table td.text-center {
+      text-align: center !important;
+    }
+
+    .data-table td[data-label]::before {
+      content: none !important;
+    }
+
+    .data-table td.td-primary {
+      color: #111827 !important;
+      font-weight: 600 !important;
+    }
+
+    .rp-progress {
+      height: 4px !important;
+      background: #e5e7eb !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .rp-progress-fill {
+      background: #111827 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    canvas {
+      max-height: 55mm !important;
+      page-break-inside: avoid;
+    }
   }
 </style>
 {% endblock %}
@@ -105,7 +382,7 @@
       </p>
     </div>
     <p class="text-xs text-[var(--color-text-muted)]">
-      Printed on <span id="print-date"></span>
+      Printed on <span id="print-date">{% now "F d, Y" %}</span>
     </p>
   </div>
 </div>
@@ -127,29 +404,45 @@
     </div>
 
     <div class="rp-head-actions no-print">
-      <button id="print-btn" type="button" onclick="handlePagePrint()" class="btn btn-secondary">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
-        </svg>
-        <span>Print</span>
-      </button>
+      <div class="rp-head-buttons">
+        <button
+          id="print-btn"
+          type="button"
+          onclick="handlePagePrint()"
+          class="btn btn-secondary w-full sm:w-auto"
+          title="For a clean PDF, turn off Headers and footers in the print dialog."
+          aria-describedby="print-tip"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+          </svg>
+          <span>Print</span>
+        </button>
 
-      <button type="button" onclick="openExportModal({
-        title: 'Export Report',
-        baseUrl: '?',
-        fmtParam: 'export',
-        showBarangay: true,
-        extraParams: {
-          start_date: '{{ start_date }}',
-          end_date: '{{ end_date }}'
-        },
-        sections: _reportSections
-      })" class="btn btn-secondary">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-        </svg>
-        <span>Export</span>
-      </button>
+        <button type="button" onclick="openExportModal({
+          title: 'Export Report',
+          baseUrl: '?',
+          fmtParam: 'export',
+          showBarangay: true,
+          extraParams: {
+            start_date: '{{ start_date }}',
+            end_date: '{{ end_date }}'
+          },
+          sections: _reportSections
+        })" class="btn btn-secondary w-full sm:w-auto">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          <span>Export</span>
+        </button>
+      </div>
+
+      <p
+        id="print-tip"
+        class="text-center text-[length:var(--text-xs)] leading-relaxed text-[var(--color-text-muted)] lg:text-right"
+      >
+        Tip: For a clean PDF, turn off Headers and footers in the print dialog.
+      </p>
     </div>
   </header>
 
@@ -209,7 +502,7 @@
     <div class="grid gap-6 lg:grid-cols-2 rp-chart-grid">
       
       <!-- Chart -->
-      <div class="agri-card p-5 sm:p-6">
+      <div id="monthly-chart-card" class="agri-card p-5 sm:p-6">
         <div id="monthly-chart-skeleton" aria-hidden="true">
           <div class="mb-4">
             <h2 class="rp-section-title">Healthy vs Diseased Crops</h2>
@@ -238,7 +531,7 @@
 
       <!-- Monthly Summary Table -->
       <div>
-        <div class="mb-3">
+        <div class="rp-block-head mb-3">
           <h2 class="rp-section-title">Monthly Detection Summary</h2>
           <p class="rp-section-lead">Detection counts by month for the selected period.</p>
         </div>
@@ -276,7 +569,7 @@
 
   <!-- TOP DISEASE FREQUENCY -->
   <section class="mb-6">
-    <div class="flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
+    <div class="rp-block-head flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
       <div>
         <h2 class="rp-section-title">Top Disease Frequency</h2>
         <p class="rp-section-lead">Top named disease categories among active detections in the selected period.</p>
@@ -334,7 +627,7 @@
 
   <!-- AVERAGE ACTUAL YIELD PER RICE VARIETY -->
   <section class="mb-6">
-    <div class="flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
+    <div class="rp-block-head flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
       <div>
         <h2 class="rp-section-title">Average Actual Yield per Rice Variety</h2>
         <p class="rp-section-lead">
@@ -390,8 +683,8 @@
   </section>
 
   <!-- RICE PRODUCTION PER BARANGAY -->
-  <section class="mb-6">
-    <div class="flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
+  <section class="rp-keep-section mb-6">
+    <div class="rp-block-head flex flex-col gap-3 mb-3 lg:flex-row lg:items-start lg:justify-between">
       <div>
         <h2 class="rp-section-title">Rice Production per Barangay</h2>
         <p class="rp-section-lead">
@@ -447,6 +740,23 @@
   </section>
 
 </section>
+
+<div
+  id="print-footer"
+  class="mt-4 hidden border-t border-[var(--color-border-strong)] pt-3 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] print:block"
+>
+  <p>
+    AgriScan+ · Reports & Analytics
+    <span aria-hidden="true">•</span>
+    Period: {{ start_date|default:"All time" }} to {{ end_date|default:"Present" }}
+  </p>
+
+  <p class="mt-1">
+    Generated: {% now "F d, Y h:i A" %}
+    <span aria-hidden="true">•</span>
+    Data reflects active records within the selected period. Decision support only.
+  </p>
+</div>
 
 <script>
 // Monthly Healthy vs Diseased Chart
