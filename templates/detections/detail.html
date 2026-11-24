@@ -390,20 +390,40 @@
     id="print-header"
     class="mb-6 hidden border border-[var(--color-border-strong)] bg-white p-4 print:block"
   >
-    <h2 class="text-xl font-bold text-[var(--color-text-primary)]">
-      Detection Detail Report
-    </h2>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div class="min-w-0">
+        <h2 class="text-xl font-bold text-[var(--color-text-primary)]">
+          Detection Detail Report
+        </h2>
 
-    <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-      Detection ID: {{ detection.pk }}
-      <span aria-hidden="true">•</span>
-      {{ detection.disease.name|default:"Unknown" }}
-    </p>
+        <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+          Detection ID: {{ detection.pk }}
+          <span aria-hidden="true">•</span>
+          {{ detection.disease.name|default:"Unknown" }}
+        </p>
 
-    <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
-      Generated:
-      <span id="print-date"></span>
-    </p>
+        <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+          Severity: {{ detection.severity_pct|default:0 }}%
+          <span aria-hidden="true">•</span>
+          Confidence: {{ detection.confidence_pct|default:0|floatformat:"-1" }}%
+        </p>
+
+        <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+          Field: {{ detection.planting.field.name|default:"Unassigned" }}
+          <span aria-hidden="true">•</span>
+          Detected: {{ detection.created_at|date:"F d, Y h:i A" }}
+        </p>
+
+        <p class="mt-1 text-[length:var(--text-sm)] text-[var(--color-text-secondary)]">
+          Model: {{ detection.model_version|default:"Not recorded" }}
+        </p>
+      </div>
+
+      <div class="text-[length:var(--text-sm)] text-[var(--color-text-secondary)] sm:text-right">
+        <p class="font-semibold text-[var(--color-text-primary)]">Generated</p>
+        <p class="mt-1" id="print-date">{% now "F d, Y h:i A" %}</p>
+      </div>
+    </div>
   </div>
 
 
@@ -416,7 +436,7 @@
     <!-- =======================================================
          LEFT COLUMN
          ======================================================= -->
-    <aside class="detection-sidebar min-w-0 space-y-6 lg:col-span-1">
+    <aside class="detection-sidebar printable min-w-0 space-y-6 lg:col-span-1">
 
 
       <!-- =====================================================
@@ -1051,7 +1071,7 @@
 
 
             <p class="mb-4 max-w-prose text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
-              Select the factors currently present in your field to receive a more specific recommendation.
+              Check the factors currently present in your field.
             </p>
 
 
@@ -1281,7 +1301,7 @@
             </div>
 
             <p class="mt-1 max-w-prose text-[length:var(--text-sm)] leading-relaxed text-[var(--color-text-secondary)]">
-              Approved guides linked to this treatment. Open a guide for the full symptoms, causes, and prevention details.
+              Approved guides linked to this treatment. Refer to these guides for the full symptoms, causes, and prevention details.
             </p>
           </div>
 
@@ -1460,6 +1480,24 @@
       {% endif %}
 
     </main>
+  </div>
+
+
+  <div
+    id="print-footer"
+    class="mt-4 hidden border-t border-[var(--color-border-strong)] pt-3 text-[length:var(--text-xs)] text-[var(--color-text-secondary)] print:block"
+  >
+    <p>
+      AgriScan+ Detection Report
+      <span aria-hidden="true">•</span>
+      Detection ID: {{ detection.pk }}
+      <span aria-hidden="true">•</span>
+      Generated: <span id="print-footer-date">{% now "F d, Y h:i A" %}</span>
+    </p>
+
+    <p class="mt-1">
+      Decision support only. Follow local DA guidance and registered product labels.
+    </p>
   </div>
 </section>
 
@@ -1797,9 +1835,12 @@
   'use strict';
 
   function updatePrintDate() {
+    const now = new Date().toLocaleString();
     const printDate = document.getElementById('print-date');
-    if (!printDate) return;
-    printDate.textContent = new Date().toLocaleString();
+    const printFooterDate = document.getElementById('print-footer-date');
+
+    if (printDate) printDate.textContent = now;
+    if (printFooterDate) printFooterDate.textContent = now;
   }
 
   window.addEventListener('beforeprint', updatePrintDate);
@@ -1885,6 +1926,11 @@
      PRINT STYLES
      ============================================================= -->
 <style>
+@page {
+  size: A4 portrait;
+  margin: 12mm 14mm;
+}
+
 @media print {
   .no-print {
     display: none !important;
@@ -1901,8 +1947,50 @@
     padding: 0 !important;
   }
 
-  #print-header {
+  #print-header,
+  #print-footer {
     display: block !important;
+  }
+
+  #print-header {
+    margin-bottom: 10px !important;
+    padding: 10px !important;
+    break-inside: avoid;
+  }
+
+  #print-footer {
+    margin-top: 10px !important;
+    padding-top: 6px !important;
+    break-inside: avoid;
+  }
+
+  #detection-grid {
+    display: block !important;
+  }
+
+  .detection-sidebar,
+  .detection-main {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .detection-sidebar {
+    margin-bottom: 10px !important;
+  }
+
+  .detection-sidebar > * + *,
+  .detection-main > * + * {
+    margin-top: 10px !important;
+  }
+
+  .detection-quick-actions,
+  .detection-support,
+  .btn,
+  #factors-clear,
+  #quick-rec-prompt,
+  .knowledge-link svg,
+  .image-trigger > span {
+    display: none !important;
   }
 
   .shadow,
@@ -1914,16 +2002,102 @@
     box-shadow: none !important;
   }
 
-  a {
-    color: #111827 !important;
-    text-decoration: none !important;
+  .agri-card {
+    padding: 12px !important;
+    border-radius: 6px !important;
+    break-inside: auto;
   }
 
   section,
   article,
   aside,
   main {
+    break-inside: auto;
+  }
+
+  .detection-summary,
+  #quick-rec-card,
+  .factor-row,
+  .metric-tile,
+  .knowledge-grid li {
     break-inside: avoid;
+  }
+
+  .factor-checkbox:checked + .factor-checkbox-ui {
+    background: #ffffff !important;
+    border-color: var(--color-warning-text) !important;
+  }
+
+  .factor-checkbox:checked + .factor-checkbox-ui::after {
+    border-color: var(--color-warning-text) !important;
+  }
+
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+
+  p,
+  li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  .detection-summary .image-trigger {
+    display: block !important;
+    max-width: 65mm;
+    margin: 0 auto;
+  }
+
+  .detection-summary .image-trigger img {
+    display: block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: 45mm !important;
+    aspect-ratio: auto !important;
+    object-fit: contain !important;
+    margin: 0 auto;
+  }
+
+  .knowledge-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .knowledge-link {
+    min-height: 0 !important;
+    padding: 6px 8px !important;
+  }
+
+  .knowledge-link span {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .agri-card h2 {
+    font-size: 13pt !important;
+  }
+
+  .agri-card h3 {
+    font-size: 11pt !important;
+  }
+
+  .detection-summary .text-lg,
+  .agri-card .metric-value {
+    font-size: 13pt !important;
+  }
+
+  .agri-card p,
+  .agri-card li,
+  .agri-card .max-w-prose {
+    font-size: 9.5pt !important;
+    line-height: 1.35 !important;
+  }
+
+  a {
+    color: #111827 !important;
+    text-decoration: none !important;
   }
 }
 </style>
