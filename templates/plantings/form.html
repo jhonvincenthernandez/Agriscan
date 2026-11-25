@@ -384,21 +384,48 @@
       <div class="agri-divider"></div>
       <div class="grid gap-5 md:grid-cols-2">
         <div class="min-w-0 form-field">
-          <label for="id_status" class="mb-1.5 block">
-            {{ form.status.label }}
+          {% if form.status_override %}
+          <label for="id_status_override" class="mb-1.5 block">
+            {{ form.status_override.label }}
           </label>
 
-          {{ form.status }}
+          {{ form.status_override }}
 
-          {% if form.status.errors %}
-          <p id="error-status" class="form-error mt-1.5" role="alert">
-            {% for err in form.status.errors %}{{ err }}{% endfor %}
+          {% if form.status_override.errors %}
+          <p id="error-status_override" class="form-error mt-1.5" role="alert">
+            {% for err in form.status_override.errors %}{{ err }}{% endfor %}
           </p>
           {% endif %}
 
-          {% if form.status.help_text %}
-          <p id="help-status" class="form-help mt-1.5">
-            {{ form.status.help_text }}
+          {% if form.status_override.help_text %}
+          <p id="help-status_override" class="form-help mt-1.5">
+            {{ form.status_override.help_text }}
+          </p>
+          {% endif %}
+          {% else %}
+          <span class="mb-1.5 block text-sm font-medium text-[var(--color-text-primary)]">Status</span>
+
+          <div class="flex min-h-[2.75rem] items-center rounded-[var(--radius-sm)] border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2">
+            {% if form.instance.pk %}
+              {% if form.instance.status == 'ongoing' %}
+                <span class="badge-base badge-success">{{ form.instance.get_status_display }}</span>
+              {% elif form.instance.status == 'harvested' %}
+                <span class="badge-base badge-solid">{{ form.instance.get_status_display }}</span>
+              {% elif form.instance.status == 'failed' %}
+                <span class="badge-base badge-danger">{{ form.instance.get_status_display }}</span>
+              {% elif form.instance.status == 'cancelled' %}
+                <span class="badge-base badge-warning">{{ form.instance.get_status_display }}</span>
+              {% else %}
+                <span class="badge-base badge-neutral">{{ form.instance.get_status_display }}</span>
+              {% endif %}
+            {% else %}
+              <span class="badge-base badge-neutral">Automatic</span>
+            {% endif %}
+          </div>
+
+          <p class="form-help mt-1.5">
+            Status updates automatically from the planting date and harvest records.
+            You do not need to change it.
           </p>
           {% endif %}
         </div>
@@ -724,6 +751,29 @@
       showBadge('harvest', days, harvestInput.value);
     }
   })();
+})();
+</script>
+
+<!-- Seed Rate Help JS -->
+<script>
+(function () {
+  const methodSelect = document.getElementById('id_planting_method');
+  const seedRateHelp = document.getElementById('help-seed_rate_kg_per_ha');
+
+  if (!methodSelect || !seedRateHelp) return;
+
+  const messages = {
+    direct_seeding: 'Optional. Enter the seeds sown directly in the field per hectare. Leave blank if unknown.',
+    transplanting: 'Optional. Enter the seeds used to grow seedlings for one hectare. Leave blank if unknown.'
+  };
+
+  function updateSeedRateHelp() {
+    const message = messages[methodSelect.value];
+    if (message) seedRateHelp.textContent = message;
+  }
+
+  methodSelect.addEventListener('change', updateSeedRateHelp);
+  updateSeedRateHelp();
 })();
 </script>
 

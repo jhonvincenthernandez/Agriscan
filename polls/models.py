@@ -1195,8 +1195,85 @@ class PlantingRecord(SoftDeleteModel, TimeStampedModel):
 
         # NOTE: No hard cap on planting cycles; only date/area validations apply.
 
+    def _get_active_harvest(self):
+        """Return the active harvest record for this planting, if any."""
+        if not self.pk:
+            return None
+        return HarvestRecord.all_objects.filter(
+            planting_id=self.pk,
+            is_active=True,
+        ).order_by('-harvest_date', '-pk').first()
+
+    def get_lifecycle_status(self):
+        """Derive the lifecycle status from dates and active harvest records.
+
+        Failed and Cancelled are manual staff decisions and are preserved
+        unless an active harvest record exists. Planned, Ongoing, and
+        Harvested are managed by the system.
+        """
+        if self._get_active_harvest():
+            return 'harvested'
+
+        if self.status in ('failed', 'cancelled'):
+            return self.status
+
+        today = timezone.localdate()
+        if self.planting_date and self.planting_date <= today:
+            return 'ongoing'
+        return 'planned'
+
+    @classmethod
+    def sync_lifecycle_statuses(cls, queryset=None):
+        """Sync stored statuses for plantings whose dates or harvests changed."""
+        today = timezone.localdate()
+        if queryset is None:
+            queryset = cls.objects.filter(is_active=True)
+
+        queryset = queryset.exclude(status__in=['failed', 'cancelled'])
+        updated_count = 0
+
+        for planting in queryset.only(
+            'pk', 'status', 'planting_date', 'actual_harvest_date'
+        ):
+            active_harvest = HarvestRecord.all_objects.filter(
+                planting_id=planting.pk,
+                is_active=True,
+            ).order_by('-harvest_date', '-pk').first()
+
+            if active_harvest:
+                new_status = 'harvested'
+                new_actual_harvest_date = active_harvest.harvest_date
+            elif planting.planting_date and planting.planting_date <= today:
+                new_status = 'ongoing'
+                new_actual_harvest_date = None
+            else:
+                new_status = 'planned'
+                new_actual_harvest_date = None
+
+            if (
+                planting.status != new_status
+                or planting.actual_harvest_date != new_actual_harvest_date
+            ):
+                cls.objects.filter(pk=planting.pk).update(
+                    status=new_status,
+                    actual_harvest_date=new_actual_harvest_date,
+                )
+                updated_count += 1
+
+        return updated_count
+
     def save(self, *args, **kwargs):
         """Auto-compute derived fields and validate before saving."""
+        # Keep the stored lifecycle status aligned with dates and harvest records.
+        self.status = self.get_lifecycle_status()
+
+        if self.status == 'harvested':
+            active_harvest = self._get_active_harvest()
+            if active_harvest:
+                self.actual_harvest_date = active_harvest.harvest_date
+        elif self.status in ('planned', 'ongoing'):
+            self.actual_harvest_date = None
+
         self.full_clean()
 
         # Maintain expected harvest date when average growth duration is set
@@ -1452,20 +1529,17 @@ class HarvestRecord(SoftDeleteModel):
             planting_id=self.planting_id,
             is_active=True,
         ).exclude(pk=self.pk).first()
-        if active_harvest:
-            PlantingRecord.objects.filter(pk=planting.pk).update(
-                status='harvested',
-                actual_harvest_date=active_harvest.harvest_date,
-            )
-            planting.status = 'harvested'
-            planting.actual_harvest_date = active_harvest.harvest_date
-        else:
-            PlantingRecord.objects.filter(pk=planting.pk).update(
-                status='ongoing',
-                actual_harvest_date=None,
-            )
-            planting.status = 'ongoing'
-            planting.actual_harvest_date = None
+        new_status = planting.get_lifecycle_status()
+        new_actual_harvest_date = (
+            active_harvest.harvest_date if active_harvest else None
+        )
+
+        PlantingRecord.objects.filter(pk=planting.pk).update(
+            status=new_status,
+            actual_harvest_date=new_actual_harvest_date,
+        )
+        planting.status = new_status
+        planting.actual_harvest_date = new_actual_harvest_date
 
         YieldPrediction.objects.filter(planting_id=planting.pk).update(
             actual_harvest_date=planting.actual_harvest_date

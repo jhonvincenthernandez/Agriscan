@@ -993,12 +993,28 @@ class PlantingRecordForm(forms.ModelForm):
         queryset=None,
         required=False,
         label='Field Owner (User)',
-        help_text='Search by name or username — only their fields will appear below',
+        help_text='Search by name or username. Only their fields will appear below.',
         widget=forms.Select(attrs={
             'class': INPUT_CLASS,
             'data-searchable': 'true',
             'id': 'id_owner_filter',
         }),
+    )
+
+    # Staff only: manual override for closing a planting cycle.
+    status_override = forms.ChoiceField(
+        choices=[
+            ('', 'Automatic'),
+            ('failed', 'Failed'),
+            ('cancelled', 'Cancelled'),
+        ],
+        required=False,
+        label='Status override (staff only)',
+        help_text=(
+            'Leave Automatic to update status from the planting date and harvest records. '
+            'Choose Failed or Cancelled only to close this planting cycle manually.'
+        ),
+        widget=forms.Select(attrs={'class': INPUT_CLASS}),
     )
 
     class Meta:
@@ -1014,7 +1030,6 @@ class PlantingRecordForm(forms.ModelForm):
             'planting_date',
             'expected_harvest_date',
             'actual_harvest_date',
-            'status',
             'notes',
         ]
         labels = {
@@ -1027,7 +1042,6 @@ class PlantingRecordForm(forms.ModelForm):
             'planting_date': 'Planting Date',
             'expected_harvest_date': 'Expected Harvest Date',
             'actual_harvest_date': 'Actual Harvest Date',
-            'status': 'Status',
             'notes': 'Notes',
         }
         widgets = {
@@ -1036,30 +1050,29 @@ class PlantingRecordForm(forms.ModelForm):
             'season': forms.Select(attrs={'class': INPUT_CLASS}),
             'planting_method': forms.Select(attrs={'class': INPUT_CLASS}),
             'area_planted_ha': forms.NumberInput(attrs={'class': INPUT_CLASS, 'step': '0.01', 'min': '0.01', 'placeholder': '0.00'}),
-            'seed_rate_kg_per_ha': forms.NumberInput(attrs={'class': INPUT_CLASS, 'step': '0.01', 'min': '0', 'placeholder': 'e.g. 50'}),
+            'seed_rate_kg_per_ha': forms.NumberInput(attrs={'class': INPUT_CLASS, 'step': '0.01', 'min': '0', 'placeholder': 'Optional'}),
             'planting_date': forms.DateInput(attrs={'class': INPUT_CLASS, 'type': 'date'}),
             'expected_harvest_date': forms.DateInput(attrs={'class': INPUT_CLASS, 'type': 'date'}),
             'actual_harvest_date': forms.DateInput(attrs={'class': INPUT_CLASS, 'type': 'date'}),
-            'status': forms.Select(attrs={'class': INPUT_CLASS}),
             'notes': forms.Textarea(attrs={'class': INPUT_CLASS + ' resize-none', 'rows': 3, 'placeholder': 'Optional notes about this planting cycle'}),
         }
         help_texts = {
             'field': 'Select the field for this planting',
             'variety': 'Select the rice variety planted',
             'season': 'Wet or dry season for this planting',
-            'planting_method': 'How the crop was planted',
+            'planting_method': 'Direct seeding sows seeds in the field. Transplanting grows seedlings in a seedbed first.',
             'area_planted_ha': 'Area planted in hectares (must be <= field size)',
-            'seed_rate_kg_per_ha': 'Estimated seed rate per hectare (optional)',
+            'seed_rate_kg_per_ha': 'Optional. Direct seeding: seeds sown in the field per hectare. Transplanting: seeds used to grow seedlings for one hectare. Leave blank if unknown.',
             'planting_date': 'Date when rice was planted',
             'expected_harvest_date': 'Expected harvest date (auto-calculated if variety has growth duration)',
             'actual_harvest_date': 'Actual harvest date (set automatically when a harvest record is created)',
-            'status': 'Current status of this planting cycle',
             'notes': 'Optional notes about this planting cycle',
         }
 
     def __init__(self, *args, user=None, target_profile=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
+        self.is_staff = False
 
         # Check if this is an edit (instance exists) or create (new)
         is_editing = self.instance and self.instance.pk
@@ -1071,6 +1084,7 @@ class PlantingRecordForm(forms.ModelForm):
             # Get user profile and role
             user_profile = getattr(user, 'profile', None)
             role = user_profile.role if user_profile else 'farmer'
+            self.is_staff = role in ['admin', 'technician']
 
             if role in ['admin', 'technician']:
                 # Populate the owner_filter dropdown with all selectable profiles
@@ -1121,7 +1135,13 @@ class PlantingRecordForm(forms.ModelForm):
                 self.fields['field'].help_text = (
                     'Select the field for this planting.'
                 )
-        
+
+        if self.is_staff:
+            if is_editing and self.instance.status in ('failed', 'cancelled'):
+                self.fields['status_override'].initial = self.instance.status
+        else:
+            self.fields.pop('status_override', None)
+
         # Make notes and expected_harvest_date optional
         self.fields['notes'].required = False
         self.fields['expected_harvest_date'].required = False
@@ -1187,8 +1207,44 @@ class PlantingRecordForm(forms.ModelForm):
 
         # Yearly 3-cycle rule is enforced centrally in PlantingRecord.clean().
         # Tagalog: Iwas duplicate logic para walang divergence sa forms/admin/API.
-        
+
+        # A harvest record is the source of truth. Do not allow a manual
+        # Failed or Cancelled override while an active harvest exists.
+        status_override = cleaned_data.get('status_override')
+        if (
+            status_override in ('failed', 'cancelled')
+            and self.instance
+            and self.instance.pk
+        ):
+            from .models import HarvestRecord
+            if HarvestRecord.all_objects.filter(
+                planting_id=self.instance.pk,
+                is_active=True,
+            ).exists():
+                self.add_error(
+                    'status_override',
+                    'A harvest record already exists. This planting must stay Harvested.',
+                )
+
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        status_override = self.cleaned_data.get('status_override')
+
+        if status_override in ('failed', 'cancelled'):
+            instance.status = status_override
+        elif self.is_staff and not status_override:
+            # Automatic selected: clear a previous manual override so the model
+            # can recalculate Planned, Ongoing, or Harvested.
+            if instance.status in ('failed', 'cancelled'):
+                instance.status = 'planned'
+
+        if commit:
+            instance.save()
+            self.save_m2m()
+
+        return instance
 
 # Isama ito sa dulo ng forms.py o sa tabi ng Admin Forms
 from django import forms

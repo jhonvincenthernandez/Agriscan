@@ -2824,7 +2824,10 @@ def plantings_list(request):
     else:
         # Farmers see only their own plantings
         plantings = PlantingRecord.objects.filter(field__owner=user_profile, is_active=True)
-    
+
+    # Keep lifecycle statuses current without requiring a manual status field.
+    PlantingRecord.sync_lifecycle_statuses(plantings)
+
     plantings = plantings.select_related(
         'field', 'field__owner', 'field__owner__user', 'variety'
     ).order_by('-planting_date')
@@ -3020,7 +3023,11 @@ def planting_edit(request, pk: int):
     else:
         # Farmers can only edit their own plantings
         planting = get_object_or_404(PlantingRecord, pk=pk, field__owner=user_profile)
-    
+
+    # Refresh the stored lifecycle status before binding the form.
+    PlantingRecord.sync_lifecycle_statuses(PlantingRecord.objects.filter(pk=planting.pk))
+    planting.refresh_from_db()
+
     if request.method == 'POST':
         form = PlantingRecordForm(request.POST, instance=planting, user=request.user)
         if form.is_valid():
