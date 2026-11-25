@@ -234,7 +234,7 @@
       margin-bottom: 6px !important;
     }
 
-    #monthly-chart-real .relative {
+    #monthly-chart-live {
       height: 55mm !important;
     }
 
@@ -242,6 +242,22 @@
       max-height: 55mm !important;
       width: 100% !important;
       height: auto !important;
+    }
+
+    #monthly-chart-card.has-print-chart #monthly-chart-live {
+      display: none !important;
+    }
+
+    #monthly-chart-card.has-print-chart #monthly-chart-print {
+      display: block !important;
+    }
+
+    #monthly-chart-print-img {
+      display: block;
+      width: 100% !important;
+      height: auto !important;
+      max-height: 55mm !important;
+      object-fit: contain;
     }
 
     .badge-base {
@@ -523,8 +539,15 @@
             <h2 class="rp-section-title">Healthy vs Diseased Crops</h2>
             <p class="rp-section-lead">Active detections in the selected period</p>
           </div>
-          <div class="relative h-64 sm:h-72">
+          <div id="monthly-chart-live" class="relative h-64 sm:h-72">
             <canvas id="monthlyChart" class="max-h-80"></canvas>
+          </div>
+          <div id="monthly-chart-print" class="hidden">
+            <img
+              id="monthly-chart-print-img"
+              alt="Bar chart comparing healthy and diseased crop detections per month"
+              class="h-auto w-full"
+            >
           </div>
         </div>
       </div>
@@ -758,6 +781,15 @@
   </p>
 </div>
 
+<div
+  id="monthly-chart-print-canvas-wrap"
+  class="no-print"
+  aria-hidden="true"
+  style="position:absolute; left:-9999px; top:0; width:1200px; height:360px; overflow:hidden;"
+>
+  <canvas id="monthlyChartPrint" width="1200" height="360"></canvas>
+</div>
+
 <script>
 // Monthly Healthy vs Diseased Chart
 const monthlyData = {{ monthly_data|safe }};
@@ -765,9 +797,8 @@ const monthLabels = monthlyData.map(d => d.month);
 const healthyData = monthlyData.map(d => d.healthy);
 const diseasedData = monthlyData.map(d => d.diseased);
 
-new Chart(document.getElementById('monthlyChart'), {
-  type: 'bar',
-  data: {
+function buildMonthlyChartData() {
+  return {
     labels: monthLabels,
     datasets: [
       {
@@ -787,15 +818,23 @@ new Chart(document.getElementById('monthlyChart'), {
         borderRadius: 4
       }
     ]
-  },
-  options: {
-    responsive: true,
+  };
+}
+
+function buildMonthlyChartOptions(isPrint) {
+  var legendSize = isPrint ? 18 : 12;
+  var tickSize = isPrint ? 16 : 11;
+
+  return {
+    responsive: !isPrint,
     maintainAspectRatio: false,
+    animation: isPrint ? false : undefined,
+    devicePixelRatio: isPrint ? 2 : undefined,
     plugins: {
       legend: {
         position: 'top',
         labels: {
-          font: { family: "'Inter', sans-serif", size: 12 },
+          font: { family: "'Inter', sans-serif", size: legendSize },
           color: '#374151'
         }
       }
@@ -804,21 +843,30 @@ new Chart(document.getElementById('monthlyChart'), {
       y: {
         beginAtZero: true,
         ticks: {
-          stepSize: 1,
-          font: { family: "'Inter', sans-serif", size: 11 },
+          stepSize: isPrint ? 2 : 1,
+          maxTicksLimit: isPrint ? 13 : undefined,
+          font: { family: "'Inter', sans-serif", size: tickSize },
           color: '#6b7280'
         },
         grid: { color: 'rgba(0,0,0,0.05)' }
       },
       x: {
         ticks: {
-          font: { family: "'Inter', sans-serif", size: 11 },
-          color: '#6b7280'
+          font: { family: "'Inter', sans-serif", size: tickSize },
+          color: '#6b7280',
+          maxRotation: isPrint ? 0 : undefined,
+          minRotation: isPrint ? 0 : undefined
         },
         grid: { display: false }
       }
     }
-  }
+  };
+}
+
+new Chart(document.getElementById('monthlyChart'), {
+  type: 'bar',
+  data: buildMonthlyChartData(),
+  options: buildMonthlyChartOptions(false)
 });
 
 // Reveal real chart card, hide skeleton
@@ -828,6 +876,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (sk) sk.style.display = 'none';
   if (real) real.classList.remove('hidden');
+
+  var printCanvas = document.getElementById('monthlyChartPrint');
+  var printImage = document.getElementById('monthly-chart-print-img');
+  var chartCard = document.getElementById('monthly-chart-card');
+
+  if (printCanvas && printImage && chartCard) {
+    var printChart = new Chart(printCanvas, {
+      type: 'bar',
+      data: buildMonthlyChartData(),
+      options: buildMonthlyChartOptions(true)
+    });
+
+    printChart.update('none');
+    printImage.onload = function () {
+      chartCard.classList.add('has-print-chart');
+    };
+    printImage.src = printChart.toBase64Image('image/png', 1);
+    if (printImage.complete) {
+      chartCard.classList.add('has-print-chart');
+    }
+    printChart.destroy();
+  }
   
   var printDate = document.getElementById('print-date');
   if (printDate) {

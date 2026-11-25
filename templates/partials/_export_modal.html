@@ -44,13 +44,47 @@
   .gem-card {
     width: min(100%, 34rem);
     max-height: min(90vh, 48rem);
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-xl);
     background: var(--color-surface);
     color: var(--color-text);
     box-shadow: var(--shadow-lg);
+    padding: 0;
+  }
+
+  .gem-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+  }
+
+  .gem-header > button {
+    flex: 0 0 auto;
+  }
+
+  .gem-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
     padding: 1rem;
+  }
+
+  .gem-actions {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem 1rem;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface);
   }
 
   .gem-title {
@@ -133,14 +167,15 @@
     padding: 0.75rem;
   }
 
-  .gem-format.gem-active-csv {
-    border-color: var(--color-success-border);
-    background: var(--color-success-soft);
+  .gem-radio {
+    accent-color: var(--color-brand);
+    color: var(--color-brand);
   }
 
+  .gem-format.gem-active-csv,
   .gem-format.gem-active-pdf {
-    border-color: var(--color-danger-border);
-    background: var(--color-danger-soft);
+    border-color: var(--color-brand-border);
+    background: var(--color-brand-light);
   }
 
   .gem-button {
@@ -170,21 +205,22 @@
     display: flex;
   }
 
-  #gem-download-btn.gem-pdf {
-    background: var(--color-danger);
-  }
-
-  #gem-download-btn.gem-pdf:hover {
-    background: var(--color-danger-hover);
-  }
-
   @media (min-width: 640px) {
     #global-export-modal {
       padding: 1rem;
     }
 
-    .gem-card {
-      padding: 1.5rem;
+    .gem-header {
+      padding: 1.5rem 1.5rem 0.75rem;
+    }
+
+    .gem-body {
+      padding: 1rem 1.5rem;
+    }
+
+    .gem-actions {
+      flex-direction: row;
+      padding: 0.75rem 1.5rem 1.5rem;
     }
   }
 </style>
@@ -200,8 +236,8 @@
   <div class="gem-card" style="position:relative;" tabindex="-1">
 
     <!-- Header -->
-    <div class="flex items-center justify-between mb-5">
-      <div>
+    <div class="gem-header">
+      <div class="min-w-0">
         <h2 id="gem-title" class="gem-title font-bold">Export Records</h2>
         <p id="gem-subtitle" class="gem-subtitle mt-1 text-sm">Choose format, date range, and columns.</p>
       </div>
@@ -214,19 +250,21 @@
       </button>
     </div>
 
+    <div class="gem-body">
+
     <!-- ── Mode 1 only: Format selector (CSV / PDF) ── -->
     <div id="gem-fmt-block">
       <p class="gem-section-label mb-2">Format</p>
       <div class="flex flex-col gap-2 mb-5 sm:flex-row">
         <label id="gem-csv-label"
                class="gem-format flex items-center gap-2">
-          <input type="radio" name="gem_fmt" value="csv" checked class="text-green-600" id="gem-fmt-csv">
-          <span class="text-sm font-medium text-[var(--color-success-text)]">CSV</span>
+          <input type="radio" name="gem_fmt" value="csv" checked class="gem-radio" id="gem-fmt-csv">
+          <span class="text-sm font-medium text-[var(--color-text)]">CSV</span>
           <span class="gem-help-text ml-auto text-xs">Excel</span>
         </label>
         <label id="gem-pdf-label"
                class="gem-format flex items-center gap-2">
-          <input type="radio" name="gem_fmt" value="pdf" class="text-red-600" id="gem-fmt-pdf">
+          <input type="radio" name="gem_fmt" value="pdf" class="gem-radio" id="gem-fmt-pdf">
           <span class="text-sm font-medium text-[var(--color-text)]">PDF</span>
           <span class="gem-help-text ml-auto text-xs">Print</span>
         </label>
@@ -305,8 +343,10 @@
       <span id="gem-feedback-text"></span>
     </div>
 
+    </div>
+
     <!-- Actions -->
-    <div class="flex flex-col gap-3 pt-3 border-t border-[var(--color-border)] sm:flex-row">
+    <div class="gem-actions">
       <button type="button" onclick="closeExportModal()"
               class="gem-button flex-1 border border-[var(--color-border)] text-[var(--color-text)] hover:bg-[var(--color-overlay)]">
         Cancel
@@ -510,6 +550,8 @@
       modal.style.display = 'flex';
       modal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+      var modalBody = modal.querySelector('.gem-body');
+      if (modalBody) modalBody.scrollTop = 0;
       var firstFocusable = modal.querySelector('button, input, [tabindex="0"]');
       if (firstFocusable) firstFocusable.focus();
     }
@@ -608,7 +650,6 @@
       colSection.style.opacity       = isCsv ? '1'  : '0.4';
       colSection.style.pointerEvents = isCsv ? ''   : 'none';
     }
-    gemSetBtnColor(isCsv ? 'csv' : 'pdf');
     var labelEl = document.getElementById('gem-download-label');
     if (labelEl) labelEl.textContent = 'Download';
 
@@ -618,12 +659,6 @@
     if (pdfLabel) {
       pdfLabel.classList.toggle('gem-active-pdf', !isCsv);
     }
-  }
-
-  function gemSetBtnColor(fmt) {
-    var btn = document.getElementById('gem-download-btn');
-    if (!btn) return;
-    btn.classList.toggle('gem-pdf', fmt === 'pdf');
   }
 
   document.addEventListener('change', function (e) {
