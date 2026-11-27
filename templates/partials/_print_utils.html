@@ -16,7 +16,7 @@
        onclick="handlePagePrint('my-print-header')"
      The function:
        - Shows the #print-header element
-       - Stamps #print-date with today's date (en-PH locale) if empty
+       - Stamps #print-date with the date and 12-hour time (en-PH locale) if empty
        - Calls window.print()
        - Hides the print header again after 500ms
 {% endcomment %}
@@ -70,11 +70,16 @@
     var ph = document.getElementById(id);
     if (ph) ph.style.display = 'block';
 
-    // Stamp the date if the element exists and is still empty
+    // Stamp the date and 12-hour time if the element exists and is still empty
     var dateEl = document.getElementById('print-date');
     if (dateEl && !dateEl.textContent.trim()) {
-      dateEl.textContent = new Date().toLocaleDateString('en-PH', {
-        year: 'numeric', month: 'long', day: 'numeric'
+      dateEl.textContent = new Date().toLocaleString('en-PH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
       });
     }
 

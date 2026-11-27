@@ -1848,7 +1848,14 @@
   'use strict';
 
   function updatePrintDate() {
-    const now = new Date().toLocaleString();
+    const now = new Date().toLocaleString('en-PH', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
     const printDate = document.getElementById('print-date');
     const printFooterDate = document.getElementById('print-footer-date');
 

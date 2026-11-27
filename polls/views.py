@@ -1597,6 +1597,22 @@ def detections_list(request):
 
     detection_classes = services.list_detection_classes()
     varieties = [v[0] for v in services.get_variety_choices()]
+    date_filter_labels = {
+        "today": "Today",
+        "week": "This Week",
+        "month": "This Month",
+    }
+    print_filter_parts = []
+    if search:
+        print_filter_parts.append(f"Search: {search}")
+    if disease_filter:
+        print_filter_parts.append(f"Condition: {disease_filter}")
+    if variety_filter:
+        print_filter_parts.append(f"Variety: {variety_filter}")
+    if date_filter:
+        print_filter_parts.append(
+            f"Date: {date_filter_labels.get(date_filter, date_filter.title())}"
+        )
     context = {
         "detections": page_obj.object_list,
         "page_obj": page_obj,
@@ -1609,6 +1625,7 @@ def detections_list(request):
         "varieties": varieties,
         "sort_by": sort,
         "page_size": page_size,
+        "print_filter_summary": " · ".join(print_filter_parts),
     }
     return render(request, "detections/list.html", context)
 

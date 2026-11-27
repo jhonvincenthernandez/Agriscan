@@ -1136,6 +1136,10 @@ video {
   min-height: 1.25rem;
 }
 
+.min-h-\[2\.75rem\] {
+  min-height: 2.75rem;
+}
+
 .min-h-\[24rem\] {
   min-height: 24rem;
 }
@@ -1166,10 +1170,6 @@ video {
 
 .min-h-screen {
   min-height: 100vh;
-}
-
-.min-h-\[2\.75rem\] {
-  min-height: 2.75rem;
 }
 
 .w-1\.5 {
@@ -2033,6 +2033,10 @@ video {
   background-color: var(--color-surface);
 }
 
+.bg-\[var\(--color-surface-muted\)\] {
+  background-color: var(--color-surface-muted);
+}
+
 .bg-\[var\(--color-text-muted\)\] {
   background-color: var(--color-text-muted);
 }
@@ -2280,10 +2284,6 @@ video {
 .bg-yellow-600 {
   --tw-bg-opacity: 1;
   background-color: rgb(202 138 4 / var(--tw-bg-opacity, 1));
-}
-
-.bg-\[var\(--color-surface-muted\)\] {
-  background-color: var(--color-surface-muted);
 }
 
 .bg-gradient-to-br {
@@ -3634,12 +3634,12 @@ video {
 }
 
 @media (min-width: 640px) {
-  .sm\:col-span-2 {
-    grid-column: span 2 / span 2;
-  }
-
   .sm\:col-span-1 {
     grid-column: span 1 / span 1;
+  }
+
+  .sm\:col-span-2 {
+    grid-column: span 2 / span 2;
   }
 
   .sm\:row-span-2 {
@@ -3687,6 +3687,10 @@ video {
     display: none;
   }
 
+  .sm\:h-10 {
+    height: 2.5rem;
+  }
+
   .sm\:h-11 {
     height: 2.75rem;
   }
@@ -3697,6 +3701,10 @@ video {
 
   .sm\:h-16 {
     height: 4rem;
+  }
+
+  .sm\:h-5 {
+    height: 1.25rem;
   }
 
   .sm\:h-6 {
@@ -3719,12 +3727,8 @@ video {
     height: 4.25rem;
   }
 
-  .sm\:h-10 {
-    height: 2.5rem;
-  }
-
-  .sm\:h-5 {
-    height: 1.25rem;
+  .sm\:w-10 {
+    width: 2.5rem;
   }
 
   .sm\:w-11 {
@@ -3739,6 +3743,10 @@ video {
     width: 4rem;
   }
 
+  .sm\:w-5 {
+    width: 1.25rem;
+  }
+
   .sm\:w-6 {
     width: 1.5rem;
   }
@@ -3749,14 +3757,6 @@ video {
 
   .sm\:w-auto {
     width: auto;
-  }
-
-  .sm\:w-10 {
-    width: 2.5rem;
-  }
-
-  .sm\:w-5 {
-    width: 1.25rem;
   }
 
   .sm\:max-w-sm {
@@ -3841,6 +3841,10 @@ video {
     padding: 3rem;
   }
 
+  .sm\:p-4 {
+    padding: 1rem;
+  }
+
   .sm\:p-5 {
     padding: 1.25rem;
   }
@@ -3851,10 +3855,6 @@ video {
 
   .sm\:p-8 {
     padding: 2rem;
-  }
-
-  .sm\:p-4 {
-    padding: 1rem;
   }
 
   .sm\:px-4 {
