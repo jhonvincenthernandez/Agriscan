@@ -219,10 +219,10 @@
     .data-table td[data-label="Planted"],
     .data-table td[data-label="Harvest"],
     .data-table td[data-label="Created"],
-    .data-table td[data-label="Tons / ha"],
+    .data-table td[data-label="Predicted Tons/ha"],
     .data-table td[data-label="Production"],
     .data-table td[data-label="Area"] { white-space: nowrap !important; }
-    .data-table td[data-label="Tons / ha"] span + span { font-size: 6.5pt !important; }
+    .data-table td[data-label="Predicted Tons/ha"] span + span { font-size: 6.5pt !important; }
     .data-table .yr-row { cursor: default !important; }
     .data-table .yr-row.is-selected { background: transparent !important; }
 
@@ -444,7 +444,7 @@
             </th>
             <th scope="col" aria-sort="{% if sb == 'model_version' %}ascending{% elif sb == '-model_version' %}descending{% else %}none{% endif %}">
               <a class="yr-sort{% if sb == 'model_version' or sb == '-model_version' %} is-active{% endif %}" href="?sort={% if sb == 'model_version' %}-model_version{% else %}model_version{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
-                Model
+                Model Version
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == '-model_version' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
               </a>
             </th>
@@ -456,7 +456,7 @@
             </th>
             <th scope="col" class="yr-num" aria-sort="{% if sb == 'predicted_yield_tons_per_ha' %}ascending{% elif sb == '-predicted_yield_tons_per_ha' %}descending{% else %}none{% endif %}">
               <a class="yr-sort{% if sb == 'predicted_yield_tons_per_ha' or sb == '-predicted_yield_tons_per_ha' %} is-active{% endif %}" href="?sort={% if sb == '-predicted_yield_tons_per_ha' %}predicted_yield_tons_per_ha{% else %}-predicted_yield_tons_per_ha{% endif %}{% if p %}&amp;search={{ p|urlencode }}{% endif %}{% if v %}&amp;variety={{ v|urlencode }}{% endif %}{% if df %}&amp;date_filter={{ df|urlencode }}{% endif %}{% if ps %}&amp;page_size={{ ps }}{% endif %}">
-                Tons / ha
+                Predicted Tons/ha
                 <svg viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">{% if sb == 'predicted_yield_tons_per_ha' %}<path d="M5 7L1 3h8L5 7z"/>{% else %}<path d="M5 3l4 4H1l4-4z"/>{% endif %}</svg>
               </a>
             </th>
@@ -520,7 +520,7 @@
               {% endif %}
             </td>
 
-            <td data-label="Model">
+            <td data-label="Model Version">
               {% if record.model_version %}
                 <span class="font-mono text-[var(--text-sm)] yr-model" title="{{ record.model_version }}">{{ record.model_version }}</span>
               {% else %}
@@ -536,7 +536,7 @@
               {% endif %}
             </td>
 
-            <td data-label="Tons / ha" class="yr-num">
+            <td data-label="Predicted Tons/ha" class="yr-num">
               {% if record.predicted_yield_tons_per_ha %}
                 <span class="font-semibold text-[var(--color-text-primary)]">{{ record.predicted_yield_tons_per_ha }}</span>
                 <span class="text-[var(--text-xs)] text-[var(--color-text-secondary)]">t/ha</span>
@@ -817,23 +817,10 @@
 <script>
 function openYieldExportModal() {
   openExportModal({
-    title: 'Export Yield Records',
+    title: 'Export Yield Prediction Records',
     csvUrl: '{% url "polls:export_yields_csv" %}',
     pdfUrl: '{% url "polls:export_yields_pdf" %}',
     showBarangay: true,
-    cols: [
-      { value: 'id',           label: 'ID'          },
-      { value: 'date',         label: 'Date'        },
-      { value: 'variety',      label: 'Variety'     },
-      { value: 'field',        label: 'Field'       },
-      { value: 'model',        label: 'Model'       },
-      { value: 'sacks_per_ha', label: 'Sacks/ha'    },
-      { value: 'confidence',   label: 'Confidence'  },
-      { value: 'area',         label: 'Area (ha)'   },
-      { value: 'total_sacks',  label: 'Total Sacks' },
-      { value: 'total_tons',   label: 'Total Tons'  },
-      { value: 'harvest_date', label: 'Harvest Date'},
-    ],
   });
 }
 </script>

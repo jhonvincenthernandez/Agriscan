@@ -632,18 +632,6 @@ function openDetExportModal() {
     csvUrl: '{% url "polls:export_detections_csv" %}',
     pdfUrl: '{% url "polls:export_detections_pdf" %}',
     showBarangay: true,
-    cols: [
-      { value: 'id',         label: 'ID'           },
-      { value: 'date',       label: 'Created'      },
-      { value: 'disease',    label: 'Condition'    },
-      {% if is_admin or is_technician %}{ value: 'owner', label: 'Owner' },{% endif %}
-      { value: 'variety',    label: 'Variety'      },
-      { value: 'field',      label: 'Field'        },
-      { value: 'status',     label: 'Status'       },
-      { value: 'confidence', label: 'Confidence'   },
-      { value: 'severity',   label: 'Severity'     },
-      { value: 'model',      label: 'Model Version'},
-    ],
   });
 }
 </script>

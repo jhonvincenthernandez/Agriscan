@@ -2184,6 +2184,81 @@ def export_detections_csv(request):
     return response
 
 
+YIELD_COLUMN_LABELS = {
+    'id': 'ID',
+    'created': 'Created',
+    'owner': 'Owner',
+    'variety': 'Variety',
+    'field': 'Field',
+    'model_version': 'Model Version',
+    'planted': 'Planted',
+    'predicted_tons_per_ha': 'Predicted Tons/ha',
+    'production': 'Production',
+    'area': 'Area (ha)',
+    'readiness': 'Readiness',
+    'harvest': 'Harvest',
+    'confidence': 'Confidence',
+}
+
+YIELD_EXPORT_COLS = [
+    'id',
+    'created',
+    'owner',
+    'variety',
+    'field',
+    'model_version',
+    'planted',
+    'predicted_tons_per_ha',
+    'production',
+    'area',
+    'readiness',
+    'harvest',
+    'confidence',
+]
+
+
+def _yield_export_cols_for(request):
+    profile = getattr(request.user, 'profile', None)
+    role = getattr(profile, 'role', None)
+    cols = list(YIELD_EXPORT_COLS)
+    if role not in ('admin', 'technician'):
+        cols = [c for c in cols if c != 'owner']
+    return cols
+
+
+def _yield_export_row(rec):
+    planting = rec.planting
+    field = planting.field if planting and planting.field else None
+    owner_profile = field.owner if field and field.owner else None
+    owner_user = owner_profile.user if owner_profile and owner_profile.user else None
+    owner_name = (owner_user.get_full_name() or owner_user.username) if owner_user else ''
+    variety_code = planting.variety.code if planting and planting.variety else 'N/A'
+    field_name = field.name if field else 'N/A'
+    planted = planting.planting_date.strftime('%b %d, %Y') if planting and planting.planting_date else ''
+    created = timezone.localtime(rec.created_at).strftime('%b %d, %Y %I:%M %p') if rec.created_at else ''
+    harvest_date = rec.estimated_harvest_date or rec.harvest_date
+    production = rec.predicted_total_production_tons if rec.predicted_total_production_tons is not None else rec.total_tons
+    if planting and planting.status == 'harvested':
+        readiness = 'Harvested'
+    else:
+        readiness = rec.get_yield_readiness_display() if rec.yield_readiness else ''
+    return {
+        'id': rec.pk,
+        'created': created,
+        'owner': owner_name,
+        'variety': variety_code,
+        'field': field_name,
+        'model_version': rec.model_version or '',
+        'planted': planted,
+        'predicted_tons_per_ha': rec.predicted_yield_tons_per_ha if rec.predicted_yield_tons_per_ha is not None else '',
+        'production': production if production is not None else '',
+        'area': rec.area_hectares if rec.area_hectares is not None else '',
+        'readiness': readiness,
+        'harvest': harvest_date.strftime('%b %d, %Y') if harvest_date else '',
+        'confidence': round(float(rec.confidence_pct or 0), 2) if rec.confidence_pct is not None else '',
+    }
+
+
 @login_required(login_url=reverse_lazy('polls:login'))
 def export_yields_csv(request):
     user_profile = getattr(request.user, 'profile', None)
@@ -2192,8 +2267,7 @@ def export_yields_csv(request):
         return redirect('polls:dashboard')
 
     from datetime import datetime as _dt
-    ALL_COLS = ['id', 'date', 'variety', 'field', 'model', 'sacks_per_ha', 'confidence', 'area', 'total_sacks', 'total_tons', 'harvest_date']
-    selected_cols = set(request.GET.getlist('cols')) or set(ALL_COLS)
+    ALL_COLS = _yield_export_cols_for(request)
 
     # Optional date range
     start_str = request.GET.get('start_date', '')
@@ -2206,7 +2280,8 @@ def export_yields_csv(request):
         start_dt = end_dt = None
 
     records_qs = YieldPrediction.objects.filter(is_active=True).select_related(
-        'planting__field', 'planting__variety'
+        'planting__field', 'planting__variety',
+        'planting__field__owner', 'planting__field__owner__user'
     ).order_by('-created_at')
     records_qs = filter_queryset_by_role(request, records_qs, user_field="planting__field__owner")
     records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
@@ -2229,32 +2304,12 @@ def export_yields_csv(request):
     writer.writerow(['Total Records', total])
     writer.writerow([])
 
-    COL_LABELS = {
-        'id': 'ID', 'date': 'Date', 'variety': 'Variety', 'field': 'Field',
-        'model': 'Model',
-        'sacks_per_ha': 'Sacks/ha', 'confidence': 'Confidence (%)',
-        'area': 'Area (ha)', 'total_sacks': 'Total Sacks',
-        'total_tons': 'Total Tons', 'harvest_date': 'Harvest Date',
-    }
-    writer.writerow([COL_LABELS[c] for c in ALL_COLS if c in selected_cols])
+    COL_LABELS = YIELD_COLUMN_LABELS
+    writer.writerow([COL_LABELS[c] for c in ALL_COLS])
 
     for rec in records_qs:
-        variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
-        field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
-        row_map = {
-            'id':           rec.pk,
-            'date':         rec.created_at.strftime('%Y-%m-%d %H:%M'),
-            'variety':      variety,
-            'field':        field,
-            'model':        rec.model_version or '',
-            'sacks_per_ha': rec.predicted_sacks_per_ha or '',
-            'confidence':   round(float(rec.confidence_pct or 0), 2) if rec.confidence_pct else '',
-            'area':         rec.area_hectares or '',
-            'total_sacks':  rec.total_sacks or '',
-            'total_tons':   rec.total_tons or '',
-            'harvest_date': rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '',
-        }
-        writer.writerow([row_map[c] for c in ALL_COLS if c in selected_cols])
+        row_map = _yield_export_row(rec)
+        writer.writerow([row_map[c] for c in ALL_COLS])
 
     return response
 
@@ -2369,7 +2424,8 @@ def export_yields_pdf(request):
         start_dt = end_dt = None
 
     records_qs = YieldPrediction.objects.filter(is_active=True).select_related(
-        'planting__field', 'planting__variety'
+        'planting__field', 'planting__variety',
+        'planting__field__owner', 'planting__field__owner__user'
     ).order_by('-created_at')
     records_qs = filter_queryset_by_role(request, records_qs, user_field="planting__field__owner")
     records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
@@ -2404,35 +2460,32 @@ def export_yields_pdf(request):
     elems.append(Paragraph(cover_line, styles['Normal']))
     elems.append(Spacer(1, 0.3*inch))
 
-    data = [['ID', 'Date', 'Variety', 'Field', 'Model', 'Sacks/ha', 'Area (ha)', 'Total Sacks', 'Harvest Date']]
+    from xml.sax.saxutils import escape
+
+    export_cols = _yield_export_cols_for(request)
+    data = [[YIELD_COLUMN_LABELS[c] for c in export_cols]]
     for rec in records:
-        variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
-        field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
+        row_map = _yield_export_row(rec)
         data.append([
-            str(rec.pk),
-            rec.created_at.strftime('%Y-%m-%d'),
-            variety[:16],
-            field[:20],
-            str(rec.model_version or '-')[:24],
-            str(rec.predicted_sacks_per_ha or '-'),
-            str(rec.area_hectares or '-'),
-            str(rec.total_sacks or '-'),
-            rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '-',
+            Paragraph(escape(str(row_map[c]) if row_map[c] is not None else ''), styles['Normal'])
+            for c in export_cols
         ])
 
-    table = Table(data, colWidths=[0.55*inch, 1.05*inch, 1.0*inch, 1.55*inch, 1.45*inch, 0.95*inch, 0.95*inch, 1.05*inch, 1.05*inch])
+    table = Table(data, repeatRows=1, hAlign='LEFT')
     table.setStyle(TableStyle([
         ('BACKGROUND',     (0, 0), (-1, 0), BLUE),
         ('TEXTCOLOR',      (0, 0), (-1, 0), colors.white),
         ('FONTNAME',       (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE',       (0, 0), (-1, 0), 9),
-        ('FONTSIZE',       (0, 1), (-1, -1), 8),
+        ('FONTSIZE',       (0, 0), (-1, 0), 8),
+        ('FONTSIZE',       (0, 1), (-1, -1), 7),
         ('ALIGN',          (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN',         (0, 0), (-1, -1), 'TOP'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, LGRAY]),
         ('GRID',           (0, 0), (-1, -1), 0.4, colors.HexColor('#d1d5db')),
         ('TOPPADDING',     (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING',  (0, 0), (-1, -1), 4),
-        ('LEFTPADDING',    (0, 0), (-1, -1), 6),
+        ('LEFTPADDING',    (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING',   (0, 0), (-1, -1), 4),
     ]))
     elems.append(table)
 
@@ -2444,6 +2497,68 @@ def export_yields_pdf(request):
     return response
 
 
+HARVEST_COLUMN_LABELS = {
+    'id': 'ID',
+    'created': 'Created',
+    'owner': 'Owner',
+    'variety': 'Variety',
+    'field': 'Field',
+    'season': 'Season',
+    'harvest_date': 'Harvest Date',
+    'actual_yield_tons': 'Actual Yield Tons',
+    'area_harvested_ha': 'Area Harvested (ha)',
+    'yield_tons_per_ha': 'Yield Tons/ha',
+    'grain_quality': 'Grain Quality',
+}
+
+HARVEST_EXPORT_COLS = [
+    'id',
+    'created',
+    'owner',
+    'variety',
+    'field',
+    'season',
+    'harvest_date',
+    'actual_yield_tons',
+    'area_harvested_ha',
+    'yield_tons_per_ha',
+    'grain_quality',
+]
+
+
+def _harvest_export_cols_for(request):
+    profile = getattr(request.user, 'profile', None)
+    role = getattr(profile, 'role', None)
+    cols = list(HARVEST_EXPORT_COLS)
+    if role not in ('admin', 'technician'):
+        cols = [c for c in cols if c != 'owner']
+    return cols
+
+
+def _harvest_export_row(rec):
+    planting = rec.planting
+    field = planting.field if planting and planting.field else None
+    owner_profile = field.owner if field and field.owner else None
+    owner_user = owner_profile.user if owner_profile and owner_profile.user else None
+    owner_name = (owner_user.get_full_name() or owner_user.username) if owner_user else ''
+    variety_code = planting.variety.code if planting and planting.variety else 'N/A'
+    field_name = field.name if field else 'N/A'
+    created = timezone.localtime(rec.created_at).strftime('%b %d, %Y %I:%M %p') if rec.created_at else ''
+    return {
+        'id': rec.pk,
+        'created': created,
+        'owner': owner_name,
+        'variety': variety_code,
+        'field': field_name,
+        'season': planting.get_season_display() if planting else '',
+        'harvest_date': rec.harvest_date.strftime('%b %d, %Y') if rec.harvest_date else '',
+        'actual_yield_tons': rec.actual_yield_tons if rec.actual_yield_tons is not None else '',
+        'area_harvested_ha': rec.area_harvested_ha if rec.area_harvested_ha is not None else '',
+        'yield_tons_per_ha': rec.yield_tons_per_ha if rec.yield_tons_per_ha is not None else '',
+        'grain_quality': rec.grain_quality or '',
+    }
+
+
 @login_required(login_url=reverse_lazy('polls:login'))
 def export_harvests_csv(request):
     user_profile = getattr(request.user, 'profile', None)
@@ -2452,8 +2567,7 @@ def export_harvests_csv(request):
         return redirect('polls:dashboard')
 
     from datetime import datetime as _dt
-    ALL_COLS = ['id', 'date', 'variety', 'field', 'yield_tons_per_ha', 'area', 'total_tons', 'harvest_date', 'quality', 'notes']
-    selected_cols = set(request.GET.getlist('cols')) or set(ALL_COLS)
+    ALL_COLS = _harvest_export_cols_for(request)
 
     # Optional date range
     start_str = request.GET.get('start_date', '')
@@ -2465,7 +2579,10 @@ def export_harvests_csv(request):
     except Exception:
         start_dt = end_dt = None
 
-    records_qs = HarvestRecord.objects.filter(is_active=True).select_related('planting__field', 'planting__variety').order_by('-harvest_date')
+    records_qs = HarvestRecord.objects.filter(is_active=True).select_related(
+        'planting__field', 'planting__variety',
+        'planting__field__owner', 'planting__field__owner__user'
+    ).order_by('-harvest_date')
     records_qs = filter_queryset_by_role(request, records_qs, user_field='planting__field__owner')
     records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
@@ -2477,7 +2594,7 @@ def export_harvests_csv(request):
     response['Content-Disposition'] = f'attachment; filename="harvest_records_{date_tag}.csv"'
 
     writer = csv.writer(response)
-    writer.writerow(['AgriScan+ Harvest Records'])
+    writer.writerow(['AgriScan+ Harvest Records Report'])
     writer.writerow(['Generated',   timezone.now().strftime('%Y-%m-%d %H:%M:%S')])
     writer.writerow(['Exported By', request.user.get_full_name() or request.user.username])
     if start_str and end_str:
@@ -2487,29 +2604,12 @@ def export_harvests_csv(request):
     writer.writerow(['Total Records', total])
     writer.writerow([])
 
-    COL_LABELS = {
-        'id': 'ID', 'date': 'Date', 'variety': 'Variety', 'field': 'Field',
-        'yield_tons_per_ha': 'Yield (t/ha)', 'area': 'Area (ha)', 'total_tons': 'Total Tons',
-        'harvest_date': 'Harvest Date', 'quality': 'Grain Quality', 'notes': 'Notes',
-    }
-    writer.writerow([COL_LABELS[c] for c in ALL_COLS if c in selected_cols])
+    COL_LABELS = HARVEST_COLUMN_LABELS
+    writer.writerow([COL_LABELS[c] for c in ALL_COLS])
 
     for rec in records_qs:
-        variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
-        field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
-        row_map = {
-            'id': rec.pk,
-            'date': rec.created_at.strftime('%Y-%m-%d %H:%M') if getattr(rec, 'created_at', None) else '',
-            'variety': variety,
-            'field': field,
-            'yield_tons_per_ha': rec.yield_tons_per_ha or '',
-            'area': rec.area_harvested_ha or '',
-            'total_tons': rec.actual_yield_tons or '',
-            'harvest_date': rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '',
-            'quality': rec.grain_quality or '',
-            'notes': rec.notes or '',
-        }
-        writer.writerow([row_map[c] for c in ALL_COLS if c in selected_cols])
+        row_map = _harvest_export_row(rec)
+        writer.writerow([row_map[c] for c in ALL_COLS])
 
     return response
 
@@ -2531,7 +2631,10 @@ def export_harvests_pdf(request):
     except Exception:
         start_dt = end_dt = None
 
-    records_qs = HarvestRecord.objects.filter(is_active=True).select_related('planting__field', 'planting__variety').order_by('-harvest_date')
+    records_qs = HarvestRecord.objects.filter(is_active=True).select_related(
+        'planting__field', 'planting__variety',
+        'planting__field__owner', 'planting__field__owner__user'
+    ).order_by('-harvest_date')
     records_qs = filter_queryset_by_role(request, records_qs, user_field='planting__field__owner')
     records_qs = _apply_barangay_filter(records_qs, barangay_filter, 'planting__field__barangay')
     if start_dt and end_dt:
@@ -2547,9 +2650,9 @@ def export_harvests_pdf(request):
     styles = getSampleStyleSheet()
     elems = []
 
-    elems.append(Paragraph('<b>AgriScan+ Harvest Records</b>', styles['Title']))
+    elems.append(Paragraph('<b>AgriScan+ Harvest Records Report</b>', styles['Title']))
     cover_line = (
-        f'Generated: {timezone.now().strftime("%B %d, %Y %H:%M")} &nbsp;|&nbsp; '
+        f'Generated: {timezone.now().strftime("%B %d, %Y %I:%M %p")} &nbsp;|&nbsp; '
         f'By: {request.user.get_full_name() or request.user.username} &nbsp;|&nbsp; '
         f'Total: {total} records'
     )
@@ -2560,35 +2663,46 @@ def export_harvests_pdf(request):
     elems.append(Paragraph(cover_line, styles['Normal']))
     elems.append(Spacer(1, 0.3*inch))
 
-    data = [['ID', 'Date', 'Variety', 'Field', 'Yield (t/ha)', 'Area (ha)', 'Total Tons', 'Harvest Date', 'Quality']]
+    from xml.sax.saxutils import escape
+
+    export_cols = _harvest_export_cols_for(request)
+    cell_style = ParagraphStyle(
+        'harvestCell',
+        parent=styles['Normal'],
+        fontSize=7,
+        leading=9,
+        spaceBefore=0,
+        spaceAfter=0,
+        wordWrap='CJK',
+    )
+    data = [[HARVEST_COLUMN_LABELS[c] for c in export_cols]]
     for rec in records:
-        variety = rec.planting.variety.code if rec.planting and rec.planting.variety else 'N/A'
-        field   = rec.planting.field.name   if rec.planting and rec.planting.field   else 'N/A'
+        row_map = _harvest_export_row(rec)
         data.append([
-            str(rec.pk),
-            rec.created_at.strftime('%Y-%m-%d') if getattr(rec, 'created_at', None) else '-',
-            variety[:16],
-            field[:20],
-            str(rec.yield_tons_per_ha or '-'),
-            str(rec.area_harvested_ha or '-'),
-            str(rec.actual_yield_tons or '-'),
-            rec.harvest_date.strftime('%Y-%m-%d') if rec.harvest_date else '-',
-            (rec.grain_quality or '-')[:18],
+            Paragraph(escape(str(row_map[c]) if row_map[c] is not None else ''), cell_style)
+            for c in export_cols
         ])
 
-    table = Table(data, colWidths=[0.55*inch, 1.05*inch, 1.0*inch, 1.55*inch, 1.0*inch, 0.9*inch, 0.9*inch, 1.05*inch, 1.1*inch])
+    grain_quality_index = export_cols.index('grain_quality') if 'grain_quality' in export_cols else None
+    col_widths = [None] * len(export_cols)
+    if grain_quality_index is not None:
+        col_widths[grain_quality_index] = 2.2*inch
+
+    table = Table(data, repeatRows=1, hAlign='LEFT', colWidths=col_widths)
     table.setStyle(TableStyle([
         ('BACKGROUND',     (0, 0), (-1, 0), BLUE),
         ('TEXTCOLOR',      (0, 0), (-1, 0), colors.white),
         ('FONTNAME',       (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE',       (0, 0), (-1, 0), 9),
-        ('FONTSIZE',       (0, 1), (-1, -1), 8),
+        ('FONTSIZE',       (0, 0), (-1, 0), 8),
+        ('FONTSIZE',       (0, 1), (-1, -1), 7),
         ('ALIGN',          (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN',         (0, 0), (-1, -1), 'TOP'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, LGRAY]),
         ('GRID',           (0, 0), (-1, -1), 0.4, colors.HexColor('#d1d5db')),
         ('TOPPADDING',     (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING',  (0, 0), (-1, -1), 4),
-        ('LEFTPADDING',    (0, 0), (-1, -1), 6),
+        ('LEFTPADDING',    (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING',   (0, 0), (-1, -1), 4),
     ]))
     elems.append(table)
 
@@ -4049,21 +4163,96 @@ def knowledge_detail(request, pk: int):
     return render(request, 'knowledge/knowledge_detail.html', {'entry': entry})
 
 
+KNOWLEDGE_COLUMN_LABELS = {
+    'id': 'ID',
+    'created': 'Created',
+    'updated': 'Last Updated',
+    'name': 'Name',
+    'category': 'Category',
+    'description': 'Description',
+    'symptoms': 'Symptoms',
+    'causes': 'Causes',
+    'prevention': 'Prevention',
+}
+
+KNOWLEDGE_EXPORT_COLS = [
+    'id',
+    'created',
+    'updated',
+    'name',
+    'category',
+    'description',
+    'symptoms',
+    'causes',
+    'prevention',
+]
+
+
+def _knowledge_export_cols_for(request):
+    cols = list(KNOWLEDGE_EXPORT_COLS)
+    return cols
+
+
+def _knowledge_export_row(entry):
+    return {
+        'id': entry.pk,
+        'created': timezone.localtime(entry.created_at).strftime('%b %d, %Y %I:%M %p') if entry.created_at else '',
+        'updated': timezone.localtime(entry.updated_at).strftime('%b %d, %Y %I:%M %p') if entry.updated_at else '',
+        'name': entry.name or '',
+        'category': entry.get_category_display() if entry.category else '',
+        'description': entry.description or '',
+        'symptoms': entry.symptoms or '',
+        'causes': entry.causes or '',
+        'prevention': entry.prevention or '',
+    }
+
+
 @login_required(login_url=reverse_lazy('polls:login'))
 def knowledge_export_pdf(request, pk: int):
-    """Export a knowledge entry as a PDF."""
+    """Export a knowledge entry as a professional PDF report."""
+    user_profile = getattr(request.user, 'profile', None)
+    if not user_profile:
+        messages.error(request, "Profile not found.")
+        return redirect('polls:dashboard')
+
     entry = get_object_or_404(KnowledgeBaseEntry, pk=pk, is_active=True)
 
     if not entry.is_published and (not hasattr(request.user, 'profile') or request.user.profile.role not in ('admin', 'technician')):
         return redirect('polls:dashboard')
 
     buffer = BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=40, leftMargin=40, topMargin=40, bottomMargin=40)
+    doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.5*cm, bottomMargin=1.5*cm)
     styles = getSampleStyleSheet()
+    elems = []
 
-    story = []
-    story.append(Paragraph(entry.name, styles['Title']))
-    story.append(Spacer(1, 12))
+    section_style = ParagraphStyle(
+        'knowledgeSection',
+        parent=styles['Heading3'],
+        fontName='Helvetica-Bold',
+        fontSize=11,
+        leading=14,
+        spaceBefore=0,
+        spaceAfter=6,
+        textColor=colors.HexColor('#1e40af'),
+    )
+    body_style = ParagraphStyle(
+        'knowledgeBody',
+        parent=styles['BodyText'],
+        fontSize=10,
+        leading=14,
+        spaceBefore=0,
+        spaceAfter=0,
+    )
+
+    elems.append(Paragraph('<b>AgriScan+ Knowledge Entry Report</b>', styles['Title']))
+    cover_line = (
+        f'Generated: {timezone.now().strftime("%B %d, %Y %I:%M %p")} &nbsp;|&nbsp; '
+        f'By: {request.user.get_full_name() or request.user.username} &nbsp;|&nbsp; '
+        f'Entry: {entry.pk} - {entry.name} &nbsp;|&nbsp; '
+        f'Category: {entry.get_category_display()}'
+    )
+    elems.append(Paragraph(cover_line, styles['Normal']))
+    elems.append(Spacer(1, 0.3*inch))
 
     # Include the image if available
     if getattr(entry, 'image', None):
@@ -4074,69 +4263,61 @@ def knowledge_export_pdf(request, pk: int):
             max_width = doc.width
             max_height = doc.height / 3
             scale = min(1, max_width / iw, max_height / ih)
-            story.append(Image(img_path, width=iw * scale, height=ih * scale))
-            story.append(Spacer(1, 12))
+            elems.append(Image(img_path, width=iw * scale, height=ih * scale))
+            elems.append(Spacer(1, 12))
         except Exception:
             pass
 
-    story.append(Paragraph(f"Category: {entry.get_category_display()}", styles['Normal']))
-    story.append(Paragraph(f"Last updated: {entry.updated_at.strftime('%b %d, %Y')}", styles['Normal']))
-    story.append(Spacer(1, 12))
-
     def add_section(title, text):
-        story.append(Paragraph(f"<b>{title}</b>", styles['Heading3']))
-        story.append(Paragraph(text.replace('\n', '<br/>'), styles['BodyText']))
-        story.append(Spacer(1, 10))
+        elems.append(Paragraph(f'<b>{title}</b>', section_style))
+        elems.append(Paragraph(text.replace('\n', '<br/>'), body_style))
+        elems.append(Spacer(1, 10))
 
-    add_section('Overview', entry.description)
-    add_section('Symptoms', entry.symptoms)
-    add_section('Causes', entry.causes or 'N/A')
-    add_section('Prevention', entry.prevention or 'N/A')
+    add_section('Overview', entry.description or 'No description available.')
+    add_section('Symptoms', entry.symptoms or 'No symptoms provided.')
+    add_section('Causes', entry.causes or 'No causes documented.')
+    add_section('Prevention & Guidance', entry.prevention or 'No prevention guidance specified.')
 
-    doc.build(story)
+    doc.build(elems)
     buffer.seek(0)
 
+    date_tag = f'{timezone.now().strftime("%Y%m%d_%H%M%S")}'
+    fname = f'knowledge_entry_{entry.pk}_{date_tag}.pdf'
     response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="knowledge_{entry.pk}.pdf"'
+    response['Content-Disposition'] = f'attachment; filename="{fname}"'
     return response
 
 
 @login_required(login_url=reverse_lazy('polls:login'))
 def knowledge_export_csv(request, pk: int):
-    """Export a knowledge entry as a simple CSV."""
+    """Export a knowledge entry as a clean CSV."""
+    user_profile = getattr(request.user, 'profile', None)
+    if not user_profile:
+        messages.error(request, "Profile not found.")
+        return redirect('polls:dashboard')
+
     entry = get_object_or_404(KnowledgeBaseEntry, pk=pk, is_active=True)
 
     if not entry.is_published and (not hasattr(request.user, 'profile') or request.user.profile.role not in ('admin', 'technician')):
         return redirect('polls:dashboard')
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="knowledge_{entry.pk}.csv"'
+    ALL_COLS = _knowledge_export_cols_for(request)
+
+    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+    date_tag = timezone.now().strftime('%Y%m%d_%H%M%S')
+    response['Content-Disposition'] = f'attachment; filename="knowledge_entry_{entry.pk}_{date_tag}.csv"'
+
     writer = csv.writer(response)
+    writer.writerow(['AgriScan+ Knowledge Entry'])
+    writer.writerow(['Generated',   timezone.now().strftime('%Y-%m-%d %I:%M %p')])
+    writer.writerow(['Exported By', request.user.get_full_name() or request.user.username])
+    writer.writerow(['Entry',       f'#{entry.pk} - {entry.name}'])
+    writer.writerow([])
+    COL_LABELS = KNOWLEDGE_COLUMN_LABELS
+    writer.writerow([COL_LABELS[c] for c in ALL_COLS])
 
-    # Allow clients to pick which columns to include via ?cols=...
-    cols = request.GET.getlist('cols')
-    defaults = ['name', 'category', 'description', 'symptoms', 'causes', 'prevention', 'image_url', 'published', 'last_updated']
-    if not cols:
-        cols = defaults
-
-    # Map keys to (label, value)
-    values = {
-        'name': ('Name', entry.name),
-        'category': ('Category', entry.get_category_display()),
-        'description': ('Description', entry.description),
-        'symptoms': ('Symptoms', entry.symptoms),
-        'causes': ('Causes', entry.causes or ''),
-        'prevention': ('Prevention', entry.prevention or ''),
-        'image_url': ('Image URL', request.build_absolute_uri(entry.image.url) if getattr(entry, 'image', None) else ''),
-        'published': ('Published', 'Yes' if entry.is_published else 'No'),
-        'last_updated': ('Last Updated', entry.updated_at.isoformat()),
-    }
-
-    writer.writerow(['Field', 'Value'])
-    for c in cols:
-        if c in values:
-            label, val = values[c]
-            writer.writerow([label, val])
+    row_map = _knowledge_export_row(entry)
+    writer.writerow([row_map[c] for c in ALL_COLS])
 
     return response
 

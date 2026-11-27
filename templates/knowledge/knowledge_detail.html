@@ -430,15 +430,6 @@ function openKnowledgeExportModal() {
     csvUrl: '{% url "polls:knowledge_export_csv" entry.pk %}',
     pdfUrl: '{% url "polls:knowledge_export_pdf" entry.pk %}',
     showBarangay: false,
-    cols: [
-      { value: 'name', label: 'Name' },
-      { value: 'category', label: 'Category' },
-      { value: 'image_url', label: 'Image URL' },
-      { value: 'description', label: 'Description' },
-      { value: 'symptoms', label: 'Symptoms' },
-      { value: 'causes', label: 'Causes' },
-      { value: 'prevention', label: 'Prevention' },
-    ],
   });
 }
 </script>

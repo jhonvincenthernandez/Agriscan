@@ -252,21 +252,21 @@
 
     <div class="gem-body">
 
-    <!-- ── Mode 1 only: Format selector (CSV / PDF) ── -->
+    <!-- ── Mode 1 only: Format selector (PDF / CSV) ── -->
     <div id="gem-fmt-block">
       <p class="gem-section-label mb-2">Format</p>
       <div class="flex flex-col gap-2 mb-5 sm:flex-row">
-        <label id="gem-csv-label"
-               class="gem-format flex items-center gap-2">
-          <input type="radio" name="gem_fmt" value="csv" checked class="gem-radio" id="gem-fmt-csv">
-          <span class="text-sm font-medium text-[var(--color-text)]">CSV</span>
-          <span class="gem-help-text ml-auto text-xs">Excel</span>
-        </label>
         <label id="gem-pdf-label"
                class="gem-format flex items-center gap-2">
-          <input type="radio" name="gem_fmt" value="pdf" class="gem-radio" id="gem-fmt-pdf">
+          <input type="radio" name="gem_fmt" value="pdf" checked class="gem-radio" id="gem-fmt-pdf">
           <span class="text-sm font-medium text-[var(--color-text)]">PDF</span>
           <span class="gem-help-text ml-auto text-xs">Print</span>
+        </label>
+        <label id="gem-csv-label"
+               class="gem-format flex items-center gap-2">
+          <input type="radio" name="gem_fmt" value="csv" class="gem-radio" id="gem-fmt-csv">
+          <span class="text-sm font-medium text-[var(--color-text)]">CSV</span>
+          <span class="gem-help-text ml-auto text-xs">Excel</span>
         </label>
       </div>
     </div>
@@ -331,7 +331,7 @@
           <button type="button" onclick="gemSetItems(false)" class="gem-action-link min-h-11 px-2 text-xs text-[var(--color-text-secondary)] hover:underline">Clear All</button>
         </div>
       </div>
-      <div id="gem-sections-list" class="space-y-2 mb-5">
+      <div id="gem-sections-list" class="grid grid-cols-1 gap-2 mb-5 sm:grid-cols-2">
         <!-- filled by openExportModal() in sections mode -->
       </div>
     </div>
@@ -496,52 +496,31 @@
       }
 
     } else {
-      // ── Mode 1: column picker ────────────────────────────────────────────
+      // ── Mode 1: format + date range ───────────────────────────────────────
       document.getElementById('gem-fmt-block').style.display   = '';
       document.getElementById('gem-date-block').style.display  = '';
       document.getElementById('gem-barangay-section').style.display  = _cfg.showBarangay !== false ? '' : 'none';
-      document.getElementById('gem-cols-section').style.display     = '';
+      document.getElementById('gem-cols-section').style.display     = 'none';
       document.getElementById('gem-sections-section').style.display = 'none';
 
-      if (subEl) subEl.textContent = _cfg.showBarangay !== false ? 'Choose format, date range, barangay, and columns.' : 'Choose format, date range, and columns.';
+      if (subEl) subEl.textContent = _cfg.showBarangay !== false ? 'Choose format, date range, and barangay.' : 'Choose format, date range.';
 
       var barangayValue1 = (_cfg.barangay || (_cfg.extraParams && _cfg.extraParams.barangay) || '').trim();
       var barangayInput1 = document.getElementById('gem-barangay');
       if (barangayInput1 && _cfg.showBarangay !== false) barangayInput1.value = barangayValue1;
 
-      // Reset to CSV
+      // Reset to PDF
+      var pdfRadio = document.getElementById('gem-fmt-pdf');
       var csvRadio = document.getElementById('gem-fmt-csv');
-      if (csvRadio) { csvRadio.checked = true; }
-      gemSyncFormat(true);
+      if (pdfRadio) { pdfRadio.checked = true; }
+      if (csvRadio) { csvRadio.checked = false; }
+      gemSyncFormat(false);
 
       // Reset dates
       var s = document.getElementById('gem-start-date');
       var e = document.getElementById('gem-end-date');
       if (s) s.value = '';
       if (e) e.value = '';
-
-      // Build column checkboxes
-      var grid = document.getElementById('gem-cols-grid');
-      if (grid) {
-        grid.innerHTML = '';
-        var cols = _cfg.cols || [];
-        cols.forEach(function (col) {
-          var lbl = document.createElement('label');
-          lbl.className = 'gem-option cursor-pointer text-sm';
-          var cb = document.createElement('input');
-          cb.type      = 'checkbox';
-          cb.name      = 'gem_col';
-          cb.value     = col.value;
-          cb.checked   = col.checked !== false;
-          cb.className = 'h-4 w-4 shrink-0 rounded text-[var(--color-brand)]';
-          var span = document.createElement('span');
-          span.className   = 'text-[var(--color-text)]';
-          span.textContent = col.label;
-          lbl.appendChild(cb);
-          lbl.appendChild(span);
-          grid.appendChild(lbl);
-        });
-      }
     }
 
     var modal = document.getElementById('global-export-modal');
@@ -608,12 +587,6 @@
       // ── Mode 1: build CSV/PDF download URL ──────────────────────────────
       var fmt  = document.querySelector('input[name="gem_fmt"]:checked');
       var fmtVal = fmt ? fmt.value : 'csv';
-      var cols = Array.from(document.querySelectorAll('#gem-cols-grid input[name="gem_col"]:checked'))
-                     .map(function (c) { return c.value; });
-      if (fmtVal === 'csv' && cols.length === 0) {
-        gemShowFeedback('Please select at least one column.', '#gem-cols-grid input[name="gem_col"]');
-        return;
-      }
       var url    = fmtVal === 'csv' ? (_cfg.csvUrl || '') : (_cfg.pdfUrl || '');
       var params = baseParams;
       Object.keys(_cfg.extraParams || {}).forEach(function (key) {
@@ -627,7 +600,6 @@
       if (start && start.value) params.set('start_date', start.value);
       if (end   && end.value)   params.set('end_date',   end.value);
       if (barangayValue) params.set('barangay', barangayValue);
-      if (fmtVal === 'csv') cols.forEach(function (c) { params.append('cols', c); });
       closeExportModal();
       window.location.href = url + (params.toString() ? '?' + params.toString() : '');
     }
