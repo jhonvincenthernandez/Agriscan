@@ -2070,6 +2070,65 @@ def yield_record_delete(request, pk: int):
     return _redirect_back_or_default(request, 'polls:yield_records_list')
 
 
+DETECTION_COLUMN_LABELS = {
+    'id': 'ID',
+    'date': 'Created',
+    'disease': 'Condition',
+    'confidence': 'Confidence',
+    'severity': 'Severity',
+    'field': 'Field',
+    'model': 'Model Version',
+    'owner': 'Owner',
+    'variety': 'Variety',
+    'status': 'Status',
+}
+
+DETECTION_EXPORT_COLS = [
+    'id',
+    'date',
+    'disease',
+    'owner',
+    'variety',
+    'field',
+    'status',
+    'confidence',
+    'severity',
+    'model',
+]
+
+
+def _detection_export_cols_for(request):
+    profile = getattr(request.user, 'profile', None)
+    role = getattr(profile, 'role', None)
+    cols = list(DETECTION_EXPORT_COLS)
+    if role not in ('admin', 'technician'):
+        cols = [c for c in cols if c != 'owner']
+    return cols
+
+
+def _detection_export_row(det):
+    planting = det.planting
+    field = planting.field if planting and planting.field else None
+    owner_profile = field.owner if field and field.owner else None
+    owner_user = owner_profile.user if owner_profile and owner_profile.user else None
+    owner_name = (owner_user.get_full_name() or owner_user.username) if owner_user else ''
+    variety_code = planting.variety.code if planting and planting.variety else ''
+    field_name = field.name if field else 'N/A'
+    created_at = timezone.localtime(det.created_at).strftime('%b %d, %Y %I:%M %p') if det.created_at else ''
+    return {
+        'id': det.pk,
+        'date': created_at,
+        'disease': det.disease.name if det.disease else 'Healthy',
+        'confidence': round(float(det.confidence_pct or 0), 2),
+        'severity': round(float(det.severity_pct or 0), 1) if det.severity_pct else '',
+        'field': field_name,
+        'model': det.model_version.version if det.model_version else '',
+        'owner': owner_name,
+        'variety': variety_code,
+        'status': planting.get_status_display() if planting else '',
+    }
+
+
 @login_required(login_url=reverse_lazy('polls:login'))
 def export_detections_csv(request):
     user_profile = getattr(request.user, 'profile', None)
@@ -2078,8 +2137,7 @@ def export_detections_csv(request):
         return redirect('polls:dashboard')
 
     from datetime import datetime as _dt
-    ALL_COLS = ['id', 'date', 'disease', 'confidence', 'severity', 'field', 'source', 'model']
-    selected_cols = set(request.GET.getlist('cols')) or set(ALL_COLS)
+    ALL_COLS = _detection_export_cols_for(request)
 
     # Optional date range
     start_str = request.GET.get('start_date', '')
@@ -2092,7 +2150,8 @@ def export_detections_csv(request):
         start_dt = end_dt = None
 
     detections_qs = DetectionRecord.objects.filter(is_active=True).select_related(
-        'disease', 'model_version', 'planting__field'
+        'disease', 'model_version', 'planting__field', 'planting__variety',
+        'planting__field__owner', 'planting__field__owner__user'
     ).order_by('-created_at')
     detections_qs = filter_queryset_by_role(request, detections_qs)
     detections_qs = _apply_barangay_filter(detections_qs, barangay_filter, 'planting__field__barangay')
@@ -2115,26 +2174,12 @@ def export_detections_csv(request):
     writer.writerow(['Total Records', total])
     writer.writerow([])
 
-    COL_LABELS = {
-        'id': 'ID', 'date': 'Date', 'disease': 'Disease',
-        'confidence': 'Confidence (%)', 'severity': 'Severity (%)',
-        'field': 'Field', 'source': 'Source', 'model': 'Model Version',
-    }
-    writer.writerow([COL_LABELS[c] for c in ALL_COLS if c in selected_cols])
+    COL_LABELS = DETECTION_COLUMN_LABELS
+    writer.writerow([COL_LABELS[c] for c in ALL_COLS])
 
     for det in detections_qs:
-        field_name = det.planting.field.name if det.planting and det.planting.field else 'N/A'
-        row_map = {
-            'id':         det.pk,
-            'date':       det.created_at.strftime('%Y-%m-%d %H:%M'),
-            'disease':    det.disease.name if det.disease else 'Healthy',
-            'confidence': round(float(det.confidence_pct or 0), 2),
-            'severity':   round(float(det.severity_pct or 0), 1) if det.severity_pct else '',
-            'field':      field_name,
-            'source':     det.source or '',
-            'model':      det.model_version.version if det.model_version else '',
-        }
-        writer.writerow([row_map[c] for c in ALL_COLS if c in selected_cols])
+        row_map = _detection_export_row(det)
+        writer.writerow([row_map[c] for c in ALL_COLS])
 
     return response
 
@@ -2232,7 +2277,8 @@ def export_detections_pdf(request):
         start_dt = end_dt = None
 
     detections_qs = DetectionRecord.objects.filter(is_active=True).select_related(
-        'disease', 'planting__field'
+        'disease', 'model_version', 'planting__field', 'planting__variety',
+        'planting__field__owner', 'planting__field__owner__user'
     ).order_by('-created_at')
     detections_qs = filter_queryset_by_role(request, detections_qs)
     detections_qs = _apply_barangay_filter(detections_qs, barangay_filter, 'planting__field__barangay')
@@ -2267,31 +2313,32 @@ def export_detections_pdf(request):
     elems.append(Paragraph(cover_line, styles['Normal']))
     elems.append(Spacer(1, 0.3*inch))
 
-    data = [['ID', 'Date', 'Disease', 'Confidence', 'Severity', 'Field']]
+    from xml.sax.saxutils import escape
+
+    export_cols = _detection_export_cols_for(request)
+    data = [[DETECTION_COLUMN_LABELS[c] for c in export_cols]]
     for det in detections:
-        field_name = det.planting.field.name if det.planting and det.planting.field else 'N/A'
+        row_map = _detection_export_row(det)
         data.append([
-            str(det.pk),
-            det.created_at.strftime('%Y-%m-%d'),
-            (det.disease.name if det.disease else 'Healthy')[:24],
-            f"{round(float(det.confidence_pct or 0), 1)}%",
-            f"{round(float(det.severity_pct or 0), 1)}%" if det.severity_pct else '-',
-            field_name[:26],
+            Paragraph(escape(str(row_map[c]) if row_map[c] is not None else ''), styles['Normal'])
+            for c in export_cols
         ])
 
-    table = Table(data, colWidths=[0.7*inch, 1.3*inch, 2.2*inch, 1.2*inch, 1.2*inch, 2.2*inch])
+    table = Table(data, repeatRows=1, hAlign='LEFT')
     table.setStyle(TableStyle([
         ('BACKGROUND',     (0, 0), (-1, 0), GREEN),
         ('TEXTCOLOR',      (0, 0), (-1, 0), colors.white),
         ('FONTNAME',       (0, 0), (-1, 0), 'Helvetica-Bold'),
-        ('FONTSIZE',       (0, 0), (-1, 0), 9),
-        ('FONTSIZE',       (0, 1), (-1, -1), 8),
+        ('FONTSIZE',       (0, 0), (-1, 0), 8),
+        ('FONTSIZE',       (0, 1), (-1, -1), 7),
         ('ALIGN',          (0, 0), (-1, -1), 'LEFT'),
+        ('VALIGN',         (0, 0), (-1, -1), 'TOP'),
         ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, LGRAY]),
         ('GRID',           (0, 0), (-1, -1), 0.4, colors.HexColor('#d1d5db')),
         ('TOPPADDING',     (0, 0), (-1, -1), 4),
         ('BOTTOMPADDING',  (0, 0), (-1, -1), 4),
-        ('LEFTPADDING',    (0, 0), (-1, -1), 6),
+        ('LEFTPADDING',    (0, 0), (-1, -1), 4),
+        ('RIGHTPADDING',   (0, 0), (-1, -1), 4),
     ]))
     elems.append(table)
 

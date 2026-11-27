@@ -634,12 +634,14 @@ function openDetExportModal() {
     showBarangay: true,
     cols: [
       { value: 'id',         label: 'ID'           },
-      { value: 'date',       label: 'Date'         },
+      { value: 'date',       label: 'Created'      },
       { value: 'disease',    label: 'Condition'    },
+      {% if is_admin or is_technician %}{ value: 'owner', label: 'Owner' },{% endif %}
+      { value: 'variety',    label: 'Variety'      },
+      { value: 'field',      label: 'Field'        },
+      { value: 'status',     label: 'Status'       },
       { value: 'confidence', label: 'Confidence'   },
       { value: 'severity',   label: 'Severity'     },
-      { value: 'field',      label: 'Field'        },
-      { value: 'source',     label: 'Source'       },
       { value: 'model',      label: 'Model Version'},
     ],
   });
