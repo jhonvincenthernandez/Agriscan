@@ -1939,6 +1939,20 @@ def yield_records_list(request):
     page_range = page_obj.paginator.get_elided_page_range(page_obj.number, on_each_side=1, on_ends=1)
 
     varieties = [v[0] for v in services.get_variety_choices()]
+    date_filter_labels = {
+        "today": "Today",
+        "week": "This Week",
+        "month": "This Month",
+    }
+    print_filter_parts = []
+    if search:
+        print_filter_parts.append(f"Search: {search}")
+    if variety_filter:
+        print_filter_parts.append(f"Variety: {variety_filter}")
+    if date_filter:
+        print_filter_parts.append(
+            f"Date: {date_filter_labels.get(date_filter, date_filter.title())}"
+        )
     context = {
         "records": page_obj.object_list,
         "page_obj": page_obj,
@@ -1949,6 +1963,7 @@ def yield_records_list(request):
         "varieties": varieties,
         "sort_by": sort,
         "page_size": page_size,
+        "print_filter_summary": " · ".join(print_filter_parts),
     }
     return render(request, "yields/list.html", context)
 
@@ -3310,6 +3325,18 @@ def harvests_list(request):
         'sort_by': sort,
         'page_size': page_size,
     }
+    print_filter_parts = []
+    if search:
+        print_filter_parts.append(f"Search: {search}")
+    if field_filter:
+        print_filter_parts.append(f"Field: {field_filter}")
+    if variety_filter:
+        print_filter_parts.append(f"Variety: {variety_filter}")
+    if season_filter:
+        print_filter_parts.append(f"Season: {season_filter.capfirst()}")
+    if year_filter:
+        print_filter_parts.append(f"Year: {year_filter}")
+    context['print_filter_summary'] = " · ".join(print_filter_parts)
     return render(request, 'harvests/list.html', context)
 
 
